@@ -1,0 +1,10 @@
+services.json
+yarn.lock
+dist
+config.json
+node_modules
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+*.webm

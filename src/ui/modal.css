@@ -1,0 +1,94 @@
+/* Modal container */
+#localStorage-modal {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 60vw; /* 60% of the viewport width */
+    height: 80vh;
+    margin: 0 auto; /* Centers horizontally */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Centers vertically and horizontally */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+/* Labels for each key */
+#localStorage-modal label {
+    font-weight: bold;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+/* Textareas for editing localStorage values */
+#localStorage-modal textarea {
+    width: 100%;
+    min-height: 5vh; /* Minimum height set to 40% of viewport height */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 1.4;
+    background-color: #f0f0f0;
+    color: #333;
+    overflow: auto;
+}
+/* Custom textareas with predefined sizes */
+#localStorage-swEnabled {
+    height:auto;
+}
+
+#localStorage-boards {
+    width: 428px;
+    height: 480px;
+}
+
+/* Save and Close button styling */
+#localStorage-modal button {
+    margin-top: 20px;
+    margin-right: 10px; /* Add margin between buttons */
+    padding: 10px 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    display: inline-block; /* Ensure buttons are inline */
+}
+
+#localStorage-modal button:hover {
+    background-color: #45a049;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    #localStorage-modal {
+        width: 90vw; /* Increase the width for smaller screens */
+        padding: 10px;
+    }
+
+    #localStorage-swEnabled, #localStorage-boards {
+        width: 100%;
+        height: auto;
+    }
+
+    #localStorage-modal textarea {
+        height: auto;
+    }
+}
+
+#localStorage-modal .lsm-cancel-button {
+    background-color: #555555; /* Dark grey color */
+}
+
+#localStorage-modal .lsm-cancel-button:hover {
+    background-color: #444444; /* Slightly darker grey on hover */
+}

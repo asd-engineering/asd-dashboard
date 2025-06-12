@@ -1,0 +1,40 @@
+/* Notification style dialog */
+.user-notification {
+    position: fixed;
+    top: 42px;
+    right: 20px;
+    background-color: #4CAF50; 
+    color: white;
+    padding: 10px 20px; 
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-size: 1rem;
+    z-index: 1000;
+    border: none; 
+    width: auto; 
+    max-width: 40vw;
+    text-align: center; 
+    opacity: 0; 
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Show the dialog (after it's shown) */
+.user-notification.show {
+    opacity: 1; /* Fully visible */
+    transform: translateY(0); /* Move to its final position */
+}
+
+/* Close button styling */
+.user-notification .close-button {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    color: white;
+    cursor: pointer;
+    margin-left: 15px; /* Space between the message and the close button */
+}
+
+.user-notification .close-button:hover {
+    color: #ffcccb; /* Light red on hover */
+}
