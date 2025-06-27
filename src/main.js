@@ -26,7 +26,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   logger.log('DOMContentLoaded event fired')
   initializeMainMenu()
   fetchServices()
-  await getConfig()
+  try {
+    await getConfig()
+  } catch (e) {
+    const { showNotification } = await import('./component/dialog/notification.js')
+    showNotification('Invalid configuration data')
+  }
   initializeDashboardMenu()
 
   const boards = await loadBoardState()

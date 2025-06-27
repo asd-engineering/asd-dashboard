@@ -12,6 +12,14 @@ function generateUUID () {
 
 // Function to show a temporary message like alert with dismiss options
 export function showNotification (message, duration = 3000) {
+  // Remove any existing notifications to avoid duplicates during tests
+  document.querySelectorAll('.user-notification').forEach(el => {
+    try {
+      el.remove()
+    } catch (e) {
+      logger.error('Error removing old notification:', e)
+    }
+  })
   // Generate a unique ID for the dialog
   const dialogId = generateUUID()
 

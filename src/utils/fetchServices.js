@@ -22,6 +22,8 @@ export const fetchServices = () =>
         serviceSelector.appendChild(option)
       })
     })
-    .catch(error => {
+    .catch(async error => {
       logger.error('Error fetching services:', error)
+      const { showNotification } = await import('../component/dialog/notification.js')
+      showNotification('Invalid services data')
     })
