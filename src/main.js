@@ -30,7 +30,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     await getConfig()
   } catch (e) {
     const { showNotification } = await import('./component/dialog/notification.js')
-    showNotification('Invalid configuration data')
+    if (!document.getElementById('config-modal')) {
+      showNotification('Invalid configuration data')
+    }
   }
   initializeDashboardMenu()
 

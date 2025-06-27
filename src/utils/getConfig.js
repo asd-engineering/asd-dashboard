@@ -38,7 +38,9 @@ async function getConfig () {
       return json
     } catch (err) {
       logger.error('Error fetching remote config:', err)
-      // fallthrough to show modal below
+      const { openConfigModal } = await import('../component/modal/configModal.js')
+      openConfigModal('')
+      throw new Error('Failed to load configuration')
     }
   }
 
@@ -55,12 +57,10 @@ async function getConfig () {
     return config
   } catch (error) {
     logger.error('Error fetching config.json:', error)
+    const { openConfigModal } = await import('../component/modal/configModal.js')
+    openConfigModal('')
+    throw new Error('Failed to load configuration')
   }
-
-  // If all methods failed, show config modal for manual input
-  const { openConfigModal } = await import('../component/modal/configModal.js')
-  openConfigModal('')
-  throw new Error('Failed to load configuration')
 }
 
 export { getConfig }

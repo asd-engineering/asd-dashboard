@@ -15,6 +15,7 @@ export function showNotification (message, duration = 3000) {
   // Remove any existing notifications to avoid duplicates during tests
   document.querySelectorAll('.user-notification').forEach(el => {
     try {
+      if (typeof el.close === 'function') el.close()
       el.remove()
     } catch (e) {
       logger.error('Error removing old notification:', e)
