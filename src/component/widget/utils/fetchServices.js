@@ -4,6 +4,27 @@ const logger = new Logger('fetchServices.js')
 
 let serviceCache = null
 let lastFetchTime = 0
+const STORAGE_KEY = 'services'
+
+function parseBase64 (data) {
+  try {
+    return JSON.parse(atob(data))
+  } catch (e) {
+    logger.error('Failed to parse base64 services:', e)
+    return null
+  }
+}
+
+async function fetchJson (url) {
+  try {
+    const response = await fetch(url)
+    if (!response.ok) throw new Error('Network response was not ok')
+    return await response.json()
+  } catch (e) {
+    logger.error('Failed to fetch services:', e)
+    return null
+  }
+}
 
 export async function fetchServices () {
   const currentTime = Date.now()
@@ -14,16 +35,35 @@ export async function fetchServices () {
     return serviceCache
   }
 
-  try {
-    const response = await fetch('/services.json')
-    if (response.ok) {
-      serviceCache = await response.json()
-      lastFetchTime = currentTime
-      return serviceCache
-    }
-  } catch (error) {
-    logger.error('Error fetching services:', error)
+  const params = new URLSearchParams(window.location.search)
+  let services = null
+
+  if (params.has('services_base64')) {
+    services = parseBase64(params.get('services_base64'))
   }
 
-  return []
+  if (!services && params.has('services_url')) {
+    services = await fetchJson(params.get('services_url'))
+  }
+
+  if (!services) {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      try {
+        services = JSON.parse(stored)
+      } catch (e) {
+        logger.error('Failed to parse services from localStorage:', e)
+      }
+    }
+  }
+
+  if (!services) {
+    services = await fetchJson('/services.json')
+  }
+
+  services = services || []
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(services))
+  serviceCache = services
+  lastFetchTime = currentTime
+  return serviceCache
 }
