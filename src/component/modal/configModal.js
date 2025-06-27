@@ -25,6 +25,7 @@ export function openConfigModal (template = DEFAULT_CONFIG_TEMPLATE) {
   logger.log('Opening config modal')
   const modal = document.createElement('div')
   modal.id = 'config-modal'
+  modal.setAttribute('role', 'dialog')
 
   const textarea = document.createElement('textarea')
   textarea.id = 'config-json'
@@ -42,7 +43,7 @@ export function openConfigModal (template = DEFAULT_CONFIG_TEMPLATE) {
       setTimeout(() => location.reload(), 500)
     } catch (e) {
       logger.error('Invalid JSON in config modal:', e)
-      showNotification('Invalid JSON, please correct and try again')
+      showNotification('Invalid JSON format')
     }
   })
 
