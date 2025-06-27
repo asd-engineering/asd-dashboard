@@ -1,4 +1,5 @@
 import { Logger } from './Logger.js'
+import { showNotification } from '../component/dialog/notification.js'
 
 const logger = new Logger('fetchServices.js')
 const STORAGE_KEY = 'services'
@@ -8,6 +9,7 @@ function parseBase64 (data) {
     return JSON.parse(atob(data))
   } catch (e) {
     logger.error('Failed to parse base64 services:', e)
+    showNotification('Invalid services data')
     return null
   }
 }
@@ -19,6 +21,7 @@ async function fetchJson (url) {
     return await response.json()
   } catch (e) {
     logger.error('Failed to fetch services:', e)
+    showNotification('Invalid services data')
     return null
   }
 }

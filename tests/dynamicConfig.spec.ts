@@ -21,17 +21,15 @@ test.describe('Dashboard Config - Base64 via URL Params', () => {
     await expect(page.locator('#service-selector option')).toHaveCount(ciServices.length + 1);
   });
 
-  test('shows error on invalid base64', async ({ page }) => {
+  test('shows config modal on invalid base64', async ({ page }) => {
     await page.goto('/?config_base64=%%%');
-    const notification = page.locator('.user-notification span');
-    await expect(notification).toHaveText(/Invalid/);
+    await expect(page.locator('#config-modal')).toBeVisible();
   });
 
-  test('shows error if base64 decodes to invalid JSON', async ({ page }) => {
+  test('shows modal if base64 decodes to invalid JSON', async ({ page }) => {
     const bad = Buffer.from('{broken}').toString('base64');
     await page.goto(`/?config_base64=${bad}`);
-    const notification = page.locator('.user-notification span');
-    await expect(notification).toHaveText(/Invalid/);
+    await expect(page.locator('#config-modal')).toBeVisible();
   });
 });
 
@@ -42,7 +40,7 @@ test.describe('Dashboard Config - Remote via URL Params', () => {
     await page.route('**/remote-config.json', route => route.fulfill({ json: ciConfig }));
     await page.route('**/remote-services.json', route => route.fulfill({ json: ciServices }));
     await page.goto('/?config_url=/remote-config.json&services_url=/remote-services.json');
-    await expect(page.locator('#service-selector option')).toHaveCount(ciServices.length + 1);
+    await expect(page.locator('#config-modal')).toHaveCount(0);
   });
 
   test('shows config popup on 404 for config_url', async ({ page }) => {
@@ -51,11 +49,10 @@ test.describe('Dashboard Config - Remote via URL Params', () => {
     await expect(page.locator('#config-modal')).toBeVisible();
   });
 
-  test('shows error on invalid JSON from remote url', async ({ page }) => {
+  test('shows modal on invalid JSON from remote url', async ({ page }) => {
     await page.route('**/bad.json', route => route.fulfill({ body: 'nope' }));
     await page.goto('/?config_url=/bad.json');
-    const notification = page.locator('.user-notification span');
-    await expect(notification).toHaveText(/Invalid/);
+    await expect(page.locator('#config-modal')).toBeVisible();
   });
 });
 

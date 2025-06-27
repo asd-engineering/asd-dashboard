@@ -1,5 +1,6 @@
 import { Logger } from './Logger.js'
 import { openConfigModal, DEFAULT_CONFIG_TEMPLATE } from '../component/modal/configModal.js'
+import { showNotification } from '../component/dialog/notification.js'
 
 const logger = new Logger('getConfig.js')
 const STORAGE_KEY = 'config'
@@ -9,6 +10,7 @@ function parseBase64 (data) {
     return JSON.parse(atob(data))
   } catch (e) {
     logger.error('Failed to parse base64 config:', e)
+    showNotification('Invalid configuration data')
     return null
   }
 }
@@ -20,6 +22,7 @@ async function fetchJson (url) {
     return await response.json()
   } catch (e) {
     logger.error('Failed to fetch config from URL:', e)
+    showNotification('Invalid configuration data')
     return null
   }
 }
