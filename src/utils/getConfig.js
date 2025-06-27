@@ -1,6 +1,11 @@
 import { Logger } from './Logger.js'
 import { openConfigModal, DEFAULT_CONFIG_TEMPLATE } from '../component/modal/configModal.js'
 import { showNotification } from '../component/dialog/notification.js'
+    showNotification('Invalid base64 configuration')
+    showNotification('Invalid configuration from URL')
+    return null
+    return null
+import { showNotification } from '../component/dialog/notification.js'
 
 const logger = new Logger('getConfig.js')
 const STORAGE_KEY = 'config'
