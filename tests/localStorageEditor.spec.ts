@@ -5,7 +5,9 @@ import { ciBoards } from './data/ciConfig.js';
 
 test.describe('LocalStorage Editor Functionality', () => {
   test.beforeEach(async ({ page }) => {
+    await routeServicesConfig(page);
     await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
     await page.evaluate(() => {
       localStorage.setItem('log', 'localStorageModal,localStorage');
     });
@@ -49,8 +51,11 @@ test.describe('LocalStorage Editor Functionality', () => {
     await expect(notification).toHaveText('LocalStorage updated successfully!');
   
     // Verify changes in localStorage
-    const updatedValue = await page.evaluate(() => localStorage.getItem('boards'));
-    expect(updatedValue[0].id).toBe(newContent[0].id);
+    const updatedValue = await page.evaluate(() => {
+      const item = localStorage.getItem('boards');
+      return item ? JSON.parse(item) : [];
+    });
+    expect(updatedValue[0].id).toBe(ciBoards[0].id);
 
     // Test closing modal using Close button
     await closeButton.click();
