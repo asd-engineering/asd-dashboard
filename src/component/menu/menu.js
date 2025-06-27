@@ -212,6 +212,13 @@ export function initializeMainMenu () {
   storageEditorLabel.textContent = emojiList.floppyDisk.unicode
   adminControl.appendChild(storageEditorLabel)
 
+  const configEditorLabel = document.createElement('label')
+  configEditorLabel.id = 'open-config-modal'
+  configEditorLabel.ariaLabel = 'Config editor'
+  configEditorLabel.title = 'Config editor'
+  configEditorLabel.textContent = emojiList.gear.unicode
+  adminControl.appendChild(configEditorLabel)
+
   menu.appendChild(adminControl)
 
   document.body.insertBefore(menu, document.body.firstChild) // Append as the first child
