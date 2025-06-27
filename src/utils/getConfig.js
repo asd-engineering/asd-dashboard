@@ -24,6 +24,7 @@ async function fetchJson (url) {
       } else {
         showNotification('Invalid configuration from URL')
       }
+      openConfigModal(DEFAULT_CONFIG_TEMPLATE)
       return null
     }
     try {
@@ -31,11 +32,13 @@ async function fetchJson (url) {
     } catch (err) {
       logger.error('Failed to parse remote config JSON:', err)
       showNotification('Invalid configuration JSON. Please check the remote URL.')
+      openConfigModal(DEFAULT_CONFIG_TEMPLATE)
       return null
     }
   } catch (e) {
     logger.error('Failed to fetch config from URL:', e)
     showNotification('Invalid configuration from URL')
+    openConfigModal(DEFAULT_CONFIG_TEMPLATE)
     return null
   }
 }
