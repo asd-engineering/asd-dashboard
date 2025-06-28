@@ -158,14 +158,14 @@
 
 .resize-handle {
     position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 15px;
-    height: 15px;
+    bottom: -2px;
+    right: -2px;
+    width: 6px;
+    height: 6px;
     cursor: se-resize;
-    background-color: rgba(255, 0, 0, 0.5); /* Changed to red for visibility */
-    border: 1px solid black; /* Added border for visibility */
-    z-index: 99; /* Ensure it appears above other elements */
+    background-color: rgba(255, 0, 0, 0.5);
+    border: 1px solid black;
+    z-index: 99;
 }
 
 .resizing {
