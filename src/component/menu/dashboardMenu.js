@@ -52,8 +52,13 @@ function initializeDashboardMenu () {
   })
 
   document.getElementById('reset-button').addEventListener('click', () => {
-    localStorage.clear()
-    location.reload()
+    // Show confirmation dialog
+    const confirmed = confirm('Confirm environment reset: all configurations and services will be permanently deleted.')
+
+    if (confirmed) {
+      localStorage.clear()
+      location.reload()
+    }
   })
 
   document.getElementById('board-selector').addEventListener('change', (event) => {
