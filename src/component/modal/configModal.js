@@ -19,7 +19,10 @@ export const DEFAULT_CONFIG_TEMPLATE = {
 
 const logger = new Logger('configModal.js')
 
-export function openConfigModal (template = DEFAULT_CONFIG_TEMPLATE) {
+export function openConfigModal () {
+  const stored = localStorage.getItem('config')
+  const configData = stored ? JSON.parse(stored) : DEFAULT_CONFIG_TEMPLATE
+
   if (document.getElementById('config-modal')) return
 
   logger.log('Opening config modal')
@@ -29,7 +32,7 @@ export function openConfigModal (template = DEFAULT_CONFIG_TEMPLATE) {
 
   const textarea = document.createElement('textarea')
   textarea.id = 'config-json'
-  textarea.value = JSON.stringify(template, null, 2)
+  textarea.value = JSON.stringify(configData, null, 2)
   modal.appendChild(textarea)
 
   const saveButton = document.createElement('button')

@@ -1,6 +1,7 @@
 import { Logger } from './Logger.js'
 import { openLocalStorageModal } from '../component/modal/localStorageModal.js'
 import { showNotification } from '../component/dialog/notification.js'
+import { openConfigModal, DEFAULT_CONFIG_TEMPLATE } from '../component/modal/configModal.js'
 
 const logger = new Logger('getConfig.js')
 const STORAGE_KEY = 'config'
@@ -21,11 +22,10 @@ async function fetchJson (url) {
     const response = await fetch(url)
     if (!response.ok) {
       if (response.status === 404) {
-        showNotification('Configuration not found (404). Please input manually.')
+        logger.info('Configuration not found (404).')
       } else {
         showNotification('Invalid configuration from URL')
       }
-      openLocalStorageModal()
       return null
     }
     try {
@@ -33,13 +33,11 @@ async function fetchJson (url) {
     } catch (err) {
       logger.error('Failed to parse remote config JSON:', err)
       showNotification('Invalid configuration JSON. Please check the remote URL.')
-      openLocalStorageModal()
       return null
     }
   } catch (e) {
     logger.error('Failed to fetch config from URL:', e)
     showNotification('Invalid configuration from URL')
-    openLocalStorageModal()
     return null
   }
 }
@@ -57,10 +55,10 @@ async function loadFromSources () {
   }
 
   if (params.has('config_url')) {
-    const cfg = await fetchJson(params.get('config_url'))
-    if (cfg) {
+    const cfgU = await fetchJson(params.get('config_url'))
+    if (cfgU) {
       window.history.replaceState(null, '', location.pathname)
-      return cfg
+      return cfgU
     }
     return null
   }
@@ -71,14 +69,20 @@ async function loadFromSources () {
       return JSON.parse(stored)
     } catch (e) {
       logger.error('Failed to parse config from localStorage:', e)
-      openLocalStorageModal()
     }
   }
 
-  const cfg = await fetchJson('config.json')
-  if (cfg) return cfg
+  const cfgJ = await fetchJson('config.json')
 
-  return null
+  if (!cfgJ) {
+    showNotification('Default configuration has been loaded. Please review and save.')
+    const cfg = DEFAULT_CONFIG_TEMPLATE
+    localStorage.setItem('config', JSON.stringify(cfg))
+    openConfigModal()
+    return cfg
+  } else {
+    return cfgJ
+  }
 }
 
 export async function getConfig () {
@@ -89,7 +93,7 @@ export async function getConfig () {
 
   const config = await loadFromSources()
   if (!config) {
-    openLocalStorageModal()
+    openConfigModal()
     throw new Error('No configuration available')
   }
 
