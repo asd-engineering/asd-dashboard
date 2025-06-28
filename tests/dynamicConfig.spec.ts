@@ -23,13 +23,13 @@ test.describe('Dashboard Config - Base64 via URL Params', () => {
 
   test('shows config modal on invalid base64', async ({ page }) => {
     await page.goto('/?config_base64=%%%');
-    await expect(page.locator('#config-modal')).toBeVisible();
+    await expect(page.locator('#localStorage-modal')).toBeVisible();
   });
 
   test('shows modal if base64 decodes to invalid JSON', async ({ page }) => {
     const bad = Buffer.from('{broken}').toString('base64');
     await page.goto(`/?config_base64=${bad}`);
-    await expect(page.locator('#config-modal')).toBeVisible();
+    await expect(page.locator('#localStorage-modal')).toBeVisible();
   });
 });
 
@@ -43,16 +43,30 @@ test.describe('Dashboard Config - Remote via URL Params', () => {
     await expect(page.locator('#config-modal')).toHaveCount(0);
   });
 
-  test.skip('shows config popup on 404 for config_url', async ({ page }) => {
-    await page.route('**/missing.json', route => route.fulfill({ status: 404 }));
+  test('shows config popup on 404 for config_url', async ({ page }) => {
+    await page.route('**/missing.json', route => {
+      const url = new URL(route.request().url());
+      if (url.pathname.endsWith('/missing.json')) {
+        route.fulfill({ status: 404 });
+      } else {
+        route.continue();
+      }
+    });
     await page.goto('/?config_url=/missing.json');
-    await expect(page.locator('#config-modal')).toBeVisible();
+    await expect(page.locator('#localStorage-modal')).toBeVisible();
   });
 
-  test.skip('shows modal on invalid JSON from remote url', async ({ page }) => {
-    await page.route('**/bad.json', route => route.fulfill({ body: 'nope' }));
+  test('shows modal on invalid JSON from remote url', async ({ page }) => {
+    await page.route('**/bad.json', route => {
+      const url = new URL(route.request().url());
+      if (url.pathname.endsWith('/bad.json')) {
+        route.fulfill({ body: 'nope' });
+      } else {
+        route.continue();
+      }
+    });
     await page.goto('/?config_url=/bad.json');
-    await expect(page.locator('#config-modal')).toBeVisible();
+    await expect(page.locator('#localStorage-modal')).toBeVisible();
   });
 });
 
@@ -63,11 +77,16 @@ test.describe('Dashboard Config - Fallback Config Popup', () => {
 
   test('popup appears when no config available via url, storage, or local file', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#config-modal')).toBeVisible();
+    await expect(page.locator('#localStorage-modal')).toBeVisible();
   });
 
   test('valid input in popup initializes dashboard', async ({ page }) => {
     await page.goto('/');
+    await page.click('#localStorage-modal .lsm-cancel-button');
+    await page.evaluate(cfg => {
+      return import('/component/modal/configModal.js').then(m => m.openConfigModal(cfg));
+    }, ciConfig);
+    await page.waitForSelector('#config-json');
     await page.fill('#config-json', JSON.stringify(ciConfig));
     await page.click('#config-modal button:not(.lsm-cancel-button)');
     await page.waitForSelector('#service-selector');
@@ -75,11 +94,16 @@ test.describe('Dashboard Config - Fallback Config Popup', () => {
     expect(stored.globalSettings.theme).toBe(ciConfig.globalSettings.theme);
   });
 
-  test.skip('invalid JSON in popup shows error', async ({ page }) => {
+  test('invalid JSON in popup shows error', async ({ page }) => {
     await page.goto('/');
+    await page.click('#localStorage-modal .lsm-cancel-button');
+    await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()));
+    await page.waitForSelector('#config-json');
     await page.fill('#config-json', '{broken');
     await page.click('#config-modal button:not(.lsm-cancel-button)');
-    await expect(page.locator('.user-notification span')).toHaveText(/Invalid/);
+    const notif = page.locator('.user-notification span').last();
+    await expect(notif).toHaveText(/Invalid/);
+    await expect(page.locator('#config-modal')).toBeVisible();
   });
 });
 
@@ -107,7 +131,7 @@ test.describe('Dashboard Config - LocalStorage Behavior', () => {
     await page.goto(`/?config_base64=${b64(ciConfig)}`);
     await page.evaluate(() => localStorage.removeItem('config'));
     await page.reload();
-    await expect(page.locator('#config-modal')).toBeVisible();
+    await expect(page.locator('#localStorage-modal')).toBeVisible();
   });
 });
 

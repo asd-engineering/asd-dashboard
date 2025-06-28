@@ -27,7 +27,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   logger.log('DOMContentLoaded event fired')
   initializeMainMenu()
   fetchServices()
-  await getConfig()
+  try {
+    await getConfig()
+  } catch (e) {
+    logger.error('Failed to load config:', e)
+    openLocalStorageModal()
+  }
   initializeDashboardMenu()
 
   const boards = await loadBoardState()
