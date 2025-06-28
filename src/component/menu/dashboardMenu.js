@@ -1,4 +1,5 @@
 import { addWidget } from '../widget/widgetManagement.js'
+import { openSaveServiceModal } from '../modal/saveServiceModal.js'
 import {
   switchBoard,
   switchView,
@@ -26,8 +27,17 @@ function initializeDashboardMenu () {
     const viewElement = document.querySelector('.board-view')
     const url = serviceSelector.value || widgetUrlInput.value
 
-    if (url) {
+    const finalize = () => {
       addWidget(url, 1, 1, 'iframe', boardElement.id, viewElement.id)
+      widgetUrlInput.value = ''
+    }
+
+    if (url) {
+      if (!serviceSelector.value && widgetUrlInput.value) {
+        openSaveServiceModal(url, finalize)
+      } else {
+        finalize()
+      }
     } else {
       showNotification('Please select a service or enter a URL.')
     }
