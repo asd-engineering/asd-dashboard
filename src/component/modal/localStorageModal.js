@@ -1,34 +1,8 @@
+import { openModal } from './modalFactory.js'
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
 
 const logger = new Logger('localStorageModal.js')
-
-export function openLocalStorageModal () {
-  // Check if the modal already exists
-  if (document.getElementById('localStorage-modal')) {
-    logger.log('LocalStorage modal is already open')
-    return
-  }
-
-  logger.log('Opening LocalStorage modal')
-  try {
-    const localStorageData = getLocalStorageData()
-    renderLocalStorageModal(localStorageData)
-  } catch (error) {
-    showNotification(error.message)
-  }
-}
-
-export function closeLocalStorageModal () {
-  logger.log('Closing LocalStorage modal')
-  const modal = document.getElementById('localStorage-modal')
-  if (modal) {
-    document.body.removeChild(modal)
-  }
-  // Remove event listeners if necessary
-  window.removeEventListener('click', handleOutsideClick)
-  window.removeEventListener('keydown', handleEscapeKey)
-}
 
 function isJSON (value) {
   try {
@@ -59,86 +33,69 @@ function getLocalStorageData () {
   return localStorageData
 }
 
-function renderLocalStorageModal (data) {
-  const modal = document.createElement('div')
-  modal.id = 'localStorage-modal'
-  document.body.appendChild(modal)
-
-  Object.keys(data).forEach(key => {
-    const label = document.createElement('label')
-    label.textContent = `Key: ${key}`
-
-    const input = document.createElement('textarea')
-    input.value = JSON.stringify(data[key], null, 2) // Prettified JSON
-    input.id = `localStorage-${key}`
-
-    modal.appendChild(label)
-    modal.appendChild(input)
-  })
-
-  const saveButton = document.createElement('button')
-  saveButton.textContent = 'Save'
-  saveButton.addEventListener('click', () => {
-    const updatedData = {}
-    let hasInvalid = false
-
-    Object.keys(data).forEach(key => {
-      const input = document.getElementById(`localStorage-${key}`).value
-
-      if (isJSON(input)) {
-        updatedData[key] = JSON.parse(input)
-      } else {
-        showNotification(`Invalid JSON detected in editor for key: ${key}. Please correct this value.`)
-        hasInvalid = true
-      }
-    })
-
-    if (hasInvalid) {
-      logger.warn('Aborting save due to invalid JSON entries')
-      return
-    }
-
-    saveLocalStorageData(updatedData)
-    showNotification('LocalStorage updated successfully!')
-    setTimeout(() => {
-      location.reload()
-    }, 600)
-  })
-
-  const buttonContainer = document.createElement('div')
-  const closeButton = document.createElement('button')
-  closeButton.textContent = 'Close'
-  closeButton.classList.add('lsm-cancel-button') // Added class
-  closeButton.onclick = closeLocalStorageModal
-
-  saveButton.classList.add('lsm-save-button') // Added class
-  buttonContainer.appendChild(saveButton)
-  buttonContainer.appendChild(closeButton)
-  modal.appendChild(buttonContainer)
-
-  // Event listener for closing the modal by clicking outside
-  window.addEventListener('click', handleOutsideClick)
-
-  // Event listener for closing the modal by pressing 'Escape'
-  window.addEventListener('keydown', handleEscapeKey)
-}
-
-function handleOutsideClick (event) {
-  const modal = document.getElementById('localStorage-modal')
-  if (event.target === modal) {
-    closeLocalStorageModal()
-  }
-}
-
-function handleEscapeKey (event) {
-  if (event.key === 'Escape') {
-    closeLocalStorageModal()
-  }
-}
-
 function saveLocalStorageData (updatedData) {
   for (const key in updatedData) {
     const value = updatedData[key]
     localStorage.setItem(key, JSON.stringify(value))
   }
+}
+
+export function openLocalStorageModal () {
+  openModal({
+    id: 'localStorage-modal',
+    onCloseCallback: () => logger.log('LocalStorage modal closed'),
+    buildContent: (modal, closeModal) => {
+      const data = getLocalStorageData()
+      for (const [key, value] of Object.entries(data)) {
+        if (key.includes('swEnabled') || key.includes('config')) continue
+
+        const label = document.createElement('label')
+        label.classList.add('modal__label')
+        label.textContent = `Key: ${key}`
+
+        const input = document.createElement('textarea')
+        input.id = `localStorage-${key}`
+        input.classList.add('modal__textarea', 'modal__textarea--grow')
+        input.value = JSON.stringify(value, null, 2)
+
+        modal.append(label, input)
+      }
+
+      const saveButton = document.createElement('button')
+      saveButton.textContent = 'Save'
+      saveButton.classList.add('modal__btn', 'modal__btn--save')
+      saveButton.addEventListener('click', () => {
+        const updated = {}
+        let invalid = false
+        for (const [key] of Object.entries(data)) {
+          if (key.includes('swEnabled') || key.includes('config')) continue
+          const val = document.getElementById(`localStorage-${key}`).value
+          try {
+            updated[key] = JSON.parse(val)
+          } catch {
+            showNotification(`Invalid JSON detected in key: ${key}`, 3000, 'error')
+            invalid = true
+          }
+        }
+        if (invalid) {
+          logger.warn('Save aborted due to invalid JSON')
+          return
+        }
+        saveLocalStorageData(updated)
+        showNotification('LocalStorage updated successfully!')
+        closeModal()
+        setTimeout(() => location.reload(), 600)
+      })
+
+      const closeButton = document.createElement('button')
+      closeButton.textContent = 'Close'
+      closeButton.classList.add('modal__btn', 'modal__btn--cancel')
+      closeButton.addEventListener('click', closeModal)
+
+      const btnContainer = document.createElement('div')
+      btnContainer.classList.add('modal__btn-group')
+      btnContainer.append(saveButton, closeButton)
+      modal.appendChild(btnContainer)
+    }
+  })
 }

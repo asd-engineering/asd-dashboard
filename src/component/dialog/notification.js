@@ -3,64 +3,52 @@ import { getUUID } from '../../utils/utils.js'
 
 const logger = new Logger('notification.js')
 
-// Function to show a temporary message like alert with dismiss options
-export function showNotification (message, duration = 3000) {
-  // Generate a unique ID for the dialog
+// Show a temporary message with optional error style
+export function showNotification (message, duration = 3000, type = 'success') {
   const dialogId = getUUID()
 
-  // Create the dialog element dynamically
   const dialog = document.createElement('dialog')
   dialog.setAttribute('id', dialogId)
-  dialog.className = 'user-notification' // Apply the notification style
+  dialog.className = `user-notification ${type === 'error' ? 'error' : 'success'}`
 
-  // Create the close (cancel) button
   const closeButton = document.createElement('button')
   closeButton.className = 'close-button'
-  closeButton.innerHTML = '&times;' // Use an "×" symbol for close
+  closeButton.innerHTML = '&times;'
 
-  // Append the message and close button to the dialog
   const messageElement = document.createElement('span')
-  messageElement.textContent = message // Add the message as plain text
+  messageElement.textContent = message
 
   dialog.appendChild(messageElement)
   dialog.appendChild(closeButton)
-
-  // Append the dialog to the body
   document.body.appendChild(dialog)
 
-  // Show the dialog
   dialog.show()
-  logger.log('Notification displayed with message:', message)
+  logger.log(`Notification (${type}) displayed with message:`, message)
 
-  // Add the "show" class for animation
   setTimeout(() => {
     dialog.classList.add('show')
-  }, 10) // Slight delay to trigger the animation
+  }, 10)
 
-  // Function to hide and remove the notification
   const hideNotification = () => {
-    dialog.classList.remove('show') // Hide the notification smoothly
-    setTimeout(function () {
+    dialog.classList.remove('show')
+    setTimeout(() => {
       dialog.close()
-      dialog.remove() // Remove the dialog from the DOM
-    }, 300) // Wait for the hide transition to complete before removing
+      dialog.remove()
+    }, 300)
   }
 
-  // Automatically close and remove the dialog after the specified duration
   const autoCloseTimeout = setTimeout(hideNotification, duration)
 
-  // Add event listener to the close button
   closeButton.addEventListener('click', () => {
-    clearTimeout(autoCloseTimeout) // Clear the auto-close timeout
-    hideNotification() // Manually close
+    clearTimeout(autoCloseTimeout)
+    hideNotification()
   })
 
-  // Add event listener for the ESC key to close the notification
   document.addEventListener('keydown', function escKeyListener (event) {
     if (event.key === 'Escape') {
-      clearTimeout(autoCloseTimeout) // Clear the auto-close timeout
-      hideNotification() // Manually close
-      document.removeEventListener('keydown', escKeyListener) // Remove event listener
+      clearTimeout(autoCloseTimeout)
+      hideNotification()
+      document.removeEventListener('keydown', escKeyListener)
     }
   })
 }

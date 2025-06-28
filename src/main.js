@@ -6,7 +6,7 @@ import { initializeDragAndDrop } from './component/widget/events/dragDrop.js'
 import { fetchServices } from './utils/fetchServices.js'
 import { getConfig } from './utils/getConfig.js'
 import { openLocalStorageModal } from './component/modal/localStorageModal.js'
-import { openConfigModal, DEFAULT_CONFIG_TEMPLATE } from './component/modal/configModal.js'
+import { openConfigModal } from './component/modal/configModal.js'
 import { initializeBoardDropdown } from './component/board/boardDropdown.js'
 import { initializeViewDropdown } from './component/view/viewDropdown.js'
 import { Logger } from './utils/Logger.js'
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await getConfig()
   } catch (e) {
     logger.error('Failed to load config:', e)
-    openLocalStorageModal()
+    openConfigModal()
   }
   initializeDashboardMenu()
 
@@ -85,9 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (configButton) {
     configButton.addEventListener('click', () => {
       try {
-        const stored = localStorage.getItem('config')
-        const template = stored ? JSON.parse(stored) : DEFAULT_CONFIG_TEMPLATE
-        openConfigModal(template)
+        openConfigModal()
       } catch (error) {
         logger.error('Error opening config modal:', error)
       }
