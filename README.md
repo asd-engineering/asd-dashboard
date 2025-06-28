@@ -55,19 +55,10 @@ Follow these steps to set up and run the ASD Dashboard:
 
 4. Open your browser and navigate to `http://localhost:8000` to access the dashboard.
 
-## Built With
-
-This project was built using the following tools and platforms:
-
-- [GPT Pilot](https://github.com/Pythagora-io/gpt-pilot): An AI developer tool that assists in generating production-ready applications.
-  - 15-10-2024: Upgraded to the latest edition of GPT-Pilot after this README commit. The current project might not reflect the previous 161 commits in GPT-Pilot because I chose not to sync my fork of the project for various reasons.
-- [Cursor](https://www.cursor.com/): An AI code editor designed to enhance productivity by integrating AI capabilities directly into the coding environment.
-- [OpenAI Platform](https://platform.openai.com/): Provides the AI models and APIs used in this project.
-
 ### License
 
 The ASD-dashboard project is currently proprietary. You are allowed to use the project for personal or internal purposes, but you are not permitted to distribute or sublicense the code.  
-Copyright (c) 2024,ASD Engineer. 
+Copyright (c) 2025, ASD Engineering. 
 
 **Note**: I plan to transition the project to an open-source license (likely MIT) in the future. However, during this early stage of development, with a focus on networking security related to the commercial side, I am keeping it proprietary to ensure I have the time to shape all ASD-related projects in a way that allows anyone to use them without compromising personal data, privacy, or project security.
 
