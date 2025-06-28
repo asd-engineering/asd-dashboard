@@ -9,7 +9,7 @@
   "scripts": {
     "prepare": "husky",
     "postinstall": "husky",
-    "start": "python3 -m http.server 8000 --directory src",
+    "start": "node serve_no_cache.js",
     "build": "mkdir -p dist && cp *.js *.css *.html dist/",
     "deploy": "npm run build",
     "lint": "npx standard",

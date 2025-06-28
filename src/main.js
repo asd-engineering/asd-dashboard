@@ -6,6 +6,7 @@ import { initializeDragAndDrop } from './component/widget/events/dragDrop.js'
 import { fetchServices } from './utils/fetchServices.js'
 import { getConfig } from './utils/getConfig.js'
 import { openLocalStorageModal } from './component/modal/localStorageModal.js'
+import { openConfigModal, DEFAULT_CONFIG_TEMPLATE } from './component/modal/configModal.js'
 import { initializeBoardDropdown } from './component/board/boardDropdown.js'
 import { initializeViewDropdown } from './component/view/viewDropdown.js'
 import { Logger } from './utils/Logger.js'
@@ -26,7 +27,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   logger.log('DOMContentLoaded event fired')
   initializeMainMenu()
   fetchServices()
-  await getConfig()
+  try {
+    await getConfig()
+  } catch (e) {
+    logger.error('Failed to load config:', e)
+    openLocalStorageModal()
+  }
   initializeDashboardMenu()
 
   const boards = await loadBoardState()
@@ -74,4 +80,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       logger.error('Error opening LocalStorage modal:', error)
     }
   })
+
+  const configButton = document.getElementById('open-config-modal')
+  if (configButton) {
+    configButton.addEventListener('click', () => {
+      try {
+        const stored = localStorage.getItem('config')
+        const template = stored ? JSON.parse(stored) : DEFAULT_CONFIG_TEMPLATE
+        openConfigModal(template)
+      } catch (error) {
+        logger.error('Error opening config modal:', error)
+      }
+    })
+  }
 })

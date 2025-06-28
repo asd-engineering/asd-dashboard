@@ -1,19 +1,12 @@
 import { Logger } from '../../utils/Logger.js'
+import { getUUID  } from '../../utils/utils.js'
 
 const logger = new Logger('notification.js')
-
-// Function to generate a UUID (simple version)
-function generateUUID () {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = Math.random() * 16 | 0; const v = c === 'x' ? r : (r & 0x3 | 0x8)
-    return v.toString(16)
-  })
-}
 
 // Function to show a temporary message like alert with dismiss options
 export function showNotification (message, duration = 3000) {
   // Generate a unique ID for the dialog
-  const dialogId = generateUUID()
+  const dialogId = getUUID()
 
   // Create the dialog element dynamically
   const dialog = document.createElement('dialog')

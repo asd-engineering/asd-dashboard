@@ -81,6 +81,16 @@ test.describe('LocalStorage Editor Functionality', () => {
     const viewName = await page.locator('#view-selector').textContent();
     expect(viewName).toContain('Modified View 1');
   });
+
+  test('invalid JSON in popup shows error', async ({ page }) => {
+    await page.click('#localStorage-edit-button');
+    await page.waitForSelector('#localStorage-modal');
+    const textarea = await page.locator('textarea#localStorage-boards');
+    await textarea.fill('{broken');
+    await page.click('button.lsm-save-button');
+    await expect(page.locator('.user-notification span')).toHaveText(/Invalid JSON detected/);
+    await expect(page.locator('#localStorage-modal')).toBeVisible();
+  });
   
 
   // test('should log notification for invalid JSON and keep non-JSON values uneditable', async ({ page }) => {

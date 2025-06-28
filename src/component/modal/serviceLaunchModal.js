@@ -1,5 +1,6 @@
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
+import { getUUID  } from '../../utils/utils.js'
 
 const logger = new Logger('serviceLaunchModal.js')
 
@@ -8,7 +9,7 @@ export function showServiceModal (serviceObj, widgetWrapper) {
 
   const modal = document.createElement('div')
   modal.className = 'service-action-modal'
-  modal.dataset.uuid = crypto.randomUUID()
+  modal.dataset.uuid = getUUID()
 
   const iframe = document.createElement('iframe')
   iframe.src = serviceObj.url
