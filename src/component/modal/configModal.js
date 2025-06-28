@@ -26,15 +26,39 @@ export function openConfigModal () {
   if (document.getElementById('config-modal')) return
 
   logger.log('Opening config modal')
+
+  // Backdrop
+  const backdrop = document.createElement('div')
+  backdrop.id = 'config-backdrop'
+  backdrop.style.position = 'fixed'
+  backdrop.style.top = 0
+  backdrop.style.left = 0
+  backdrop.style.width = '100vw'
+  backdrop.style.height = '100vh'
+  backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'
+  backdrop.style.display = 'flex'
+  backdrop.style.justifyContent = 'center'
+  backdrop.style.alignItems = 'center'
+  backdrop.style.zIndex = 10000
+
+  // Modal
   const modal = document.createElement('div')
   modal.id = 'config-modal'
   modal.setAttribute('role', 'dialog')
+  modal.style.backgroundColor = '#fff'
+  modal.style.padding = '2rem'
+  modal.style.borderRadius = '8px'
+  modal.style.maxHeight = '80vh'
+  modal.style.overflowY = 'auto'
+  modal.style.minWidth = '300px'
 
+  // Config JSON editor
   const textarea = document.createElement('textarea')
   textarea.id = 'config-json'
   textarea.value = JSON.stringify(configData, null, 2)
   modal.appendChild(textarea)
 
+  // Buttons
   const saveButton = document.createElement('button')
   saveButton.textContent = 'Save'
   saveButton.addEventListener('click', () => {
@@ -60,24 +84,26 @@ export function openConfigModal () {
   buttonContainer.appendChild(closeButton)
   modal.appendChild(buttonContainer)
 
-  document.body.appendChild(modal)
+  // Append modal to backdrop, then to body
+  backdrop.appendChild(modal)
+  document.body.appendChild(backdrop)
 
   window.addEventListener('click', handleOutsideClick)
   window.addEventListener('keydown', handleEscapeKey)
 }
 
 export function closeConfigModal () {
-  const modal = document.getElementById('config-modal')
-  if (modal) {
-    modal.remove()
+  const backdrop = document.getElementById('config-backdrop')
+  if (backdrop) {
+    backdrop.remove()
   }
   window.removeEventListener('click', handleOutsideClick)
   window.removeEventListener('keydown', handleEscapeKey)
 }
 
 function handleOutsideClick (event) {
-  const modal = document.getElementById('config-modal')
-  if (event.target === modal) {
+  const backdrop = document.getElementById('config-backdrop')
+  if (event.target === backdrop) {
     closeConfigModal()
   }
 }

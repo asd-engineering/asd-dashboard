@@ -21,11 +21,10 @@ export function openLocalStorageModal () {
 
 export function closeLocalStorageModal () {
   logger.log('Closing LocalStorage modal')
-  const modal = document.getElementById('localStorage-modal')
-  if (modal) {
-    document.body.removeChild(modal)
+  const backdrop = document.getElementById('localStorage-backdrop')
+  if (backdrop) {
+    document.body.removeChild(backdrop)
   }
-  // Remove event listeners if necessary
   window.removeEventListener('click', handleOutsideClick)
   window.removeEventListener('keydown', handleEscapeKey)
 }
@@ -60,16 +59,38 @@ function getLocalStorageData () {
 }
 
 function renderLocalStorageModal (data) {
+  const backdrop = document.createElement('div')
+  backdrop.id = 'localStorage-backdrop'
+  backdrop.style.position = 'fixed'
+  backdrop.style.top = 0
+  backdrop.style.left = 0
+  backdrop.style.width = '100vw'
+  backdrop.style.height = '100vh'
+  backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'
+  backdrop.style.display = 'flex'
+  backdrop.style.justifyContent = 'center'
+  backdrop.style.alignItems = 'center'
+  backdrop.style.zIndex = 10000
+
   const modal = document.createElement('div')
   modal.id = 'localStorage-modal'
-  document.body.appendChild(modal)
+  modal.style.backgroundColor = '#fff'
+  modal.style.padding = '2rem'
+  modal.style.borderRadius = '8px'
+  modal.style.maxHeight = '80vh'
+  modal.style.overflowY = 'auto'
+  modal.style.minWidth = '300px'
+
+  // Append modal to backdrop
+  backdrop.appendChild(modal)
+  document.body.appendChild(backdrop)
 
   Object.keys(data).forEach(key => {
     const label = document.createElement('label')
     label.textContent = `Key: ${key}`
 
     const input = document.createElement('textarea')
-    input.value = JSON.stringify(data[key], null, 2) // Prettified JSON
+    input.value = JSON.stringify(data[key], null, 2)
     input.id = `localStorage-${key}`
 
     modal.appendChild(label)
@@ -108,24 +129,23 @@ function renderLocalStorageModal (data) {
   const buttonContainer = document.createElement('div')
   const closeButton = document.createElement('button')
   closeButton.textContent = 'Close'
-  closeButton.classList.add('lsm-cancel-button') // Added class
+  closeButton.classList.add('lsm-cancel-button')
   closeButton.onclick = closeLocalStorageModal
 
-  saveButton.classList.add('lsm-save-button') // Added class
+  saveButton.classList.add('lsm-save-button')
   buttonContainer.appendChild(saveButton)
   buttonContainer.appendChild(closeButton)
   modal.appendChild(buttonContainer)
 
-  // Event listener for closing the modal by clicking outside
+  // Listen to backdrop click
   window.addEventListener('click', handleOutsideClick)
-
-  // Event listener for closing the modal by pressing 'Escape'
   window.addEventListener('keydown', handleEscapeKey)
 }
 
 function handleOutsideClick (event) {
-  const modal = document.getElementById('localStorage-modal')
-  if (event.target === modal) {
+  const backdrop = document.getElementById('localStorage-backdrop')
+
+  if (event.target === backdrop) {
     closeLocalStorageModal()
   }
 }
