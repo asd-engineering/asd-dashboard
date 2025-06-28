@@ -38,15 +38,8 @@ export function openModal ({ id, buildContent, onCloseCallback, showCloseIcon = 
   const modal = document.createElement('div')
   modal.id = id
   modal.setAttribute('role', 'dialog')
-  Object.assign(modal.style, {
-    backgroundColor: '#fff',
-    padding: '2rem',
-    borderRadius: '8px',
-    maxHeight: '80vh',
-    overflowY: 'auto',
-    minWidth: '300px',
-    overflowX: 'hidden'
-  })
+  modal.classList.add('modal')
+  modal.classList.add('modal--lg')
 
   if (showCloseIcon) {
     const closeBtn = document.createElement('button')
@@ -54,11 +47,11 @@ export function openModal ({ id, buildContent, onCloseCallback, showCloseIcon = 
     closeBtn.setAttribute('aria-label', 'Close modal')
     Object.assign(closeBtn.style, {
       position: 'absolute',
-      top: '-1.2rem',
-      right: '-1.2rem',
+      top: '0.2rem',
+      right: '-0.3rem',
       background: 'none',
       border: 'none',
-      fontSize: '1.2rem',
+      fontSize: '1rem',
       cursor: 'pointer',
       lineHeight: '1'
     })

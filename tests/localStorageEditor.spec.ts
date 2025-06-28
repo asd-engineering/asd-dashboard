@@ -27,8 +27,8 @@ test.describe('LocalStorage Editor Functionality', () => {
     await expect(modal).toBeVisible();
   
     // Verify Close button is present
-    const closeButton = await modal.locator('button.lsm-cancel-button');
-    await page.waitForSelector('button.lsm-cancel-button');
+    const closeButton = await modal.locator('button.modal__btn--cancel');
+    await page.waitForSelector('button.modal__btn--cancel');
     await expect(closeButton).toBeVisible();
   
     // Modify the JSON content in the textarea to create a board, view, and widget
@@ -40,8 +40,8 @@ test.describe('LocalStorage Editor Functionality', () => {
     await textarea.fill(newContent);
   
     // Save changes
-    const saveButton = await modal.locator('button.lsm-save-button');
-    await page.waitForSelector('button.lsm-save-button');
+    const saveButton = await modal.locator('button.modal__btn--save');
+    await page.waitForSelector('button.modal__btn--save');
     await saveButton.click();
   
     // Wait for notification
@@ -87,7 +87,7 @@ test.describe('LocalStorage Editor Functionality', () => {
     await page.waitForSelector('#localStorage-modal');
     const textarea = await page.locator('textarea#localStorage-boards');
     await textarea.fill('{broken');
-    await page.click('button.lsm-save-button');
+    await page.click('button.modal__btn--save');
     await expect(page.locator('.user-notification span')).toHaveText(/Invalid JSON detected/);
     await expect(page.locator('#localStorage-modal')).toBeVisible();
   });

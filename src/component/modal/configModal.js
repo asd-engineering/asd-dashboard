@@ -30,12 +30,13 @@ export function openConfigModal () {
     buildContent: (modal, closeModal) => {
       const textarea = document.createElement('textarea')
       textarea.id = 'config-json'
+      textarea.classList.add('modal__textarea--grow')
       textarea.value = JSON.stringify(configData, null, 2)
       modal.appendChild(textarea)
 
       const saveButton = document.createElement('button')
       saveButton.textContent = 'Save'
-      saveButton.classList.add('lsm-save-button')
+      saveButton.classList.add('modal__btn', 'modal__btn--save')
       saveButton.addEventListener('click', () => {
         try {
           const cfg = JSON.parse(textarea.value)
@@ -51,10 +52,11 @@ export function openConfigModal () {
 
       const closeButton = document.createElement('button')
       closeButton.textContent = 'Close'
-      closeButton.classList.add('lsm-cancel-button')
+      closeButton.classList.add('modal__btn', 'modal__btn--cancel')
       closeButton.addEventListener('click', closeModal)
 
       const buttonContainer = document.createElement('div')
+      buttonContainer.classList.add('modal__btn-group')
       buttonContainer.append(saveButton, closeButton)
       modal.appendChild(buttonContainer)
     }

@@ -82,13 +82,13 @@ test.describe('Dashboard Config - Fallback Config Popup', () => {
 
   test('valid input in popup initializes dashboard', async ({ page }) => {
     await page.goto('/');
-    await page.click('#config-modal .lsm-cancel-button');
+    await page.click('#config-modal .modal__btn--cancel');
     await page.evaluate(cfg => {
       return import('/component/modal/configModal.js').then(m => m.openConfigModal(cfg));
     }, ciConfig);
     await page.waitForSelector('#config-json');
     await page.fill('#config-json', JSON.stringify(ciConfig));
-    await page.click('#config-modal button:not(.lsm-cancel-button)');
+    await page.click('#config-modal .modal__btn--save');
     await page.waitForSelector('#service-selector');
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('config') || '{}'));
     expect(stored.globalSettings.theme).toBe(ciConfig.globalSettings.theme);
@@ -99,7 +99,7 @@ test.describe('Dashboard Config - Fallback Config Popup', () => {
     await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()));
     await page.waitForSelector('#config-json');
     await page.fill('#config-json', '{broken');
-    await page.click('#config-modal button.lsm-save-button');
+    await page.click('#config-modal button.modal__btn--save');
     const notif = page.locator('.user-notification.error span').last()
     await expect(notif).toHaveText(/Invalid JSON/);
     await expect(page.locator('#config-modal')).toBeVisible();
@@ -120,7 +120,7 @@ test.describe('Dashboard Config - LocalStorage Behavior', () => {
     await page.goto(`/?config_base64=${b64(ciConfig)}`);
     await page.click('#open-config-modal');
     await page.fill('#config-json', JSON.stringify({ ...ciConfig, boards: [] }));
-    await page.click('#config-modal button:not(.lsm-cancel-button)');
+    await page.click('#config-modal .modal__btn--save');
     await page.reload();
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('config')||'{}'));
     expect(Array.isArray(stored.boards)).toBeTruthy();

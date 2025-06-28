@@ -13,9 +13,11 @@ export function openSaveServiceModal (url, onClose) {
       input.placeholder = 'Service name'
       input.required = true
       input.id = 'save-service-name'
+      input.classList.add('modal__input')
       modal.append(message, input)
 
       const saveButton = document.createElement('button')
+      saveButton.classList.add('modal__btn')
       saveButton.textContent = 'Save & Close'
       saveButton.addEventListener('click', () => {
         const name = input.value.trim()
@@ -29,9 +31,11 @@ export function openSaveServiceModal (url, onClose) {
 
       const skipButton = document.createElement('button')
       skipButton.textContent = 'Skip'
+      skipButton.classList.add('modal__btn', 'modal__btn--cancel')
       skipButton.addEventListener('click', closeModal)
 
       const btnContainer = document.createElement('div')
+      btnContainer.classList.add('modal__btn-group')
       btnContainer.append(saveButton, skipButton)
       modal.appendChild(btnContainer)
     }

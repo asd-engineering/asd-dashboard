@@ -46,22 +46,29 @@ export function openLocalStorageModal () {
     onCloseCallback: () => logger.log('LocalStorage modal closed'),
     buildContent: (modal, closeModal) => {
       const data = getLocalStorageData()
-      Object.entries(data).forEach(([key, value]) => {
+      for (const [key, value] of Object.entries(data)) {
+        if (key.includes('swEnabled') || key.includes('config')) continue
+
         const label = document.createElement('label')
+        label.classList.add('modal__label')
         label.textContent = `Key: ${key}`
+
         const input = document.createElement('textarea')
         input.id = `localStorage-${key}`
+        input.classList.add('modal__textarea', 'modal__textarea--grow')
         input.value = JSON.stringify(value, null, 2)
+
         modal.append(label, input)
-      })
+      }
 
       const saveButton = document.createElement('button')
       saveButton.textContent = 'Save'
-      saveButton.classList.add('lsm-save-button')
+      saveButton.classList.add('modal__btn', 'modal__btn--save')
       saveButton.addEventListener('click', () => {
         const updated = {}
         let invalid = false
-        Object.keys(data).forEach(key => {
+        for (const [key] of Object.entries(data)) {
+          if (key.includes('swEnabled') || key.includes('config')) continue
           const val = document.getElementById(`localStorage-${key}`).value
           try {
             updated[key] = JSON.parse(val)
@@ -69,7 +76,7 @@ export function openLocalStorageModal () {
             showNotification(`Invalid JSON detected in key: ${key}`, 3000, 'error')
             invalid = true
           }
-        })
+        }
         if (invalid) {
           logger.warn('Save aborted due to invalid JSON')
           return
@@ -82,10 +89,11 @@ export function openLocalStorageModal () {
 
       const closeButton = document.createElement('button')
       closeButton.textContent = 'Close'
-      closeButton.classList.add('lsm-cancel-button')
+      closeButton.classList.add('modal__btn', 'modal__btn--cancel')
       closeButton.addEventListener('click', closeModal)
 
       const btnContainer = document.createElement('div')
+      btnContainer.classList.add('modal__btn-group')
       btnContainer.append(saveButton, closeButton)
       modal.appendChild(btnContainer)
     }
