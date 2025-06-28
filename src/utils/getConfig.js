@@ -11,7 +11,7 @@ function parseBase64 (data) {
     return JSON.parse(atob(data))
   } catch (e) {
     logger.error('Failed to parse base64 config:', e)
-    showNotification('Invalid base64 configuration')
+    showNotification('Invalid base64 configuration', 3000, 'error')
     openLocalStorageModal()
     return null
   }
@@ -24,7 +24,7 @@ async function fetchJson (url) {
       if (response.status === 404) {
         logger.info('Configuration not found (404).')
       } else {
-        showNotification('Invalid configuration from URL')
+        showNotification('Invalid configuration from URL', 3000, 'error')
       }
       return null
     }
@@ -32,12 +32,12 @@ async function fetchJson (url) {
       return await response.json()
     } catch (err) {
       logger.error('Failed to parse remote config JSON:', err)
-      showNotification('Invalid configuration JSON. Please check the remote URL.')
+      showNotification('Invalid configuration JSON. Please check the remote URL.', 3000, 'error')
       return null
     }
   } catch (e) {
     logger.error('Failed to fetch config from URL:', e)
-    showNotification('Invalid configuration from URL')
+    showNotification('Invalid configuration from URL', 3000, 'error')
     return null
   }
 }

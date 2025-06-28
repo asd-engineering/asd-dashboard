@@ -9,7 +9,7 @@ function parseBase64 (data) {
     return JSON.parse(atob(data))
   } catch (e) {
     logger.error('Failed to parse base64 services:', e)
-    showNotification('Invalid services data')
+    showNotification('Invalid services data', 3000, 'error')
     return null
   }
 }
@@ -21,7 +21,7 @@ async function fetchJson (url) {
     return await response.json()
   } catch (e) {
     logger.error('Failed to fetch services:', e)
-    showNotification('Invalid services data')
+    showNotification('Invalid services data', 3000, 'error')
     return null
   }
 }

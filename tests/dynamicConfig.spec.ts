@@ -96,13 +96,12 @@ test.describe('Dashboard Config - Fallback Config Popup', () => {
 
   test('invalid JSON in popup shows error', async ({ page }) => {
     await page.goto('/');
-    await page.click('#config-modal .lsm-cancel-button');
     await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()));
     await page.waitForSelector('#config-json');
     await page.fill('#config-json', '{broken');
-    await page.click('#config-modal button:not(.lsm-cancel-button)');
-    const notif = page.locator('.user-notification span').last();
-    await expect(notif).toHaveText(/Invalid/);
+    await page.click('#config-modal button.lsm-save-button');
+    const notif = page.locator('.user-notification.error span').last()
+    await expect(notif).toHaveText(/Invalid JSON/);
     await expect(page.locator('#config-modal')).toBeVisible();
   });
 });

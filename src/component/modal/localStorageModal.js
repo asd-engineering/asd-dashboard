@@ -66,7 +66,7 @@ export function openLocalStorageModal () {
           try {
             updated[key] = JSON.parse(val)
           } catch {
-            showNotification(`Invalid JSON detected in key: ${key}`)
+            showNotification(`Invalid JSON detected in key: ${key}`, 3000, 'error')
             invalid = true
           }
         })

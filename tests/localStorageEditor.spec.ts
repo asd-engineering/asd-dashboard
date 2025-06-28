@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 import { routeServicesConfig } from './shared/mocking';
-import emojiList from '../src/ui/unicodeEmoji.js';
 import { ciBoards } from './data/ciConfig.js';
 
 test.describe('LocalStorage Editor Functionality', () => {

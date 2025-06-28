@@ -77,14 +77,14 @@ function handleDrop (e, targetWidgetWrapper) {
   const draggedWidget = widgetContainer.querySelector(`[data-order='${draggedOrder}']`)
 
   if (!draggedWidget) {
-    logger.error('Invalid dragged widget element')
+    logger.error('Invalid dragged widget element', 3000, 'error')
     return
   }
 
   if (targetOrder !== null) {
     const targetWidget = widgetContainer.querySelector(`[data-order='${targetOrder}']`)
     if (!targetWidget) {
-      logger.error('Invalid target widget element')
+      logger.error('Invalid target widget element', 3000, 'error')
       return
     }
 
