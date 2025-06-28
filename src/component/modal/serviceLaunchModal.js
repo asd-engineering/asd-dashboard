@@ -1,6 +1,6 @@
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
-import { getUUID  } from '../../utils/utils.js'
+import { getUUID } from '../../utils/utils.js'
 
 const logger = new Logger('serviceLaunchModal.js')
 

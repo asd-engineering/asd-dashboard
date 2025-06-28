@@ -67,8 +67,7 @@ This project was built using the following tools and platforms:
 ### License
 
 The ASD-dashboard project is currently proprietary. You are allowed to use the project for personal or internal purposes, but you are not permitted to distribute or sublicense the code.  
-Copyright (c) 2024, K.R. Wuite.  
-For more information, please visit: [https://kelvin.id](https://kelvin.id) or email [legal@kelvin.id](mailto:legal@kelvin.id).
+Copyright (c) 2024,ASD Engineer. 
 
 **Note**: I plan to transition the project to an open-source license (likely MIT) in the future. However, during this early stage of development, with a focus on networking security related to the commercial side, I am keeping it proprietary to ensure I have the time to shape all ASD-related projects in a way that allows anyone to use them without compromising personal data, privacy, or project security.
 

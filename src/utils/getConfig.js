@@ -1,5 +1,4 @@
 import { Logger } from './Logger.js'
-import { openConfigModal, DEFAULT_CONFIG_TEMPLATE } from '../component/modal/configModal.js'
 import { openLocalStorageModal } from '../component/modal/localStorageModal.js'
 import { showNotification } from '../component/dialog/notification.js'
 

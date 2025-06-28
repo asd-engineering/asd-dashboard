@@ -1,3 +1,4 @@
+import os from 'os';
 import { defineConfig, devices } from '@playwright/test';
 
 /**
@@ -12,7 +13,7 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers: os.cpus().length -1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   // There is no reason to wait so long in a PWA with hardly any content
@@ -50,6 +51,7 @@ export default defineConfig({
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      grep: process.env.CI ? /.*/ : /.^/,
     },
   ],
   /* Run local dev server before starting the tests */
