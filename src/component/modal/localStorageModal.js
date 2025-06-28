@@ -80,6 +80,7 @@ function renderLocalStorageModal (data) {
   saveButton.textContent = 'Save'
   saveButton.addEventListener('click', () => {
     const updatedData = {}
+    let hasInvalid = false
 
     Object.keys(data).forEach(key => {
       const input = document.getElementById(`localStorage-${key}`).value
@@ -88,14 +89,20 @@ function renderLocalStorageModal (data) {
         updatedData[key] = JSON.parse(input)
       } else {
         showNotification(`Invalid JSON detected in editor for key: ${key}. Please correct this value.`)
+        hasInvalid = true
       }
     })
+
+    if (hasInvalid) {
+      logger.warn('Aborting save due to invalid JSON entries')
+      return
+    }
 
     saveLocalStorageData(updatedData)
     showNotification('LocalStorage updated successfully!')
     setTimeout(() => {
       location.reload()
-    }, 600) // Wait 1 second before reloading
+    }, 600)
   })
 
   const buttonContainer = document.createElement('div')

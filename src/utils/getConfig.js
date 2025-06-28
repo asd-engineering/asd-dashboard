@@ -1,5 +1,6 @@
 import { Logger } from './Logger.js'
 import { openConfigModal, DEFAULT_CONFIG_TEMPLATE } from '../component/modal/configModal.js'
+import { openLocalStorageModal } from '../component/modal/localStorageModal.js'
 import { showNotification } from '../component/dialog/notification.js'
 
 const logger = new Logger('getConfig.js')
@@ -11,6 +12,7 @@ function parseBase64 (data) {
   } catch (e) {
     logger.error('Failed to parse base64 config:', e)
     showNotification('Invalid base64 configuration')
+    openLocalStorageModal()
     return null
   }
 }
@@ -24,7 +26,7 @@ async function fetchJson (url) {
       } else {
         showNotification('Invalid configuration from URL')
       }
-      openConfigModal(DEFAULT_CONFIG_TEMPLATE)
+      openLocalStorageModal()
       return null
     }
     try {
@@ -32,13 +34,13 @@ async function fetchJson (url) {
     } catch (err) {
       logger.error('Failed to parse remote config JSON:', err)
       showNotification('Invalid configuration JSON. Please check the remote URL.')
-      openConfigModal(DEFAULT_CONFIG_TEMPLATE)
+      openLocalStorageModal()
       return null
     }
   } catch (e) {
     logger.error('Failed to fetch config from URL:', e)
     showNotification('Invalid configuration from URL')
-    openConfigModal(DEFAULT_CONFIG_TEMPLATE)
+    openLocalStorageModal()
     return null
   }
 }
@@ -70,6 +72,7 @@ async function loadFromSources () {
       return JSON.parse(stored)
     } catch (e) {
       logger.error('Failed to parse config from localStorage:', e)
+      openLocalStorageModal()
     }
   }
 
@@ -87,7 +90,7 @@ export async function getConfig () {
 
   const config = await loadFromSources()
   if (!config) {
-    openConfigModal(DEFAULT_CONFIG_TEMPLATE)
+    openLocalStorageModal()
     throw new Error('No configuration available')
   }
 
