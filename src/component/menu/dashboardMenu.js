@@ -1,5 +1,6 @@
 import { addWidget } from '../widget/widgetManagement.js'
 import { openSaveServiceModal } from '../modal/saveServiceModal.js'
+import * as servicesStore from '../../storage/servicesStore.js'
 import {
   switchBoard,
   switchView,
@@ -19,25 +20,27 @@ function initializeDashboardMenu () {
   uiInitialized = true
 
   logger.log('Dashboard menu initialized')
+  populateServiceDropdown()
+  document.addEventListener('services-updated', populateServiceDropdown)
 
   document.getElementById('add-widget-button').addEventListener('click', () => {
     const serviceSelector = document.getElementById('service-selector')
     const widgetUrlInput = document.getElementById('widget-url')
     const boardElement = document.querySelector('.board')
     const viewElement = document.querySelector('.board-view')
-    const url = serviceSelector.value || widgetUrlInput.value
+    const selectedServiceUrl = serviceSelector.value
+    const manualUrl = widgetUrlInput.value
+    const url = selectedServiceUrl || manualUrl
 
     const finalize = () => {
       addWidget(url, 1, 1, 'iframe', boardElement.id, viewElement.id)
       widgetUrlInput.value = ''
     }
 
-    if (url) {
-      if (!serviceSelector.value && widgetUrlInput.value) {
-        openSaveServiceModal(url, finalize)
-      } else {
-        finalize()
-      }
+    if (selectedServiceUrl) {
+      finalize()
+    } else if (manualUrl) {
+      openSaveServiceModal(manualUrl, finalize)
     } else {
       showNotification('Please select a service or enter a URL.')
     }
@@ -66,6 +69,22 @@ function initializeDashboardMenu () {
     const selectedViewId = event.target.value
     logger.log(`Switching to selected view ${selectedViewId} in board ${selectedBoardId}`)
     switchView(selectedBoardId, selectedViewId)
+  })
+}
+
+function populateServiceDropdown () {
+  const selector = document.getElementById('service-selector')
+  if (!selector) return
+  selector.innerHTML = ''
+  const defaultOption = document.createElement('option')
+  defaultOption.value = ''
+  defaultOption.textContent = 'Select a Service'
+  selector.appendChild(defaultOption)
+  servicesStore.load().forEach(service => {
+    const opt = document.createElement('option')
+    opt.value = service.url
+    opt.textContent = service.name
+    selector.appendChild(opt)
   })
 }
 

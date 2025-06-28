@@ -1,3 +1,5 @@
+import { load, save } from '../../storage/servicesStore.js'
+
 export function openSaveServiceModal (url, onClose) {
   if (document.getElementById('save-service-modal')) return
 
@@ -21,16 +23,10 @@ export function openSaveServiceModal (url, onClose) {
   saveButton.addEventListener('click', () => {
     const name = input.value.trim()
     if (!name) return
-    const services = JSON.parse(localStorage.getItem('services') || '[]')
+    const services = load()
     services.push({ name, url })
-    localStorage.setItem('services', JSON.stringify(services))
-    const selector = document.getElementById('service-selector')
-    if (selector) {
-      const opt = document.createElement('option')
-      opt.value = url
-      opt.textContent = name
-      selector.appendChild(opt)
-    }
+    save(services)
+    document.dispatchEvent(new CustomEvent('services-updated'))
     closeModal()
   })
 
