@@ -58,6 +58,7 @@ test.describe('LocalStorage Editor Functionality', () => {
     expect(updatedValue[0].id).toBe(ciBoards[0].id);
 
     // Test closing modal using Close button
+    await page.click('#localStorage-edit-button');
     await closeButton.click();
     await expect(await page.locator('#localStorage-modal')).toBeHidden();
   
