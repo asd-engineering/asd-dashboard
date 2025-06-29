@@ -64,3 +64,5 @@
  * @property {string} message
  * @property {string} time
  */
+
+export {}

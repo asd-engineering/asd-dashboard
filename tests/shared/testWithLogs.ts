@@ -12,6 +12,7 @@ export {
   firefox,
   webkit,
   request,
+  type Page,
 } from 'playwright/test';
 
 type ConsoleLog = { type: string; text: string };
@@ -47,7 +48,7 @@ export const test = base.extend<{
           net.push({
             url: r.url(),
             status: res.status(),
-            timing: res.timing // <-- FIXED: was res.timing()
+            timing: r.timing()
           });
       });
       await use(net);
