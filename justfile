@@ -14,6 +14,14 @@ start:
 test:
     npm run test
 
+# Run tests matching a grep pattern
+test-grep GREP:
+    npm run test:grep "{{GREP}}"
+
+# Run only widget tagged tests
+test-widgets:
+    npm run test:widgets
+
 # 4. Autoformat & fix lint errors
 format:
     npm run lint-fix

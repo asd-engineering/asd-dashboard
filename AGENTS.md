@@ -116,7 +116,7 @@ tests/                      # Playwright AI-generated tests
 
 * Use `Justfile`:
 
-  * `just start`, `just test`, `just format`, `just extract-symbols`
+  * `just start`, `just test`, `just test-grep <tag>`, `just test-widgets`, `just format`, `just extract-symbols`
 * Lint and autoformat:
 
   ```bash
@@ -130,6 +130,7 @@ tests/                      # Playwright AI-generated tests
 
 * Generate or update Playwright `.spec.ts` tests alongside every feature.
 * **All tests must pass.**
+* Run tests with `just test` or use `just test-grep <tag>` and `just test-widgets` for targeted runs.
 
 ---
 
