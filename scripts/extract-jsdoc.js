@@ -3,7 +3,7 @@
 
 import { parse } from 'comment-parser'
 import { promises as fs } from 'fs'
-import globby from 'globby'
+import { globby } from 'globby'
 
 async function extract () {
   const files = await globby('src/**/*.js')
