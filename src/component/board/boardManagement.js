@@ -1,3 +1,8 @@
+/**
+ * Board and view management utilities.
+ *
+ * @module boardManagement
+ */
 import { saveBoardState, loadBoardState } from '../../storage/localStorage.js'
 import { addWidget } from '../widget/widgetManagement.js'
 import { Logger } from '../../utils/Logger.js'

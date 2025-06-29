@@ -1,3 +1,8 @@
+/**
+ * Provides interactive resizing of widgets via mouse drag handles.
+ *
+ * @module resizeHandler
+ */
 import { saveWidgetState } from '../../../storage/localStorage.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../../utils/elements.js'
 // import { debounce } from '../../../utils/utils.js'
@@ -7,6 +12,11 @@ import { Logger } from '../../../utils/Logger.js'
 
 const logger = new Logger('resizeHandler.js')
 
+/**
+ * Append resize handles to all widgets and register listeners.
+ *
+ * @returns {void}
+ */
 export function initializeResizeHandles () {
   const widgets = document.querySelectorAll('.widget')
   logger.info(`Found ${widgets.length} widgets to initialize resize handles.`)
@@ -39,6 +49,13 @@ function createResizeOverlay () {
   return overlay
 }
 
+/**
+ * Start tracking mouse movement for resizing a widget.
+ *
+ * @param {MouseEvent} event - Mousedown event that initiated resize.
+ * @param {HTMLElement} widget - The widget element being resized.
+ * @returns {Promise<void>}
+ */
 async function handleResizeStart (event, widget) {
   const startX = event.clientX
   const startY = event.clientY

@@ -1,3 +1,14 @@
+/**
+ * URL helper utilities.
+ *
+ * @module getCurrentUrl
+ */
+
+/**
+ * Return the base URL combined with the first path segment.
+ *
+ * @returns {string}
+ */
 function getCurrentUrl () {
   // Split the URL by "/"
   const parts = document.location.href.split('/')

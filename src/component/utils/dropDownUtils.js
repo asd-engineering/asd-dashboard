@@ -1,7 +1,19 @@
+/**
+ * Shared dropdown initialization helper.
+ *
+ * @module dropDownUtils
+ */
 import { Logger } from '../../utils/Logger.js'
 
 const logger = new Logger('dropDownUtils.js')
 
+/**
+ * Attach click handlers to a dropdown based on data-action attributes.
+ *
+ * @param {HTMLElement} dropdownElement - The dropdown container element.
+ * @param {Object<string,Function>} handlers - Map of action names to callbacks.
+ * @returns {void}
+ */
 export function initializeDropdown (dropdownElement, handlers) {
   if (!dropdownElement) {
     logger.error('Dropdown element not found')

@@ -1,7 +1,18 @@
+/**
+ * Utility to toggle a widget into a full-screen display mode.
+ *
+ * @module fullscreenToggle
+ */
 import { Logger } from '../../../utils/Logger.js'
 
 const logger = new Logger('fullscreenToggle.js')
 
+/**
+ * Toggle the given widget element between fullscreen and normal size.
+ *
+ * @param {HTMLElement} widget - The widget wrapper to modify.
+ * @returns {void}
+ */
 function toggleFullScreen (widget) {
   const isFullScreen = widget.classList.contains('fullscreen')
 
@@ -16,6 +27,12 @@ function toggleFullScreen (widget) {
   }
 }
 
+/**
+ * Exit fullscreen when the user presses the Escape key.
+ *
+ * @param {KeyboardEvent} event - Keydown event.
+ * @returns {void}
+ */
 function handleEscapeKey (event) {
   if (event.key === 'Escape') {
     const fullScreenWidget = document.querySelector('.widget-wrapper.fullscreen')

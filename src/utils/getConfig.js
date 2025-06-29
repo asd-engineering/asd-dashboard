@@ -1,3 +1,8 @@
+/**
+ * Load configuration from query parameters, localStorage or defaults.
+ *
+ * @module getConfig
+ */
 import { Logger } from './Logger.js'
 import { openLocalStorageModal } from '../component/modal/localStorageModal.js'
 import { showNotification } from '../component/dialog/notification.js'
@@ -85,6 +90,11 @@ async function loadFromSources () {
   }
 }
 
+/**
+ * Load and cache the dashboard configuration from multiple sources.
+ *
+ * @returns {Promise<Object>} Parsed configuration object.
+ */
 export async function getConfig () {
   if (window.asd && window.asd.config && Object.keys(window.asd.config).length > 0) {
     logger.log('Using cached configuration')

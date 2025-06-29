@@ -1,3 +1,8 @@
+/**
+ * Widget creation and management functions.
+ *
+ * @module widgetManagement
+ */
 import { saveWidgetState } from '../../storage/localStorage.js'
 import { fetchData } from './utils/fetchData.js'
 import { showResizeMenu, hideResizeMenu, showResizeMenuBlock, hideResizeMenuBlock } from './menu/resizeMenu.js'

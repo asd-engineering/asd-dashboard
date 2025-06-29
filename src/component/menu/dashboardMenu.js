@@ -1,3 +1,8 @@
+/**
+ * Menu actions for adding widgets and switching boards/views.
+ *
+ * @module dashboardMenu
+ */
 import { addWidget } from '../widget/widgetManagement.js'
 import { openSaveServiceModal } from '../modal/saveServiceModal.js'
 import * as servicesStore from '../../storage/servicesStore.js'
@@ -15,6 +20,11 @@ const logger = new Logger('dashboardMenu.js')
 
 let uiInitialized = false // Guard variable
 
+/**
+ * Set up event handlers for the dashboard menu and populate service options.
+ *
+ * @returns {void}
+ */
 function initializeDashboardMenu () {
   if (uiInitialized) return // Guard clause
   uiInitialized = true
@@ -77,6 +87,11 @@ function initializeDashboardMenu () {
   })
 }
 
+/**
+ * Populate the service drop-down with saved services.
+ *
+ * @returns {void}
+ */
 function populateServiceDropdown () {
   const selector = document.getElementById('service-selector')
   if (!selector) return

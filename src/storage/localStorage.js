@@ -1,3 +1,8 @@
+/**
+ * Utilities for persisting board and widget state in `localStorage`.
+ *
+ * @module localStorage
+ */
 import { createWidget } from '../component/widget/widgetManagement.js'
 import { getServiceFromUrl } from '../component/widget/utils/widgetUtils.js'
 import { initializeResizeHandles } from '../component/widget/events/resizeHandler.js'

@@ -1,3 +1,8 @@
+/**
+ * Modal dialog for editing the application configuration.
+ *
+ * @module configModal
+ */
 import { openModal } from './modalFactory.js'
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
@@ -20,6 +25,11 @@ export const DEFAULT_CONFIG_TEMPLATE = {
 
 const logger = new Logger('configModal.js')
 
+/**
+ * Open a modal dialog allowing the user to edit and save configuration JSON.
+ *
+ * @returns {void}
+ */
 export function openConfigModal () {
   const stored = localStorage.getItem('config')
   const configData = stored ? JSON.parse(stored) : DEFAULT_CONFIG_TEMPLATE
