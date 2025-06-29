@@ -8,6 +8,8 @@ Codex AI exclusively implements all client-side logic for the VanillaJS dashboar
 * **Vanilla JavaScript (ES6+ modules)** directly executable in-browser.
 * **Client-side only architecture** (use DOM APIs, localStorage, fetch).
 
+---
+
 ## Optimal Development Strategy
 
 ### Functional-Core, OO-Shell
@@ -53,8 +55,8 @@ If `symbols.json` is missing or out-of-date, Codex code generation and refactori
 
 ## File & Folder Structure (AI-Friendly)
 
-* Keep files concise, each with clear responsibilies.
-* Descriptive filenames (`boardManagement.js`, `configModal.js`).
+* Keep files concise, each with clear responsibilities.
+* Use descriptive filenames (`boardManagement.js`, `configModal.js`, etc).
 
 ```
 src/
@@ -82,10 +84,10 @@ tests/                      # Playwright AI-generated tests
 
 ## Coding Guidelines
 
-* **Single Responsibility Principle (SRP)** strictly enforced.
-* Explicit interfaces: clearly define inputs/outputs per function.
-* Self-explanatory naming conventions (camelCase).
-* **Always write JSDoc blocks**:
+* Enforce **Single Responsibility Principle** (SRP) strictly.
+* Define **explicit input/output contracts** for every function.
+* Use clear camelCase naming.
+* Always include JSDoc with exact symbol name:
 
   ```js
   /**
@@ -110,6 +112,8 @@ tests/                      # Playwright AI-generated tests
   const logger = new Logger('widgetModal.js')
   ```
 
+Structured logs are persisted to `window._appLogs` only when running inside Playwright.
+
 ---
 
 ## Automation & Formatting
@@ -117,11 +121,13 @@ tests/                      # Playwright AI-generated tests
 * Use `Justfile`:
 
   * `just start`, `just test`, `just test-grep <tag>`, `just format`, `just extract-symbols`
+
 * Lint and autoformat:
 
   ```bash
   npm run lint-fix
   ```
+
 * Output must always be ready to commit & test.
 
 ---
@@ -133,69 +139,86 @@ tests/                      # Playwright AI-generated tests
 * After running `just test`, AI must read the generated `playwright-report.json` to extract test outcomes and failure details for in-agent validation.
 * Run tests with `just test` or use `just test-grep <tag>` for targeted runs.
 
-## Playwright Report Helpers  (Justfile)
+---
 
-After running `just test`, Codex (or any automation) should build a compact
-index of the huge Playwright report:
+## 🧪 Two-Phase Test Process
+
+Codex must follow this strict sequence when analyzing tests or logs.
+
+### Phase 1: Test Execution
+
+*Runs the full suite and generates `playwright-report.json`, required for indexing.*
+
+```bash
+just test
+# or: npx playwright test --reporter=json
+```
+
+### Phase 2: Test Indexing & Inspection
+
+*Builds a fast-to-query, compressed log summary and enables AI log inspection.*
 
 ```bash
 just index-report            # → playwright-report-index.json.gz
-````
+```
 
-This gzip-compressed file holds one JSON row per test (per browser), making
-queries fast and avoiding the HTML viewer.
+Then inspect with:
 
-### 1  List Results by Name (regex)
+```bash
+just list '<title-regex>'            # Filter by test name
+just failures '<title-regex>'        # Show failing tests only
+just logs '<title-regex>' [browser]  # View logs for matching test
+```
+
+---
+
+## Playwright Report Helpers (Justfile)
+
+### 1. List Results by Name (regex)
 
 ```bash
 just list '<title-regex>'
 ```
 
-* **Filters only on `.fullTitle`** (case-insensitive regex).
-* Browser filtering is **not** supported (use title regexes only).
-* Passing no regex lists every test.
+* Filters `.fullTitle` (case-insensitive regex).
+* Browser filtering is **not supported**.
+* Use `\b` boundaries or `[^A-Za-z]` to avoid partial matches.
 
-Examples:
+| Command                          | Output                                                              |
+| -------------------------------- | ------------------------------------------------------------------- |
+| `just list`                      | entire table                                                        |
+| `just list 'drag.*drop'`         | all tests whose title contains “drag … drop” (including “Dropdown”) |
+| `just list '\bdrag\b.*\bdrop\b'` | exact match for “drag and drop”                                     |
 
-| Command                          | Output                                                                                       |
-| -------------------------------- | -------------------------------------------------------------------------------------------- |
-| `just list`                      | entire table                                                                                 |
-| `just list 'drag.*drop'`         | all tests whose title contains “drag … drop” (including “Dropdown” unless you tighten regex) |
-| `just list '\bdrag\b.*\bdrop\b'` | **one** row for the “drag and drop” test, avoids “Dropdown”                                  |
+---
 
-> **Regex tip:** use `\bword\b` boundaries or `drag[^A-Za-z]*drop` to avoid
-> matching titles like “Dropdown”.
-
-### 2  List Failures Only
+### 2. List Failures Only
 
 ```bash
 just failures '<title-regex>'
 ```
 
-Same title filter, but pre-filters rows where `status != "passed"`.
+Shows failing/flaky test runs only. Same title matching logic.
 
-Example:
+---
 
-```bash
-just failures
-# failed  chromium  addManageWidgets.spec.ts › Widgets › should be able to add 4 services and drag and drop 🤏
-```
-
-### 3  View Logs for One Test
+### 3. View Logs for One Test
 
 ```bash
 just logs '<title-regex>' [browser-regex]
 ```
 
-* The helper script still accepts an optional *browser regex* for convenience,
-  but the main index queries remain title-based.
-* It decodes and pretty-prints `console-logs`, `network-logs`, and `app-logs`
-  attachments.
+* Pretty-prints all structured logs:
+
+  * `network-logs.json`
+  * `console-logs.json`
+  * `app-logs.json`
+* Browser filter is optional.
 
 Example:
 
 ```bash
-just logs '\bdrag\b.*\bdrop\b'
+just logs '\bdrag\b.*\bdrop\b' chromium
 ```
 
 Output (trimmed):
@@ -214,16 +237,12 @@ Output (trimmed):
 
 ### Quick Reference
 
-| Command                         | Purpose                                 |
-| ------------------------------- | --------------------------------------- |
-| `just index-report`             | Build compressed index                  |
-| `just list '<regex>'`           | List tests filtered by title            |
-| `just failures '<regex>'`       | List only failing tests                 |
-| `just logs '<regex>' [browser]` | Decode logs for the first matching test |
-
-**Important:** Title filtering is regex-based and case-insensitive; browser
-filtering is *not* built into `list`/`failures`. Use precise regex boundaries
-to avoid unintended matches.
+| Command                         | Purpose                          |
+| ------------------------------- | -------------------------------- |
+| `just index-report`             | Build compressed test index      |
+| `just list '<regex>'`           | List tests filtered by title     |
+| `just failures '<regex>'`       | List only failed tests           |
+| `just logs '<regex>' [browser]` | Decode logs for matching test(s) |
 
 ---
 
@@ -237,10 +256,25 @@ to avoid unintended matches.
 
 ## Iterative AI Validation
 
-* Codex must periodically regenerate `symbols.json` and simplify/refactor existing code.
-* All modifications must be traceable to a symbol in `symbols.json`.
-* Files not in the symbol index are ignored from future AI updates unless explicitly regenerated.
+Codex must:
+
+1. Periodically re-run:
+
+   ```bash
+   just extract-symbols
+   just test
+   just index-report
+   ```
+2. Validate symbol presence and test coverage.
+3. Refactor or extend code based on failures or log patterns.
+4. Ignore files not referenced in `symbols.json` unless regenerated explicitly.
 
 ---
 
-By following this strategy, AI agents maintain full symbolic awareness, type safety, and scalable architecture — without requiring TypeScript or compilation.
+By following this phased strategy, AI agents maintain full symbolic awareness, test-integrated feedback, and a fully browser-native, zero-boilerplate architecture.
+<!--
+🟢 Updated 2025-06-29:
+- Split test execution into 2 phases (run vs. index)
+- Clarified structured log commands
+- Refined folder structure comments and command examples
+-->
