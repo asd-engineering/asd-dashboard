@@ -5,6 +5,41 @@ import { Logger } from '../utils/Logger.js'
 
 const logger = new Logger('localStorage.js')
 
+function serializeWidgetState (widget) {
+  let metadata = {}
+  if (widget.dataset.metadata) {
+    try {
+      metadata = JSON.parse(widget.dataset.metadata)
+    } catch (error) {
+      logger.error('Error parsing metadata:', error)
+      metadata = {}
+    }
+  }
+
+  let settings = {}
+  if (widget.dataset.settings) {
+    try {
+      settings = JSON.parse(widget.dataset.settings)
+    } catch (error) {
+      logger.error('Error parsing settings:', error)
+      settings = {}
+    }
+  }
+
+  const state = {
+    dataid: widget.dataset.dataid,
+    order: widget.getAttribute('data-order'),
+    url: widget.querySelector('iframe').src,
+    columns: widget.dataset.columns || 1,
+    rows: widget.dataset.rows || 1,
+    type: widget.dataset.type || 'iframe',
+    metadata,
+    settings
+  }
+  logger.info('Saving widget state:', state)
+  return state
+}
+
 async function saveWidgetState (boardId, viewId) {
   if (!boardId) {
     boardId = document.querySelector('.board').id
@@ -20,40 +55,7 @@ async function saveWidgetState (boardId, viewId) {
     }
     const widgetContainer = document.getElementById('widget-container')
     const widgets = Array.from(widgetContainer.children)
-    const widgetState = widgets.map(widget => {
-      let metadata = {}
-      if (widget.dataset.metadata) {
-        try {
-          metadata = JSON.parse(widget.dataset.metadata)
-        } catch (error) {
-          logger.error('Error parsing metadata:', error)
-          metadata = {} // Default to an empty object if parsing fails
-        }
-      }
-
-      let settings = {}
-      if (widget.dataset.settings) {
-        try {
-          settings = JSON.parse(widget.dataset.settings)
-        } catch (error) {
-          logger.error('Error parsing settings:', error)
-          settings = {} // Default to an empty object if parsing fails
-        }
-      }
-
-      const state = {
-        dataid: widget.dataset.dataid, // Include dataid in the state
-        order: widget.getAttribute('data-order'),
-        url: widget.querySelector('iframe').src,
-        columns: widget.dataset.columns || 1,
-        rows: widget.dataset.rows || 1,
-        type: widget.dataset.type || 'iframe',
-        metadata,
-        settings
-      }
-      logger.info('Saving widget state:', state)
-      return state
-    })
+    const widgetState = widgets.map(widget => serializeWidgetState(widget))
     const boards = await loadBoardState()
     logger.info(`Loaded board state from localStorage: ${boards}`)
     const board = boards.find(b => b.id === boardId)
