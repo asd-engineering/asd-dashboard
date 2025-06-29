@@ -116,7 +116,7 @@ tests/                      # Playwright AI-generated tests
 
 * Use `Justfile`:
 
-  * `just start`, `just test`, `just format`, `just extract-arch`
+  * `just start`, `just test`, `just format`, `just extract-symbols`
 * Lint and autoformat:
 
   ```bash
