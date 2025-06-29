@@ -25,6 +25,27 @@ ASD Dashboard is architected with a focus on simplicity and adaptability:
 - **Playwright Integration & Testing**: Comprehensive testing using Playwright, with automated tests running via GitHub Actions.
 - **Custom Logger Integration**: All log statements use a custom logger for better development and debugging.
 
+## Dynamic Configuration
+
+The dashboard configuration and available services can be supplied at runtime via URL query parameters. This is useful for loading remote or ephemeral data without touching the default files.
+
+- `config_base64` – base64 encoded JSON for the entire `config.json` content.
+- `config_url` – direct URL to a remote `config.json` file.
+- `services_base64` – base64 encoded JSON describing available services.
+- `services_url` – direct URL to a remote `services.json` file.
+
+When provided, the parameters above take priority over any data stored in `localStorage` or the local `config.json` and `services.json` files. All JSON must be valid and encoded with base64 when using the `*_base64` variants.
+
+Examples:
+
+```bash
+# Load from remote files
+http://localhost:8000/?config_url=https://example.com/config.json&services_url=https://example.com/services.json
+
+# Load from base64 strings
+http://localhost:8000/?config_base64=<base64-string>&services_base64=<base64-string>
+```
+
 ## Getting started
 
 ### Requirements
