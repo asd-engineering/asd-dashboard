@@ -10,3 +10,4 @@ node_modules
 *.webm
 *.log
 local/
+playwright-report.json

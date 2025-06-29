@@ -116,7 +116,7 @@ tests/                      # Playwright AI-generated tests
 
 * Use `Justfile`:
 
-  * `just start`, `just test`, `just test-grep <tag>`, `just test-widgets`, `just format`, `just extract-symbols`
+  * `just start`, `just test`, `just test-grep <tag>`, `just format`, `just extract-symbols`
 * Lint and autoformat:
 
   ```bash
@@ -130,7 +130,8 @@ tests/                      # Playwright AI-generated tests
 
 * Generate or update Playwright `.spec.ts` tests alongside every feature.
 * **All tests must pass.**
-* Run tests with `just test` or use `just test-grep <tag>` and `just test-widgets` for targeted runs.
+* After running `just test`, AI must read the generated `playwright-report.json` to extract test outcomes and failure details for in-agent validation.
+* Run tests with `just test` or use `just test-grep <tag>` for targeted runs.
 
 ---
 
@@ -151,4 +152,3 @@ tests/                      # Playwright AI-generated tests
 ---
 
 By following this strategy, AI agents maintain full symbolic awareness, type safety, and scalable architecture — without requiring TypeScript or compilation.
-
