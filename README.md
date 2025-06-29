@@ -76,6 +76,55 @@ Follow these steps to set up and run the ASD Dashboard:
 
 4. Open your browser and navigate to `http://localhost:8000` to access the dashboard.
 
+## AI-Enhanced Test Infrastructure
+
+ASD Dashboard integrates an advanced test automation setup powered by [Playwright](https://playwright.dev), designed for **AI-assisted Test-Driven Development (TDD)**.
+
+Instead of manually adding test hooks for logs in each test file, we override the standard `@playwright/test` import via a custom alias defined in `tsconfig.json`. This injects enhanced logging capabilities into every test automatically.
+
+### Rich Feedback for Autonomous Agents
+
+Our custom test runner captures the following data during every test:
+
+- **Console logs** (e.g. `console.log`, `console.warn`)
+- **Network requests** (URLs, status codes)
+- **App logs** exposed via `window._appLogs` (collected from the client during Playwright runs)
+
+These logs are automatically attached to the Playwright report (`.json` and HTML) on every test—**even when it passes**—making them ideal for Codex/AI agents that analyze feedback post-run.
+
+### Structure
+
+| File                                | Purpose                                       |
+|-------------------------------------|-----------------------------------------------|
+| `tests/test.ts`                     | Overrides `@playwright/test`, injects fixtures |
+| `tsconfig.json`                     | Aliases `@playwright/test` to our runner      |
+| `playwright.config.ts`             | Configures global test behavior (trace, video, etc.) |
+
+### Example Usage
+
+You write tests like this:
+
+```ts
+import { test, expect } from '@playwright/test';
+
+test('does something', async ({ page }) => {
+  await page.goto('/');
+  // ...
+});
+```
+
+Console logs, network requests, and in-app logs (window._appLogs) are automatically captured and attached to each test. No extra boilerplate or fixture setup is required. The code becomes:
+
+```ts
+// Instead of importing from @playwright/test directly:
+import { test, expect } from '@playwright/test';
+
+test('does something', async ({ page, console, network, app }) => {
+  await page.goto('/');
+  // ...
+});
+```
+
 ### License
 
 The ASD-dashboard project is currently proprietary. You are allowed to use the project for personal or internal purposes, but you are not permitted to distribute or sublicense the code.  
