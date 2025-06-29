@@ -40,6 +40,15 @@ function serializeWidgetState (widget) {
   return state
 }
 
+/**
+ * Serialize widgets in the current view and store them under the given board
+ * and view identifiers in localStorage. Each widget is saved with its order,
+ * dimensions, URL and any metadata/settings.
+ *
+ * @param {string} boardId - Board identifier. Defaults to the current board element id.
+ * @param {string} viewId - View identifier. Defaults to the current view element id.
+ * @returns {Promise<void>}
+ */
 async function saveWidgetState (boardId, viewId) {
   if (!boardId) {
     boardId = document.querySelector('.board').id
@@ -78,6 +87,15 @@ async function saveWidgetState (boardId, viewId) {
   }
 }
 
+/**
+ * Restore widget DOM elements for the specified board and view from
+ * localStorage. Widgets are recreated using {@link createWidget} and metadata
+ * and settings are re-applied.
+ *
+ * @param {string} boardId - Board identifier.
+ * @param {string} viewId - View identifier whose widgets should be loaded.
+ * @returns {Promise<void>}
+ */
 async function loadWidgetState (boardId, viewId) {
   try {
     logger.info('loadWidgetState function called for board:', boardId, 'and view:', viewId)
@@ -131,6 +149,13 @@ async function loadWidgetState (boardId, viewId) {
   }
 }
 
+/**
+ * Store the initial board configuration defined in {@code window.asd.config}
+ * into localStorage. This is typically called on first run to seed the
+ * persistent board data.
+ *
+ * @returns {Promise<void>}
+ */
 async function loadInitialConfig () {
   try {
     const boards = window.asd.config.boards
@@ -152,6 +177,12 @@ function setBoardAndViewIds (boardId, viewId) {
   logger.log(`Set currentBoardId to: ${window.asd.currentBoardId}, currentViewId to: ${window.asd.currentViewId}`)
 }
 
+/**
+ * Persist the entire boards array to localStorage under the key `boards`.
+ *
+ * @param {Array} boards - Array of board objects to store.
+ * @returns {Promise<void>}
+ */
 export async function saveBoardState (boards) {
   try {
     localStorage.setItem('boards', JSON.stringify(boards))
@@ -161,6 +192,12 @@ export async function saveBoardState (boards) {
   }
 }
 
+/**
+ * Retrieve the array of boards from localStorage.
+ * The result is also assigned to {@code window.asd.boards} for global access.
+ *
+ * @returns {Promise<Array>} Parsed array of boards or an empty array on failure.
+ */
 export async function loadBoardState () {
   try {
     const boards = localStorage.getItem('boards')
