@@ -1,7 +1,20 @@
+/**
+ * Utility for fetching data and posting to widgets.
+ *
+ * @module fetchData
+ */
 import { Logger } from '../../../utils/Logger.js'
 
 const logger = new Logger('fetchData.js')
 
+/**
+ * Fetch JSON data from a URL and pass it to a callback.
+ *
+ * @param {string} url - Endpoint to request.
+ * @param {Function} callback - Receives the parsed JSON.
+ * @function fetchData
+ * @returns {void}
+ */
 function fetchData (url, callback) {
   logger.log('Fetching data from URL:', url)
   fetch(url, {
@@ -23,6 +36,12 @@ function fetchData (url, callback) {
     })
 }
 
+/**
+ * Retrieve the auth token for API requests.
+ *
+ * @function getAuthToken
+ * @returns {string}
+ */
 function getAuthToken () {
   return 'YOUR_API_TOKEN' // Placeholder
 }

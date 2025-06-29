@@ -1,3 +1,17 @@
+/**
+ * Miscellaneous utility helpers.
+ *
+ * @module utils
+ */
+
+/**
+ * Create a debounced version of a function.
+ *
+ * @function debounce
+ * @param {Function} func - Function to debounce.
+ * @param {number} wait - Delay in milliseconds.
+ * @returns {Function}
+ */
 function debounce (func, wait) {
   let timeout
   return function executedFunction (...args) {
@@ -10,6 +24,12 @@ function debounce (func, wait) {
   }
 }
 
+/**
+ * Generate a UUID using the browser crypto API when available.
+ *
+ * @function getUUID
+ * @returns {string}
+ */
 function getUUID () {
   if (crypto.randomUUID) {
     return crypto.randomUUID()

@@ -1,4 +1,9 @@
 /* eslint-env serviceworker */
+/**
+ * Basic service worker used to cache fetched resources.
+ *
+ * @module serviceWorker
+ */
 const CACHE_NAME = 'my-cache-v3' // Make sure this matches the cache name in the main.js file
 // self.addEventListener('fetch', (event) => {
 //   const testUrls = [

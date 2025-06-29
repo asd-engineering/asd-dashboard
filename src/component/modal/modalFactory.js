@@ -1,8 +1,24 @@
+/**
+ * Utility for constructing modal dialogs.
+ *
+ * @module modalFactory
+ */
 import emojiList from '../../ui/unicodeEmoji.js'
 import { Logger } from '../../utils/Logger.js'
 
 const logger = new Logger('modalFactory.js')
 
+/**
+ * Create and display a modal element.
+ *
+ * @param {Object} options - Modal configuration options.
+ * @param {string} options.id - Unique id for the modal.
+ * @param {Function} options.buildContent - Callback that populates the modal body.
+ * @param {Function} [options.onCloseCallback] - Called when the modal closes.
+ * @param {boolean} [options.showCloseIcon=true] - Display an "X" close icon.
+ * @function openModal
+ * @returns {void}
+ */
 export function openModal ({ id, buildContent, onCloseCallback, showCloseIcon = true }) {
   if (document.getElementById(id)) {
     logger.log(`Modal ${id} already open`)

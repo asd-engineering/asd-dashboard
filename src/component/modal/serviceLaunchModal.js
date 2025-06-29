@@ -1,3 +1,8 @@
+/**
+ * Modal used to launch a service-specific action in an iframe.
+ *
+ * @module serviceLaunchModal
+ */
 import { openModal } from './modalFactory.js'
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
@@ -5,6 +10,15 @@ import { getUUID } from '../../utils/utils.js'
 
 const logger = new Logger('serviceLaunchModal.js')
 
+/**
+ * Open a modal that loads a service URL in an iframe to perform an action.
+ * After completion the widget iframe is refreshed.
+ *
+ * @param {{url: string}} serviceObj - Service information with a URL.
+ * @param {HTMLElement} widgetWrapper - Widget element to refresh.
+ * @function showServiceModal
+ * @returns {void}
+ */
 export function showServiceModal (serviceObj, widgetWrapper) {
   openModal({
     id: `service-action-modal-${getUUID()}`,

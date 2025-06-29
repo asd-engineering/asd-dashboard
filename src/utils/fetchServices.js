@@ -1,3 +1,8 @@
+/**
+ * Fetch a list of services from various sources and store them globally.
+ *
+ * @module utils/fetchServices
+ */
 import { Logger } from './Logger.js'
 import { showNotification } from '../component/dialog/notification.js'
 
@@ -26,6 +31,12 @@ async function fetchJson (url) {
   }
 }
 
+/**
+ * Fetch the service list and update the service selector on the page.
+ *
+ * @function fetchServices
+ * @returns {Promise<Array>} Array of service objects.
+ */
 export const fetchServices = async () => {
   const params = new URLSearchParams(window.location.search)
   let services = null

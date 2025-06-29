@@ -1,3 +1,9 @@
+/**
+ * Simple browser console logger with runtime enable/disable support.
+ *
+ * @module Logger
+ * @class Logger
+ */
 export class Logger {
   constructor (fileName) {
     // Remove the .js extension if it exists
@@ -56,14 +62,33 @@ export class Logger {
     this.logMessage('info', ...args)
   }
 
+  /**
+   * Persist a comma-separated list of files to log or 'all'.
+   *
+  * @param {string} [files='all'] - Files to enable logging for.
+   * @function enableLogs
+  * @returns {void}
+  */
   static enableLogs (files = 'all') {
     localStorage.setItem('log', files)
   }
 
+  /**
+  * Disable all logging output.
+  *
+   * @function disableLogs
+  * @returns {void}
+  */
   static disableLogs () {
     localStorage.removeItem('log')
   }
 
+  /**
+  * Print the list of files currently logging to the console.
+  *
+   * @function listLoggedFiles
+  * @returns {void}
+  */
   static listLoggedFiles () {
     const logSetting = localStorage.getItem('log')
     if (logSetting === 'all') {

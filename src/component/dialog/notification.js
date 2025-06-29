@@ -1,9 +1,22 @@
+/**
+ * Simple notification dialog utilities.
+ *
+ * @module notification
+ */
 import { Logger } from '../../utils/Logger.js'
 import { getUUID } from '../../utils/utils.js'
 
 const logger = new Logger('notification.js')
 
-// Show a temporary message with optional error style
+/**
+ * Display a temporary notification message.
+ *
+ * @param {string} message - Text content of the notification.
+ * @param {number} [duration=3000] - How long to display the notification.
+ * @param {('success'|'error')} [type='success'] - Visual style of the message.
+ * @function showNotification
+ * @returns {void}
+ */
 export function showNotification (message, duration = 3000, type = 'success') {
   const dialogId = getUUID()
 

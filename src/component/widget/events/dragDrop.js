@@ -1,9 +1,22 @@
+/**
+ * Drag and drop handlers for reordering widgets.
+ *
+ * @module dragDrop
+ */
 import { updateWidgetOrders } from '../widgetManagement.js'
 import { saveWidgetState } from '../../../storage/localStorage.js'
 import { Logger } from '../../../utils/Logger.js'
 
 const logger = new Logger('dragDrop.js')
 
+/**
+ * Begin dragging a widget by setting up transfer data and overlays.
+ *
+ * @param {DragEvent} e - The dragstart event.
+ * @param {HTMLElement} draggedWidgetWrapper - The widget being dragged.
+ * @function handleDragStart
+ * @returns {void}
+ */
 function handleDragStart (e, draggedWidgetWrapper) {
   const widgetOrder = draggedWidgetWrapper.getAttribute('data-order')
   logger.log('Drag started for widget with order:', widgetOrder)
@@ -20,6 +33,13 @@ function handleDragStart (e, draggedWidgetWrapper) {
   })
 }
 
+/**
+ * Clean up after a drag operation ends.
+ *
+ * @param {DragEvent} e - The dragend event.
+ * @function handleDragEnd
+ * @returns {void}
+ */
 function handleDragEnd (e) {
   const widgetContainer = document.getElementById('widget-container')
   const widgets = Array.from(widgetContainer.children)
@@ -29,6 +49,13 @@ function handleDragEnd (e) {
   })
 }
 
+/**
+ * Insert a transparent overlay to mark a widget as a drop target.
+ *
+ * @param {HTMLElement} widgetWrapper - Widget element to overlay.
+ * @function addDragOverlay
+ * @returns {void}
+ */
 function addDragOverlay (widgetWrapper) {
   const dragOverlay = document.createElement('div')
   dragOverlay.classList.add('drag-overlay')
@@ -56,6 +83,13 @@ function addDragOverlay (widgetWrapper) {
   widgetWrapper.classList.add('has-overlay')
 }
 
+/**
+ * Remove the overlay from a widget wrapper if present.
+ *
+ * @param {HTMLElement} widgetWrapper - Widget element to clean up.
+ * @function removeDragOverlay
+ * @returns {void}
+ */
 function removeDragOverlay (widgetWrapper) {
   const dragOverlay = widgetWrapper.querySelector('.drag-overlay')
   if (dragOverlay) {
@@ -64,6 +98,14 @@ function removeDragOverlay (widgetWrapper) {
   widgetWrapper.classList.remove('has-overlay', 'highlight-drop-area')
 }
 
+/**
+ * Drop handler to rearrange widgets or reposition them on the grid.
+ *
+ * @param {DragEvent} e - The drop event.
+ * @param {?HTMLElement} targetWidgetWrapper - Widget wrapper receiving the drop or null.
+ * @function handleDrop
+ * @returns {void}
+ */
 function handleDrop (e, targetWidgetWrapper) {
   e.preventDefault()
   logger.log('Drop event on overlay for widget:', targetWidgetWrapper)
@@ -155,17 +197,39 @@ function handleDrop (e, targetWidgetWrapper) {
   draggedWidget.classList.remove('dragging')
 }
 
+/**
+ * Highlight a widget as a potential drop target.
+ *
+ * @param {DragEvent} e - The dragover event.
+ * @param {HTMLElement} widgetWrapper - The widget element hovered over.
+ * @function handleDragOver
+ * @returns {void}
+ */
 function handleDragOver (e, widgetWrapper) {
   e.preventDefault()
   logger.log('Drag over event on overlay for widget:', widgetWrapper)
   widgetWrapper.classList.add('drag-over', 'highlight-drop-area')
 }
 
+/**
+ * Remove highlighting when a dragged item leaves a widget.
+ *
+ * @param {DragEvent} e - The dragleave event.
+ * @param {HTMLElement} widgetWrapper - Widget that lost drag focus.
+ * @function handleDragLeave
+ * @returns {void}
+ */
 function handleDragLeave (e, widgetWrapper) {
   logger.log('Drag leave event on overlay for widget:', widgetWrapper)
   widgetWrapper.classList.remove('drag-over', 'highlight-drop-area')
 }
 
+/**
+ * Enable drag-and-drop events on the widget container.
+ *
+ * @function initializeDragAndDrop
+ * @returns {void}
+ */
 function initializeDragAndDrop () {
   const widgetContainer = document.getElementById('widget-container')
   widgetContainer.addEventListener('dragover', (e) => {

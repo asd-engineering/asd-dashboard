@@ -1,5 +1,16 @@
+/**
+ * Build and initialize the main dashboard menu UI.
+ *
+ * @module menu
+ */
 import emojiList from '../../ui/unicodeEmoji.js'
 
+/**
+ * Initialize service worker controls in the menu.
+ *
+ * @function initSW
+ * @returns {void}
+ */
 function initSW () {
   const swToggle = document.getElementById('sw-toggle')
   const swIcon = document.querySelector('.sw-icon')
@@ -76,6 +87,12 @@ function initSW () {
   }
 }
 
+/**
+ * Create the main dashboard menu and insert it into the page.
+ *
+ * @function initializeMainMenu
+ * @returns {void}
+ */
 export function initializeMainMenu () {
   const menu = document.createElement('menu')
   menu.id = 'controls'

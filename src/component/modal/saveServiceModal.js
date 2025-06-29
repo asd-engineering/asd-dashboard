@@ -1,6 +1,19 @@
+/**
+ * Modal prompting to save a URL as a named service.
+ *
+ * @module saveServiceModal
+ */
 import { openModal } from './modalFactory.js'
 import { load, save } from '../../storage/servicesStore.js'
 
+/**
+ * Open a modal allowing the user to name and store a service URL.
+ *
+ * @param {string} url - The service URL to save.
+ * @param {Function} onClose - Callback when the modal closes.
+ * @function openSaveServiceModal
+ * @returns {void}
+ */
 export function openSaveServiceModal (url, onClose) {
   openModal({
     id: 'save-service-modal',
