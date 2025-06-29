@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Menu actions for adding widgets and switching boards/views.
  *

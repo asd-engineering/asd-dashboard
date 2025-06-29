@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Helper functions used by widgets.
  *

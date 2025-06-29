@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Build and initialize the main dashboard menu UI.
  *

@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Modal dialog for viewing and editing `localStorage` entries.
  *

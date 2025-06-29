@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Board and view management utilities.
  *
@@ -7,8 +8,13 @@ import { saveBoardState, loadBoardState } from '../../storage/localStorage.js'
 import { addWidget } from '../widget/widgetManagement.js'
 import { Logger } from '../../utils/Logger.js'
 
+/** @typedef {import('../../types.js').Board} Board */
+/** @typedef {import('../../types.js').View} View */
+/** @typedef {import('../../types.js').Widget} Widget */
+
 const logger = new Logger('boardManagement.js')
 
+/** @type {Array<Board>} */
 export let boards = []
 
 function generateUniqueId (prefix) {
@@ -23,7 +29,7 @@ function generateUniqueId (prefix) {
  * @param {?string} [boardId=null] - Existing board identifier, if any.
  * @param {?string} [viewId=null] - Identifier for the default view.
  * @function createBoard
- * @returns {object} The created board.
+ * @returns {Board} The created board.
  */
 export function createBoard (boardName, boardId = null, viewId = null) {
   const newBoardId = boardId || generateUniqueId('board')
@@ -65,7 +71,7 @@ export function createBoard (boardName, boardId = null, viewId = null) {
  * @param {string} viewName - Display name for the view.
  * @param {?string} [viewId=null] - Optional predefined id for the view.
  * @function createView
- * @returns {object|undefined} The created view or undefined if the board is not found.
+ * @returns {View|undefined} The created view or undefined if the board is not found.
  */
 export function createView (boardId, viewName, viewId = null) {
   const board = boards.find(b => b.id === boardId)
