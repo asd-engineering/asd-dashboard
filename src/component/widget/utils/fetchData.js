@@ -12,6 +12,7 @@ const logger = new Logger('fetchData.js')
  *
  * @param {string} url - Endpoint to request.
  * @param {Function} callback - Receives the parsed JSON.
+ * @function fetchData
  * @returns {void}
  */
 function fetchData (url, callback) {
@@ -38,6 +39,7 @@ function fetchData (url, callback) {
 /**
  * Retrieve the auth token for API requests.
  *
+ * @function getAuthToken
  * @returns {string}
  */
 function getAuthToken () {

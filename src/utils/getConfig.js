@@ -93,6 +93,7 @@ async function loadFromSources () {
 /**
  * Load and cache the dashboard configuration from multiple sources.
  *
+ * @function getConfig
  * @returns {Promise<Object>} Parsed configuration object.
  */
 export async function getConfig () {

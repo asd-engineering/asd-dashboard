@@ -34,6 +34,7 @@ async function fetchJson (url) {
 /**
  * Fetch the service list and update the service selector on the page.
  *
+ * @function fetchServices
  * @returns {Promise<Array>} Array of service objects.
  */
 export const fetchServices = async () => {

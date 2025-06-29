@@ -14,6 +14,7 @@ const logger = new Logger('dragDrop.js')
  *
  * @param {DragEvent} e - The dragstart event.
  * @param {HTMLElement} draggedWidgetWrapper - The widget being dragged.
+ * @function handleDragStart
  * @returns {void}
  */
 function handleDragStart (e, draggedWidgetWrapper) {
@@ -36,6 +37,7 @@ function handleDragStart (e, draggedWidgetWrapper) {
  * Clean up after a drag operation ends.
  *
  * @param {DragEvent} e - The dragend event.
+ * @function handleDragEnd
  * @returns {void}
  */
 function handleDragEnd (e) {
@@ -51,6 +53,7 @@ function handleDragEnd (e) {
  * Insert a transparent overlay to mark a widget as a drop target.
  *
  * @param {HTMLElement} widgetWrapper - Widget element to overlay.
+ * @function addDragOverlay
  * @returns {void}
  */
 function addDragOverlay (widgetWrapper) {
@@ -84,6 +87,7 @@ function addDragOverlay (widgetWrapper) {
  * Remove the overlay from a widget wrapper if present.
  *
  * @param {HTMLElement} widgetWrapper - Widget element to clean up.
+ * @function removeDragOverlay
  * @returns {void}
  */
 function removeDragOverlay (widgetWrapper) {
@@ -99,6 +103,7 @@ function removeDragOverlay (widgetWrapper) {
  *
  * @param {DragEvent} e - The drop event.
  * @param {?HTMLElement} targetWidgetWrapper - Widget wrapper receiving the drop or null.
+ * @function handleDrop
  * @returns {void}
  */
 function handleDrop (e, targetWidgetWrapper) {
@@ -197,6 +202,7 @@ function handleDrop (e, targetWidgetWrapper) {
  *
  * @param {DragEvent} e - The dragover event.
  * @param {HTMLElement} widgetWrapper - The widget element hovered over.
+ * @function handleDragOver
  * @returns {void}
  */
 function handleDragOver (e, widgetWrapper) {
@@ -210,6 +216,7 @@ function handleDragOver (e, widgetWrapper) {
  *
  * @param {DragEvent} e - The dragleave event.
  * @param {HTMLElement} widgetWrapper - Widget that lost drag focus.
+ * @function handleDragLeave
  * @returns {void}
  */
 function handleDragLeave (e, widgetWrapper) {
@@ -220,6 +227,7 @@ function handleDragLeave (e, widgetWrapper) {
 /**
  * Enable drag-and-drop events on the widget container.
  *
+ * @function initializeDragAndDrop
  * @returns {void}
  */
 function initializeDragAndDrop () {

@@ -16,6 +16,7 @@ const logger = new Logger('modalFactory.js')
  * @param {Function} options.buildContent - Callback that populates the modal body.
  * @param {Function} [options.onCloseCallback] - Called when the modal closes.
  * @param {boolean} [options.showCloseIcon=true] - Display an "X" close icon.
+ * @function openModal
  * @returns {void}
  */
 export function openModal ({ id, buildContent, onCloseCallback, showCloseIcon = true }) {

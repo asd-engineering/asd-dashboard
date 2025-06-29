@@ -52,6 +52,7 @@ function serializeWidgetState (widget) {
  *
  * @param {string} boardId - Board identifier. Defaults to the current board element id.
  * @param {string} viewId - View identifier. Defaults to the current view element id.
+ * @function saveWidgetState
  * @returns {Promise<void>}
  */
 async function saveWidgetState (boardId, viewId) {
@@ -99,6 +100,7 @@ async function saveWidgetState (boardId, viewId) {
  *
  * @param {string} boardId - Board identifier.
  * @param {string} viewId - View identifier whose widgets should be loaded.
+ * @function loadWidgetState
  * @returns {Promise<void>}
  */
 async function loadWidgetState (boardId, viewId) {
@@ -159,6 +161,7 @@ async function loadWidgetState (boardId, viewId) {
  * into localStorage. This is typically called on first run to seed the
  * persistent board data.
  *
+ * @function loadInitialConfig
  * @returns {Promise<void>}
  */
 async function loadInitialConfig () {
@@ -185,6 +188,7 @@ function setBoardAndViewIds (boardId, viewId) {
 /**
  * Persist the entire boards array to localStorage under the key `boards`.
  *
+ * @function saveBoardState
  * @param {Array} boards - Array of board objects to store.
  * @returns {Promise<void>}
  */
@@ -201,6 +205,7 @@ export async function saveBoardState (boards) {
  * Retrieve the array of boards from localStorage.
  * The result is also assigned to {@code window.asd.boards} for global access.
  *
+ * @function loadBoardState
  * @returns {Promise<Array>} Parsed array of boards or an empty array on failure.
  */
 export async function loadBoardState () {

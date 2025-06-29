@@ -14,6 +14,7 @@ const logger = new Logger('notification.js')
  * @param {string} message - Text content of the notification.
  * @param {number} [duration=3000] - How long to display the notification.
  * @param {('success'|'error')} [type='success'] - Visual style of the message.
+ * @function showNotification
  * @returns {void}
  */
 export function showNotification (message, duration = 3000, type = 'success') {

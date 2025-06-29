@@ -13,6 +13,7 @@ const logger = new Logger('boardDropdown.js')
 /**
  * Attach dropdown actions for board management.
  *
+ * @function initializeBoardDropdown
  * @returns {void}
  */
 export function initializeBoardDropdown () {
@@ -29,6 +30,7 @@ export function initializeBoardDropdown () {
 /**
  * Prompt the user for a board name and create it.
  *
+ * @function handleCreateBoard
  * @returns {Promise<void>}
  */
 async function handleCreateBoard () {
@@ -58,6 +60,7 @@ async function handleCreateBoard () {
 /**
  * Prompt for a new name and rename the selected board.
  *
+ * @function handleRenameBoard
  * @returns {void}
  */
 function handleRenameBoard () {
@@ -77,6 +80,7 @@ function handleRenameBoard () {
 /**
  * Delete the currently selected board after confirmation.
  *
+ * @function handleDeleteBoard
  * @returns {void}
  */
 function handleDeleteBoard () {
@@ -98,6 +102,7 @@ function handleDeleteBoard () {
 /**
  * Get the board id currently selected in the dropdown.
  *
+ * @function getSelectedBoardId
  * @returns {string}
  */
 function getSelectedBoardId () {

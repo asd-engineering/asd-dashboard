@@ -16,6 +16,7 @@ const logger = new Logger('serviceLaunchModal.js')
  *
  * @param {{url: string}} serviceObj - Service information with a URL.
  * @param {HTMLElement} widgetWrapper - Widget element to refresh.
+ * @function showServiceModal
  * @returns {void}
  */
 export function showServiceModal (serviceObj, widgetWrapper) {

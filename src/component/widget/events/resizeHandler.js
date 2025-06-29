@@ -15,6 +15,7 @@ const logger = new Logger('resizeHandler.js')
 /**
  * Append resize handles to all widgets and register listeners.
  *
+ * @function initializeResizeHandles
  * @returns {void}
  */
 export function initializeResizeHandles () {
@@ -54,6 +55,7 @@ function createResizeOverlay () {
  *
  * @param {MouseEvent} event - Mousedown event that initiated resize.
  * @param {HTMLElement} widget - The widget element being resized.
+ * @function handleResizeStart
  * @returns {Promise<void>}
  */
 async function handleResizeStart (event, widget) {

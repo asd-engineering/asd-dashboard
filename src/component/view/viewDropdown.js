@@ -13,6 +13,7 @@ const logger = new Logger('viewDropdown.js')
 /**
  * Set up the dropdown used for view management actions.
  *
+ * @function initializeViewDropdown
  * @returns {void}
  */
 export function initializeViewDropdown () {
@@ -30,6 +31,7 @@ export function initializeViewDropdown () {
 /**
  * Create a new view on the active board.
  *
+ * @function handleCreateView
  * @returns {Promise<void>}
  */
 async function handleCreateView () {
@@ -58,6 +60,7 @@ async function handleCreateView () {
 /**
  * Rename the currently selected view.
  *
+ * @function handleRenameView
  * @returns {void}
  */
 function handleRenameView () {
@@ -77,6 +80,7 @@ function handleRenameView () {
 /**
  * Delete the active view after confirmation.
  *
+ * @function handleDeleteView
  * @returns {void}
  */
 function handleDeleteView () {
@@ -96,6 +100,7 @@ function handleDeleteView () {
 /**
  * Remove all widgets from the current view.
  *
+ * @function handleResetView
  * @returns {void}
  */
 function handleResetView () {

@@ -11,6 +11,7 @@ import { load, save } from '../../storage/servicesStore.js'
  *
  * @param {string} url - The service URL to save.
  * @param {Function} onClose - Callback when the modal closes.
+ * @function openSaveServiceModal
  * @returns {void}
  */
 export function openSaveServiceModal (url, onClose) {

@@ -48,6 +48,7 @@ function saveLocalStorageData (updatedData) {
 /**
  * Display a modal to inspect and modify `localStorage` keys.
  *
+ * @function openLocalStorageModal
  * @returns {void}
  */
 export function openLocalStorageModal () {

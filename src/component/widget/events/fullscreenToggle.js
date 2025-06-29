@@ -11,6 +11,7 @@ const logger = new Logger('fullscreenToggle.js')
  * Toggle the given widget element between fullscreen and normal size.
  *
  * @param {HTMLElement} widget - The widget wrapper to modify.
+ * @function toggleFullScreen
  * @returns {void}
  */
 function toggleFullScreen (widget) {
@@ -31,6 +32,7 @@ function toggleFullScreen (widget) {
  * Exit fullscreen when the user presses the Escape key.
  *
  * @param {KeyboardEvent} event - Keydown event.
+ * @function handleEscapeKey
  * @returns {void}
  */
 function handleEscapeKey (event) {
