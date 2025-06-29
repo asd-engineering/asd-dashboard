@@ -116,7 +116,7 @@ tests/                      # Playwright AI-generated tests
 
 * Use `Justfile`:
 
-  * `just start`, `just test`, `just format`, `just extract-symbols`
+  * `just start`, `just test`, `just test-grep <tag>`, `just format`, `just extract-symbols`
 * Lint and autoformat:
 
   ```bash
@@ -130,6 +130,100 @@ tests/                      # Playwright AI-generated tests
 
 * Generate or update Playwright `.spec.ts` tests alongside every feature.
 * **All tests must pass.**
+* After running `just test`, AI must read the generated `playwright-report.json` to extract test outcomes and failure details for in-agent validation.
+* Run tests with `just test` or use `just test-grep <tag>` for targeted runs.
+
+## Playwright Report Helpers  (Justfile)
+
+After running `just test`, Codex (or any automation) should build a compact
+index of the huge Playwright report:
+
+```bash
+just index-report            # → playwright-report-index.json.gz
+````
+
+This gzip-compressed file holds one JSON row per test (per browser), making
+queries fast and avoiding the HTML viewer.
+
+### 1  List Results by Name (regex)
+
+```bash
+just list '<title-regex>'
+```
+
+* **Filters only on `.fullTitle`** (case-insensitive regex).
+* Browser filtering is **not** supported (use title regexes only).
+* Passing no regex lists every test.
+
+Examples:
+
+| Command                          | Output                                                                                       |
+| -------------------------------- | -------------------------------------------------------------------------------------------- |
+| `just list`                      | entire table                                                                                 |
+| `just list 'drag.*drop'`         | all tests whose title contains “drag … drop” (including “Dropdown” unless you tighten regex) |
+| `just list '\bdrag\b.*\bdrop\b'` | **one** row for the “drag and drop” test, avoids “Dropdown”                                  |
+
+> **Regex tip:** use `\bword\b` boundaries or `drag[^A-Za-z]*drop` to avoid
+> matching titles like “Dropdown”.
+
+### 2  List Failures Only
+
+```bash
+just failures '<title-regex>'
+```
+
+Same title filter, but pre-filters rows where `status != "passed"`.
+
+Example:
+
+```bash
+just failures
+# failed  chromium  addManageWidgets.spec.ts › Widgets › should be able to add 4 services and drag and drop 🤏
+```
+
+### 3  View Logs for One Test
+
+```bash
+just logs '<title-regex>' [browser-regex]
+```
+
+* The helper script still accepts an optional *browser regex* for convenience,
+  but the main index queries remain title-based.
+* It decodes and pretty-prints `console-logs`, `network-logs`, and `app-logs`
+  attachments.
+
+Example:
+
+```bash
+just logs '\bdrag\b.*\bdrop\b'
+```
+
+Output (trimmed):
+
+```
+=== addManageWidgets.spec.ts › Widgets › should be able to add 4 services and drag and drop 🤏 (chromium) ===
+
+--- network-logs ---
+[ { url: 'http://localhost:8000/', status: 200 }, … ]
+
+--- console-logs ---
+[ { type: 'log', text: 'All caches cleared' }, … ]
+```
+
+---
+
+### Quick Reference
+
+| Command                         | Purpose                                 |
+| ------------------------------- | --------------------------------------- |
+| `just index-report`             | Build compressed index                  |
+| `just list '<regex>'`           | List tests filtered by title            |
+| `just failures '<regex>'`       | List only failing tests                 |
+| `just logs '<regex>' [browser]` | Decode logs for the first matching test |
+
+**Important:** Title filtering is regex-based and case-insensitive; browser
+filtering is *not* built into `list`/`failures`. Use precise regex boundaries
+to avoid unintended matches.
 
 ---
 
@@ -150,4 +244,3 @@ tests/                      # Playwright AI-generated tests
 ---
 
 By following this strategy, AI agents maintain full symbolic awareness, type safety, and scalable architecture — without requiring TypeScript or compilation.
-

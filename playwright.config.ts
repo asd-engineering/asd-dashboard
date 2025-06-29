@@ -15,7 +15,9 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: os.cpus().length -1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: [
+    ['json', { outputFile: 'playwright-report.json' }]
+  ],
   // There is no reason to wait so long in a PWA with hardly any content
   // Faster feedback and less spend minutes in Githun Actions
   timeout: 10000, // Timeout for each test (in milliseconds) default is 30000

@@ -9,4 +9,7 @@ node_modules
 /playwright/.cache/
 *.webm
 *.log
+*.txt
 local/
+playwright-report.json
+playwright-report-index.json.gz

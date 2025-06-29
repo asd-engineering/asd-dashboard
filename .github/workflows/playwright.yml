@@ -2,28 +2,51 @@ name: Playwright Tests
 
 on:
   push:
-    branches: [ main, develop, feature/*, gpt-pilot/* ]
+    branches: [main, develop, feature/**]           # double-star for nested branches
   pull_request:
-    branches: [ main, develop, feature/*, gpt-pilot/* ]
+    branches: [main, develop, feature/**]
 
 jobs:
   test:
-    timeout-minutes: 60
+    timeout-minutes: 10
     runs-on: ubuntu-latest
+
+    concurrency:                                    # <-- de-dented: must align with other job keys
+      group: playwright-${{ github.head_ref || github.ref }}
+      cancel-in-progress: true
+
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+
     - uses: actions/setup-node@v4
       with:
-        node-version: lts/*
+        node-version: 'lts/*'
+        cache: 'npm'
 
-    - name: Install Playwright Browsers
-      run: npm i && npx playwright install-deps && npx playwright install 
+    - name: Restore Playwright browsers cache
+      id: playwright-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-playwright-
+
+    - name: Install deps & browsers
+      run: |
+        npm ci
+        npx playwright install --with-deps
 
     - name: Run Playwright tests
-      run: npm run test
+      env:
+        CI: 'true'
+      run: npm run test:report
 
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
+    - name: Upload Playwright report
+      if: always()
+      uses: actions/upload-artifact@v4
       with:
         name: playwright-report
         path: playwright-report/

@@ -3,8 +3,99 @@
     "name": "Logger",
     "kind": "class",
     "file": "src/utils/Logger.js",
-    "description": "Simple browser console logger with runtime enable/disable support.",
+    "description": "Simple browser console logger with runtime enable/disable support. During Playwright test runs (via `navigator.webdriver`), structured logs are also stored in `window._appLogs` for later harvesting.",
     "params": [],
+    "returns": ""
+  },
+  {
+    "name": "checkLogStatus",
+    "kind": "function",
+    "file": "src/utils/Logger.js",
+    "description": "Check whether logging is enabled for the current file. Uses localStorage key `log` which may contain `'all'` or comma-separated filenames.",
+    "params": [],
+    "returns": "boolean"
+  },
+  {
+    "name": "getCallingFunctionName",
+    "kind": "function",
+    "file": "src/utils/Logger.js",
+    "description": "Extracts the function name of the caller (if available) from the stack trace.",
+    "params": [],
+    "returns": "string"
+  },
+  {
+    "name": "logMessage",
+    "kind": "function",
+    "file": "src/utils/Logger.js",
+    "description": "Internal log writer, applies prefixes and optionally persists structured logs into window._appLogs during Playwright test runs.",
+    "params": [
+      {
+        "name": "level",
+        "type": "string",
+        "desc": "- Console method to use ('log', 'warn', 'error', etc)"
+      },
+      {
+        "name": "args",
+        "type": "...any",
+        "desc": "- Arguments to log"
+      }
+    ],
+    "returns": ""
+  },
+  {
+    "name": "log",
+    "kind": "function",
+    "file": "src/utils/Logger.js",
+    "description": "Output standard log.",
+    "params": [
+      {
+        "name": "args",
+        "type": "...any",
+        "desc": ""
+      }
+    ],
+    "returns": ""
+  },
+  {
+    "name": "warn",
+    "kind": "function",
+    "file": "src/utils/Logger.js",
+    "description": "Output warning.",
+    "params": [
+      {
+        "name": "args",
+        "type": "...any",
+        "desc": ""
+      }
+    ],
+    "returns": ""
+  },
+  {
+    "name": "error",
+    "kind": "function",
+    "file": "src/utils/Logger.js",
+    "description": "Output error.",
+    "params": [
+      {
+        "name": "args",
+        "type": "...any",
+        "desc": ""
+      }
+    ],
+    "returns": ""
+  },
+  {
+    "name": "info",
+    "kind": "function",
+    "file": "src/utils/Logger.js",
+    "description": "Output info.",
+    "params": [
+      {
+        "name": "args",
+        "type": "...any",
+        "desc": ""
+      }
+    ],
     "returns": ""
   },
   {
@@ -574,6 +665,25 @@
     "returns": "void"
   },
   {
+    "name": "initializeDropdown",
+    "kind": "function",
+    "file": "src/component/utils/dropDownUtils.js",
+    "description": "Attach click handlers to a dropdown based on data-action attributes.",
+    "params": [
+      {
+        "name": "dropdownElement",
+        "type": "HTMLElement",
+        "desc": "- The dropdown container element."
+      },
+      {
+        "name": "handlers",
+        "type": "Object<string,Function>",
+        "desc": "- Map of action names to callbacks."
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "initializeViewDropdown",
     "kind": "function",
     "file": "src/component/view/viewDropdown.js",
@@ -611,25 +721,6 @@
     "file": "src/component/view/viewDropdown.js",
     "description": "Remove all widgets from the current view.",
     "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "initializeDropdown",
-    "kind": "function",
-    "file": "src/component/utils/dropDownUtils.js",
-    "description": "Attach click handlers to a dropdown based on data-action attributes.",
-    "params": [
-      {
-        "name": "dropdownElement",
-        "type": "HTMLElement",
-        "desc": "- The dropdown container element."
-      },
-      {
-        "name": "handlers",
-        "type": "Object<string,Function>",
-        "desc": "- Map of action names to callbacks."
-      }
-    ],
     "returns": "void"
   },
   {
