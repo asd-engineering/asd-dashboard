@@ -34,6 +34,7 @@ async function fetchJson (url) {
 /**
  * Retrieve the list of services from query params, localStorage or a default file.
  *
+ * @function fetchServices
  * @returns {Promise<Array>} Resolves with an array of service definitions.
  */
 export async function fetchServices () {

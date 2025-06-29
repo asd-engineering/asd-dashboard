@@ -7,6 +7,7 @@
 /**
  * Get the id of the currently active board element.
  *
+ * @function getCurrentBoardId
  * @returns {string}
  */
 export function getCurrentBoardId () {
@@ -16,6 +17,7 @@ export function getCurrentBoardId () {
 /**
  * Get the id of the currently active view element.
  *
+ * @function getCurrentViewId
  * @returns {string}
  */
 export function getCurrentViewId () {

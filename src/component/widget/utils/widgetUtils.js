@@ -12,6 +12,7 @@ const logger = new Logger('widgetUtils.js')
  * Determine which service definition matches the provided URL.
  *
  * @param {string} url - Widget URL.
+ * @function getServiceFromUrl
  * @returns {Promise<string>} Name of the service or 'defaultService'.
  */
 async function getServiceFromUrl (url) {

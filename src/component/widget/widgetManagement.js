@@ -27,6 +27,7 @@ const logger = new Logger('widgetManagement.js')
  * @param {number} [gridColumnSpan=1] - Number of grid columns to span.
  * @param {number} [gridRowSpan=1] - Number of grid rows to span.
  * @param {?string} [dataid=null] - Optional persistent widget identifier.
+ * @function createWidget
  * @returns {Promise<HTMLDivElement>} Wrapper element containing the widget.
  */
 async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, dataid = null) {
@@ -197,6 +198,7 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
  * @param {?string} [boardId] - Board id; defaults to the active board.
  * @param {?string} [viewId] - View id; defaults to the active view.
  * @param {?string} [dataid=null] - Persistent widget identifier.
+ * @function addWidget
  * @returns {Promise<void>} Resolves when the widget is added.
  */
 async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, viewId, dataid = null) {
@@ -243,6 +245,7 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
  * Persist the resulting widget layout using {@link saveWidgetState}.
  *
  * @param {HTMLElement} widgetElement - Wrapper element to remove.
+ * @function removeWidget
  * @returns {void}
  */
 function removeWidget (widgetElement) {
@@ -280,6 +283,7 @@ async function configureWidget (iframeElement) {
  * Recompute and store the ordering of widgets in the container.
  * Saves the updated arrangement via {@link saveWidgetState}.
  *
+ * @function updateWidgetOrders
  * @returns {void}
  */
 function updateWidgetOrders () {

@@ -23,6 +23,7 @@ let uiInitialized = false // Guard variable
 /**
  * Set up event handlers for the dashboard menu and populate service options.
  *
+ * @function initializeDashboardMenu
  * @returns {void}
  */
 function initializeDashboardMenu () {
@@ -90,6 +91,7 @@ function initializeDashboardMenu () {
 /**
  * Populate the service drop-down with saved services.
  *
+ * @function populateServiceDropdown
  * @returns {void}
  */
 function populateServiceDropdown () {

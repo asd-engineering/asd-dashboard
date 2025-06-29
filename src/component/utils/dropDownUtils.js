@@ -12,6 +12,7 @@ const logger = new Logger('dropDownUtils.js')
  *
  * @param {HTMLElement} dropdownElement - The dropdown container element.
  * @param {Object<string,Function>} handlers - Map of action names to callbacks.
+ * @function initializeDropdown
  * @returns {void}
  */
 export function initializeDropdown (dropdownElement, handlers) {

@@ -22,6 +22,7 @@ function generateUniqueId (prefix) {
  * @param {string} boardName - Display name for the board.
  * @param {?string} [boardId=null] - Existing board identifier, if any.
  * @param {?string} [viewId=null] - Identifier for the default view.
+ * @function createBoard
  * @returns {object} The created board.
  */
 export function createBoard (boardName, boardId = null, viewId = null) {
@@ -63,6 +64,7 @@ export function createBoard (boardName, boardId = null, viewId = null) {
  * @param {string} boardId - Identifier of the board to modify.
  * @param {string} viewName - Display name for the view.
  * @param {?string} [viewId=null] - Optional predefined id for the view.
+ * @function createView
  * @returns {object|undefined} The created view or undefined if the board is not found.
  */
 export function createView (boardId, viewName, viewId = null) {
@@ -108,6 +110,7 @@ function clearWidgetContainer () {
  *
  * @param {string} boardId - Identifier of the board containing the view.
  * @param {string} viewId - Identifier of the view to activate.
+ * @function switchView
  * @returns {Promise<void>} Resolves when widgets are loaded.
  */
 export async function switchView (boardId, viewId) {
@@ -145,6 +148,7 @@ export async function switchView (boardId, viewId) {
  * Reads the last used view from localStorage to preselect it.
  *
  * @param {string} boardId - Identifier of the board whose views will be shown.
+ * @function updateViewSelector
  * @returns {void}
  */
 export function updateViewSelector (boardId) {
@@ -186,6 +190,7 @@ export function updateViewSelector (boardId) {
  *
  * @param {string} boardId - Identifier of the board to activate.
  * @param {?string} [viewId=null] - Specific view id to load, defaults to first view.
+ * @function switchBoard
  * @returns {Promise<void>} Resolves when the view is switched.
  */
 export async function switchBoard (boardId, viewId = null) {
@@ -211,6 +216,7 @@ export async function switchBoard (boardId, viewId = null) {
  * Load boards from localStorage and populate the selectors.
  * Creates a default board when none exist and returns the first board/view.
  *
+ * @function initializeBoards
  * @returns {Promise<{boardId: string, viewId: string}|undefined>} Resolves with the first board and view identifiers.
  */
 export function initializeBoards () {
@@ -246,6 +252,7 @@ export function initializeBoards () {
  * Also selects the board stored in localStorage if available.
  *
  * @param {{id: string, name: string}} board - Board information to display.
+ * @function addBoardToUI
  * @returns {void}
  */
 export function addBoardToUI (board) {
@@ -267,6 +274,7 @@ export function addBoardToUI (board) {
  *
  * @param {string} boardId - Identifier of the board to rename.
  * @param {string} newBoardName - New name displayed to the user.
+ * @function renameBoard
  * @returns {void}
  */
 export function renameBoard (boardId, newBoardName) {
@@ -286,6 +294,7 @@ export function renameBoard (boardId, newBoardName) {
  * The remaining boards are saved back to localStorage.
  *
  * @param {string} boardId - Identifier of the board to delete.
+ * @function deleteBoard
  * @returns {void}
  */
 export function deleteBoard (boardId) {
@@ -314,6 +323,7 @@ export function deleteBoard (boardId) {
  * @param {string} boardId - Board containing the view.
  * @param {string} viewId - Identifier of the view to rename.
  * @param {string} newViewName - The new display name.
+ * @function renameView
  * @returns {void}
  */
 export function renameView (boardId, viewId, newViewName) {
@@ -338,6 +348,7 @@ export function renameView (boardId, viewId, newViewName) {
  *
  * @param {string} boardId - Identifier of the board containing the view.
  * @param {string} viewId - Identifier of the view to remove.
+ * @function deleteView
  * @returns {void}
  */
 export function deleteView (boardId, viewId) {
@@ -369,6 +380,7 @@ export function deleteView (boardId, viewId) {
  *
  * @param {string} boardId - Identifier of the board containing the view.
  * @param {string} viewId - Identifier of the view to reset.
+ * @function resetView
  * @returns {void}
  */
 export function resetView (boardId, viewId) {

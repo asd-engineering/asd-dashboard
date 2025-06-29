@@ -28,6 +28,7 @@ const logger = new Logger('configModal.js')
 /**
  * Open a modal dialog allowing the user to edit and save configuration JSON.
  *
+ * @function openConfigModal
  * @returns {void}
  */
 export function openConfigModal () {

@@ -7,6 +7,7 @@
 /**
  * Return the base URL combined with the first path segment.
  *
+ * @function getCurrentUrl
  * @returns {string}
  */
 function getCurrentUrl () {

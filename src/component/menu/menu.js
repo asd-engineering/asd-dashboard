@@ -8,6 +8,7 @@ import emojiList from '../../ui/unicodeEmoji.js'
 /**
  * Initialize service worker controls in the menu.
  *
+ * @function initSW
  * @returns {void}
  */
 function initSW () {
@@ -89,6 +90,7 @@ function initSW () {
 /**
  * Create the main dashboard menu and insert it into the page.
  *
+ * @function initializeMainMenu
  * @returns {void}
  */
 export function initializeMainMenu () {
