@@ -1,3 +1,8 @@
+/**
+ * Modal dialog for viewing and editing `localStorage` entries.
+ *
+ * @module localStorageModal
+ */
 import { openModal } from './modalFactory.js'
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
@@ -40,6 +45,11 @@ function saveLocalStorageData (updatedData) {
   }
 }
 
+/**
+ * Display a modal to inspect and modify `localStorage` keys.
+ *
+ * @returns {void}
+ */
 export function openLocalStorageModal () {
   openModal({
     id: 'localStorage-modal',

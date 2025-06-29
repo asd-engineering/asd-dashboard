@@ -1,3 +1,8 @@
+/**
+ * Widget creation and management functions.
+ *
+ * @module widgetManagement
+ */
 import { saveWidgetState } from '../../storage/localStorage.js'
 import { fetchData } from './utils/fetchData.js'
 import { showResizeMenu, hideResizeMenu, showResizeMenuBlock, hideResizeMenuBlock } from './menu/resizeMenu.js'
@@ -14,6 +19,16 @@ import { showServiceModal } from '../modal/serviceLaunchModal.js'
 
 const logger = new Logger('widgetManagement.js')
 
+/**
+ * Build the DOM structure for a widget iframe and its controls.
+ *
+ * @param {string} service - Service identifier derived from the URL.
+ * @param {string} url - Iframe source URL.
+ * @param {number} [gridColumnSpan=1] - Number of grid columns to span.
+ * @param {number} [gridRowSpan=1] - Number of grid rows to span.
+ * @param {?string} [dataid=null] - Optional persistent widget identifier.
+ * @returns {Promise<HTMLDivElement>} Wrapper element containing the widget.
+ */
 async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, dataid = null) {
   logger.log('Creating widget with URL:', url)
   const config = await getConfig()
@@ -172,6 +187,18 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
   return widgetWrapper
 }
 
+/**
+ * Insert a widget into the current view and persist the layout.
+ *
+ * @param {string} url - URL of the service to embed.
+ * @param {number} [columns=1] - Grid columns spanned by the widget.
+ * @param {number} [rows=1] - Grid rows spanned by the widget.
+ * @param {string} [type='iframe'] - Widget type, usually 'iframe'.
+ * @param {?string} [boardId] - Board id; defaults to the active board.
+ * @param {?string} [viewId] - View id; defaults to the active view.
+ * @param {?string} [dataid=null] - Persistent widget identifier.
+ * @returns {Promise<void>} Resolves when the widget is added.
+ */
 async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, viewId, dataid = null) {
   logger.log('Adding widget with URL:', url)
 
@@ -211,6 +238,13 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
   initializeResizeHandles()
 }
 
+/**
+ * Remove a widget from the DOM and update ordering information.
+ * Persist the resulting widget layout using {@link saveWidgetState}.
+ *
+ * @param {HTMLElement} widgetElement - Wrapper element to remove.
+ * @returns {void}
+ */
 function removeWidget (widgetElement) {
   const dataid = widgetElement.dataset.dataid
   widgetElement.remove()
@@ -242,6 +276,12 @@ async function configureWidget (iframeElement) {
   }
 }
 
+/**
+ * Recompute and store the ordering of widgets in the container.
+ * Saves the updated arrangement via {@link saveWidgetState}.
+ *
+ * @returns {void}
+ */
 function updateWidgetOrders () {
   const widgetContainer = document.getElementById('widget-container')
   const widgets = Array.from(widgetContainer.children)

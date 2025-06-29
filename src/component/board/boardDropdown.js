@@ -1,3 +1,8 @@
+/**
+ * UI handlers for the board actions dropdown.
+ *
+ * @module boardDropdown
+ */
 import { saveBoardState } from '../../storage/localStorage.js'
 import { createBoard, renameBoard, deleteBoard, updateViewSelector, addBoardToUI, boards, switchBoard, switchView } from './boardManagement.js'
 import { initializeDropdown } from '../utils/dropDownUtils.js'
@@ -5,6 +10,11 @@ import { Logger } from '../../utils/Logger.js'
 
 const logger = new Logger('boardDropdown.js')
 
+/**
+ * Attach dropdown actions for board management.
+ *
+ * @returns {void}
+ */
 export function initializeBoardDropdown () {
   const boardDropdown = document.getElementById('board-dropdown')
   logger.log('Board dropdown initialized:', boardDropdown)
@@ -16,6 +26,11 @@ export function initializeBoardDropdown () {
   })
 }
 
+/**
+ * Prompt the user for a board name and create it.
+ *
+ * @returns {Promise<void>}
+ */
 async function handleCreateBoard () {
   const boardName = prompt('Enter new board name:')
   if (boardName) {
@@ -40,6 +55,11 @@ async function handleCreateBoard () {
   }
 }
 
+/**
+ * Prompt for a new name and rename the selected board.
+ *
+ * @returns {void}
+ */
 function handleRenameBoard () {
   const boardId = getSelectedBoardId()
   const newBoardName = prompt('Enter new board name:')
@@ -54,6 +74,11 @@ function handleRenameBoard () {
   }
 }
 
+/**
+ * Delete the currently selected board after confirmation.
+ *
+ * @returns {void}
+ */
 function handleDeleteBoard () {
   const boardId = getSelectedBoardId()
   if (confirm('Are you sure you want to delete this board?')) {
@@ -70,6 +95,11 @@ function handleDeleteBoard () {
   }
 }
 
+/**
+ * Get the board id currently selected in the dropdown.
+ *
+ * @returns {string}
+ */
 function getSelectedBoardId () {
   const boardSelector = document.getElementById('board-selector')
   return boardSelector.value

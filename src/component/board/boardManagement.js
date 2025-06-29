@@ -1,3 +1,8 @@
+/**
+ * Board and view management utilities.
+ *
+ * @module boardManagement
+ */
 import { saveBoardState, loadBoardState } from '../../storage/localStorage.js'
 import { addWidget } from '../widget/widgetManagement.js'
 import { Logger } from '../../utils/Logger.js'
@@ -10,6 +15,15 @@ function generateUniqueId (prefix) {
   return `${prefix}-${Date.now()}`
 }
 
+/**
+ * Create a board with a default view.
+ * Updates DOM selectors and persists the state in localStorage.
+ *
+ * @param {string} boardName - Display name for the board.
+ * @param {?string} [boardId=null] - Existing board identifier, if any.
+ * @param {?string} [viewId=null] - Identifier for the default view.
+ * @returns {object} The created board.
+ */
 export function createBoard (boardName, boardId = null, viewId = null) {
   const newBoardId = boardId || generateUniqueId('board')
   const newBoard = {
@@ -42,6 +56,15 @@ export function createBoard (boardName, boardId = null, viewId = null) {
   return newBoard
 }
 
+/**
+ * Add a new view to an existing board and make it active.
+ * The board state is persisted in localStorage and DOM selectors are updated.
+ *
+ * @param {string} boardId - Identifier of the board to modify.
+ * @param {string} viewName - Display name for the view.
+ * @param {?string} [viewId=null] - Optional predefined id for the view.
+ * @returns {object|undefined} The created view or undefined if the board is not found.
+ */
 export function createView (boardId, viewName, viewId = null) {
   const board = boards.find(b => b.id === boardId)
   if (board) {
@@ -79,6 +102,14 @@ function clearWidgetContainer () {
   }
 }
 
+/**
+ * Switch the currently active view within a board.
+ * Clears and repopulates the widget container and updates localStorage.
+ *
+ * @param {string} boardId - Identifier of the board containing the view.
+ * @param {string} viewId - Identifier of the view to activate.
+ * @returns {Promise<void>} Resolves when widgets are loaded.
+ */
 export async function switchView (boardId, viewId) {
   const board = boards.find(b => b.id === boardId)
   if (board) {
@@ -109,6 +140,13 @@ export async function switchView (boardId, viewId) {
   }
 }
 
+/**
+ * Populate the view selector dropdown for a given board.
+ * Reads the last used view from localStorage to preselect it.
+ *
+ * @param {string} boardId - Identifier of the board whose views will be shown.
+ * @returns {void}
+ */
 export function updateViewSelector (boardId) {
   const viewSelector = document.getElementById('view-selector')
   if (!viewSelector) {
@@ -142,6 +180,14 @@ export function updateViewSelector (boardId) {
   }
 }
 
+/**
+ * Switch the current board and optionally a specific view.
+ * Updates DOM identifiers and remembers the selection in localStorage.
+ *
+ * @param {string} boardId - Identifier of the board to activate.
+ * @param {?string} [viewId=null] - Specific view id to load, defaults to first view.
+ * @returns {Promise<void>} Resolves when the view is switched.
+ */
 export async function switchBoard (boardId, viewId = null) {
   logger.log(`Attempting to switch to board: ${boardId}`)
   const board = boards.find(b => b.id === boardId)
@@ -161,6 +207,12 @@ export async function switchBoard (boardId, viewId = null) {
   }
 }
 
+/**
+ * Load boards from localStorage and populate the selectors.
+ * Creates a default board when none exist and returns the first board/view.
+ *
+ * @returns {Promise<{boardId: string, viewId: string}|undefined>} Resolves with the first board and view identifiers.
+ */
 export function initializeBoards () {
   return loadBoardState().then(loadedBoards => {
     boards = loadedBoards || []
@@ -189,6 +241,13 @@ export function initializeBoards () {
   })
 }
 
+/**
+ * Insert a board option into the board selector element.
+ * Also selects the board stored in localStorage if available.
+ *
+ * @param {{id: string, name: string}} board - Board information to display.
+ * @returns {void}
+ */
 export function addBoardToUI (board) {
   const boardSelector = document.getElementById('board-selector')
   const option = document.createElement('option')
@@ -203,6 +262,13 @@ export function addBoardToUI (board) {
   }
 }
 
+/**
+ * Rename an existing board and persist the change.
+ *
+ * @param {string} boardId - Identifier of the board to rename.
+ * @param {string} newBoardName - New name displayed to the user.
+ * @returns {void}
+ */
 export function renameBoard (boardId, newBoardName) {
   const board = boards.find(b => b.id === boardId)
   if (board) {
@@ -215,6 +281,13 @@ export function renameBoard (boardId, newBoardName) {
   }
 }
 
+/**
+ * Remove a board from the application and update the UI.
+ * The remaining boards are saved back to localStorage.
+ *
+ * @param {string} boardId - Identifier of the board to delete.
+ * @returns {void}
+ */
 export function deleteBoard (boardId) {
   const boardIndex = boards.findIndex(b => b.id === boardId)
   if (boardIndex !== -1) {
@@ -235,6 +308,14 @@ export function deleteBoard (boardId) {
   }
 }
 
+/**
+ * Rename a view within a board and persist the update.
+ *
+ * @param {string} boardId - Board containing the view.
+ * @param {string} viewId - Identifier of the view to rename.
+ * @param {string} newViewName - The new display name.
+ * @returns {void}
+ */
 export function renameView (boardId, viewId, newViewName) {
   const board = boards.find(b => b.id === boardId)
   if (board) {
@@ -252,6 +333,13 @@ export function renameView (boardId, viewId, newViewName) {
   }
 }
 
+/**
+ * Delete a view from a board, updating the DOM and stored state.
+ *
+ * @param {string} boardId - Identifier of the board containing the view.
+ * @param {string} viewId - Identifier of the view to remove.
+ * @returns {void}
+ */
 export function deleteView (boardId, viewId) {
   const board = boards.find(b => b.id === boardId)
   if (board) {
@@ -276,6 +364,13 @@ export function deleteView (boardId, viewId) {
   }
 }
 
+/**
+ * Clear all widgets from a view and persist the empty state.
+ *
+ * @param {string} boardId - Identifier of the board containing the view.
+ * @param {string} viewId - Identifier of the view to reset.
+ * @returns {void}
+ */
 export function resetView (boardId, viewId) {
   const board = boards.find(b => b.id === boardId)
   if (board) {

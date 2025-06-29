@@ -1,3 +1,8 @@
+/**
+ * Entry point for the dashboard application.
+ *
+ * @module main
+ */
 import { initializeMainMenu } from './component/menu/menu.js'
 import { initializeBoards, switchBoard } from './component/board/boardManagement.js'
 import { initializeDashboardMenu } from './component/menu/dashboardMenu.js'

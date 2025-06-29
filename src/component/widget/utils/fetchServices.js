@@ -1,3 +1,8 @@
+/**
+ * Utilities for retrieving the list of available services.
+ *
+ * @module fetchServices
+ */
 import { Logger } from '../../../utils/Logger.js'
 
 const logger = new Logger('fetchServices.js')
@@ -26,6 +31,11 @@ async function fetchJson (url) {
   }
 }
 
+/**
+ * Retrieve the list of services from query params, localStorage or a default file.
+ *
+ * @returns {Promise<Array>} Resolves with an array of service definitions.
+ */
 export async function fetchServices () {
   const currentTime = Date.now()
   const cacheDuration = 60000 // 1 minute

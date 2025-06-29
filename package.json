@@ -24,7 +24,9 @@
     "@types/node": "^22.7.4",
     "husky": "^9.1.6",
     "playwright": "^1.47.2",
-    "standard": "*"
+    "standard": "*",
+    "comment-parser": "^1.4.0",
+    "globby": "^13.2.2"
   },
   "standard": {
     "globals": [
