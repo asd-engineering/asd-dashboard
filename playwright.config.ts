@@ -16,7 +16,6 @@ export default defineConfig({
   workers: os.cpus().length -1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ['html'],
     ['json', { outputFile: 'playwright-report.json' }]
   ],
   // There is no reason to wait so long in a PWA with hardly any content

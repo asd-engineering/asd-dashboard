@@ -12,3 +12,4 @@ node_modules
 *.txt
 local/
 playwright-report.json
+playwright-report-index.json.gz

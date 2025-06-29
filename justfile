@@ -1,4 +1,5 @@
 # Justfile for asd-dashboard
+import "scripts/just/playwright.just"
 
 # Bootstrap the project
 setup:
