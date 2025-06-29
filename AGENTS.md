@@ -47,7 +47,6 @@ just extract-symbols
 This command outputs:
 
 * `symbols.json` – machine-readable symbol index used by Codex
-* `SYMBOL_INDEX.md` (optional) – human-readable overview
 
 If `symbols.json` is missing or out-of-date, Codex code generation and refactoring is considered invalid.
 
@@ -130,6 +129,10 @@ Structured logs are persisted to `window._appLogs` only when running inside Play
 
 * Output must always be ready to commit & test.
 
+Notes:
+- ℹ️ All test-related `just` commands are defined in [`scripts/just/playwright.just`](scripts/just/playwright.just).  
+- Codex may extend or customize them via the Justfile if workflows evolve.
+
 ---
 
 ## Test-Driven Features
@@ -169,6 +172,10 @@ just list '<title-regex>'            # Filter by test name
 just failures '<title-regex>'        # Show failing tests only
 just logs '<title-regex>' [browser]  # View logs for matching test
 ```
+
+Notes:
+- Always rerun `just index-report` after any new test execution, or log-based tools (`just list`, `just failures`, `just logs`) may become stale.
+
 
 ---
 
