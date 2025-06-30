@@ -107,6 +107,6 @@ function handleDeleteBoard () {
  * @returns {string}
  */
 function getSelectedBoardId () {
-  const boardSelector = /** @type {HTMLSelectElement} */(document.getElementById('board-selector'))
+  const boardSelector = document.getElementById('board-selector')
   return boardSelector.value
 }

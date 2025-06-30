@@ -29,7 +29,7 @@ function handleDragStart (e, draggedWidgetWrapper) {
   const widgets = Array.from(widgetContainer.children)
   widgets.forEach(widget => {
     if (widget !== draggedWidgetWrapper) {
-      addDragOverlay(/** @type {HTMLElement} */(widget))
+      addDragOverlay(widget)
     }
   })
 }
@@ -45,7 +45,7 @@ function handleDragEnd (e) {
   const widgetContainer = document.getElementById('widget-container')
   const widgets = Array.from(widgetContainer.children)
   widgets.forEach(widget => {
-    removeDragOverlay(/** @type {HTMLElement} */(widget))
+    removeDragOverlay(widget)
     widget.classList.remove('drag-over')
   })
 }
@@ -117,7 +117,7 @@ function handleDrop (e, targetWidgetWrapper) {
   logger.log(`Drop event: draggedOrder=${draggedOrder}, targetOrder=${targetOrder}`)
 
   const widgetContainer = document.getElementById('widget-container')
-  const draggedWidget = /** @type {HTMLElement|null} */(widgetContainer.querySelector(`[data-order='${draggedOrder}']`))
+  const draggedWidget = widgetContainer.querySelector(`[data-order='${draggedOrder}']`)
 
   if (!draggedWidget) {
     logger.error('Invalid dragged widget element', 3000, 'error')
@@ -125,7 +125,7 @@ function handleDrop (e, targetWidgetWrapper) {
   }
 
   if (targetOrder !== null) {
-    const targetWidget = /** @type {HTMLElement|null} */(widgetContainer.querySelector(`[data-order='${targetOrder}']`))
+    const targetWidget = widgetContainer.querySelector(`[data-order='${targetOrder}']`)
     if (!targetWidget) {
       logger.error('Invalid target widget element', 3000, 'error')
       return
@@ -149,7 +149,7 @@ function handleDrop (e, targetWidgetWrapper) {
     }
   } else {
     // Calculate nearest available grid position
-    const gridColumnCount = getComputedStyle(widgetContainer).getPropertyValue('grid-template-columns').split(' ').length
+    const gridColumnCount = parseInt(getComputedStyle(widgetContainer).getPropertyValue('grid-template-columns').split(' ').length, 10)
     let targetColumn = Math.floor(e.clientX / draggedWidget.offsetWidth)
     let targetRow = Math.floor(e.clientY / draggedWidget.offsetHeight)
 
@@ -158,8 +158,8 @@ function handleDrop (e, targetWidgetWrapper) {
     targetColumn = Math.max(targetColumn, 0)
     targetRow = Math.max(targetRow, 0)
 
-    draggedWidget.style.gridColumnStart = String(targetColumn + 1)
-    draggedWidget.style.gridRowStart = String(targetRow + 1)
+    draggedWidget.style.gridColumnStart = targetColumn + 1
+    draggedWidget.style.gridRowStart = targetRow + 1
 
     logger.log('Widget moved to new grid position:', {
       column: targetColumn + 1,
@@ -235,14 +235,14 @@ function initializeDragAndDrop () {
   const widgetContainer = document.getElementById('widget-container')
   widgetContainer.addEventListener('dragover', (e) => {
     e.preventDefault()
-    const dragOverTarget = /** @type {HTMLElement} */(e.target).closest('.widget-wrapper')
+    const dragOverTarget = e.target.closest('.widget-wrapper')
     if (dragOverTarget) {
       dragOverTarget.classList.add('drag-over', 'highlight-drop-area')
     }
   })
 
   widgetContainer.addEventListener('dragleave', (e) => {
-    const dragLeaveTarget = /** @type {HTMLElement} */(e.target).closest('.widget-wrapper')
+    const dragLeaveTarget = e.target.closest('.widget-wrapper')
     if (dragLeaveTarget) {
       dragLeaveTarget.classList.remove('drag-over', 'highlight-drop-area')
     }
@@ -251,24 +251,24 @@ function initializeDragAndDrop () {
   widgetContainer.addEventListener('drop', (e) => {
     e.preventDefault()
     const draggedOrder = e.dataTransfer.getData('text/plain')
-    const targetWidgetWrapper = /** @type {HTMLElement} */(e.target).closest('.widget-wrapper')
+    const targetWidgetWrapper = e.target.closest('.widget-wrapper')
     const targetOrder = targetWidgetWrapper ? targetWidgetWrapper.getAttribute('data-order') : null
 
     if (draggedOrder !== null) {
       const widgets = Array.from(widgetContainer.children)
-      const draggedWidget = /** @type {HTMLElement}|undefined */(widgets.find(widget => widget.getAttribute('data-order') === draggedOrder))
+      const draggedWidget = widgets.find(widget => widget.getAttribute('data-order') === draggedOrder)
 
       if (draggedWidget) {
         if (targetOrder !== null) {
-          const targetWidget = /** @type {HTMLElement}|undefined */(widgets.find(widget => widget.getAttribute('data-order') === targetOrder))
+          const targetWidget = widgets.find(widget => widget.getAttribute('data-order') === targetOrder)
           if (targetWidget) {
             // Swap orders
             draggedWidget.setAttribute('data-order', targetOrder)
             targetWidget.setAttribute('data-order', draggedOrder)
 
             // Update CSS order
-            draggedWidget.style.order = String(targetOrder)
-            targetWidget.style.order = String(draggedOrder)
+            draggedWidget.style.order = targetOrder
+            targetWidget.style.order = draggedOrder
           }
         } else {
           // Handle drop in open space

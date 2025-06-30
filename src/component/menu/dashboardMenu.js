@@ -36,8 +36,8 @@ function initializeDashboardMenu () {
   document.addEventListener('services-updated', populateServiceDropdown)
 
   document.getElementById('add-widget-button').addEventListener('click', () => {
-    const serviceSelector = /** @type {HTMLSelectElement} */(document.getElementById('service-selector'))
-    const widgetUrlInput = /** @type {HTMLInputElement} */(document.getElementById('widget-url'))
+    const serviceSelector = document.getElementById('service-selector')
+    const widgetUrlInput = document.getElementById('widget-url')
     const boardElement = document.querySelector('.board')
     const viewElement = document.querySelector('.board-view')
     const selectedServiceUrl = serviceSelector.value
@@ -74,8 +74,7 @@ function initializeDashboardMenu () {
   })
 
   document.getElementById('board-selector').addEventListener('change', (event) => {
-    const target = /** @type {HTMLSelectElement} */(event.target)
-    const selectedBoardId = target.value
+    const selectedBoardId = event.target.value
     const currentBoardId = getCurrentBoardId()
     saveWidgetState(currentBoardId) // Save the state of the current board before switching
     switchBoard(selectedBoardId)
@@ -84,8 +83,7 @@ function initializeDashboardMenu () {
 
   document.getElementById('view-selector').addEventListener('change', (event) => {
     const selectedBoardId = getCurrentBoardId()
-    const target = /** @type {HTMLSelectElement} */(event.target)
-    const selectedViewId = target.value
+    const selectedViewId = event.target.value
     logger.log(`Switching to selected view ${selectedViewId} in board ${selectedBoardId}`)
     switchView(selectedBoardId, selectedViewId)
   })

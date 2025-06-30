@@ -23,11 +23,7 @@ const logger = new Logger('main.js')
 
 window.asd = {
   services: [],
-  config: /** @type {import('./types.js').DashboardConfig} */ ({
-    globalSettings: {},
-    boards: [],
-    styling: { widget: { minColumns: 1, maxColumns: 1, minRows: 1, maxRows: 1 } }
-  }),
+  config: {},
   boards: [],
   currentBoardId: null,
   currentViewId: null
