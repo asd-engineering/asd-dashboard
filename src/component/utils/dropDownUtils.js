@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Shared dropdown initialization helper.
  *
@@ -22,7 +23,8 @@ export function initializeDropdown (dropdownElement, handlers) {
   }
 
   dropdownElement.addEventListener('click', (event) => {
-    const action = event.target.dataset.action // Assuming the action is stored in a data attribute
+    const target = /** @type {HTMLElement} */(event.target)
+    const action = target.dataset.action // Assuming the action is stored in a data attribute
     logger.log('Dropdown action clicked:', action)
 
     if (handlers && typeof handlers[action] === 'function') {

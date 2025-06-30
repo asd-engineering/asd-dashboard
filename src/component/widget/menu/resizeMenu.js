@@ -1,3 +1,4 @@
+// @ts-check
 import emojiList from '../../../ui/unicodeEmoji.js'
 import { saveWidgetState } from '../../../storage/localStorage.js'
 import { fetchServices } from '../utils/fetchServices.js'
@@ -33,10 +34,10 @@ async function resizeHorizontally (widget, increase = true) {
       widget.classList.remove('below-min', 'exceeding-max')
     }
 
-    widget.dataset.columns = newSpan
+    widget.dataset.columns = String(newSpan)
     widget.style.gridColumn = `span ${newSpan}`
     logger.log(`Widget resized horizontally to span ${newSpan} columns`)
-    saveWidgetState()
+    saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
 
     // Log dimensions and overflow state of widget container
     const widgetContainer = document.getElementById('widget-container')
@@ -74,10 +75,10 @@ async function resizeVertically (widget, increase = true) {
       widget.classList.remove('below-min', 'exceeding-max')
     }
 
-    widget.dataset.rows = newSpan
+    widget.dataset.rows = String(newSpan)
     widget.style.gridRow = `span ${newSpan}`
     logger.log(`Widget resized vertically to span ${newSpan} rows`)
-    saveWidgetState()
+    saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
 
     // Log dimensions and overflow state of widget container
     const widgetContainer = document.getElementById('widget-container')
@@ -210,7 +211,7 @@ async function showResizeMenuBlock (icon, widgetWrapper) {
       button.addEventListener('click', async () => {
         await adjustWidgetSize(widgetWrapper, option.cols, option.rows)
         menu.remove()
-        await saveWidgetState()
+        await saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
       })
       menu.appendChild(button)
     })
