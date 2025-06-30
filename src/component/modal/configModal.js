@@ -100,23 +100,36 @@ export function openConfigModal () {
       exportButton.classList.add('modal__btn', 'modal__btn--export')
       exportButton.addEventListener('click', async () => {
         try {
-          const cfg = localStorage.getItem('config') || ''
-          const svc = localStorage.getItem('services') || ''
+          const cfgStr = localStorage.getItem('config')
+          const svcStr = localStorage.getItem('services')
+          let cfg, svc
+          try { cfg = cfgStr && JSON.parse(cfgStr) } catch { cfg = null }
+          try { svc = svcStr && JSON.parse(svcStr) } catch { svc = null }
+
+          if (!cfg || !svc) {
+            logger.warn('Export aborted: missing config or services')
+            showNotification('❌ Cannot export: config or services are missing', 4000, 'error')
+            return
+          }
+
           const [cfgEnc, svcEnc] = await Promise.all([
-            gzipBase64Url(cfg),
-            gzipBase64Url(svc)
+            gzipBase64Url(JSON.stringify(cfg)),
+            gzipBase64Url(JSON.stringify(svc))
           ])
           const url = `${location.origin}${location.pathname}#cfg=${cfgEnc}&svc=${svcEnc}`
           await navigator.clipboard.writeText(url)
 
+          const kb = (url.length / 1024).toFixed(1)
+          showNotification(`✅ URL copied to clipboard! (${kb} KB)`, 4000, 'success')
+          logger.info(`Exported config URL (${url.length} chars)`)
+
           if (url.length > 60000) {
-            alert('⚠️ Waarschuwing: URL is erg groot, werkt mogelijk niet in alle browsers.')
-          } else {
-            alert('✅ URL gekopieerd!')
+            showNotification('⚠️ URL is very large and may not work in all browsers', 6000, 'error')
+            logger.warn(`Exported URL length: ${url.length}`)
           }
         } catch (e) {
-          console.error('Export mislukt', e)
-          alert('Export mislukt')
+          showNotification('❌ Failed to export config', 4000, 'error')
+          logger.error('Export failed', e)
         }
       })
 

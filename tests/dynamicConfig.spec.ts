@@ -99,9 +99,9 @@ test.describe('Dashboard Config - Fallback Config Popup', () => {
     }, { cfg: ciConfig, svc: ciServices });
     await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()));
     await page.waitForSelector('#config-modal .modal__btn--export');
-    await page.evaluate(() => { window.copied = ''; navigator.clipboard.writeText = async t => { window.copied = t } });
+    await page.evaluate(() => { (window as any).__copied = ''; navigator.clipboard.writeText = async text => { (window as any).__copied = text }; });
     await page.click('#config-modal .modal__btn--export');
-    const url = await page.evaluate(() => window.copied);
+    const url = await page.evaluate(() => (window as any).__copied);
     const hash = url.split('#')[1] || '';
     const params = new URLSearchParams(hash);
 
