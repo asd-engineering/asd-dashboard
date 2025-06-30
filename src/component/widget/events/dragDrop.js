@@ -29,7 +29,7 @@ function handleDragStart (e, draggedWidgetWrapper) {
   const widgets = Array.from(widgetContainer.children)
   widgets.forEach(widget => {
     if (widget !== draggedWidgetWrapper) {
-      addDragOverlay(widget)
+      addDragOverlay(/** @type {HTMLElement} */(widget))
     }
   })
 }
@@ -45,8 +45,9 @@ function handleDragEnd (e) {
   const widgetContainer = document.getElementById('widget-container')
   const widgets = Array.from(widgetContainer.children)
   widgets.forEach(widget => {
-    removeDragOverlay(widget)
-    widget.classList.remove('drag-over')
+    const el = /** @type {HTMLElement} */(widget)
+    removeDragOverlay(el)
+    el.classList.remove('drag-over')
   })
 }
 
@@ -149,17 +150,18 @@ function handleDrop (e, targetWidgetWrapper) {
     }
   } else {
     // Calculate nearest available grid position
-    const gridColumnCount = parseInt(getComputedStyle(widgetContainer).getPropertyValue('grid-template-columns').split(' ').length, 10)
-    let targetColumn = Math.floor(e.clientX / draggedWidget.offsetWidth)
-    let targetRow = Math.floor(e.clientY / draggedWidget.offsetHeight)
+    const gridColumnCount = parseInt(getComputedStyle(widgetContainer).getPropertyValue('grid-template-columns').split(' ').length.toString(), 10)
+    const draggedEl = /** @type {HTMLElement} */(draggedWidget)
+    let targetColumn = Math.floor(e.clientX / draggedEl.offsetWidth)
+    let targetRow = Math.floor(e.clientY / draggedEl.offsetHeight)
 
     // Adjust to fit within grid boundaries
     targetColumn = Math.min(targetColumn, gridColumnCount - 1)
     targetColumn = Math.max(targetColumn, 0)
     targetRow = Math.max(targetRow, 0)
 
-    draggedWidget.style.gridColumnStart = targetColumn + 1
-    draggedWidget.style.gridRowStart = targetRow + 1
+    draggedEl.style.gridColumnStart = (targetColumn + 1).toString()
+    draggedEl.style.gridRowStart = (targetRow + 1).toString()
 
     logger.log('Widget moved to new grid position:', {
       column: targetColumn + 1,
@@ -173,7 +175,7 @@ function handleDrop (e, targetWidgetWrapper) {
   updateWidgetOrders()
 
   // Update localStorage with new widget position
-  const widgetId = draggedWidget.dataset.dataid
+  const widgetId = (/** @type {HTMLElement} */(draggedWidget)).dataset.dataid
   const boardId = window.asd.currentBoardId
   const viewId = window.asd.currentViewId
   const widgetState = JSON.parse(localStorage.getItem('widgetState')) || {}
@@ -188,8 +190,8 @@ function handleDrop (e, targetWidgetWrapper) {
 
   const widgetIndex = widgetState[boardId][viewId].findIndex(widget => widget.dataid === widgetId)
   if (widgetIndex !== -1) {
-    widgetState[boardId][viewId][widgetIndex].column = parseInt(draggedWidget.style.gridColumnStart)
-    widgetState[boardId][viewId][widgetIndex].row = parseInt(draggedWidget.style.gridRowStart)
+    widgetState[boardId][viewId][widgetIndex].column = parseInt((/** @type {HTMLElement} */(draggedWidget)).style.gridColumnStart)
+    widgetState[boardId][viewId][widgetIndex].row = parseInt((/** @type {HTMLElement} */(draggedWidget)).style.gridRowStart)
   }
 
   localStorage.setItem('widgetState', JSON.stringify(widgetState))
@@ -235,14 +237,14 @@ function initializeDragAndDrop () {
   const widgetContainer = document.getElementById('widget-container')
   widgetContainer.addEventListener('dragover', (e) => {
     e.preventDefault()
-    const dragOverTarget = e.target.closest('.widget-wrapper')
+    const dragOverTarget = (/** @type {HTMLElement} */(e.target)).closest('.widget-wrapper')
     if (dragOverTarget) {
       dragOverTarget.classList.add('drag-over', 'highlight-drop-area')
     }
   })
 
   widgetContainer.addEventListener('dragleave', (e) => {
-    const dragLeaveTarget = e.target.closest('.widget-wrapper')
+    const dragLeaveTarget = (/** @type {HTMLElement} */(e.target)).closest('.widget-wrapper')
     if (dragLeaveTarget) {
       dragLeaveTarget.classList.remove('drag-over', 'highlight-drop-area')
     }
@@ -251,24 +253,26 @@ function initializeDragAndDrop () {
   widgetContainer.addEventListener('drop', (e) => {
     e.preventDefault()
     const draggedOrder = e.dataTransfer.getData('text/plain')
-    const targetWidgetWrapper = e.target.closest('.widget-wrapper')
+    const targetWidgetWrapper = (/** @type {HTMLElement} */(e.target)).closest('.widget-wrapper')
     const targetOrder = targetWidgetWrapper ? targetWidgetWrapper.getAttribute('data-order') : null
 
     if (draggedOrder !== null) {
       const widgets = Array.from(widgetContainer.children)
-      const draggedWidget = widgets.find(widget => widget.getAttribute('data-order') === draggedOrder)
+      const draggedWidgetEl = widgets.find(widget => widget.getAttribute('data-order') === draggedOrder)
 
-      if (draggedWidget) {
+      if (draggedWidgetEl) {
+        const draggedWidget = /** @type {HTMLElement} */(draggedWidgetEl)
         if (targetOrder !== null) {
-          const targetWidget = widgets.find(widget => widget.getAttribute('data-order') === targetOrder)
-          if (targetWidget) {
+          const targetWidgetEl = widgets.find(widget => widget.getAttribute('data-order') === targetOrder)
+          if (targetWidgetEl) {
+            const targetWidget = /** @type {HTMLElement} */(targetWidgetEl)
             // Swap orders
             draggedWidget.setAttribute('data-order', targetOrder)
             targetWidget.setAttribute('data-order', draggedOrder)
 
             // Update CSS order
-            draggedWidget.style.order = targetOrder
-            targetWidget.style.order = draggedOrder
+            draggedWidget.style.order = targetOrder.toString()
+            targetWidget.style.order = draggedOrder.toString()
           }
         } else {
           // Handle drop in open space
@@ -276,7 +280,7 @@ function initializeDragAndDrop () {
         }
 
         // Save the new state
-        saveWidgetState()
+        saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
       }
     }
   })
