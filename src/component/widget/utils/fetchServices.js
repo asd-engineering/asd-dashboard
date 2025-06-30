@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Utilities for retrieving the list of available services.
  *

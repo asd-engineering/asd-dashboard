@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Widget creation and management functions.
  *

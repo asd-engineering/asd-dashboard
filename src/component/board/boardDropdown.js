@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * UI handlers for the board actions dropdown.
  *

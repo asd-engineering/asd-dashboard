@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Simple notification dialog utilities.
  *

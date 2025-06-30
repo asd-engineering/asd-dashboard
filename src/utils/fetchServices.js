@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Fetch a list of services from various sources and store them globally.
  *
@@ -5,6 +6,8 @@
  */
 import { Logger } from './Logger.js'
 import { showNotification } from '../component/dialog/notification.js'
+
+/** @typedef {import('../types.js').Service} Service */
 
 const logger = new Logger('fetchServices.js')
 const STORAGE_KEY = 'services'
@@ -35,7 +38,7 @@ async function fetchJson (url) {
  * Fetch the service list and update the service selector on the page.
  *
  * @function fetchServices
- * @returns {Promise<Array>} Array of service objects.
+ * @returns {Promise<Array<Service>>} Array of service objects.
  */
 export const fetchServices = async () => {
   const params = new URLSearchParams(window.location.search)

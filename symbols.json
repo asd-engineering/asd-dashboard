@@ -1,5 +1,73 @@
 [
   {
+    "name": "saveWidgetState",
+    "kind": "function",
+    "file": "src/storage/localStorage.js",
+    "description": "Serialize widgets in the current view and store them under the given board and view identifiers in localStorage. Each widget is saved with its order, dimensions, URL and any metadata/settings.",
+    "params": [
+      {
+        "name": "boardId",
+        "type": "string",
+        "desc": "- Board identifier. Defaults to the current board element id."
+      },
+      {
+        "name": "viewId",
+        "type": "string",
+        "desc": "- View identifier. Defaults to the current view element id."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "loadWidgetState",
+    "kind": "function",
+    "file": "src/storage/localStorage.js",
+    "description": "Restore widget DOM elements for the specified board and view from localStorage. Widgets are recreated using {@link createWidget} and metadata and settings are re-applied.",
+    "params": [
+      {
+        "name": "boardId",
+        "type": "string",
+        "desc": "- Board identifier."
+      },
+      {
+        "name": "viewId",
+        "type": "string",
+        "desc": "- View identifier whose widgets should be loaded."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "loadInitialConfig",
+    "kind": "function",
+    "file": "src/storage/localStorage.js",
+    "description": "Store the initial board configuration defined in {@code window.asd.config} into localStorage. This is typically called on first run to seed the persistent board data.",
+    "params": [],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "saveBoardState",
+    "kind": "function",
+    "file": "src/storage/localStorage.js",
+    "description": "Persist the entire boards array to localStorage under the key `boards`.",
+    "params": [
+      {
+        "name": "boards",
+        "type": "Array<Board>",
+        "desc": "- Array of board objects to store."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "loadBoardState",
+    "kind": "function",
+    "file": "src/storage/localStorage.js",
+    "description": "Retrieve the array of boards from localStorage. The result is also assigned to {@code window.asd.boards} for global access.",
+    "params": [],
+    "returns": "Promise<Array<Board>>"
+  },
+  {
     "name": "Logger",
     "kind": "class",
     "file": "src/utils/Logger.js",
@@ -150,7 +218,7 @@
     "file": "src/utils/fetchServices.js",
     "description": "Fetch the service list and update the service selector on the page.",
     "params": [],
-    "returns": "Promise<Array>"
+    "returns": "Promise<Array<Service>>"
   },
   {
     "name": "getConfig",
@@ -194,74 +262,6 @@
     "description": "Generate a UUID using the browser crypto API when available.",
     "params": [],
     "returns": "string"
-  },
-  {
-    "name": "saveWidgetState",
-    "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Serialize widgets in the current view and store them under the given board and view identifiers in localStorage. Each widget is saved with its order, dimensions, URL and any metadata/settings.",
-    "params": [
-      {
-        "name": "boardId",
-        "type": "string",
-        "desc": "- Board identifier. Defaults to the current board element id."
-      },
-      {
-        "name": "viewId",
-        "type": "string",
-        "desc": "- View identifier. Defaults to the current view element id."
-      }
-    ],
-    "returns": "Promise<void>"
-  },
-  {
-    "name": "loadWidgetState",
-    "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Restore widget DOM elements for the specified board and view from localStorage. Widgets are recreated using {@link createWidget} and metadata and settings are re-applied.",
-    "params": [
-      {
-        "name": "boardId",
-        "type": "string",
-        "desc": "- Board identifier."
-      },
-      {
-        "name": "viewId",
-        "type": "string",
-        "desc": "- View identifier whose widgets should be loaded."
-      }
-    ],
-    "returns": "Promise<void>"
-  },
-  {
-    "name": "loadInitialConfig",
-    "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Store the initial board configuration defined in {@code window.asd.config} into localStorage. This is typically called on first run to seed the persistent board data.",
-    "params": [],
-    "returns": "Promise<void>"
-  },
-  {
-    "name": "saveBoardState",
-    "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Persist the entire boards array to localStorage under the key `boards`.",
-    "params": [
-      {
-        "name": "boards",
-        "type": "Array",
-        "desc": "- Array of board objects to store."
-      }
-    ],
-    "returns": "Promise<void>"
-  },
-  {
-    "name": "loadBoardState",
-    "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Retrieve the array of boards from localStorage. The result is also assigned to {@code window.asd.boards} for global access.",
-    "params": [],
-    "returns": "Promise<Array>"
   },
   {
     "name": "initializeBoardDropdown",
@@ -325,7 +325,7 @@
         "desc": "- Identifier for the default view."
       }
     ],
-    "returns": "object"
+    "returns": "Board"
   },
   {
     "name": "createView",
@@ -349,7 +349,7 @@
         "desc": "- Optional predefined id for the view."
       }
     ],
-    "returns": "object|undefined"
+    "returns": "View|undefined"
   },
   {
     "name": "switchView",

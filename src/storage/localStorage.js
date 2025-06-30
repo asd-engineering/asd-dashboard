@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Utilities for persisting board and widget state in `localStorage`.
  *
@@ -8,8 +9,16 @@ import { getServiceFromUrl } from '../component/widget/utils/widgetUtils.js'
 import { initializeResizeHandles } from '../component/widget/events/resizeHandler.js'
 import { Logger } from '../utils/Logger.js'
 
+/** @typedef {import('../types.js').Widget} Widget */
+/** @typedef {import('../types.js').Board} Board */
+
 const logger = new Logger('localStorage.js')
 
+/**
+ * Convert a widget DOM element to a serializable state object.
+ * @param {HTMLElement} widget
+ * @returns {Widget}
+ */
 function serializeWidgetState (widget) {
   let metadata = {}
   if (widget.dataset.metadata) {
@@ -189,7 +198,7 @@ function setBoardAndViewIds (boardId, viewId) {
  * Persist the entire boards array to localStorage under the key `boards`.
  *
  * @function saveBoardState
- * @param {Array} boards - Array of board objects to store.
+ * @param {Array<Board>} boards - Array of board objects to store.
  * @returns {Promise<void>}
  */
 export async function saveBoardState (boards) {
@@ -206,7 +215,7 @@ export async function saveBoardState (boards) {
  * The result is also assigned to {@code window.asd.boards} for global access.
  *
  * @function loadBoardState
- * @returns {Promise<Array>} Parsed array of boards or an empty array on failure.
+ * @returns {Promise<Array<Board>>} Parsed array of boards or an empty array on failure.
  */
 export async function loadBoardState () {
   try {

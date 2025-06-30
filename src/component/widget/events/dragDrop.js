@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Drag and drop handlers for reordering widgets.
  *

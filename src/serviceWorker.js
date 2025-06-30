@@ -1,3 +1,4 @@
+// @ts-check
 /* eslint-env serviceworker */
 /**
  * Basic service worker used to cache fetched resources.

@@ -18,7 +18,8 @@
     "test:ui": "playwright test --ui",
     "test:grep": "playwright test --grep",
     "test:report": "playwright test --reporter=html",
-    "merge-videos": "NODE_PATH=$(npm root -g) node scripts/mergePlaywrightVideos.js"
+    "merge-videos": "NODE_PATH=$(npm root -g) node scripts/mergePlaywrightVideos.js",
+    "check": "tsc"
   },
   "devDependencies": {
     "@playwright/test": "^1.47.2",
@@ -27,7 +28,8 @@
     "playwright": "^1.47.2",
     "standard": "*",
     "comment-parser": "^1.4.0",
-    "globby": "^13.2.2"
+    "globby": "^13.2.2",
+    "typescript": "^5.8.3"
   },
   "standard": {
     "globals": [

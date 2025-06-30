@@ -7,12 +7,12 @@
 | 🛠️ **DevelopmentAgent**     | Implements features from structured logs → passing tests    | Logs (`playwright-report-index.json.gz`), symbols, tests | Clean JS, passing tests, updated `symbols.json` |
 | 📦 **LoggerAttacher**        | Ensures structured logging (`Logger`) in UI modules         | `Logger.js`, UI modules                                  | Structured logs in Playwright reports           |
 | 🧬 **SymbolIndexMaintainer** | Keeps canonical `symbols.json` always updated               | JS sources                                               | Accurate `symbols.json`                         |
-| 🧪 **TestInspector**         | Executes & indexes Playwright tests for Codex introspection | `.spec.ts`, Playwright commands                          | `playwright-report-index.json.gz`               |
+| 💪 **TestInspector**         | Executes & indexes Playwright tests for Codex introspection | `.spec.ts`, Playwright commands                          | `playwright-report-index.json.gz`               |
 | ✅ **ValidationAgent**        | Validates symbols, tests, logs before commit                | `symbols.json`, tests, logs, JSDoc, lint                 | Commit-ready PRs with clear QA summaries        |
 
 ---
 
-## 🚧 AI Agent Constraints
+## ⚧️ AI Agent Constraints
 
 * **Client-side only** (DOM APIs, localStorage, fetch).
 * **No frameworks/transpilers/build tools**. Pure ES6+ Vanilla JS.
@@ -130,11 +130,11 @@ Output must always be ready-to-commit.
 
 ---
 
-## 🧪 Two-Phase AI-Driven Workflow
+## Two-Phase AI-Driven Workflow
 
 Codex agents follow a strict workflow:
 
-### ① Test Execution
+### Test Execution
 
 Generate structured logs:
 
@@ -151,7 +151,7 @@ DEV-ENV-ERROR: playwright dependency missing
 Proposed fix: npm install playwright
 ```
 
-### ② Test Indexing & Inspection
+### Test Indexing & Inspection
 
 Create indexed logs:
 
@@ -193,6 +193,38 @@ Core scripts:
 * Design modular, config-driven interfaces.
 * Enable symbolic navigation for simulation and validation.
 * Avoid hard-coded paths or options; rely on configuration files.
+
+---
+
+## ❌ TypeScript Error Handling Policy
+
+Codex may not patch TypeScript errors using blind type assertions like `as HTMLElement` or `as any`.
+
+### 🧱 Rules:
+
+* Always use `instanceof` or other runtime-safe guards:
+
+  ```ts
+  if (target instanceof HTMLInputElement) {
+    console.log(target.value);
+  }
+  ```
+
+* Never assume properties exist on `EventTarget`, `HTMLElement`, or `Element` without guard checks.
+
+* Never silence errors via widening types unless validated by runtime contract.
+
+* Avoid introducing regressions by validating every fix.
+
+### ✅ Mandatory Post-Fix Validation
+
+After applying any fix:
+
+```bash
+just check && just test:changed
+```
+
+Only if both pass, the patch is accepted.
 
 ---
 

@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Provides interactive resizing of widgets via mouse drag handles.
  *

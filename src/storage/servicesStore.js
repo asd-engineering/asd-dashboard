@@ -1,3 +1,4 @@
+// @ts-check
 const STORAGE_KEY = 'services'
 
 export function load () {

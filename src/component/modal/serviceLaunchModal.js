@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Modal used to launch a service-specific action in an iframe.
  *

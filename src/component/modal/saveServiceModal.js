@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Modal prompting to save a URL as a named service.
  *

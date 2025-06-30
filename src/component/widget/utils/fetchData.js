@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Utility for fetching data and posting to widgets.
  *

@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Utility for constructing modal dialogs.
  *

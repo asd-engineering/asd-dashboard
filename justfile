@@ -26,3 +26,7 @@ format:
 # Extract symbol index
 extract-symbols:
     node scripts/extract-symbol-index.mjs
+
+# Run static type checking
+check:
+    npm run check

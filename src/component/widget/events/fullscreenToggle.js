@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Utility to toggle a widget into a full-screen display mode.
  *

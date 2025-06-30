@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Miscellaneous utility helpers.
  *
