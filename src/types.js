@@ -53,6 +53,8 @@
  * @typedef {Object} DashboardConfig
  * @property {object} globalSettings
  * @property {Array<Board>} boards
+ * @property {object} [styling]
+ * @property {{minColumns:number,maxColumns:number,minRows:number,maxRows:number}} [styling.widget]
  */
 
 /**
