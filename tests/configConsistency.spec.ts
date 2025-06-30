@@ -41,4 +41,16 @@ test.describe('config consistency', () => {
 
     expect(cfg.boards).toEqual(boards)
   })
+
+  test('saving config without boards removes boards storage', async ({ page }) => {
+    await page.click('#open-config-modal')
+    const textarea = page.locator('#config-json')
+    const cfg = JSON.parse(await textarea.inputValue())
+    delete cfg.boards
+    await textarea.fill(JSON.stringify(cfg, null, 2))
+    await page.click('#config-modal .modal__btn--save')
+    await page.waitForLoadState('domcontentloaded')
+    const boards = await page.evaluate(() => localStorage.getItem('boards'))
+    expect(boards).toBeNull()
+  })
 })

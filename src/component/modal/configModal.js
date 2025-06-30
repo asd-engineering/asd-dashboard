@@ -65,6 +65,13 @@ export function openConfigModal () {
         try {
           const cfg = JSON.parse(textarea.value)
           localStorage.setItem('config', JSON.stringify(cfg))
+
+          if (Array.isArray(cfg.boards)) {
+            localStorage.setItem('boards', JSON.stringify(cfg.boards))
+          } else {
+            localStorage.removeItem('boards')
+          }
+
           showNotification('Config saved to localStorage')
           closeModal()
           setTimeout(() => location.reload(), 500)

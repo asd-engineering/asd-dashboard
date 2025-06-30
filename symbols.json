@@ -264,30 +264,6 @@
     "returns": "string"
   },
   {
-    "name": "showNotification",
-    "kind": "function",
-    "file": "src/component/dialog/notification.js",
-    "description": "Display a temporary notification message.",
-    "params": [
-      {
-        "name": "message",
-        "type": "string",
-        "desc": "- Text content of the notification."
-      },
-      {
-        "name": "duration",
-        "type": "number",
-        "desc": "- How long to display the notification."
-      },
-      {
-        "name": "type",
-        "type": "('success'|'error')",
-        "desc": "- Visual style of the message."
-      }
-    ],
-    "returns": "void"
-  },
-  {
     "name": "initializeBoardDropdown",
     "kind": "function",
     "file": "src/component/board/boardDropdown.js",
@@ -540,6 +516,30 @@
         "name": "viewId",
         "type": "string",
         "desc": "- Identifier of the view to reset."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "showNotification",
+    "kind": "function",
+    "file": "src/component/dialog/notification.js",
+    "description": "Display a temporary notification message.",
+    "params": [
+      {
+        "name": "message",
+        "type": "string",
+        "desc": "- Text content of the notification."
+      },
+      {
+        "name": "duration",
+        "type": "number",
+        "desc": "- How long to display the notification."
+      },
+      {
+        "name": "type",
+        "type": "('success'|'error')",
+        "desc": "- Visual style of the message."
       }
     ],
     "returns": "void"
