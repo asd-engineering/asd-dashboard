@@ -10,6 +10,8 @@ import { Logger } from '../../utils/Logger.js'
 import { clearConfigFragment } from '../../utils/fragmentGuard.js'
 import { gzipJsonToBase64url } from '../../utils/compression.js'
 
+/** @typedef {import('../../types.js').DashboardConfig} DashboardConfig */
+
 export const DEFAULT_CONFIG_TEMPLATE = {
   globalSettings: {
     theme: 'light',

@@ -197,6 +197,90 @@
     "returns": "void"
   },
   {
+    "name": "base64UrlEncode",
+    "kind": "function",
+    "file": "src/utils/compression.js",
+    "description": "Base64url encode a byte array.",
+    "params": [
+      {
+        "name": "bytes",
+        "type": "Uint8Array",
+        "desc": ""
+      }
+    ],
+    "returns": "string"
+  },
+  {
+    "name": "base64UrlDecode",
+    "kind": "function",
+    "file": "src/utils/compression.js",
+    "description": "Decode a base64url string to bytes.",
+    "params": [
+      {
+        "name": "str",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "Uint8Array"
+  },
+  {
+    "name": "gzipJsonToBase64url",
+    "kind": "function",
+    "file": "src/utils/compression.js",
+    "description": "Gzip a JavaScript object and encode it as base64url.",
+    "params": [
+      {
+        "name": "obj",
+        "type": "object",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<string>"
+  },
+  {
+    "name": "gunzipBase64urlToJson",
+    "kind": "function",
+    "file": "src/utils/compression.js",
+    "description": "Decode and gunzip a base64url string to a JavaScript object.",
+    "params": [
+      {
+        "name": "str",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<object>"
+  },
+  {
+    "name": "encodeConfig",
+    "kind": "function",
+    "file": "src/utils/compression.js",
+    "description": "Convenience wrapper for encoding dashboard configuration objects.",
+    "params": [
+      {
+        "name": "cfg",
+        "type": "object",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<string>"
+  },
+  {
+    "name": "decodeConfig",
+    "kind": "function",
+    "file": "src/utils/compression.js",
+    "description": "Convenience wrapper for decoding dashboard configuration objects.",
+    "params": [
+      {
+        "name": "str",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<object>"
+  },
+  {
     "name": "getCurrentBoardId",
     "kind": "function",
     "file": "src/utils/elements.js",
@@ -219,6 +303,14 @@
     "description": "Fetch the service list and update the service selector on the page.",
     "params": [],
     "returns": "Promise<Array<Service>>"
+  },
+  {
+    "name": "clearConfigFragment",
+    "kind": "function",
+    "file": "src/utils/fragmentGuard.js",
+    "description": "Remove any `#cfg` or `#svc` fragment from the current URL without triggering a reload.",
+    "params": [],
+    "returns": "void"
   },
   {
     "name": "loadFromFragment",

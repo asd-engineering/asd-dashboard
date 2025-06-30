@@ -7,6 +7,8 @@
 
 /**
  * Base64url encode a byte array.
+ *
+ * @function base64UrlEncode
  * @param {Uint8Array} bytes
  * @returns {string}
  */
@@ -21,6 +23,8 @@ function base64UrlEncode (bytes) {
 
 /**
  * Decode a base64url string to bytes.
+ *
+ * @function base64UrlDecode
  * @param {string} str
  * @returns {Uint8Array}
  */
@@ -37,6 +41,8 @@ function base64UrlDecode (str) {
 
 /**
  * Gzip a JavaScript object and encode it as base64url.
+ *
+ * @function gzipJsonToBase64url
  * @param {object} obj
  * @returns {Promise<string>}
  */
@@ -57,6 +63,8 @@ export async function gzipJsonToBase64url (obj) {
 
 /**
  * Decode and gunzip a base64url string to a JavaScript object.
+ *
+ * @function gunzipBase64urlToJson
  * @param {string} str
  * @returns {Promise<object>}
  */
@@ -73,3 +81,21 @@ export async function gunzipBase64urlToJson (str) {
   }
   return JSON.parse(text)
 }
+
+/**
+ * Convenience wrapper for encoding dashboard configuration objects.
+ *
+ * @function encodeConfig
+ * @param {object} cfg
+ * @returns {Promise<string>}
+ */
+export const encodeConfig = gzipJsonToBase64url
+
+/**
+ * Convenience wrapper for decoding dashboard configuration objects.
+ *
+ * @function decodeConfig
+ * @param {string} str
+ * @returns {Promise<object>}
+ */
+export const decodeConfig = gunzipBase64urlToJson
