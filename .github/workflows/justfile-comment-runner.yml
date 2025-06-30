@@ -18,11 +18,8 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // ↳ Ensure core is imported before setOutput
-            const core = require('@actions/core');
             let allowed = false;
             const actor = context.actor;
-
             if (context.payload.repository.owner.type === "Organization") {
               try {
                 const { data } = await github.orgs.getMembershipForUser({
@@ -36,8 +33,6 @@ jobs:
             } else {
               allowed = (actor === context.repo.owner);
             }
-
-            // ↳ Always emit a string
             core.setOutput('allowed', allowed ? 'true' : 'false');
 
       - name: Exit if not admin
@@ -57,11 +52,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          # ↳ Strip the literal prefix '/run' (no stray quotes!)
+          # Strip the literal prefix '/run'
           body="${COMMENT#/run}"
           body="$(echo "$body" | xargs)"
 
-          # ↳ Split on && or ;
+          # Split on && or ;
           IFS=$'\n' read -rd '' -a cmds <<<"$(
             printf '%s\n' "$body" \
               | sed 's/&&/\n/g; s/;/\n/g' \
@@ -70,14 +65,11 @@ jobs:
 
           results=""
           for cmd in "${cmds[@]}"; do
-            # ↳ Extract subcommand, whitelist safe chars
             justcmd="${cmd%% *}"
             if [[ ! "$justcmd" =~ ^[A-Za-z0-9_-]+$ ]]; then
               echo "Refusing suspicious just command: $justcmd"
               exit 1
             fi
-
-            # ↳ Trim args
             args="$(printf '%s' "${cmd#"$justcmd"}" | xargs)"
             echo "::group::Running: just $justcmd $args"
             if output=$(just "$justcmd" $args 2>&1); then
@@ -90,7 +82,6 @@ jobs:
             echo "::endgroup::"
           done
 
-          # ↳ Save for comment step
           printf "%b" "$results" > results.txt
 
       - name: Comment results
