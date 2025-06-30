@@ -19,7 +19,13 @@ const logger = new Logger('fragmentLoader.js')
  * @function loadFromFragment
  * @returns {Promise<void>}
  */
-export async function loadFromFragment () {
+/**
+ * Load config/services from URL fragment into localStorage.
+ *
+ * @param {boolean} [wasExplicitLoad=false] - Skip guard when true.
+ * @returns {Promise<void>}
+ */
+export async function loadFromFragment (wasExplicitLoad = false) {
   if (!('DecompressionStream' in window)) {
     if (location.hash.includes('cfg=') || location.hash.includes('svc=')) {
       showNotification('⚠️ DecompressionStream niet ondersteund door deze browser.', 4000, 'error')
@@ -32,6 +38,11 @@ export async function loadFromFragment () {
   const params = new URLSearchParams(hash)
   const cfgParam = params.get('cfg')
   const svcParam = params.get('svc')
+
+  if (localStorage.getItem('config') && !wasExplicitLoad) {
+    console.warn('⚠️ Skipping fragment load: config already exists in storage')
+    return
+  }
 
   const base64UrlDecode = str => {
     const pad = '===='.slice(0, (4 - str.length % 4) % 4)

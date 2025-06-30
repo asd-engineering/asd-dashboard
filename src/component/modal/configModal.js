@@ -7,6 +7,7 @@
 import { openModal } from './modalFactory.js'
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
+import { clearConfigFragment } from '../../utils/fragmentGuard.js'
 
 export const DEFAULT_CONFIG_TEMPLATE = {
   globalSettings: {
@@ -87,6 +88,7 @@ export function openConfigModal () {
 
           showNotification('Config saved to localStorage')
           closeModal()
+          clearConfigFragment()
           setTimeout(() => location.reload(), 500)
         } catch (e) {
           logger.error('Invalid JSON:', e)
