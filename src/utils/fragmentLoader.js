@@ -39,8 +39,13 @@ export async function loadFromFragment (wasExplicitLoad = false) {
   const cfgParam = params.get('cfg')
   const svcParam = params.get('svc')
 
-  if (localStorage.getItem('config') && !wasExplicitLoad) {
-    console.warn('⚠️ Skipping fragment load: config already exists in storage')
+  const hasLocalData =
+    localStorage.getItem('config') ||
+    localStorage.getItem('services') ||
+    localStorage.getItem('boards')
+
+  if (hasLocalData && !wasExplicitLoad) {
+    console.warn('⚠️ Skipping fragment load: local data already exists')
     return
   }
 

@@ -19,3 +19,19 @@ test('loads config and services from URL fragment', async ({ page }) => {
   expect(config.globalSettings.theme).toBe(ciConfig.globalSettings.theme)
   expect(services.length).toBe(ciServices.length)
 })
+
+test('fragment data is not reapplied if localStorage already has data', async ({ page }) => {
+  const cfg = encode(ciConfig)
+  await page.goto(`/#cfg=${cfg}`)
+  await page.waitForLoadState('domcontentloaded')
+
+  await page.evaluate(() => {
+    localStorage.setItem('config', JSON.stringify({ globalSettings: { theme: 'dark' } }))
+    localStorage.setItem('services', JSON.stringify([]))
+    localStorage.setItem('boards', JSON.stringify([]))
+  })
+
+  await page.goto(`/#cfg=${cfg}`)
+  const theme = await page.evaluate(() => JSON.parse(localStorage.getItem('config') || '{}').globalSettings.theme)
+  expect(theme).toBe('dark')
+})
