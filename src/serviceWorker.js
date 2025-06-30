@@ -1,3 +1,4 @@
+// @ts-check
 /* eslint-env serviceworker */
 /**
  * Basic service worker used to cache fetched resources.
@@ -22,7 +23,7 @@ const CACHE_NAME = 'my-cache-v3' // Make sure this matches the cache name in the
 //   }
 // });
 
-self.addEventListener('install', function (event) {
+self.addEventListener('install', /** @param {any} event */ function (event) {
   console.log('[Service Worker] Installed')
   event.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
@@ -35,7 +36,7 @@ self.addEventListener('install', function (event) {
   )
 })
 
-self.addEventListener('fetch', function (event) {
+self.addEventListener('fetch', /** @param {any} event */ function (event) {
   console.log('[Service Worker] Fetching: ', event.request.url)
   event.respondWith(
     caches.match(event.request).then(function (response) {
@@ -56,7 +57,7 @@ self.addEventListener('fetch', function (event) {
   )
 })
 
-self.addEventListener('activate', function (event) {
+self.addEventListener('activate', /** @param {any} event */ function (event) {
   console.log('[Service Worker] Activating and cleaning up old caches')
   const cacheWhitelist = [CACHE_NAME] // Only keep the current cache
   event.waitUntil(

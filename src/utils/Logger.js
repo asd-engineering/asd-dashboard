@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Simple browser console logger with runtime enable/disable support.
  * During Playwright test runs (via `navigator.webdriver`), structured logs are

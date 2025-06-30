@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Utilities for persisting board and widget state in `localStorage`.
  *
@@ -8,8 +9,16 @@ import { getServiceFromUrl } from '../component/widget/utils/widgetUtils.js'
 import { initializeResizeHandles } from '../component/widget/events/resizeHandler.js'
 import { Logger } from '../utils/Logger.js'
 
+/** @typedef {import('../types.js').Widget} Widget */
+/** @typedef {import('../types.js').Board} Board */
+
 const logger = new Logger('localStorage.js')
 
+/**
+ * Convert a widget DOM element to a serializable state object.
+ * @param {HTMLElement} widget
+ * @returns {Widget}
+ */
 function serializeWidgetState (widget) {
   let metadata = {}
   if (widget.dataset.metadata) {
@@ -70,7 +79,7 @@ async function saveWidgetState (boardId, viewId) {
     }
     const widgetContainer = document.getElementById('widget-container')
     const widgets = Array.from(widgetContainer.children)
-    const widgetState = widgets.map(widget => serializeWidgetState(widget))
+    const widgetState = widgets.map(w => serializeWidgetState(/** @type {HTMLElement} */ (w)))
     const boards = await loadBoardState()
     logger.info(`Loaded board state from localStorage: ${boards}`)
     const board = boards.find(b => b.id === boardId)
@@ -121,7 +130,7 @@ async function loadWidgetState (boardId, viewId) {
         logger.info('Found widget state in view:', view.widgetState)
         const savedState = view.widgetState
         const widgetContainer = document.getElementById('widget-container')
-        const existingWidgetIds = Array.from(widgetContainer.children).map(w => w.dataset.dataid)
+        const existingWidgetIds = Array.from(widgetContainer.children).map(w => /** @type {HTMLElement} */ (w).dataset.dataid)
 
         for (const widgetData of savedState) {
           if (!existingWidgetIds.includes(widgetData.dataid)) {
@@ -130,12 +139,12 @@ async function loadWidgetState (boardId, viewId) {
             const widgetWrapper = await createWidget(
               service,
               widgetData.url,
-              widgetData.columns,
-              widgetData.rows,
+              Number(widgetData.columns),
+              Number(widgetData.rows),
               widgetData.dataid // Ensure dataid is passed to maintain widget identity
             )
-            widgetWrapper.dataset.order = widgetData.order
-            widgetWrapper.style.order = widgetData.order
+            widgetWrapper.dataset.order = String(widgetData.order)
+            widgetWrapper.style.order = String(widgetData.order)
             widgetWrapper.dataset.type = widgetData.type
             widgetWrapper.dataset.metadata = JSON.stringify(widgetData.metadata)
             widgetWrapper.dataset.settings = JSON.stringify(widgetData.settings)
@@ -189,7 +198,7 @@ function setBoardAndViewIds (boardId, viewId) {
  * Persist the entire boards array to localStorage under the key `boards`.
  *
  * @function saveBoardState
- * @param {Array} boards - Array of board objects to store.
+ * @param {Array<Board>} boards - Array of board objects to store.
  * @returns {Promise<void>}
  */
 export async function saveBoardState (boards) {
@@ -206,7 +215,7 @@ export async function saveBoardState (boards) {
  * The result is also assigned to {@code window.asd.boards} for global access.
  *
  * @function loadBoardState
- * @returns {Promise<Array>} Parsed array of boards or an empty array on failure.
+ * @returns {Promise<Array<Board>>} Parsed array of boards or an empty array on failure.
  */
 export async function loadBoardState () {
   try {

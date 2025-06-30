@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Build and initialize the main dashboard menu UI.
  *
@@ -12,7 +13,7 @@ import emojiList from '../../ui/unicodeEmoji.js'
  * @returns {void}
  */
 function initSW () {
-  const swToggle = document.getElementById('sw-toggle')
+  const swToggle = /** @type {HTMLInputElement} */ (document.getElementById('sw-toggle'))
   const swIcon = document.querySelector('.sw-icon')
   const swCheckbox = document.querySelector('.icon-checkbox')
   const swEnabled = localStorage.getItem('swEnabled') === 'true'
@@ -75,7 +76,7 @@ function initSW () {
 
     swToggle.addEventListener('change', function () {
       const isEnabled = swToggle.checked
-      localStorage.setItem('swEnabled', isEnabled)
+      localStorage.setItem('swEnabled', String(isEnabled))
       updateServiceWorkerUI(isEnabled)
 
       if (isEnabled) {

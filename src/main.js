@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Entry point for the dashboard application.
  *
@@ -22,7 +23,11 @@ const logger = new Logger('main.js')
 
 window.asd = {
   services: [],
-  config: {},
+  config: {
+    globalSettings: {},
+    styling: { widget: { minColumns: 1, maxColumns: 6, minRows: 1, maxRows: 6 } },
+    boards: []
+  },
   boards: [],
   currentBoardId: null,
   currentViewId: null

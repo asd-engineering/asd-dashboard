@@ -69,12 +69,17 @@ Follow these steps to set up and run the ASD Dashboard:
    npm install
    ```
 
-3. Start the application:
+3. Run static type checks:
+   ```bash
+   just check
+   ```
+
+4. Start the application:
    ```bash
    npm run start
    ```
 
-4. Open your browser and navigate to `http://localhost:8000` to access the dashboard.
+5. Open your browser and navigate to `http://localhost:8000` to access the dashboard.
 
 ## AI-Enhanced Test Infrastructure
 

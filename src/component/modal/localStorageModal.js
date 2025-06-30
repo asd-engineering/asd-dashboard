@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Modal dialog for viewing and editing `localStorage` entries.
  *
@@ -80,7 +81,7 @@ export function openLocalStorageModal () {
         let invalid = false
         for (const [key] of Object.entries(data)) {
           if (key.includes('swEnabled') || key.includes('config')) continue
-          const val = document.getElementById(`localStorage-${key}`).value
+          const val = /** @type {HTMLInputElement} */ (document.getElementById(`localStorage-${key}`)).value
           try {
             updated[key] = JSON.parse(val)
           } catch {
