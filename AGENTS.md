@@ -216,18 +216,6 @@ Codex may not patch TypeScript errors using blind type assertions like `as HTMLE
 
 * Avoid introducing regressions by validating every fix.
 
-### ✅ Mandatory Post-Fix Validation
-
-After applying any fix:
-
-```bash
-just check && just test:changed
-```
-
-Only if both pass, the patch is accepted.
-
----
-
 ## 🔄 Iterative AI Validation (Continuous Loop)
 
 Codex continuously validates with:

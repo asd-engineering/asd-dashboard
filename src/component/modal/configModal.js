@@ -33,8 +33,20 @@ const logger = new Logger('configModal.js')
  * @returns {void}
  */
 export function openConfigModal () {
-  const stored = localStorage.getItem('config')
-  const configData = stored ? JSON.parse(stored) : DEFAULT_CONFIG_TEMPLATE
+  const storedConfig = localStorage.getItem('config')
+  const storedBoards = localStorage.getItem('boards')
+  const configData = storedConfig ? JSON.parse(storedConfig) : { ...DEFAULT_CONFIG_TEMPLATE }
+
+  if (storedBoards) {
+    try {
+      const boards = JSON.parse(storedBoards)
+      if (Array.isArray(boards)) {
+        configData.boards = boards
+      }
+    } catch (e) {
+      logger.error('Failed to parse boards from localStorage:', e)
+    }
+  }
 
   openModal({
     id: 'config-modal',
@@ -53,6 +65,13 @@ export function openConfigModal () {
         try {
           const cfg = JSON.parse(textarea.value)
           localStorage.setItem('config', JSON.stringify(cfg))
+
+          if (Array.isArray(cfg.boards)) {
+            localStorage.setItem('boards', JSON.stringify(cfg.boards))
+          } else {
+            localStorage.removeItem('boards')
+          }
+
           showNotification('Config saved to localStorage')
           closeModal()
           setTimeout(() => location.reload(), 500)
