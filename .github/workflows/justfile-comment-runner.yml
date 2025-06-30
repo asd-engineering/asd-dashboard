@@ -18,9 +18,11 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // Only allow org admins (repo admins for orgs, or repo owner)
+            // ↳ Ensure core is imported before setOutput
+            const core = require('@actions/core');
             let allowed = false;
             const actor = context.actor;
+
             if (context.payload.repository.owner.type === "Organization") {
               try {
                 const { data } = await github.orgs.getMembershipForUser({
@@ -28,18 +30,23 @@ jobs:
                   username: actor,
                 });
                 allowed = data.role === "admin";
-              } catch (e) {}
+              } catch {
+                allowed = false;
+              }
             } else {
               allowed = (actor === context.repo.owner);
             }
-            core.setOutput('allowed', allowed);
+
+            // ↳ Always emit a string
+            core.setOutput('allowed', allowed ? 'true' : 'false');
+
       - name: Exit if not admin
         if: steps.is_admin.outputs.allowed != 'true'
         run: |
           echo "User ${{ github.actor }} is not authorized to run commands."
           exit 1
 
-      - name: Install just (Justfile runner)
+      - name: Install just
         run: |
           sudo apt-get update
           sudo apt-get install -y just
@@ -48,38 +55,45 @@ jobs:
         env:
           COMMENT: ${{ github.event.comment.body }}
         run: |
-          #!/usr/bin/env bash
-          set -e
+          set -euo pipefail
 
-          # Remove the '/run' prefix, trim whitespace
-          body="${COMMENT#\/run}"
+          # ↳ Strip the literal prefix '/run' (no stray quotes!)
+          body="${COMMENT#/run}"
           body="$(echo "$body" | xargs)"
 
-          # Split commands on '&&' or ';'
-          IFS=$'\n' read -rd '' -a commands <<<"$(echo "$body" | sed 's/&&/\n/g; s/;/\n/g' | sed '/^\s*$/d' | sed 's/^\s*//; s/\s*$//')"
+          # ↳ Split on && or ;
+          IFS=$'\n' read -rd '' -a cmds <<<"$(
+            printf '%s\n' "$body" \
+              | sed 's/&&/\n/g; s/;/\n/g' \
+              | sed '/^\s*$/d; s/^\s*//; s/\s*$//'
+          )"
 
           results=""
-          for cmd in "${commands[@]}"; do
-            justcmd="$(echo "$cmd" | awk '{print $1}')"
-            if [[ ! "$justcmd" =~ ^[a-zA-Z0-9_-]+$ ]]; then
-              echo "Refusing to run suspicious just command: $justcmd"
+          for cmd in "${cmds[@]}"; do
+            # ↳ Extract subcommand, whitelist safe chars
+            justcmd="${cmd%% *}"
+            if [[ ! "$justcmd" =~ ^[A-Za-z0-9_-]+$ ]]; then
+              echo "Refusing suspicious just command: $justcmd"
               exit 1
             fi
-            args="${cmd#"$justcmd"}"
-            echo "::group::Running: just $justcmd$args"
-            if output=$(just $justcmd $args 2>&1); then
-              results+="✅ just $justcmd$args\n$output\n\n"
+
+            # ↳ Trim args
+            args="$(printf '%s' "${cmd#"$justcmd"}" | xargs)"
+            echo "::group::Running: just $justcmd $args"
+            if output=$(just "$justcmd" $args 2>&1); then
+              results+="✅ just $justcmd $args\n$output\n\n"
             else
-              results+="❌ just $justcmd$args\n$output\n\n"
+              results+="❌ just $justcmd $args\n$output\n\n"
               echo "::endgroup::"
               break
             fi
             echo "::endgroup::"
           done
 
-          echo -e "$results" > results.txt
+          # ↳ Save for comment step
+          printf "%b" "$results" > results.txt
 
-      - name: Comment results (optional)
+      - name: Comment results
         if: always()
         uses: peter-evans/create-or-update-comment@v4
         with:
