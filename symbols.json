@@ -659,30 +659,6 @@
     "returns": "void"
   },
   {
-    "name": "showNotification",
-    "kind": "function",
-    "file": "src/component/dialog/notification.js",
-    "description": "Display a temporary notification message.",
-    "params": [
-      {
-        "name": "message",
-        "type": "string",
-        "desc": "- Text content of the notification."
-      },
-      {
-        "name": "duration",
-        "type": "number",
-        "desc": "- How long to display the notification."
-      },
-      {
-        "name": "type",
-        "type": "('success'|'error')",
-        "desc": "- Visual style of the message."
-      }
-    ],
-    "returns": "void"
-  },
-  {
     "name": "initializeDashboardMenu",
     "kind": "function",
     "file": "src/component/menu/dashboardMenu.js",
@@ -712,6 +688,30 @@
     "file": "src/component/menu/menu.js",
     "description": "Create the main dashboard menu and insert it into the page.",
     "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "showNotification",
+    "kind": "function",
+    "file": "src/component/dialog/notification.js",
+    "description": "Display a temporary notification message.",
+    "params": [
+      {
+        "name": "message",
+        "type": "string",
+        "desc": "- Text content of the notification."
+      },
+      {
+        "name": "duration",
+        "type": "number",
+        "desc": "- How long to display the notification."
+      },
+      {
+        "name": "type",
+        "type": "('success'|'error')",
+        "desc": "- Visual style of the message."
+      }
+    ],
     "returns": "void"
   },
   {
