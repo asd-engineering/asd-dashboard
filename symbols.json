@@ -7,12 +7,12 @@
     "params": [
       {
         "name": "boardId",
-        "type": "string",
+        "type": "?string",
         "desc": "- Board identifier. Defaults to the current board element id."
       },
       {
         "name": "viewId",
-        "type": "string",
+        "type": "?string",
         "desc": "- View identifier. Defaults to the current view element id."
       }
     ],

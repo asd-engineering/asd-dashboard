@@ -33,7 +33,7 @@ export function initializeResizeHandles () {
 
     resizeHandle.addEventListener('mousedown', (event) => {
       event.preventDefault()
-      handleResizeStart(event, widget)
+      handleResizeStart(event, /** @type {HTMLElement} */(widget))
     })
   })
 }
@@ -42,11 +42,11 @@ function createResizeOverlay () {
   const overlay = document.createElement('div')
   overlay.className = 'resize-overlay'
   overlay.style.position = 'fixed'
-  overlay.style.top = 0
-  overlay.style.left = 0
+  overlay.style.top = '0'
+  overlay.style.left = '0'
   overlay.style.width = '100%'
   overlay.style.height = '100%'
-  overlay.style.zIndex = 1000 // Ensure it is above all other elements
+  overlay.style.zIndex = '1000' // Ensure it is above all other elements
   document.body.appendChild(overlay)
   return overlay
 }
@@ -90,8 +90,8 @@ async function handleResizeStart (event, widget) {
 
       widget.style.gridColumn = `span ${snappedWidth}`
       widget.style.gridRow = `span ${snappedHeight}`
-      widget.dataset.columns = snappedWidth
-      widget.dataset.rows = snappedHeight
+      widget.dataset.columns = String(snappedWidth)
+      widget.dataset.rows = String(snappedHeight)
 
       logger.info(`Widget resized to columns: ${snappedWidth}, rows: ${snappedHeight}`)
     } catch (error) {
