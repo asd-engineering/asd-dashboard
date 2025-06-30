@@ -100,23 +100,40 @@ export function openConfigModal () {
       exportButton.classList.add('modal__btn', 'modal__btn--export')
       exportButton.addEventListener('click', async () => {
         try {
-          const cfg = localStorage.getItem('config') || ''
-          const svc = localStorage.getItem('services') || ''
+          const cfgRaw = localStorage.getItem('config')
+          const svcRaw = localStorage.getItem('services')
+
+          let cfgValid = true
+          let svcValid = true
+          try { if (!cfgRaw) cfgValid = false; else JSON.parse(cfgRaw) } catch { cfgValid = false }
+          try { if (!svcRaw) svcValid = false; else JSON.parse(svcRaw) } catch { svcValid = false }
+
+          if (!cfgValid || !svcValid) {
+            logger.warn('Export aborted: missing config or services')
+            showNotification('❌ Cannot export: config or services are missing', 4000, 'error')
+            return
+          }
+
           const [cfgEnc, svcEnc] = await Promise.all([
-            gzipBase64Url(cfg),
-            gzipBase64Url(svc)
+            gzipBase64Url(cfgRaw),
+            gzipBase64Url(svcRaw)
           ])
           const url = `${location.origin}${location.pathname}#cfg=${cfgEnc}&svc=${svcEnc}`
+
           await navigator.clipboard.writeText(url)
 
           if (url.length > 60000) {
-            alert('⚠️ Waarschuwing: URL is erg groot, werkt mogelijk niet in alle browsers.')
+            showNotification('⚠️ URL is very large and may not work in all browsers', 6000, 'error')
+            logger.warn(`Exported URL length: ${url.length}`)
           } else {
-            alert('✅ URL gekopieerd!')
+            const kb = (url.length / 1024).toFixed(1)
+            showNotification(`✅ URL copied to clipboard! (${kb} KB)`, 4000, 'success')
           }
+
+          logger.info(`Exported config URL (${url.length} chars)`)
         } catch (e) {
-          console.error('Export mislukt', e)
-          alert('Export mislukt')
+          showNotification('❌ Failed to export config', 4000, 'error')
+          logger.error('Export failed', e)
         }
       })
 

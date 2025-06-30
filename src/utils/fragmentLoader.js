@@ -7,6 +7,11 @@
  * @module fragmentLoader
  */
 
+import { Logger } from './Logger.js'
+import { showNotification } from '../component/dialog/notification.js'
+
+const logger = new Logger('fragmentLoader.js')
+
 /**
  * Parse the URL fragment and store config/services in localStorage.
  * Logs info on success and alerts on failure.
@@ -17,9 +22,9 @@
 export async function loadFromFragment () {
   if (!('DecompressionStream' in window)) {
     if (location.hash.includes('cfg=') || location.hash.includes('svc=')) {
-      alert('⚠️ DecompressionStream niet ondersteund door deze browser.')
+      showNotification('⚠️ DecompressionStream niet ondersteund door deze browser.', 4000, 'error')
     }
-    console.warn('DecompressionStream niet ondersteund, fragment loader wordt overgeslagen.')
+    logger.warn('DecompressionStream niet ondersteund, fragment loader wordt overgeslagen.')
     return
   }
 
@@ -51,19 +56,17 @@ export async function loadFromFragment () {
       if (Array.isArray(cfg.boards)) {
         localStorage.setItem('boards', JSON.stringify(cfg.boards))
       }
-      console.info('✅ Config geladen uit fragment')
+      logger.info('✅ Config geladen uit fragment')
     }
 
     if (svcParam) {
       const json = await gunzip(base64UrlDecode(svcParam))
       const svc = JSON.parse(json)
       localStorage.setItem('services', JSON.stringify(svc))
-      console.info('✅ Services geladen uit fragment')
+      logger.info('✅ Services geladen uit fragment')
     }
-
-    location.hash = ''
   } catch (e) {
-    console.error('❌ Fout bij laden uit fragment:', e)
-    alert('Fout bij laden van dashboardconfiguratie uit URL fragment.')
+    logger.error('❌ Fout bij laden uit fragment:', e)
+    showNotification('Fout bij laden van dashboardconfiguratie uit URL fragment.', 4000, 'error')
   }
 }
