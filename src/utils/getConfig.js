@@ -54,6 +54,10 @@ async function loadFromSources () {
   if (params.has('config_base64')) {
     const cfg = parseBase64(params.get('config_base64'))
     if (cfg) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg))
+      if (Array.isArray(cfg.boards)) {
+        localStorage.setItem('boards', JSON.stringify(cfg.boards))
+      }
       window.history.replaceState(null, '', location.pathname)
       return cfg
     }
@@ -63,6 +67,10 @@ async function loadFromSources () {
   if (params.has('config_url')) {
     const cfgU = await fetchJson(params.get('config_url'))
     if (cfgU) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cfgU))
+      if (Array.isArray(cfgU.boards)) {
+        localStorage.setItem('boards', JSON.stringify(cfgU.boards))
+      }
       window.history.replaceState(null, '', location.pathname)
       return cfgU
     }

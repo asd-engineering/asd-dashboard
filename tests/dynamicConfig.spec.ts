@@ -15,10 +15,15 @@ async function clearStorage(page) {
 
 test.describe('Dashboard Config - Base64 via URL Params', () => {
   test('loads dashboard from valid config_base64 and services_base64', async ({ page }) => {
-    const config = b64(ciConfig);
+    const cfg = { ...ciConfig, boards: ciBoards };
+    const config = b64(cfg);
     const services = b64(ciServices);
     await page.goto(`/?config_base64=${config}&services_base64=${services}`);
     await expect(page.locator('#service-selector option')).toHaveCount(ciServices.length + 1);
+    const boards = await page.evaluate(() => window.asd.boards);
+    expect(boards.length).toBe(ciBoards.length);
+    const names = await page.$$eval('#board-selector option', opts => opts.map(o => o.textContent));
+    expect(names).toContain(ciBoards[0].name);
   });
 
   test('shows config modal on invalid base64', async ({ page }) => {
