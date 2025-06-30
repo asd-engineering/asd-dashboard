@@ -8,6 +8,7 @@ import { openModal } from './modalFactory.js'
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
 import { clearConfigFragment } from '../../utils/fragmentGuard.js'
+import { gzipJsonToBase64url } from '../../utils/compression.js'
 
 export const DEFAULT_CONFIG_TEMPLATE = {
   globalSettings: {
@@ -26,19 +27,6 @@ export const DEFAULT_CONFIG_TEMPLATE = {
 }
 
 const logger = new Logger('configModal.js')
-
-/**
- * Gzip en base64url encode een string.
- * @param {string} data
- * @returns {Promise<string>}
- */
-async function gzipBase64Url (data) {
-  const cs = new CompressionStream('gzip')
-  const stream = new Blob([data]).stream().pipeThrough(cs)
-  const buffer = await new Response(stream).arrayBuffer()
-  const b64 = btoa(String.fromCharCode(...new Uint8Array(buffer)))
-  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-}
 
 /**
  * Open a modal dialog allowing the user to edit and save configuration JSON.
@@ -115,8 +103,8 @@ export function openConfigModal () {
           }
 
           const [cfgEnc, svcEnc] = await Promise.all([
-            gzipBase64Url(JSON.stringify(cfg)),
-            gzipBase64Url(JSON.stringify(svc))
+            gzipJsonToBase64url(cfg),
+            gzipJsonToBase64url(svc)
           ])
           const url = `${location.origin}${location.pathname}#cfg=${cfgEnc}&svc=${svcEnc}`
           await navigator.clipboard.writeText(url)

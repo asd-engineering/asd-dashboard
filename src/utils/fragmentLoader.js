@@ -9,6 +9,7 @@
 
 import { Logger } from './Logger.js'
 import { showNotification } from '../component/dialog/notification.js'
+import { gunzipBase64urlToJson } from './compression.js'
 
 const logger = new Logger('fragmentLoader.js')
 
@@ -49,25 +50,9 @@ export async function loadFromFragment (wasExplicitLoad = false) {
     return
   }
 
-  const base64UrlDecode = str => {
-    const pad = '===='.slice(0, (4 - str.length % 4) % 4)
-    const b64 = str.replace(/-/g, '+').replace(/_/g, '/') + pad
-    const binary = atob(b64)
-    const bytes = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-    return bytes
-  }
-
-  const gunzip = async (bytes) => {
-    const ds = new DecompressionStream('gzip')
-    const stream = new Blob([bytes]).stream().pipeThrough(ds)
-    return new Response(stream).text()
-  }
-
   try {
     if (cfgParam) {
-      const json = await gunzip(base64UrlDecode(cfgParam))
-      const cfg = JSON.parse(json)
+      const cfg = await gunzipBase64urlToJson(cfgParam)
       localStorage.setItem('config', JSON.stringify(cfg))
       if (Array.isArray(cfg.boards)) {
         localStorage.setItem('boards', JSON.stringify(cfg.boards))
@@ -76,8 +61,7 @@ export async function loadFromFragment (wasExplicitLoad = false) {
     }
 
     if (svcParam) {
-      const json = await gunzip(base64UrlDecode(svcParam))
-      const svc = JSON.parse(json)
+      const svc = await gunzipBase64urlToJson(svcParam)
       localStorage.setItem('services', JSON.stringify(svc))
       logger.info('✅ Services geladen uit fragment')
     }
