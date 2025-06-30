@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Modal dialog for editing the application configuration.
  *

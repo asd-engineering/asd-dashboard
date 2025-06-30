@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Load configuration from query parameters, localStorage or defaults.
  *

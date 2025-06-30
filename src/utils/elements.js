@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * DOM element helpers.
  *
