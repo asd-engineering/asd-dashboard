@@ -40,7 +40,7 @@ function handleEscapeKey (event) {
   if (event.key === 'Escape') {
     const fullScreenWidget = document.querySelector('.widget-wrapper.fullscreen')
     if (fullScreenWidget) {
-      toggleFullScreen(fullScreenWidget)
+      toggleFullScreen(/** @type {HTMLElement} */(fullScreenWidget))
     }
   }
 }
