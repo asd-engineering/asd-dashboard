@@ -83,9 +83,9 @@ test.describe('Dashboard Config - Fallback Config Popup', () => {
   test('valid input in popup initializes dashboard', async ({ page }) => {
     await page.goto('/');
     await page.click('#config-modal .modal__btn--cancel');
-    await page.evaluate(cfg => {
-      return import('/component/modal/configModal.js').then(m => m.openConfigModal(cfg));
-    }, ciConfig);
+    await page.evaluate(() => {
+      return import('/component/modal/configModal.js').then(m => m.openConfigModal());
+    });
     await page.waitForSelector('#config-json');
     await page.fill('#config-json', JSON.stringify(ciConfig));
     await page.click('#config-modal .modal__btn--save');

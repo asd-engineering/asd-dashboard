@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Dropdown handlers for view-specific actions.
  *

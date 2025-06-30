@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * UI handlers for the board actions dropdown.
  *
@@ -106,6 +107,6 @@ function handleDeleteBoard () {
  * @returns {string}
  */
 function getSelectedBoardId () {
-  const boardSelector = document.getElementById('board-selector')
+  const boardSelector = /** @type {HTMLSelectElement} */(document.getElementById('board-selector'))
   return boardSelector.value
 }

@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Utility to toggle a widget into a full-screen display mode.
  *
@@ -39,7 +40,7 @@ function handleEscapeKey (event) {
   if (event.key === 'Escape') {
     const fullScreenWidget = document.querySelector('.widget-wrapper.fullscreen')
     if (fullScreenWidget) {
-      toggleFullScreen(fullScreenWidget)
+      toggleFullScreen(/** @type {HTMLElement} */(fullScreenWidget))
     }
   }
 }
