@@ -13,8 +13,9 @@ import emojiList from '../../ui/unicodeEmoji.js'
  * @returns {void}
  */
 function initSW () {
-  const swToggle = document.getElementById('sw-toggle')
+  const swToggle = /** @type {HTMLInputElement} */(document.getElementById('sw-toggle'))
   const swIcon = document.querySelector('.sw-icon')
+  /** @type {HTMLElement} */
   const swCheckbox = document.querySelector('.icon-checkbox')
   const swEnabled = localStorage.getItem('swEnabled') === 'true'
   swToggle.checked = swEnabled
@@ -76,7 +77,7 @@ function initSW () {
 
     swToggle.addEventListener('change', function () {
       const isEnabled = swToggle.checked
-      localStorage.setItem('swEnabled', isEnabled)
+      localStorage.setItem('swEnabled', String(isEnabled))
       updateServiceWorkerUI(isEnabled)
 
       if (isEnabled) {

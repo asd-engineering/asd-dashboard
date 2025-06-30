@@ -25,7 +25,8 @@ const CACHE_NAME = 'my-cache-v3' // Make sure this matches the cache name in the
 
 self.addEventListener('install', function (event) {
   console.log('[Service Worker] Installed')
-  event.waitUntil(
+  const installEvent = /** @type {any} */(event)
+  installEvent.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
       console.log('[Service Worker] Caching pre-defined assets')
       return cache.addAll([
@@ -37,19 +38,20 @@ self.addEventListener('install', function (event) {
 })
 
 self.addEventListener('fetch', function (event) {
-  console.log('[Service Worker] Fetching: ', event.request.url)
-  event.respondWith(
-    caches.match(event.request).then(function (response) {
+  const fetchEvent = /** @type {any} */(event)
+  console.log('[Service Worker] Fetching: ', fetchEvent.request.url)
+  fetchEvent.respondWith(
+    caches.match(fetchEvent.request).then(function (response) {
       if (response) {
-        console.log('[Service Worker] Cache hit for: ', event.request.url)
+        console.log('[Service Worker] Cache hit for: ', fetchEvent.request.url)
         return response
       }
-      console.log('[Service Worker] Cache miss, fetching from network: ', event.request.url)
-      return fetch(event.request).then(function (networkResponse) {
+      console.log('[Service Worker] Cache miss, fetching from network: ', fetchEvent.request.url)
+      return fetch(fetchEvent.request).then(function (networkResponse) {
         // Cache the new asset if it's fetched from the network
         return caches.open(CACHE_NAME).then(function (cache) {
-          console.log('[Service Worker] Caching new resource: ', event.request.url)
-          cache.put(event.request, networkResponse.clone())
+          console.log('[Service Worker] Caching new resource: ', fetchEvent.request.url)
+          cache.put(fetchEvent.request, networkResponse.clone())
           return networkResponse
         })
       })
@@ -60,7 +62,8 @@ self.addEventListener('fetch', function (event) {
 self.addEventListener('activate', function (event) {
   console.log('[Service Worker] Activating and cleaning up old caches')
   const cacheWhitelist = [CACHE_NAME] // Only keep the current cache
-  event.waitUntil(
+  const activateEvent = /** @type {any} */(event)
+  activateEvent.waitUntil(
     caches.keys().then(function (cacheNames) {
       cacheNames.forEach(function (cacheName) {
         if (cacheWhitelist.indexOf(cacheName) === -1) {
