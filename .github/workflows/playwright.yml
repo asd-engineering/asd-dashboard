@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
 
-    concurrency:                                    # <-- de-dented: must align with other job keys
+    concurrency:
       group: playwright-${{ github.head_ref || github.ref }}
       cancel-in-progress: true
 

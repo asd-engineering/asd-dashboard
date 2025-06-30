@@ -1,0 +1,101 @@
+name: Justfile Comment Runner
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  run_justfile_commands:
+    if: startsWith(github.event.comment.body, '/run')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate user is admin
+        id: is_admin
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // ↳ Ensure core is imported before setOutput
+            const core = require('@actions/core');
+            let allowed = false;
+            const actor = context.actor;
+
+            if (context.payload.repository.owner.type === "Organization") {
+              try {
+                const { data } = await github.orgs.getMembershipForUser({
+                  org: context.repo.owner,
+                  username: actor,
+                });
+                allowed = data.role === "admin";
+              } catch {
+                allowed = false;
+              }
+            } else {
+              allowed = (actor === context.repo.owner);
+            }
+
+            // ↳ Always emit a string
+            core.setOutput('allowed', allowed ? 'true' : 'false');
+
+      - name: Exit if not admin
+        if: steps.is_admin.outputs.allowed != 'true'
+        run: |
+          echo "User ${{ github.actor }} is not authorized to run commands."
+          exit 1
+
+      - name: Install just
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y just
+
+      - name: Parse and run Justfile commands
+        env:
+          COMMENT: ${{ github.event.comment.body }}
+        run: |
+          set -euo pipefail
+
+          # ↳ Strip the literal prefix '/run' (no stray quotes!)
+          body="${COMMENT#/run}"
+          body="$(echo "$body" | xargs)"
+
+          # ↳ Split on && or ;
+          IFS=$'\n' read -rd '' -a cmds <<<"$(
+            printf '%s\n' "$body" \
+              | sed 's/&&/\n/g; s/;/\n/g' \
+              | sed '/^\s*$/d; s/^\s*//; s/\s*$//'
+          )"
+
+          results=""
+          for cmd in "${cmds[@]}"; do
+            # ↳ Extract subcommand, whitelist safe chars
+            justcmd="${cmd%% *}"
+            if [[ ! "$justcmd" =~ ^[A-Za-z0-9_-]+$ ]]; then
+              echo "Refusing suspicious just command: $justcmd"
+              exit 1
+            fi
+
+            # ↳ Trim args
+            args="$(printf '%s' "${cmd#"$justcmd"}" | xargs)"
+            echo "::group::Running: just $justcmd $args"
+            if output=$(just "$justcmd" $args 2>&1); then
+              results+="✅ just $justcmd $args\n$output\n\n"
+            else
+              results+="❌ just $justcmd $args\n$output\n\n"
+              echo "::endgroup::"
+              break
+            fi
+            echo "::endgroup::"
+          done
+
+          # ↳ Save for comment step
+          printf "%b" "$results" > results.txt
+
+      - name: Comment results
+        if: always()
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body-file: results.txt

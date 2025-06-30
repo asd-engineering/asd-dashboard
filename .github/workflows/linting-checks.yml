@@ -1,0 +1,38 @@
+# .github/workflows/lint-and-typecheck.yml
+name: Lint & Type Check
+
+on:
+  push:
+
+jobs:
+  lint_and_typecheck:
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: linting-${{ github.head_ref || github.ref }}
+      cancel-in-progress: true
+
+    strategy:
+      matrix:
+        node-version: [lts/*]
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint with StandardJS
+        run: npx standard
+
+      - name: Type check
+        run: npm run check
