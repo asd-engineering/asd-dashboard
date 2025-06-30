@@ -15,6 +15,7 @@ import { openLocalStorageModal } from './component/modal/localStorageModal.js'
 import { openConfigModal } from './component/modal/configModal.js'
 import { initializeBoardDropdown } from './component/board/boardDropdown.js'
 import { initializeViewDropdown } from './component/view/viewDropdown.js'
+import { loadFromFragment } from './utils/fragmentLoader.js'
 import { Logger } from './utils/Logger.js'
 
 const logger = new Logger('main.js')
@@ -31,6 +32,7 @@ window.asd = {
 
 document.addEventListener('DOMContentLoaded', async () => {
   logger.log('DOMContentLoaded event fired')
+  await loadFromFragment()
   initializeMainMenu()
   fetchServices()
   try {

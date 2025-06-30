@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { ciConfig, ciBoards } from './data/ciConfig';
 import { ciServices } from './data/ciServices';
+import { gunzipSync } from 'zlib';
 
 function b64(obj: any) {
   return Buffer.from(JSON.stringify(obj)).toString('base64');
@@ -83,6 +84,38 @@ test.describe('Dashboard Config - Fallback Config Popup', () => {
   test('popup appears when no config available via url, storage, or local file', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('#config-modal')).toBeVisible();
+  });
+
+  test('config modal shows Export button', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('#config-modal .modal__btn--export')).toBeVisible();
+  });
+
+  test('export button copies encoded URL', async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(({ cfg, svc }) => {
+      localStorage.setItem('config', JSON.stringify(cfg));
+      localStorage.setItem('services', JSON.stringify(svc));
+    }, { cfg: ciConfig, svc: ciServices });
+    await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()));
+    await page.waitForSelector('#config-modal .modal__btn--export');
+    await page.evaluate(() => { window.copied = ''; navigator.clipboard.writeText = async t => { window.copied = t } });
+    await page.click('#config-modal .modal__btn--export');
+    const url = await page.evaluate(() => window.copied);
+    const hash = url.split('#')[1] || '';
+    const params = new URLSearchParams(hash);
+
+    const decode = (str: string) => {
+      const pad = '='.repeat((4 - str.length % 4) % 4);
+      const b64 = str.replace(/-/g, '+').replace(/_/g, '/') + pad;
+      const buf = Buffer.from(b64, 'base64');
+      return gunzipSync(buf).toString();
+    };
+
+    const cfg = JSON.parse(decode(params.get('cfg')!));
+    const svc = JSON.parse(decode(params.get('svc')!));
+    expect(cfg.globalSettings.theme).toBe(ciConfig.globalSettings.theme);
+    expect(svc.length).toBe(ciServices.length);
   });
 
   test('valid input in popup initializes dashboard', async ({ page }) => {

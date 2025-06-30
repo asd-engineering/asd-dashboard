@@ -221,6 +221,14 @@
     "returns": "Promise<Array<Service>>"
   },
   {
+    "name": "loadFromFragment",
+    "kind": "function",
+    "file": "src/utils/fragmentLoader.js",
+    "description": "Parse the URL fragment and store config/services in localStorage. Logs info on success and alerts on failure.",
+    "params": [],
+    "returns": "Promise<void>"
+  },
+  {
     "name": "getConfig",
     "kind": "function",
     "file": "src/utils/getConfig.js",

@@ -27,6 +27,19 @@ export const DEFAULT_CONFIG_TEMPLATE = {
 const logger = new Logger('configModal.js')
 
 /**
+ * Gzip en base64url encode een string.
+ * @param {string} data
+ * @returns {Promise<string>}
+ */
+async function gzipBase64Url (data) {
+  const cs = new CompressionStream('gzip')
+  const stream = new Blob([data]).stream().pipeThrough(cs)
+  const buffer = await new Response(stream).arrayBuffer()
+  const b64 = btoa(String.fromCharCode(...new Uint8Array(buffer)))
+  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+/**
  * Open a modal dialog allowing the user to edit and save configuration JSON.
  *
  * @function openConfigModal
@@ -81,6 +94,32 @@ export function openConfigModal () {
         }
       })
 
+      const exportButton = document.createElement('button')
+      exportButton.textContent = 'Export'
+      exportButton.title = 'Genereer deelbare URL'
+      exportButton.classList.add('modal__btn', 'modal__btn--export')
+      exportButton.addEventListener('click', async () => {
+        try {
+          const cfg = localStorage.getItem('config') || ''
+          const svc = localStorage.getItem('services') || ''
+          const [cfgEnc, svcEnc] = await Promise.all([
+            gzipBase64Url(cfg),
+            gzipBase64Url(svc)
+          ])
+          const url = `${location.origin}${location.pathname}#cfg=${cfgEnc}&svc=${svcEnc}`
+          await navigator.clipboard.writeText(url)
+
+          if (url.length > 60000) {
+            alert('⚠️ Waarschuwing: URL is erg groot, werkt mogelijk niet in alle browsers.')
+          } else {
+            alert('✅ URL gekopieerd!')
+          }
+        } catch (e) {
+          console.error('Export mislukt', e)
+          alert('Export mislukt')
+        }
+      })
+
       const closeButton = document.createElement('button')
       closeButton.textContent = 'Close'
       closeButton.classList.add('modal__btn', 'modal__btn--cancel')
@@ -88,7 +127,7 @@ export function openConfigModal () {
 
       const buttonContainer = document.createElement('div')
       buttonContainer.classList.add('modal__btn-group')
-      buttonContainer.append(saveButton, closeButton)
+      buttonContainer.append(saveButton, exportButton, closeButton)
       modal.appendChild(buttonContainer)
     }
   })
