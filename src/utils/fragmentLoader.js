@@ -10,6 +10,7 @@
 import { Logger } from './Logger.js'
 import { showNotification } from '../component/dialog/notification.js'
 import { gunzipBase64urlToJson } from './compression.js'
+import { openFragmentDecisionModal } from '../component/modal/fragmentDecisionModal.js'
 
 const logger = new Logger('fragmentLoader.js')
 
@@ -45,8 +46,8 @@ export async function loadFromFragment (wasExplicitLoad = false) {
     localStorage.getItem('services') ||
     localStorage.getItem('boards')
 
-  if (hasLocalData && !wasExplicitLoad) {
-    console.warn('⚠️ Skipping fragment load: local data already exists')
+  if ((cfgParam || svcParam) && hasLocalData && !wasExplicitLoad) {
+    await openFragmentDecisionModal(cfgParam, svcParam)
     return
   }
 

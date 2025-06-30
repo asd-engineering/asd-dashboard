@@ -337,6 +337,44 @@
     "returns": "string"
   },
   {
+    "name": "mergeBoards",
+    "kind": "function",
+    "file": "src/utils/merge.js",
+    "description": "Merge board arrays by id.",
+    "params": [
+      {
+        "name": "existingBoards",
+        "type": "Array<Board>",
+        "desc": ""
+      },
+      {
+        "name": "newBoards",
+        "type": "Array<Board>",
+        "desc": ""
+      }
+    ],
+    "returns": "Array<Board>"
+  },
+  {
+    "name": "mergeServices",
+    "kind": "function",
+    "file": "src/utils/merge.js",
+    "description": "Merge service arrays by unique url or id.",
+    "params": [
+      {
+        "name": "existingServices",
+        "type": "Array<Service>",
+        "desc": ""
+      },
+      {
+        "name": "newServices",
+        "type": "Array<Service>",
+        "desc": ""
+      }
+    ],
+    "returns": "Array<Service>"
+  },
+  {
     "name": "debounce",
     "kind": "function",
     "file": "src/utils/utils.js",
@@ -683,6 +721,25 @@
     "description": "Open a modal dialog allowing the user to edit and save configuration JSON.",
     "params": [],
     "returns": "void"
+  },
+  {
+    "name": "openFragmentDecisionModal",
+    "kind": "function",
+    "file": "src/component/modal/fragmentDecisionModal.js",
+    "description": "Display modal asking user to overwrite or merge fragment data.",
+    "params": [
+      {
+        "name": "cfgParam",
+        "type": "string|null",
+        "desc": "- Encoded config fragment."
+      },
+      {
+        "name": "svcParam",
+        "type": "string|null",
+        "desc": "- Encoded service fragment."
+      }
+    ],
+    "returns": "Promise<void>"
   },
   {
     "name": "openLocalStorageModal",
