@@ -51,9 +51,10 @@
 /**
  * Dashboard configuration loaded from storage or URL.
  * @typedef {Object} DashboardConfig
- * @property {object} globalSettings
- * @property {Array<Board>} boards
- */
+ * @property {object} [globalSettings]
+ * @property {Array<Board>} [boards]
+ * @property {{widget: {minColumns:number, maxColumns:number, minRows:number, maxRows:number}}} [styling]
+*/
 
 /**
  * Structured entry written by {@link Logger} during tests.

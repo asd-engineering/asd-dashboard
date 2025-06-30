@@ -13,7 +13,7 @@ import {
   updateViewSelector
 } from '../../component/board/boardManagement.js'
 import { saveWidgetState } from '../../storage/localStorage.js'
-import { getCurrentBoardId } from '../../utils/elements.js'
+import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
 
@@ -36,8 +36,8 @@ function initializeDashboardMenu () {
   document.addEventListener('services-updated', populateServiceDropdown)
 
   document.getElementById('add-widget-button').addEventListener('click', () => {
-    const serviceSelector = document.getElementById('service-selector')
-    const widgetUrlInput = document.getElementById('widget-url')
+    const serviceSelector = /** @type {HTMLSelectElement} */(document.getElementById('service-selector'))
+    const widgetUrlInput = /** @type {HTMLInputElement} */(document.getElementById('widget-url'))
     const boardElement = document.querySelector('.board')
     const viewElement = document.querySelector('.board-view')
     const selectedServiceUrl = serviceSelector.value
@@ -74,16 +74,18 @@ function initializeDashboardMenu () {
   })
 
   document.getElementById('board-selector').addEventListener('change', (event) => {
-    const selectedBoardId = event.target.value
+    const target = /** @type {HTMLSelectElement} */(event.target)
+    const selectedBoardId = target.value
     const currentBoardId = getCurrentBoardId()
-    saveWidgetState(currentBoardId) // Save the state of the current board before switching
+    saveWidgetState(currentBoardId, getCurrentViewId()) // Save current view state
     switchBoard(selectedBoardId)
     updateViewSelector(selectedBoardId)
   })
 
   document.getElementById('view-selector').addEventListener('change', (event) => {
     const selectedBoardId = getCurrentBoardId()
-    const selectedViewId = event.target.value
+    const target = /** @type {HTMLSelectElement} */(event.target)
+    const selectedViewId = target.value
     logger.log(`Switching to selected view ${selectedViewId} in board ${selectedBoardId}`)
     switchView(selectedBoardId, selectedViewId)
   })
