@@ -1,5 +1,4 @@
 // @ts-check
-/* global HTMLElement */
 /**
  * Widget creation and management functions.
  *
@@ -58,8 +57,8 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
 
   widgetWrapper.style.gridColumn = `span ${gridColumnSpan}`
   widgetWrapper.style.gridRow = `span ${gridRowSpan}`
-  widgetWrapper.dataset.columns = String(gridColumnSpan)
-  widgetWrapper.dataset.rows = String(gridRowSpan)
+  widgetWrapper.dataset.columns = gridColumnSpan
+  widgetWrapper.dataset.rows = gridRowSpan
 
   const iframe = document.createElement('iframe')
   iframe.src = url
@@ -122,7 +121,7 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
   resizeMenuIcon.addEventListener('mouseleave', (event) => {
     logger.log('Mouse left resize menu icon')
     const related = event.relatedTarget
-    if (!(related instanceof HTMLElement) || !related.closest('.resize-menu')) {
+    if (!related || !related.closest('.resize-menu')) {
       debouncedHideResizeMenu(resizeMenuIcon)
     }
   })
@@ -137,7 +136,7 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
   resizeMenuBlockIcon.addEventListener('mouseleave', (event) => {
     logger.log('Mouse left resize menu block icon')
     const related = event.relatedTarget
-    if (!(related instanceof HTMLElement) || !related.closest('.resize-menu-block')) {
+    if (!related || !related.closest('.resize-menu-block')) {
       debouncedHideResizeMenuBlock(widgetWrapper)
     }
   })
@@ -220,7 +219,7 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
   logger.log('Extracted service:', service)
 
   const widgetWrapper = await createWidget(service, url, columns, rows, dataid)
-  widgetWrapper.setAttribute('data-order', String(widgetContainer.children.length))
+  widgetWrapper.setAttribute('data-order', widgetContainer.children.length)
   widgetContainer.appendChild(widgetWrapper)
 
   logger.log('Widget appended to container:', widgetWrapper)
@@ -293,11 +292,10 @@ function updateWidgetOrders () {
   const widgets = Array.from(widgetContainer.children)
 
   widgets.forEach((widget, index) => {
-    const element = /** @type {HTMLElement} */(widget)
-    element.setAttribute('data-order', String(index))
-    element.style.order = String(index)
+    widget.setAttribute('data-order', index)
+    widget.style.order = index
     logger.log('Updated widget order:', {
-      dataid: element.dataset.dataid,
+      dataid: widget.dataset.dataid,
       order: index
     })
   })

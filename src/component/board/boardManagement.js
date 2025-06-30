@@ -136,15 +136,7 @@ export async function switchView (boardId, viewId) {
       clearWidgetContainer()
       logger.log(`Rendering widgets for view ${viewId}:`, view.widgetState)
       for (const widget of view.widgetState) {
-        await addWidget(
-          widget.url,
-          Number(widget.columns),
-          Number(widget.rows),
-          widget.type,
-          boardId,
-          viewId,
-          widget.dataid
-        )
+        await addWidget(widget.url, widget.columns, widget.rows, widget.type, boardId, viewId, widget.dataid)
       }
       window.asd.currentViewId = viewId
       localStorage.setItem('lastUsedViewId', viewId)
@@ -166,7 +158,7 @@ export async function switchView (boardId, viewId) {
  * @returns {void}
  */
 export function updateViewSelector (boardId) {
-  const viewSelector = /** @type {HTMLSelectElement|null} */(document.getElementById('view-selector'))
+  const viewSelector = document.getElementById('view-selector')
   if (!viewSelector) {
     logger.error('View selector element not found')
     return
@@ -258,7 +250,6 @@ export function initializeBoards () {
     }
   }).catch(error => {
     logger.error('Error initializing boards:', error)
-    return undefined
   })
 }
 
@@ -271,7 +262,7 @@ export function initializeBoards () {
  * @returns {void}
  */
 export function addBoardToUI (board) {
-  const boardSelector = /** @type {HTMLSelectElement} */(document.getElementById('board-selector'))
+  const boardSelector = document.getElementById('board-selector')
   const option = document.createElement('option')
   option.value = board.id
   option.textContent = board.name
@@ -416,7 +407,7 @@ export function resetView (boardId, viewId) {
 }
 
 function updateBoardSelector () {
-  const boardSelector = /** @type {HTMLSelectElement} */(document.getElementById('board-selector'))
+  const boardSelector = document.getElementById('board-selector')
   boardSelector.innerHTML = ''
   boards.forEach(board => {
     const option = document.createElement('option')

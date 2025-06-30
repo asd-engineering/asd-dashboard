@@ -34,7 +34,7 @@ async function resizeHorizontally (widget, increase = true) {
       widget.classList.remove('below-min', 'exceeding-max')
     }
 
-    widget.dataset.columns = String(newSpan)
+    widget.dataset.columns = newSpan
     widget.style.gridColumn = `span ${newSpan}`
     logger.log(`Widget resized horizontally to span ${newSpan} columns`)
     saveWidgetState()
@@ -75,7 +75,7 @@ async function resizeVertically (widget, increase = true) {
       widget.classList.remove('below-min', 'exceeding-max')
     }
 
-    widget.dataset.rows = String(newSpan)
+    widget.dataset.rows = newSpan
     widget.style.gridRow = `span ${newSpan}`
     logger.log(`Widget resized vertically to span ${newSpan} rows`)
     saveWidgetState()
@@ -264,8 +264,8 @@ async function adjustWidgetSize (widgetWrapper, columns, rows) {
     columns = Math.min(Math.max(columns, minColumns), maxColumns)
     rows = Math.min(Math.max(rows, minRows), maxRows)
 
-    widgetWrapper.dataset.columns = String(columns)
-    widgetWrapper.dataset.rows = String(rows)
+    widgetWrapper.dataset.columns = columns
+    widgetWrapper.dataset.rows = rows
     widgetWrapper.style.gridColumn = `span ${columns}`
     widgetWrapper.style.gridRow = `span ${rows}`
     logger.log(`Widget resized to ${columns} columns and ${rows} rows`)

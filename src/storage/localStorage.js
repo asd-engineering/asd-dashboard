@@ -59,8 +59,8 @@ function serializeWidgetState (widget) {
  * and view identifiers in localStorage. Each widget is saved with its order,
  * dimensions, URL and any metadata/settings.
  *
- * @param {?string} [boardId] - Board identifier. Defaults to the current board element id.
- * @param {?string} [viewId] - View identifier. Defaults to the current view element id.
+ * @param {string} boardId - Board identifier. Defaults to the current board element id.
+ * @param {string} viewId - View identifier. Defaults to the current view element id.
  * @function saveWidgetState
  * @returns {Promise<void>}
  */
@@ -79,7 +79,7 @@ async function saveWidgetState (boardId, viewId) {
     }
     const widgetContainer = document.getElementById('widget-container')
     const widgets = Array.from(widgetContainer.children)
-    const widgetState = widgets.map(widget => serializeWidgetState(/** @type {HTMLElement} */(widget)))
+    const widgetState = widgets.map(widget => serializeWidgetState(widget))
     const boards = await loadBoardState()
     logger.info(`Loaded board state from localStorage: ${boards}`)
     const board = boards.find(b => b.id === boardId)
@@ -130,7 +130,7 @@ async function loadWidgetState (boardId, viewId) {
         logger.info('Found widget state in view:', view.widgetState)
         const savedState = view.widgetState
         const widgetContainer = document.getElementById('widget-container')
-        const existingWidgetIds = Array.from(widgetContainer.children).map(w => /** @type {HTMLElement} */(w).dataset.dataid)
+        const existingWidgetIds = Array.from(widgetContainer.children).map(w => w.dataset.dataid)
 
         for (const widgetData of savedState) {
           if (!existingWidgetIds.includes(widgetData.dataid)) {
@@ -139,12 +139,12 @@ async function loadWidgetState (boardId, viewId) {
             const widgetWrapper = await createWidget(
               service,
               widgetData.url,
-              Number(widgetData.columns),
-              Number(widgetData.rows),
+              widgetData.columns,
+              widgetData.rows,
               widgetData.dataid // Ensure dataid is passed to maintain widget identity
             )
-            widgetWrapper.dataset.order = String(widgetData.order)
-            widgetWrapper.style.order = String(widgetData.order)
+            widgetWrapper.dataset.order = widgetData.order
+            widgetWrapper.style.order = widgetData.order
             widgetWrapper.dataset.type = widgetData.type
             widgetWrapper.dataset.metadata = JSON.stringify(widgetData.metadata)
             widgetWrapper.dataset.settings = JSON.stringify(widgetData.settings)
