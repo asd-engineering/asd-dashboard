@@ -7,7 +7,7 @@ menu {
 #controls {
     display: flex;
     justify-content: center;
-    gap: 1rem;
+    gap: 0.5rem;
     padding: 0.5rem; 
     background-color: #fff;
     z-index: 1001;
@@ -19,11 +19,17 @@ menu {
     display: flex;
     flex-direction: row; /* Horizontal alignment */
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-between;
     gap: 0.3rem; /* Minimize spacing between elements */
     padding: 0.3rem;
     border-radius: 8px;
     background-color: #f9f9f9;
     width: auto; /* Auto width for tighter fit */
+    max-width: 100%; /* Prevent from growing beyond container */
+    flex-wrap: wrap;
+    overflow: hidden;
+    word-break: break-word;
 }
 
 /* Styles for select, input, and button elements */
@@ -33,6 +39,17 @@ menu {
     font-size: 0.8rem;
     border: 1px solid #ccc;
     border-radius: 4px;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-width: 0; /* allows flex to shrink */
+    flex-shrink: 1;
+}
+
+/* Ellipsis on overly long items */
+#controls select {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 #controls button {
@@ -47,7 +64,7 @@ menu {
     transition: background-color 0.3s ease;
 }
 
-#controls button:hover,{
+#controls button:hover{
     background-color: #45a049;
 }
 

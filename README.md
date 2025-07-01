@@ -1,6 +1,6 @@
 # ASD Dashboard
 
-The ASD web dashboard is a VanillaJS Progressive Web App (PWA) designed to streamline ⚡ Accelerated Software Development and 🚀 Automated Service Deployment. This application empowers users to manage remote services through dynamic, resizable widgets encapsulated within iframes. It supports multiple boards and views for flexible configurations, with user preferences stored in localStorage for persistent sessions. Services are configured in `services.json` and the configuration can be loaded via a `config.json` file. Both files can be loaded local or remote due to the way the project has been designed as a PWA.
+The ASD web dashboard is a VanillaJS Progressive Web App (PWA) designed to streamline ⚡ Accelerated Software Development/Devops and Service Deployment. This application empowers users to manage remote services through dynamic, resizable widgets encapsulated within iframes. It supports multiple boards and views for flexible configurations, with user preferences stored in localStorage for persistent sessions. Services are configured in `services.json` and the configuration can be loaded via a `config.json` file. Both files can be loaded local or remote due to the way the project has been designed as a PWA.
 
 ## Overview
 
@@ -25,26 +25,84 @@ ASD Dashboard is architected with a focus on simplicity and adaptability:
 - **Playwright Integration & Testing**: Comprehensive testing using Playwright, with automated tests running via GitHub Actions.
 - **Custom Logger Integration**: All log statements use a custom logger for better development and debugging.
 
-## Dynamic Configuration
+Here's the optimized version of the second part—**URL Fragment-Based Config Sharing**—to follow directly after the revised query parameter section. It's concise, technically precise, and clearly contrasts with the dynamic configuration method:
 
-The dashboard configuration and available services can be supplied at runtime via URL query parameters. This is useful for loading remote or ephemeral data without touching the default files.
+## Private Config Sharing (via URL Fragment)
 
-- `config_base64` – base64 encoded JSON for the entire `config.json` content.
-- `config_url` – direct URL to a remote `config.json` file.
-- `services_base64` – base64 encoded JSON describing available services.
-- `services_url` – direct URL to a remote `services.json` file.
+ASD Dashboard also supports sharing full configuration and service state using the URL **fragment** (`#...`), which is **never sent to the server**. This method is ideal for securely sharing setups between users without exposing data to the backend or intermediaries.
 
-When provided, the parameters above take priority over any data stored in `localStorage` or the local `config.json` and `services.json` files. All JSON must be valid and encoded with base64 when using the `*_base64` variants.
+### How It Works
 
-Examples:
+* Click **“Export”** in the config modal to generate a shareable URL:
+
+  ```
+  https://your-dashboard.app/#cfg=<compressed>&svc=<compressed>
+  ```
+
+* Config and services are:
+
+  * **Gzipped** and **base64url-encoded** for compactness
+  * Decoded locally using modern browser APIs (e.g. `DecompressionStream`)
+  * Persisted to `localStorage` when the page loads
+
+* **No servers are involved**: data stays fully client-side.
+
+### Advantages
+
+* 🔒 **100% private** – Fragment data never hits the server or network
+* 🧪 **Great for debugging** – Share exact UI state across devices or teams
+* 🔁 **Instant import** – Users loading the link get your full dashboard setup
+* ⚡ **Offline-ready** – Works even when hosted statically or offline
+
+### Practical Limits
+
+* Works reliably up to \~60KB total URL length (more than enough for hundreds of services)
+* Shows a warning if the link becomes too large for some browsers
+* Fails gracefully if compression is unsupported (e.g., older Safari versions)
+
+### Use Case Example
+
+You can configure your dashboard, click **Export**, and share the link in Slack or WhatsApp. The recipient opens it and instantly gets your layout, widgets, theme, and services—no installation, syncing, or servers involved.
+
+## Dynamic Configuration (via URL Parameters)
+
+The dashboard also supports loading configuration and services **dynamically at runtime** using URL **query parameters**. This feature is mainly intended for **testing, development, or temporary setups** where you want to load alternative configuration data **without modifying local files**.
+
+> ⚠️ **Note:** Unlike fragment-based config sharing (which is 100% client-side and private), query parameters **are sent to the server** and may appear in logs, caches, proxies, or analytics systems. Avoid using this for sensitive or personal data.
+
+### Supported Parameters
+
+* `config_base64` – base64-encoded JSON of the full `config.json`.
+* `config_url` – direct URL to a remote `config.json` file.
+* `services_base64` – base64-encoded JSON for service definitions.
+* `services_url` – direct URL to a remote `services.json` file.
+
+These values override:
+
+* Anything stored in `localStorage`
+* The default local `config.json` and `services.json` files
+
+### Example URLs
 
 ```bash
-# Load from remote files
+# Load from remote config/services
 http://localhost:8000/?config_url=https://example.com/config.json&services_url=https://example.com/services.json
 
-# Load from base64 strings
+# Load from base64-encoded strings
 http://localhost:8000/?config_base64=<base64-string>&services_base64=<base64-string>
 ```
+
+### When to Use This
+
+✅ Ideal for:
+
+* Testing alternate dashboards or environments
+* Injecting configuration from CI scripts or preview links
+
+❌ Not ideal for:
+
+* Production or long-term use
+* Sharing sensitive configs (use the fragment-based method instead)
 
 ## Getting started
 

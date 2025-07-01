@@ -32,7 +32,9 @@ window.asd = {
 
 document.addEventListener('DOMContentLoaded', async () => {
   logger.log('DOMContentLoaded event fired')
-  await loadFromFragment()
+  const params = new URLSearchParams(location.search)
+  const force = params.get('force') === 'true'
+  await loadFromFragment(force)
   initializeMainMenu()
   fetchServices()
   try {

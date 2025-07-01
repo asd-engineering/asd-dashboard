@@ -84,6 +84,13 @@ async function extractSymbols () {
     return true
   })
 
+  // Sort symbols for stable output and reduced git diffs
+  deduped.sort((a, b) => {
+    if (a.name !== b.name) return a.name.localeCompare(b.name)
+    if (a.kind !== b.kind) return a.kind.localeCompare(b.kind)
+    return a.file.localeCompare(b.file)
+  })
+
   await fs.writeFile('symbols.json', JSON.stringify(deduped, null, 2), 'utf8')
   console.log(`✅ symbols.json generated with ${deduped.length} entries.`)
 }

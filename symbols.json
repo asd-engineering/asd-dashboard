@@ -1,79 +1,103 @@
 [
   {
-    "name": "saveWidgetState",
+    "name": "addBoardToUI",
     "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Serialize widgets in the current view and store them under the given board and view identifiers in localStorage. Each widget is saved with its order, dimensions, URL and any metadata/settings.",
+    "file": "src/component/board/boardManagement.js",
+    "description": "Insert a board option into the board selector element. Also selects the board stored in localStorage if available.",
     "params": [
       {
-        "name": "boardId",
+        "name": "board",
+        "type": "{id: string, name: string}",
+        "desc": "- Board information to display."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "addDragOverlay",
+    "kind": "function",
+    "file": "src/component/widget/events/dragDrop.js",
+    "description": "Insert a transparent overlay to mark a widget as a drop target.",
+    "params": [
+      {
+        "name": "widgetWrapper",
+        "type": "HTMLElement",
+        "desc": "- Widget element to overlay."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "addWidget",
+    "kind": "function",
+    "file": "src/component/widget/widgetManagement.js",
+    "description": "Insert a widget into the current view and persist the layout.",
+    "params": [
+      {
+        "name": "url",
         "type": "string",
-        "desc": "- Board identifier. Defaults to the current board element id."
+        "desc": "- URL of the service to embed."
+      },
+      {
+        "name": "columns",
+        "type": "number",
+        "desc": "- Grid columns spanned by the widget."
+      },
+      {
+        "name": "rows",
+        "type": "number",
+        "desc": "- Grid rows spanned by the widget."
+      },
+      {
+        "name": "type",
+        "type": "string",
+        "desc": "- Widget type, usually 'iframe'."
+      },
+      {
+        "name": "boardId",
+        "type": "?string",
+        "desc": "- Board id; defaults to the active board."
       },
       {
         "name": "viewId",
-        "type": "string",
-        "desc": "- View identifier. Defaults to the current view element id."
-      }
-    ],
-    "returns": "Promise<void>"
-  },
-  {
-    "name": "loadWidgetState",
-    "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Restore widget DOM elements for the specified board and view from localStorage. Widgets are recreated using {@link createWidget} and metadata and settings are re-applied.",
-    "params": [
-      {
-        "name": "boardId",
-        "type": "string",
-        "desc": "- Board identifier."
+        "type": "?string",
+        "desc": "- View id; defaults to the active view."
       },
       {
-        "name": "viewId",
-        "type": "string",
-        "desc": "- View identifier whose widgets should be loaded."
+        "name": "dataid",
+        "type": "?string",
+        "desc": "- Persistent widget identifier."
       }
     ],
     "returns": "Promise<void>"
   },
   {
-    "name": "loadInitialConfig",
+    "name": "base64UrlDecode",
     "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Store the initial board configuration defined in {@code window.asd.config} into localStorage. This is typically called on first run to seed the persistent board data.",
-    "params": [],
-    "returns": "Promise<void>"
-  },
-  {
-    "name": "saveBoardState",
-    "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Persist the entire boards array to localStorage under the key `boards`.",
+    "file": "src/utils/compression.js",
+    "description": "Decode a base64url string to bytes.",
     "params": [
       {
-        "name": "boards",
-        "type": "Array<Board>",
-        "desc": "- Array of board objects to store."
+        "name": "str",
+        "type": "string",
+        "desc": ""
       }
     ],
-    "returns": "Promise<void>"
+    "returns": "Uint8Array"
   },
   {
-    "name": "loadBoardState",
+    "name": "base64UrlEncode",
     "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Retrieve the array of boards from localStorage. The result is also assigned to {@code window.asd.boards} for global access.",
-    "params": [],
-    "returns": "Promise<Array<Board>>"
-  },
-  {
-    "name": "Logger",
-    "kind": "class",
-    "file": "src/utils/Logger.js",
-    "description": "Simple browser console logger with runtime enable/disable support. During Playwright test runs (via `navigator.webdriver`), structured logs are also stored in `window._appLogs` for later harvesting.",
-    "params": [],
-    "returns": ""
+    "file": "src/utils/compression.js",
+    "description": "Base64url encode a byte array.",
+    "params": [
+      {
+        "name": "bytes",
+        "type": "Uint8Array",
+        "desc": ""
+      }
+    ],
+    "returns": "string"
   },
   {
     "name": "checkLogStatus",
@@ -84,232 +108,12 @@
     "returns": "boolean"
   },
   {
-    "name": "getCallingFunctionName",
+    "name": "clearConfigFragment",
     "kind": "function",
-    "file": "src/utils/Logger.js",
-    "description": "Extracts the function name of the caller (if available) from the stack trace.",
-    "params": [],
-    "returns": "string"
-  },
-  {
-    "name": "logMessage",
-    "kind": "function",
-    "file": "src/utils/Logger.js",
-    "description": "Internal log writer, applies prefixes and optionally persists structured logs into window._appLogs during Playwright test runs.",
-    "params": [
-      {
-        "name": "level",
-        "type": "string",
-        "desc": "- Console method to use ('log', 'warn', 'error', etc)"
-      },
-      {
-        "name": "args",
-        "type": "...any",
-        "desc": "- Arguments to log"
-      }
-    ],
-    "returns": ""
-  },
-  {
-    "name": "log",
-    "kind": "function",
-    "file": "src/utils/Logger.js",
-    "description": "Output standard log.",
-    "params": [
-      {
-        "name": "args",
-        "type": "...any",
-        "desc": ""
-      }
-    ],
-    "returns": ""
-  },
-  {
-    "name": "warn",
-    "kind": "function",
-    "file": "src/utils/Logger.js",
-    "description": "Output warning.",
-    "params": [
-      {
-        "name": "args",
-        "type": "...any",
-        "desc": ""
-      }
-    ],
-    "returns": ""
-  },
-  {
-    "name": "error",
-    "kind": "function",
-    "file": "src/utils/Logger.js",
-    "description": "Output error.",
-    "params": [
-      {
-        "name": "args",
-        "type": "...any",
-        "desc": ""
-      }
-    ],
-    "returns": ""
-  },
-  {
-    "name": "info",
-    "kind": "function",
-    "file": "src/utils/Logger.js",
-    "description": "Output info.",
-    "params": [
-      {
-        "name": "args",
-        "type": "...any",
-        "desc": ""
-      }
-    ],
-    "returns": ""
-  },
-  {
-    "name": "enableLogs",
-    "kind": "function",
-    "file": "src/utils/Logger.js",
-    "description": "Persist a comma-separated list of files to log or 'all'.",
-    "params": [
-      {
-        "name": "files",
-        "type": "string",
-        "desc": "- Files to enable logging for."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "disableLogs",
-    "kind": "function",
-    "file": "src/utils/Logger.js",
-    "description": "Disable all logging output.",
+    "file": "src/utils/fragmentGuard.js",
+    "description": "Remove any `#cfg` or `#svc` fragment from the current URL without triggering a reload.",
     "params": [],
     "returns": "void"
-  },
-  {
-    "name": "listLoggedFiles",
-    "kind": "function",
-    "file": "src/utils/Logger.js",
-    "description": "Print the list of files currently logging to the console.",
-    "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "getCurrentBoardId",
-    "kind": "function",
-    "file": "src/utils/elements.js",
-    "description": "Get the id of the currently active board element.",
-    "params": [],
-    "returns": "string"
-  },
-  {
-    "name": "getCurrentViewId",
-    "kind": "function",
-    "file": "src/utils/elements.js",
-    "description": "Get the id of the currently active view element.",
-    "params": [],
-    "returns": "string"
-  },
-  {
-    "name": "fetchServices",
-    "kind": "function",
-    "file": "src/utils/fetchServices.js",
-    "description": "Fetch the service list and update the service selector on the page.",
-    "params": [],
-    "returns": "Promise<Array<Service>>"
-  },
-  {
-    "name": "loadFromFragment",
-    "kind": "function",
-    "file": "src/utils/fragmentLoader.js",
-    "description": "Parse the URL fragment and store config/services in localStorage. Logs info on success and alerts on failure.",
-    "params": [],
-    "returns": "Promise<void>"
-  },
-  {
-    "name": "getConfig",
-    "kind": "function",
-    "file": "src/utils/getConfig.js",
-    "description": "Load and cache the dashboard configuration from multiple sources.",
-    "params": [],
-    "returns": "Promise<Object>"
-  },
-  {
-    "name": "getCurrentUrl",
-    "kind": "function",
-    "file": "src/utils/getCurrentUrl.js",
-    "description": "Return the base URL combined with the first path segment.",
-    "params": [],
-    "returns": "string"
-  },
-  {
-    "name": "debounce",
-    "kind": "function",
-    "file": "src/utils/utils.js",
-    "description": "Create a debounced version of a function.",
-    "params": [
-      {
-        "name": "func",
-        "type": "Function",
-        "desc": "- Function to debounce."
-      },
-      {
-        "name": "wait",
-        "type": "number",
-        "desc": "- Delay in milliseconds."
-      }
-    ],
-    "returns": "Function"
-  },
-  {
-    "name": "getUUID",
-    "kind": "function",
-    "file": "src/utils/utils.js",
-    "description": "Generate a UUID using the browser crypto API when available.",
-    "params": [],
-    "returns": "string"
-  },
-  {
-    "name": "initializeBoardDropdown",
-    "kind": "function",
-    "file": "src/component/board/boardDropdown.js",
-    "description": "Attach dropdown actions for board management.",
-    "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "handleCreateBoard",
-    "kind": "function",
-    "file": "src/component/board/boardDropdown.js",
-    "description": "Prompt the user for a board name and create it.",
-    "params": [],
-    "returns": "Promise<void>"
-  },
-  {
-    "name": "handleRenameBoard",
-    "kind": "function",
-    "file": "src/component/board/boardDropdown.js",
-    "description": "Prompt for a new name and rename the selected board.",
-    "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "handleDeleteBoard",
-    "kind": "function",
-    "file": "src/component/board/boardDropdown.js",
-    "description": "Delete the currently selected board after confirmation.",
-    "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "getSelectedBoardId",
-    "kind": "function",
-    "file": "src/component/board/boardDropdown.js",
-    "description": "Get the board id currently selected in the dropdown.",
-    "params": [],
-    "returns": "string"
   },
   {
     "name": "createBoard",
@@ -360,97 +164,71 @@
     "returns": "View|undefined"
   },
   {
-    "name": "switchView",
+    "name": "createWidget",
     "kind": "function",
-    "file": "src/component/board/boardManagement.js",
-    "description": "Switch the currently active view within a board. Clears and repopulates the widget container and updates localStorage.",
+    "file": "src/component/widget/widgetManagement.js",
+    "description": "Build the DOM structure for a widget iframe and its controls.",
     "params": [
       {
-        "name": "boardId",
+        "name": "service",
         "type": "string",
-        "desc": "- Identifier of the board containing the view."
+        "desc": "- Service identifier derived from the URL."
       },
       {
-        "name": "viewId",
+        "name": "url",
         "type": "string",
-        "desc": "- Identifier of the view to activate."
-      }
-    ],
-    "returns": "Promise<void>"
-  },
-  {
-    "name": "updateViewSelector",
-    "kind": "function",
-    "file": "src/component/board/boardManagement.js",
-    "description": "Populate the view selector dropdown for a given board. Reads the last used view from localStorage to preselect it.",
-    "params": [
-      {
-        "name": "boardId",
-        "type": "string",
-        "desc": "- Identifier of the board whose views will be shown."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "switchBoard",
-    "kind": "function",
-    "file": "src/component/board/boardManagement.js",
-    "description": "Switch the current board and optionally a specific view. Updates DOM identifiers and remembers the selection in localStorage.",
-    "params": [
-      {
-        "name": "boardId",
-        "type": "string",
-        "desc": "- Identifier of the board to activate."
+        "desc": "- Iframe source URL."
       },
       {
-        "name": "viewId",
+        "name": "gridColumnSpan",
+        "type": "number",
+        "desc": "- Number of grid columns to span."
+      },
+      {
+        "name": "gridRowSpan",
+        "type": "number",
+        "desc": "- Number of grid rows to span."
+      },
+      {
+        "name": "dataid",
         "type": "?string",
-        "desc": "- Specific view id to load, defaults to first view."
+        "desc": "- Optional persistent widget identifier."
       }
     ],
-    "returns": "Promise<void>"
+    "returns": "Promise<HTMLDivElement>"
   },
   {
-    "name": "initializeBoards",
+    "name": "debounce",
     "kind": "function",
-    "file": "src/component/board/boardManagement.js",
-    "description": "Load boards from localStorage and populate the selectors. Creates a default board when none exist and returns the first board/view.",
-    "params": [],
-    "returns": "Promise<{boardId: string, viewId: string}|undefined>"
-  },
-  {
-    "name": "addBoardToUI",
-    "kind": "function",
-    "file": "src/component/board/boardManagement.js",
-    "description": "Insert a board option into the board selector element. Also selects the board stored in localStorage if available.",
+    "file": "src/utils/utils.js",
+    "description": "Create a debounced version of a function.",
     "params": [
       {
-        "name": "board",
-        "type": "{id: string, name: string}",
-        "desc": "- Board information to display."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "renameBoard",
-    "kind": "function",
-    "file": "src/component/board/boardManagement.js",
-    "description": "Rename an existing board and persist the change.",
-    "params": [
-      {
-        "name": "boardId",
-        "type": "string",
-        "desc": "- Identifier of the board to rename."
+        "name": "func",
+        "type": "Function",
+        "desc": "- Function to debounce."
       },
       {
-        "name": "newBoardName",
-        "type": "string",
-        "desc": "- New name displayed to the user."
+        "name": "wait",
+        "type": "number",
+        "desc": "- Delay in milliseconds."
       }
     ],
-    "returns": "void"
+    "returns": "Function"
+  },
+  {
+    "name": "decodeConfig",
+    "kind": "function",
+    "file": "src/utils/compression.js",
+    "description": "Convenience wrapper for decoding dashboard configuration objects.",
+    "params": [
+      {
+        "name": "str",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<object>"
   },
   {
     "name": "deleteBoard",
@@ -462,30 +240,6 @@
         "name": "boardId",
         "type": "string",
         "desc": "- Identifier of the board to delete."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "renameView",
-    "kind": "function",
-    "file": "src/component/board/boardManagement.js",
-    "description": "Rename a view within a board and persist the update.",
-    "params": [
-      {
-        "name": "boardId",
-        "type": "string",
-        "desc": "- Board containing the view."
-      },
-      {
-        "name": "viewId",
-        "type": "string",
-        "desc": "- Identifier of the view to rename."
-      },
-      {
-        "name": "newViewName",
-        "type": "string",
-        "desc": "- The new display name."
       }
     ],
     "returns": "void"
@@ -510,47 +264,404 @@
     "returns": "void"
   },
   {
-    "name": "resetView",
+    "name": "disableLogs",
     "kind": "function",
-    "file": "src/component/board/boardManagement.js",
-    "description": "Clear all widgets from a view and persist the empty state.",
+    "file": "src/utils/Logger.js",
+    "description": "Disable all logging output.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "enableLogs",
+    "kind": "function",
+    "file": "src/utils/Logger.js",
+    "description": "Persist a comma-separated list of files to log or 'all'.",
     "params": [
       {
-        "name": "boardId",
+        "name": "files",
         "type": "string",
-        "desc": "- Identifier of the board containing the view."
-      },
-      {
-        "name": "viewId",
-        "type": "string",
-        "desc": "- Identifier of the view to reset."
+        "desc": "- Files to enable logging for."
       }
     ],
     "returns": "void"
   },
   {
-    "name": "showNotification",
+    "name": "encodeConfig",
     "kind": "function",
-    "file": "src/component/dialog/notification.js",
-    "description": "Display a temporary notification message.",
+    "file": "src/utils/compression.js",
+    "description": "Convenience wrapper for encoding dashboard configuration objects.",
     "params": [
       {
-        "name": "message",
+        "name": "cfg",
+        "type": "object",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<string>"
+  },
+  {
+    "name": "error",
+    "kind": "function",
+    "file": "src/utils/Logger.js",
+    "description": "Output error.",
+    "params": [
+      {
+        "name": "args",
+        "type": "...any",
+        "desc": ""
+      }
+    ],
+    "returns": ""
+  },
+  {
+    "name": "fetchData",
+    "kind": "function",
+    "file": "src/component/widget/utils/fetchData.js",
+    "description": "Fetch JSON data from a URL and pass it to a callback.",
+    "params": [
+      {
+        "name": "url",
         "type": "string",
-        "desc": "- Text content of the notification."
+        "desc": "- Endpoint to request."
       },
       {
-        "name": "duration",
-        "type": "number",
-        "desc": "- How long to display the notification."
-      },
-      {
-        "name": "type",
-        "type": "('success'|'error')",
-        "desc": "- Visual style of the message."
+        "name": "callback",
+        "type": "Function",
+        "desc": "- Receives the parsed JSON."
       }
     ],
     "returns": "void"
+  },
+  {
+    "name": "fetchServices",
+    "kind": "function",
+    "file": "src/component/widget/utils/fetchServices.js",
+    "description": "Retrieve the list of services from query params, localStorage or a default file.",
+    "params": [],
+    "returns": "Promise<Array>"
+  },
+  {
+    "name": "fetchServices",
+    "kind": "function",
+    "file": "src/utils/fetchServices.js",
+    "description": "Fetch the service list and update the service selector on the page.",
+    "params": [],
+    "returns": "Promise<Array<Service>>"
+  },
+  {
+    "name": "getAuthToken",
+    "kind": "function",
+    "file": "src/component/widget/utils/fetchData.js",
+    "description": "Retrieve the auth token for API requests.",
+    "params": [],
+    "returns": "string"
+  },
+  {
+    "name": "getCallingFunctionName",
+    "kind": "function",
+    "file": "src/utils/Logger.js",
+    "description": "Extracts the function name of the caller (if available) from the stack trace.",
+    "params": [],
+    "returns": "string"
+  },
+  {
+    "name": "getConfig",
+    "kind": "function",
+    "file": "src/utils/getConfig.js",
+    "description": "Load and cache the dashboard configuration from multiple sources.",
+    "params": [],
+    "returns": "Promise<Object>"
+  },
+  {
+    "name": "getCurrentBoardId",
+    "kind": "function",
+    "file": "src/utils/elements.js",
+    "description": "Get the id of the currently active board element.",
+    "params": [],
+    "returns": "string"
+  },
+  {
+    "name": "getCurrentUrl",
+    "kind": "function",
+    "file": "src/utils/getCurrentUrl.js",
+    "description": "Return the base URL combined with the first path segment.",
+    "params": [],
+    "returns": "string"
+  },
+  {
+    "name": "getCurrentViewId",
+    "kind": "function",
+    "file": "src/utils/elements.js",
+    "description": "Get the id of the currently active view element.",
+    "params": [],
+    "returns": "string"
+  },
+  {
+    "name": "getSelectedBoardId",
+    "kind": "function",
+    "file": "src/component/board/boardDropdown.js",
+    "description": "Get the board id currently selected in the dropdown.",
+    "params": [],
+    "returns": "string"
+  },
+  {
+    "name": "getServiceFromUrl",
+    "kind": "function",
+    "file": "src/component/widget/utils/widgetUtils.js",
+    "description": "Determine which service definition matches the provided URL.",
+    "params": [
+      {
+        "name": "url",
+        "type": "string",
+        "desc": "- Widget URL."
+      }
+    ],
+    "returns": "Promise<string>"
+  },
+  {
+    "name": "getUUID",
+    "kind": "function",
+    "file": "src/utils/utils.js",
+    "description": "Generate a UUID using the browser crypto API when available.",
+    "params": [],
+    "returns": "string"
+  },
+  {
+    "name": "gunzipBase64urlToJson",
+    "kind": "function",
+    "file": "src/utils/compression.js",
+    "description": "Decode and gunzip a base64url string to a JavaScript object.",
+    "params": [
+      {
+        "name": "str",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<object>"
+  },
+  {
+    "name": "gzipJsonToBase64url",
+    "kind": "function",
+    "file": "src/utils/compression.js",
+    "description": "Gzip a JavaScript object and encode it as base64url.",
+    "params": [
+      {
+        "name": "obj",
+        "type": "object",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<string>"
+  },
+  {
+    "name": "handleCreateBoard",
+    "kind": "function",
+    "file": "src/component/board/boardDropdown.js",
+    "description": "Prompt the user for a board name and create it.",
+    "params": [],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "handleCreateView",
+    "kind": "function",
+    "file": "src/component/view/viewDropdown.js",
+    "description": "Create a new view on the active board.",
+    "params": [],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "handleDeleteBoard",
+    "kind": "function",
+    "file": "src/component/board/boardDropdown.js",
+    "description": "Delete the currently selected board after confirmation.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "handleDeleteView",
+    "kind": "function",
+    "file": "src/component/view/viewDropdown.js",
+    "description": "Delete the active view after confirmation.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "handleDragEnd",
+    "kind": "function",
+    "file": "src/component/widget/events/dragDrop.js",
+    "description": "Clean up after a drag operation ends.",
+    "params": [
+      {
+        "name": "e",
+        "type": "DragEvent",
+        "desc": "- The dragend event."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "handleDragLeave",
+    "kind": "function",
+    "file": "src/component/widget/events/dragDrop.js",
+    "description": "Remove highlighting when a dragged item leaves a widget.",
+    "params": [
+      {
+        "name": "e",
+        "type": "DragEvent",
+        "desc": "- The dragleave event."
+      },
+      {
+        "name": "widgetWrapper",
+        "type": "HTMLElement",
+        "desc": "- Widget that lost drag focus."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "handleDragOver",
+    "kind": "function",
+    "file": "src/component/widget/events/dragDrop.js",
+    "description": "Highlight a widget as a potential drop target.",
+    "params": [
+      {
+        "name": "e",
+        "type": "DragEvent",
+        "desc": "- The dragover event."
+      },
+      {
+        "name": "widgetWrapper",
+        "type": "HTMLElement",
+        "desc": "- The widget element hovered over."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "handleDragStart",
+    "kind": "function",
+    "file": "src/component/widget/events/dragDrop.js",
+    "description": "Begin dragging a widget by setting up transfer data and overlays.",
+    "params": [
+      {
+        "name": "e",
+        "type": "DragEvent",
+        "desc": "- The dragstart event."
+      },
+      {
+        "name": "draggedWidgetWrapper",
+        "type": "HTMLElement",
+        "desc": "- The widget being dragged."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "handleDrop",
+    "kind": "function",
+    "file": "src/component/widget/events/dragDrop.js",
+    "description": "Drop handler to rearrange widgets or reposition them on the grid.",
+    "params": [
+      {
+        "name": "e",
+        "type": "DragEvent",
+        "desc": "- The drop event."
+      },
+      {
+        "name": "targetWidgetWrapper",
+        "type": "?HTMLElement",
+        "desc": "- Widget wrapper receiving the drop or null."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "handleEscapeKey",
+    "kind": "function",
+    "file": "src/component/widget/events/fullscreenToggle.js",
+    "description": "Exit fullscreen when the user presses the Escape key.",
+    "params": [
+      {
+        "name": "event",
+        "type": "KeyboardEvent",
+        "desc": "- Keydown event."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "handleRenameBoard",
+    "kind": "function",
+    "file": "src/component/board/boardDropdown.js",
+    "description": "Prompt for a new name and rename the selected board.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "handleRenameView",
+    "kind": "function",
+    "file": "src/component/view/viewDropdown.js",
+    "description": "Rename the currently selected view.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "handleResetView",
+    "kind": "function",
+    "file": "src/component/view/viewDropdown.js",
+    "description": "Remove all widgets from the current view.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "handleResizeStart",
+    "kind": "function",
+    "file": "src/component/widget/events/resizeHandler.js",
+    "description": "Start tracking mouse movement for resizing a widget.",
+    "params": [
+      {
+        "name": "event",
+        "type": "MouseEvent",
+        "desc": "- Mousedown event that initiated resize."
+      },
+      {
+        "name": "widget",
+        "type": "HTMLElement",
+        "desc": "- The widget element being resized."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "info",
+    "kind": "function",
+    "file": "src/utils/Logger.js",
+    "description": "Output info.",
+    "params": [
+      {
+        "name": "args",
+        "type": "...any",
+        "desc": ""
+      }
+    ],
+    "returns": ""
+  },
+  {
+    "name": "initializeBoardDropdown",
+    "kind": "function",
+    "file": "src/component/board/boardDropdown.js",
+    "description": "Attach dropdown actions for board management.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "initializeBoards",
+    "kind": "function",
+    "file": "src/component/board/boardManagement.js",
+    "description": "Load boards from localStorage and populate the selectors. Creates a default board when none exist and returns the first board/view.",
+    "params": [],
+    "returns": "Promise<{boardId: string, viewId: string}|undefined>"
   },
   {
     "name": "initializeDashboardMenu",
@@ -561,10 +672,53 @@
     "returns": "void"
   },
   {
-    "name": "populateServiceDropdown",
+    "name": "initializeDragAndDrop",
     "kind": "function",
-    "file": "src/component/menu/dashboardMenu.js",
-    "description": "Populate the service drop-down with saved services.",
+    "file": "src/component/widget/events/dragDrop.js",
+    "description": "Enable drag-and-drop events on the widget container.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "initializeDropdown",
+    "kind": "function",
+    "file": "src/component/utils/dropDownUtils.js",
+    "description": "Attach click handlers to a dropdown based on data-action attributes.",
+    "params": [
+      {
+        "name": "dropdownElement",
+        "type": "HTMLElement",
+        "desc": "- The dropdown container element."
+      },
+      {
+        "name": "handlers",
+        "type": "Object<string,Function>",
+        "desc": "- Map of action names to callbacks."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "initializeMainMenu",
+    "kind": "function",
+    "file": "src/component/menu/menu.js",
+    "description": "Create the main dashboard menu and insert it into the page.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "initializeResizeHandles",
+    "kind": "function",
+    "file": "src/component/widget/events/resizeHandler.js",
+    "description": "Append resize handles to all widgets and register listeners.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "initializeViewDropdown",
+    "kind": "function",
+    "file": "src/component/view/viewDropdown.js",
+    "description": "Set up the dropdown used for view management actions.",
     "params": [],
     "returns": "void"
   },
@@ -577,12 +731,134 @@
     "returns": "void"
   },
   {
-    "name": "initializeMainMenu",
+    "name": "listLoggedFiles",
     "kind": "function",
-    "file": "src/component/menu/menu.js",
-    "description": "Create the main dashboard menu and insert it into the page.",
+    "file": "src/utils/Logger.js",
+    "description": "Print the list of files currently logging to the console.",
     "params": [],
     "returns": "void"
+  },
+  {
+    "name": "loadBoardState",
+    "kind": "function",
+    "file": "src/storage/localStorage.js",
+    "description": "Retrieve the array of boards from localStorage. The result is also assigned to {@code window.asd.boards} for global access.",
+    "params": [],
+    "returns": "Promise<Array<Board>>"
+  },
+  {
+    "name": "loadFromFragment",
+    "kind": "function",
+    "file": "src/utils/fragmentLoader.js",
+    "description": "Parse the URL fragment and store config/services in localStorage. Logs info on success and alerts on failure.",
+    "params": [],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "loadInitialConfig",
+    "kind": "function",
+    "file": "src/storage/localStorage.js",
+    "description": "Store the initial board configuration defined in {@code window.asd.config} into localStorage. This is typically called on first run to seed the persistent board data.",
+    "params": [],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "loadWidgetState",
+    "kind": "function",
+    "file": "src/storage/localStorage.js",
+    "description": "Restore widget DOM elements for the specified board and view from localStorage. Widgets are recreated using {@link createWidget} and metadata and settings are re-applied.",
+    "params": [
+      {
+        "name": "boardId",
+        "type": "string",
+        "desc": "- Board identifier."
+      },
+      {
+        "name": "viewId",
+        "type": "string",
+        "desc": "- View identifier whose widgets should be loaded."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "log",
+    "kind": "function",
+    "file": "src/utils/Logger.js",
+    "description": "Output standard log.",
+    "params": [
+      {
+        "name": "args",
+        "type": "...any",
+        "desc": ""
+      }
+    ],
+    "returns": ""
+  },
+  {
+    "name": "Logger",
+    "kind": "class",
+    "file": "src/utils/Logger.js",
+    "description": "Simple browser console logger with runtime enable/disable support. During Playwright test runs (via `navigator.webdriver`), structured logs are also stored in `window._appLogs` for later harvesting.",
+    "params": [],
+    "returns": ""
+  },
+  {
+    "name": "logMessage",
+    "kind": "function",
+    "file": "src/utils/Logger.js",
+    "description": "Internal log writer, applies prefixes and optionally persists structured logs into window._appLogs during Playwright test runs.",
+    "params": [
+      {
+        "name": "level",
+        "type": "string",
+        "desc": "- Console method to use ('log', 'warn', 'error', etc)"
+      },
+      {
+        "name": "args",
+        "type": "...any",
+        "desc": "- Arguments to log"
+      }
+    ],
+    "returns": ""
+  },
+  {
+    "name": "mergeBoards",
+    "kind": "function",
+    "file": "src/utils/merge.js",
+    "description": "Merge board arrays by id.",
+    "params": [
+      {
+        "name": "existingBoards",
+        "type": "Array<Board>",
+        "desc": ""
+      },
+      {
+        "name": "newBoards",
+        "type": "Array<Board>",
+        "desc": ""
+      }
+    ],
+    "returns": "Array<Board>"
+  },
+  {
+    "name": "mergeServices",
+    "kind": "function",
+    "file": "src/utils/merge.js",
+    "description": "Merge service arrays by unique url or id.",
+    "params": [
+      {
+        "name": "existingServices",
+        "type": "Array<Service>",
+        "desc": ""
+      },
+      {
+        "name": "newServices",
+        "type": "Array<Service>",
+        "desc": ""
+      }
+    ],
+    "returns": "Array<Service>"
   },
   {
     "name": "openConfigModal",
@@ -591,6 +867,25 @@
     "description": "Open a modal dialog allowing the user to edit and save configuration JSON.",
     "params": [],
     "returns": "void"
+  },
+  {
+    "name": "openFragmentDecisionModal",
+    "kind": "function",
+    "file": "src/component/modal/fragmentDecisionModal.js",
+    "description": "Display modal asking user to overwrite or merge fragment data.",
+    "params": [
+      {
+        "name": "cfgParam",
+        "type": "string|null",
+        "desc": "- Encoded config fragment."
+      },
+      {
+        "name": "svcParam",
+        "type": "string|null",
+        "desc": "- Encoded service fragment."
+      }
+    ],
+    "returns": "Promise<void>"
   },
   {
     "name": "openLocalStorageModal",
@@ -654,6 +949,161 @@
     "returns": "void"
   },
   {
+    "name": "populateServiceDropdown",
+    "kind": "function",
+    "file": "src/component/menu/dashboardMenu.js",
+    "description": "Populate the service drop-down with saved services.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "removeDragOverlay",
+    "kind": "function",
+    "file": "src/component/widget/events/dragDrop.js",
+    "description": "Remove the overlay from a widget wrapper if present.",
+    "params": [
+      {
+        "name": "widgetWrapper",
+        "type": "HTMLElement",
+        "desc": "- Widget element to clean up."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "removeWidget",
+    "kind": "function",
+    "file": "src/component/widget/widgetManagement.js",
+    "description": "Remove a widget from the DOM and update ordering information. Persist the resulting widget layout using {@link saveWidgetState}.",
+    "params": [
+      {
+        "name": "widgetElement",
+        "type": "HTMLElement",
+        "desc": "- Wrapper element to remove."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "renameBoard",
+    "kind": "function",
+    "file": "src/component/board/boardManagement.js",
+    "description": "Rename an existing board and persist the change.",
+    "params": [
+      {
+        "name": "boardId",
+        "type": "string",
+        "desc": "- Identifier of the board to rename."
+      },
+      {
+        "name": "newBoardName",
+        "type": "string",
+        "desc": "- New name displayed to the user."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "renameView",
+    "kind": "function",
+    "file": "src/component/board/boardManagement.js",
+    "description": "Rename a view within a board and persist the update.",
+    "params": [
+      {
+        "name": "boardId",
+        "type": "string",
+        "desc": "- Board containing the view."
+      },
+      {
+        "name": "viewId",
+        "type": "string",
+        "desc": "- Identifier of the view to rename."
+      },
+      {
+        "name": "newViewName",
+        "type": "string",
+        "desc": "- The new display name."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "resetView",
+    "kind": "function",
+    "file": "src/component/board/boardManagement.js",
+    "description": "Clear all widgets from a view and persist the empty state.",
+    "params": [
+      {
+        "name": "boardId",
+        "type": "string",
+        "desc": "- Identifier of the board containing the view."
+      },
+      {
+        "name": "viewId",
+        "type": "string",
+        "desc": "- Identifier of the view to reset."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "saveBoardState",
+    "kind": "function",
+    "file": "src/storage/localStorage.js",
+    "description": "Persist the entire boards array to localStorage under the key `boards`.",
+    "params": [
+      {
+        "name": "boards",
+        "type": "Array<Board>",
+        "desc": "- Array of board objects to store."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "saveWidgetState",
+    "kind": "function",
+    "file": "src/storage/localStorage.js",
+    "description": "Serialize widgets in the current view and store them under the given board and view identifiers in localStorage. Each widget is saved with its order, dimensions, URL and any metadata/settings.",
+    "params": [
+      {
+        "name": "boardId",
+        "type": "string",
+        "desc": "- Board identifier. Defaults to the current board element id."
+      },
+      {
+        "name": "viewId",
+        "type": "string",
+        "desc": "- View identifier. Defaults to the current view element id."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "showNotification",
+    "kind": "function",
+    "file": "src/component/dialog/notification.js",
+    "description": "Display a temporary notification message.",
+    "params": [
+      {
+        "name": "message",
+        "type": "string",
+        "desc": "- Text content of the notification."
+      },
+      {
+        "name": "duration",
+        "type": "number",
+        "desc": "- How long to display the notification."
+      },
+      {
+        "name": "type",
+        "type": "('success'|'error')",
+        "desc": "- Visual style of the message."
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "showServiceModal",
     "kind": "function",
     "file": "src/component/modal/serviceLaunchModal.js",
@@ -673,289 +1123,42 @@
     "returns": "void"
   },
   {
-    "name": "initializeDropdown",
+    "name": "switchBoard",
     "kind": "function",
-    "file": "src/component/utils/dropDownUtils.js",
-    "description": "Attach click handlers to a dropdown based on data-action attributes.",
+    "file": "src/component/board/boardManagement.js",
+    "description": "Switch the current board and optionally a specific view. Updates DOM identifiers and remembers the selection in localStorage.",
     "params": [
-      {
-        "name": "dropdownElement",
-        "type": "HTMLElement",
-        "desc": "- The dropdown container element."
-      },
-      {
-        "name": "handlers",
-        "type": "Object<string,Function>",
-        "desc": "- Map of action names to callbacks."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "initializeViewDropdown",
-    "kind": "function",
-    "file": "src/component/view/viewDropdown.js",
-    "description": "Set up the dropdown used for view management actions.",
-    "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "handleCreateView",
-    "kind": "function",
-    "file": "src/component/view/viewDropdown.js",
-    "description": "Create a new view on the active board.",
-    "params": [],
-    "returns": "Promise<void>"
-  },
-  {
-    "name": "handleRenameView",
-    "kind": "function",
-    "file": "src/component/view/viewDropdown.js",
-    "description": "Rename the currently selected view.",
-    "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "handleDeleteView",
-    "kind": "function",
-    "file": "src/component/view/viewDropdown.js",
-    "description": "Delete the active view after confirmation.",
-    "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "handleResetView",
-    "kind": "function",
-    "file": "src/component/view/viewDropdown.js",
-    "description": "Remove all widgets from the current view.",
-    "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "createWidget",
-    "kind": "function",
-    "file": "src/component/widget/widgetManagement.js",
-    "description": "Build the DOM structure for a widget iframe and its controls.",
-    "params": [
-      {
-        "name": "service",
-        "type": "string",
-        "desc": "- Service identifier derived from the URL."
-      },
-      {
-        "name": "url",
-        "type": "string",
-        "desc": "- Iframe source URL."
-      },
-      {
-        "name": "gridColumnSpan",
-        "type": "number",
-        "desc": "- Number of grid columns to span."
-      },
-      {
-        "name": "gridRowSpan",
-        "type": "number",
-        "desc": "- Number of grid rows to span."
-      },
-      {
-        "name": "dataid",
-        "type": "?string",
-        "desc": "- Optional persistent widget identifier."
-      }
-    ],
-    "returns": "Promise<HTMLDivElement>"
-  },
-  {
-    "name": "addWidget",
-    "kind": "function",
-    "file": "src/component/widget/widgetManagement.js",
-    "description": "Insert a widget into the current view and persist the layout.",
-    "params": [
-      {
-        "name": "url",
-        "type": "string",
-        "desc": "- URL of the service to embed."
-      },
-      {
-        "name": "columns",
-        "type": "number",
-        "desc": "- Grid columns spanned by the widget."
-      },
-      {
-        "name": "rows",
-        "type": "number",
-        "desc": "- Grid rows spanned by the widget."
-      },
-      {
-        "name": "type",
-        "type": "string",
-        "desc": "- Widget type, usually 'iframe'."
-      },
       {
         "name": "boardId",
-        "type": "?string",
-        "desc": "- Board id; defaults to the active board."
+        "type": "string",
+        "desc": "- Identifier of the board to activate."
       },
       {
         "name": "viewId",
         "type": "?string",
-        "desc": "- View id; defaults to the active view."
-      },
-      {
-        "name": "dataid",
-        "type": "?string",
-        "desc": "- Persistent widget identifier."
+        "desc": "- Specific view id to load, defaults to first view."
       }
     ],
     "returns": "Promise<void>"
   },
   {
-    "name": "removeWidget",
+    "name": "switchView",
     "kind": "function",
-    "file": "src/component/widget/widgetManagement.js",
-    "description": "Remove a widget from the DOM and update ordering information. Persist the resulting widget layout using {@link saveWidgetState}.",
+    "file": "src/component/board/boardManagement.js",
+    "description": "Switch the currently active view within a board. Clears and repopulates the widget container and updates localStorage.",
     "params": [
       {
-        "name": "widgetElement",
-        "type": "HTMLElement",
-        "desc": "- Wrapper element to remove."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "updateWidgetOrders",
-    "kind": "function",
-    "file": "src/component/widget/widgetManagement.js",
-    "description": "Recompute and store the ordering of widgets in the container. Saves the updated arrangement via {@link saveWidgetState}.",
-    "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "handleDragStart",
-    "kind": "function",
-    "file": "src/component/widget/events/dragDrop.js",
-    "description": "Begin dragging a widget by setting up transfer data and overlays.",
-    "params": [
-      {
-        "name": "e",
-        "type": "DragEvent",
-        "desc": "- The dragstart event."
+        "name": "boardId",
+        "type": "string",
+        "desc": "- Identifier of the board containing the view."
       },
       {
-        "name": "draggedWidgetWrapper",
-        "type": "HTMLElement",
-        "desc": "- The widget being dragged."
+        "name": "viewId",
+        "type": "string",
+        "desc": "- Identifier of the view to activate."
       }
     ],
-    "returns": "void"
-  },
-  {
-    "name": "handleDragEnd",
-    "kind": "function",
-    "file": "src/component/widget/events/dragDrop.js",
-    "description": "Clean up after a drag operation ends.",
-    "params": [
-      {
-        "name": "e",
-        "type": "DragEvent",
-        "desc": "- The dragend event."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "addDragOverlay",
-    "kind": "function",
-    "file": "src/component/widget/events/dragDrop.js",
-    "description": "Insert a transparent overlay to mark a widget as a drop target.",
-    "params": [
-      {
-        "name": "widgetWrapper",
-        "type": "HTMLElement",
-        "desc": "- Widget element to overlay."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "removeDragOverlay",
-    "kind": "function",
-    "file": "src/component/widget/events/dragDrop.js",
-    "description": "Remove the overlay from a widget wrapper if present.",
-    "params": [
-      {
-        "name": "widgetWrapper",
-        "type": "HTMLElement",
-        "desc": "- Widget element to clean up."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "handleDrop",
-    "kind": "function",
-    "file": "src/component/widget/events/dragDrop.js",
-    "description": "Drop handler to rearrange widgets or reposition them on the grid.",
-    "params": [
-      {
-        "name": "e",
-        "type": "DragEvent",
-        "desc": "- The drop event."
-      },
-      {
-        "name": "targetWidgetWrapper",
-        "type": "?HTMLElement",
-        "desc": "- Widget wrapper receiving the drop or null."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "handleDragOver",
-    "kind": "function",
-    "file": "src/component/widget/events/dragDrop.js",
-    "description": "Highlight a widget as a potential drop target.",
-    "params": [
-      {
-        "name": "e",
-        "type": "DragEvent",
-        "desc": "- The dragover event."
-      },
-      {
-        "name": "widgetWrapper",
-        "type": "HTMLElement",
-        "desc": "- The widget element hovered over."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "handleDragLeave",
-    "kind": "function",
-    "file": "src/component/widget/events/dragDrop.js",
-    "description": "Remove highlighting when a dragged item leaves a widget.",
-    "params": [
-      {
-        "name": "e",
-        "type": "DragEvent",
-        "desc": "- The dragleave event."
-      },
-      {
-        "name": "widgetWrapper",
-        "type": "HTMLElement",
-        "desc": "- Widget that lost drag focus."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "initializeDragAndDrop",
-    "kind": "function",
-    "file": "src/component/widget/events/dragDrop.js",
-    "description": "Enable drag-and-drop events on the widget container.",
-    "params": [],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "toggleFullScreen",
@@ -972,93 +1175,39 @@
     "returns": "void"
   },
   {
-    "name": "handleEscapeKey",
+    "name": "updateViewSelector",
     "kind": "function",
-    "file": "src/component/widget/events/fullscreenToggle.js",
-    "description": "Exit fullscreen when the user presses the Escape key.",
+    "file": "src/component/board/boardManagement.js",
+    "description": "Populate the view selector dropdown for a given board. Reads the last used view from localStorage to preselect it.",
     "params": [
       {
-        "name": "event",
-        "type": "KeyboardEvent",
-        "desc": "- Keydown event."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "initializeResizeHandles",
-    "kind": "function",
-    "file": "src/component/widget/events/resizeHandler.js",
-    "description": "Append resize handles to all widgets and register listeners.",
-    "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "handleResizeStart",
-    "kind": "function",
-    "file": "src/component/widget/events/resizeHandler.js",
-    "description": "Start tracking mouse movement for resizing a widget.",
-    "params": [
-      {
-        "name": "event",
-        "type": "MouseEvent",
-        "desc": "- Mousedown event that initiated resize."
-      },
-      {
-        "name": "widget",
-        "type": "HTMLElement",
-        "desc": "- The widget element being resized."
-      }
-    ],
-    "returns": "Promise<void>"
-  },
-  {
-    "name": "fetchData",
-    "kind": "function",
-    "file": "src/component/widget/utils/fetchData.js",
-    "description": "Fetch JSON data from a URL and pass it to a callback.",
-    "params": [
-      {
-        "name": "url",
+        "name": "boardId",
         "type": "string",
-        "desc": "- Endpoint to request."
-      },
-      {
-        "name": "callback",
-        "type": "Function",
-        "desc": "- Receives the parsed JSON."
+        "desc": "- Identifier of the board whose views will be shown."
       }
     ],
     "returns": "void"
   },
   {
-    "name": "getAuthToken",
+    "name": "updateWidgetOrders",
     "kind": "function",
-    "file": "src/component/widget/utils/fetchData.js",
-    "description": "Retrieve the auth token for API requests.",
+    "file": "src/component/widget/widgetManagement.js",
+    "description": "Recompute and store the ordering of widgets in the container. Saves the updated arrangement via {@link saveWidgetState}.",
     "params": [],
-    "returns": "string"
+    "returns": "void"
   },
   {
-    "name": "fetchServices",
+    "name": "warn",
     "kind": "function",
-    "file": "src/component/widget/utils/fetchServices.js",
-    "description": "Retrieve the list of services from query params, localStorage or a default file.",
-    "params": [],
-    "returns": "Promise<Array>"
-  },
-  {
-    "name": "getServiceFromUrl",
-    "kind": "function",
-    "file": "src/component/widget/utils/widgetUtils.js",
-    "description": "Determine which service definition matches the provided URL.",
+    "file": "src/utils/Logger.js",
+    "description": "Output warning.",
     "params": [
       {
-        "name": "url",
-        "type": "string",
-        "desc": "- Widget URL."
+        "name": "args",
+        "type": "...any",
+        "desc": ""
       }
     ],
-    "returns": "Promise<string>"
+    "returns": ""
   }
 ]
