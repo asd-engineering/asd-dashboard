@@ -181,7 +181,7 @@
         "desc": "- Identifier for the default view."
       }
     ],
-    "returns": "Board"
+    "returns": "Promise<Board>"
   },
   {
     "name": "createView",
@@ -205,7 +205,7 @@
         "desc": "- Optional predefined id for the view."
       }
     ],
-    "returns": "View|undefined"
+    "returns": "Promise<View|undefined>"
   },
   {
     "name": "createWidget",
@@ -286,7 +286,7 @@
         "desc": "- Identifier of the board to delete."
       }
     ],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "deleteView",
@@ -305,7 +305,7 @@
         "desc": "- Identifier of the view to remove."
       }
     ],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "disableLogs",
@@ -534,7 +534,7 @@
     "file": "src/component/board/boardDropdown.js",
     "description": "Delete the currently selected board after confirmation.",
     "params": [],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "handleDeleteView",
@@ -542,7 +542,7 @@
     "file": "src/component/view/viewDropdown.js",
     "description": "Delete the active view after confirmation.",
     "params": [],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "handleDragEnd",
@@ -654,7 +654,7 @@
     "file": "src/component/board/boardDropdown.js",
     "description": "Prompt for a new name and rename the selected board.",
     "params": [],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "handleRenameView",
@@ -662,7 +662,7 @@
     "file": "src/component/view/viewDropdown.js",
     "description": "Rename the currently selected view.",
     "params": [],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "handleResetView",
@@ -670,7 +670,7 @@
     "file": "src/component/view/viewDropdown.js",
     "description": "Remove all widgets from the current view.",
     "params": [],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "handleResizeStart",
@@ -1087,7 +1087,7 @@
         "desc": "- New name displayed to the user."
       }
     ],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "renameView",
@@ -1111,7 +1111,7 @@
         "desc": "- The new display name."
       }
     ],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "requestRemoval",
@@ -1144,7 +1144,7 @@
         "desc": "- Identifier of the view to reset."
       }
     ],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "saveBoardState",
@@ -1164,17 +1164,17 @@
     "name": "saveWidgetState",
     "kind": "function",
     "file": "src/storage/localStorage.js",
-    "description": "Serialize widgets in the current view and store them under the given board and view identifiers in localStorage. Each widget is saved with its order, dimensions, URL and any metadata/settings.",
+    "description": "Serialize widgets in the current view and store them under the given board and view identifiers in localStorage. This function now reads the visible widgets directly from the DOM to ensure the saved state matches the UI.",
     "params": [
       {
         "name": "boardId",
         "type": "string",
-        "desc": "- Board identifier. Defaults to the current board element id."
+        "desc": "- Board identifier."
       },
       {
         "name": "viewId",
         "type": "string",
-        "desc": "- View identifier. Defaults to the current view element id."
+        "desc": "- View identifier."
       }
     ],
     "returns": "Promise<void>"
