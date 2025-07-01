@@ -39,6 +39,6 @@ test.describe('Menu control visibility', () => {
 
     const resetButton = page.locator('#admin-control #reset-button')
     await expect(resetButton).toBeVisible()
-    await expect(resetButton).toHaveText(`${emojiList.crossCycle.unicode} Reset`)
+    await expect(resetButton).toHaveText(`${emojiList.crossCycle.unicode}`)
   })
 })
