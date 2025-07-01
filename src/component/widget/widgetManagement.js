@@ -24,7 +24,6 @@ const logger = new Logger('widgetManagement.js')
 export const widgetParkingLot = new WidgetParkingLot(10)
 widgetParkingLot.debugInfo = () => ({
   size: widgetParkingLot.cache.size,
-  parked: document.getElementById('widget-parking').childElementCount,
   keys: [...widgetParkingLot.cache.keys()]
 })
 
