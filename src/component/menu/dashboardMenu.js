@@ -61,7 +61,14 @@ function initializeDashboardMenu () {
 
   document.getElementById('toggle-widget-menu').addEventListener('click', () => {
     const widgetContainer = document.getElementById('widget-container')
-    widgetContainer.classList.toggle('hide-widget-menu')
+    const toggled = widgetContainer.classList.toggle('hide-widget-menu') // true if class was added
+
+    // Notify based on actual result *after* toggle
+    const message = toggled
+      ? 'Widget menu hidden'
+      : 'Widget menu shown'
+
+    showNotification(message)
   })
 
   document.getElementById('reset-button').addEventListener('click', () => {
