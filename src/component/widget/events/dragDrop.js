@@ -137,11 +137,10 @@ function handleDrop (e, targetWidgetWrapper) {
       targetWidgetOrder: targetWidget.getAttribute('data-order')
     })
 
-    draggedWidget.setAttribute('data-order', targetOrder)
-    targetWidget.setAttribute('data-order', draggedOrder)
-
-    draggedWidget.style.order = targetOrder
-    targetWidget.style.order = draggedOrder
+    // Swap CSS order properties. updateWidgetOrders will handle normalization and saving.
+    const draggedWidgetStyleOrder = draggedWidget.style.order
+    targetWidget.style.order = draggedWidget.style.order
+    draggedWidget.style.order = draggedWidgetStyleOrder
   } else {
     // Calculate nearest available grid position
     const gridColumnCount = parseInt(getComputedStyle(widgetContainer).getPropertyValue('grid-template-columns').split(' ').length.toString(), 10)
@@ -166,30 +165,9 @@ function handleDrop (e, targetWidgetWrapper) {
   const updatedWidgets = Array.from(widgetContainer.children)
   updatedWidgets.forEach(widget => widget.classList.remove('drag-over'))
 
+  // This function will re-calculate all widget orders based on their
+  // new positions and then call saveWidgetState.
   updateWidgetOrders()
-
-  // Update localStorage with new widget position
-  const widgetId = (/** @type {HTMLElement} */(draggedWidget)).dataset.dataid
-  const boardId = window.asd.currentBoardId
-  const viewId = window.asd.currentViewId
-  const widgetState = JSON.parse(localStorage.getItem('widgetState')) || {}
-
-  if (!widgetState[boardId]) {
-    widgetState[boardId] = {}
-  }
-
-  if (!widgetState[boardId][viewId]) {
-    widgetState[boardId][viewId] = []
-  }
-
-  const widgetIndex = widgetState[boardId][viewId].findIndex(widget => widget.dataid === widgetId)
-  if (widgetIndex !== -1) {
-    widgetState[boardId][viewId][widgetIndex].column = parseInt((/** @type {HTMLElement} */(draggedWidget)).style.gridColumnStart)
-    widgetState[boardId][viewId][widgetIndex].row = parseInt((/** @type {HTMLElement} */(draggedWidget)).style.gridRowStart)
-  }
-
-  localStorage.setItem('widgetState', JSON.stringify(widgetState))
-  saveWidgetState(boardId, viewId)
 
   draggedWidget.classList.remove('dragging')
 }
@@ -261,12 +239,9 @@ function initializeDragAndDrop () {
           if (targetWidgetEl) {
             const targetWidget = /** @type {HTMLElement} */(targetWidgetEl)
             // Swap orders
-            draggedWidget.setAttribute('data-order', targetOrder)
-            targetWidget.setAttribute('data-order', draggedOrder)
-
-            // Update CSS order
-            draggedWidget.style.order = targetOrder.toString()
-            targetWidget.style.order = draggedOrder.toString()
+            const draggedWidgetStyleOrder = draggedWidget.style.order
+            targetWidget.style.order = draggedWidget.style.order
+            draggedWidget.style.order = draggedWidgetStyleOrder
           }
         } else {
           // Handle drop in open space

@@ -41,8 +41,8 @@ function serializeWidgetState (widget) {
     dataid: widget.dataset.dataid,
     order: widget.getAttribute('data-order'),
     url: widget.querySelector('iframe').src,
-    columns: widget.dataset.columns || 1,
-    rows: widget.dataset.rows || 1,
+    columns: widget.dataset.columns || '1',
+    rows: widget.dataset.rows || '1',
     type: widget.dataset.type || 'iframe',
     metadata,
     settings
@@ -53,11 +53,11 @@ function serializeWidgetState (widget) {
 
 /**
  * Serialize widgets in the current view and store them under the given board
- * and view identifiers in localStorage. Each widget is saved with its order,
- * dimensions, URL and any metadata/settings.
+ * and view identifiers in localStorage. This function now reads the visible widgets
+ * directly from the DOM to ensure the saved state matches the UI.
  *
- * @param {string} boardId - Board identifier. Defaults to the current board element id.
- * @param {string} viewId - View identifier. Defaults to the current view element id.
+ * @param {string} boardId - Board identifier.
+ * @param {string} viewId - View identifier.
  * @function saveWidgetState
  * @returns {Promise<void>}
  */
@@ -67,22 +67,20 @@ async function saveWidgetState (boardId, viewId) {
   }
 
   try {
-    const boards = await loadBoardState()
+    const boards = window.asd.boards
     const board = boards.find(b => b.id === boardId)
     if (!board) return logger.error(`Board not found for saving state: ${boardId}`)
 
     const view = board.views.find(v => v.id === viewId)
     if (!view) return logger.error(`View not found for saving state: ${viewId}`)
 
-    const updatedWidgetState = view.widgetState
-      .map(widgetData => {
-        const widgetElement = window.asd.widgetStore.get(widgetData.dataid)
-        if (widgetElement) {
-          return serializeWidgetState(widgetElement)
-        }
-        return widgetData
-      })
-      .filter(Boolean)
+    const widgetContainer = document.getElementById('widget-container')
+    // Get all widgets that are currently visible (not display: none)
+    // This correctly reflects the state of the current view
+    const visibleWidgets = Array.from(widgetContainer.children)
+      .filter(el => (el instanceof HTMLElement) && el.style.display !== 'none')
+
+    const updatedWidgetState = visibleWidgets.map(widget => serializeWidgetState(/** @type {HTMLElement} */(widget)))
 
     view.widgetState = updatedWidgetState
 
@@ -137,6 +135,7 @@ async function loadInitialConfig () {
 async function saveBoardState (boards) {
   try {
     localStorage.setItem('boards', JSON.stringify(boards))
+    window.asd.boards = boards // Keep global state synchronized
     logger.log('Saved board state to localStorage')
   } catch (error) {
     logger.error('Error saving board state:', error)
