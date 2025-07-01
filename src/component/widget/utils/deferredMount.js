@@ -5,6 +5,8 @@
  * @module deferredMount
  */
 
+import { initializeResizeHandles } from '../events/resizeHandler.js'
+
 const pending = new Set()
 
 /**
@@ -16,6 +18,7 @@ const pending = new Set()
 export function deferredMount (parent, child) {
   const cb = () => {
     parent.appendChild(child)
+    initializeResizeHandles()
     pending.delete(cancel)
   }
   let handle

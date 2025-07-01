@@ -29,9 +29,7 @@ function getCache () {
   if (!cacheInstance) {
     const limit = Number(window.asd?.config?.globalSettings?.widget_cache_count) || 10
     cacheInstance = new WidgetLRUCache(limit)
-    const dev = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) ||
-      (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production') ||
-      window.location.hostname === 'localhost'
+    const dev = import.meta.env?.MODE !== 'production'
     if (dev) {
       window.widgetCacheDebug = {
         getStats: () => cacheInstance.stats(),
@@ -281,9 +279,7 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
   widgetWrapper.setAttribute('data-order', String(widgetContainer.children.length))
   widgetWrapper.dataset.cache = cacheHit ? 'hit' : 'miss'
 
-  const devOverlay = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) ||
-    (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production') ||
-    window.location.hostname === 'localhost'
+  const devOverlay = import.meta.env?.MODE !== 'production'
   if (devOverlay) {
     let overlay = widgetWrapper.querySelector('.widget-debug-overlay')
     if (!overlay) {

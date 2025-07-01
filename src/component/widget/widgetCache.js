@@ -95,7 +95,6 @@ export class WidgetLRUCache {
     // explicit null to avoid leaks
     // @ts-ignore
     el = null
-    this.cache.delete(id)
   }
 }
 
