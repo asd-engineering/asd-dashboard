@@ -122,6 +122,15 @@ export class Logger {
   }
 
   /**
+   * Output debug information.
+   * @function debug
+   * @param {...any} args
+   */
+  debug (...args) {
+    this.logMessage('debug', ...args)
+  }
+
+  /**
    * Output info.
    * @function info
    * @param {...any} args

@@ -47,6 +47,7 @@ test.describe('LocalStorage Editor Functionality', () => {
     // Wait for notification
     const notification = await page.locator('.user-notification span');
     await page.waitForSelector('.user-notification span', { state: 'visible', timeout });
+    await page.waitForSelector('.user-notification span:has-text("LocalStorage updated")');
     await expect(notification).toHaveText('LocalStorage updated successfully!');
   
     // Verify changes in localStorage
@@ -69,7 +70,10 @@ test.describe('LocalStorage Editor Functionality', () => {
     // Reload the page and verify changes in localStorage
     await page.reload();
     
-    const boards = await page.evaluate(() => JSON.parse(localStorage.getItem('boards')));
+    const boards = await page.evaluate(() => {
+      const key = Object.keys(localStorage).find(k => k.startsWith('image#'))!;
+      return JSON.parse(localStorage.getItem(key)).boards;
+    });
     expect(boards[0].name).toBe('Modified Board 1');
     expect(boards[0].views[0].name).toBe('Modified View 1');
     expect(boards[0].views[0].widgetState[0].url).toBe('http://localhost:8000/asd/toolbox');

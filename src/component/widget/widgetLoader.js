@@ -26,6 +26,9 @@ export async function loadWidgetsFromConfig (widgets) {
       console.debug('loadWidgetsFromConfig: skipped falsy widget')
       continue
     }
+    const existing = container.querySelector(`[data-dataid="${data.dataid}"]`)
+    if (existing && !document.contains(existing)) existing.remove()
+    await new Promise(resolve => window.requestAnimationFrame(resolve)) // allow detach cycle
     if (container.querySelector(`[data-dataid="${data.dataid}"]`)) {
       console.debug('loadWidgetsFromConfig: widget already exists', data.dataid)
       continue

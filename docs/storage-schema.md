@@ -31,3 +31,10 @@ Widgets inside a view require these fields:
 Older buckets might omit the `version` property. The loader automatically sets it
 to `"1"` to keep widgets functional. When new fields are introduced they must be
 optional so earlier dashboards continue to load without modification.
+
+Hash format
+-----------
+#local:<sessionId>[&board=<id>&view=<id>]
+
+UI code MUST preserve the `#local:<sessionId>` prefix to avoid
+creating new storage buckets.

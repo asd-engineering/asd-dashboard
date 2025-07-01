@@ -17,6 +17,7 @@ import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
 import { clearConfigFragment } from '../../utils/fragmentGuard.js'
+import { changeUrlParams } from '../../utils/hashParams.js'
 
 const logger = new Logger('dashboardMenu.js')
 
@@ -80,6 +81,7 @@ function initializeDashboardMenu () {
     const selectedBoardId = target.value
     const currentBoardId = getCurrentBoardId()
     saveWidgetState(currentBoardId, getCurrentViewId()) // Save current view state
+    location.hash = changeUrlParams(location.hash, { board: selectedBoardId })
     await switchBoard(selectedBoardId)
     updateViewSelector(selectedBoardId)
   })
@@ -89,6 +91,7 @@ function initializeDashboardMenu () {
     const target = /** @type {HTMLSelectElement} */(event.target)
     const selectedViewId = target.value
     logger.log(`Switching to selected view ${selectedViewId} in board ${selectedBoardId}`)
+    location.hash = changeUrlParams(location.hash, { board: selectedBoardId, view: selectedViewId })
     await switchView(selectedBoardId, selectedViewId)
   })
 }

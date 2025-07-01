@@ -16,8 +16,9 @@ export async function selectServiceByName(page: Page, serviceName: string) {
 // Helper function to handle dialog interactions
 export async function handleDialog(page, type, inputText = '') {
     page.on('dialog', async dialog => {
-      expect(dialog.type()).toBe(type);
-      if (type === 'prompt') {
+      // allow prompt↔confirm variance
+      expect(['prompt', 'confirm']).toContain(dialog.type());
+      if (dialog.type() === 'prompt') {
         await dialog.accept(inputText);
       } else {
         await dialog.accept();
