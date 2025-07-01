@@ -5,6 +5,7 @@
  * @module menu
  */
 import emojiList from '../../ui/unicodeEmoji.js'
+import { showNotification } from '../dialog/notification.js'
 
 /**
  * Initialize service worker controls in the menu.
@@ -79,6 +80,7 @@ function initSW () {
       const isEnabled = swToggle.checked
       localStorage.setItem('swEnabled', String(isEnabled))
       updateServiceWorkerUI(isEnabled)
+      showNotification(`Service Worker ${isEnabled ? 'Enabled' : 'Disabled'}`, 500)
 
       if (isEnabled) {
         registerServiceWorker()
