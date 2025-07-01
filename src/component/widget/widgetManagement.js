@@ -216,12 +216,18 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
   boardId = boardId || window.asd.currentBoardId
   viewId = viewId || window.asd.currentViewId
 
+  if (dataid && window.asd.widgetStore.has(dataid)) {
+    window.asd.widgetStore.show(dataid)
+    return
+  }
+
   const service = await getServiceFromUrl(url)
   logger.log('Extracted service:', service)
 
   const widgetWrapper = await createWidget(service, url, columns, rows, dataid)
   widgetWrapper.setAttribute('data-order', String(widgetContainer.children.length))
   widgetContainer.appendChild(widgetWrapper)
+  window.asd.widgetStore.add(widgetWrapper.dataset.dataid, widgetWrapper)
 
   logger.log('Widget appended to container:', widgetWrapper)
 
@@ -252,7 +258,7 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
  */
 function removeWidget (widgetElement) {
   const dataid = widgetElement.dataset.dataid
-  widgetElement.remove()
+  window.asd.widgetStore.requestRemoval(dataid)
   logger.log('Widget removed with dataid:', dataid)
   updateWidgetOrders()
   const boardId = window.asd.currentBoardId

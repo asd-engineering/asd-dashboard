@@ -130,18 +130,40 @@ export async function switchView (boardId, viewId) {
         logger.error('board-view element not found in DOM')
       }
 
-      clearWidgetContainer()
       logger.log(`Rendering widgets for view ${viewId}:`, view.widgetState)
-      for (const widget of view.widgetState) {
-        await addWidget(
-          widget.url,
-          Number(widget.columns),
-          Number(widget.rows),
-          widget.type,
-          boardId,
-          viewId,
-          widget.dataid
-        )
+      const widgetContainer = document.getElementById('widget-container')
+      const store = window.asd.widgetStore
+
+      const activeIds = new Set(view.widgetState.map(w => w.dataid))
+
+      for (const [id] of store.widgets.entries()) {
+        if (!activeIds.has(id)) {
+          store.hide(id)
+        }
+      }
+
+      for (const [index, widget] of view.widgetState.entries()) {
+        if (store.has(widget.dataid)) {
+          const el = store.get(widget.dataid)
+          store.show(widget.dataid)
+          el.setAttribute('data-order', String(index))
+          el.style.order = String(index)
+          if (!widgetContainer.contains(el)) {
+            widgetContainer.appendChild(el)
+          } else {
+            widgetContainer.appendChild(el)
+          }
+        } else {
+          await addWidget(
+            widget.url,
+            Number(widget.columns),
+            Number(widget.rows),
+            widget.type,
+            boardId,
+            viewId,
+            widget.dataid
+          )
+        }
       }
       window.asd.currentViewId = viewId
       localStorage.setItem('lastUsedViewId', viewId)
