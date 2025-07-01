@@ -755,7 +755,7 @@
     "file": "src/component/menu/dashboardMenu.js",
     "description": "Set up event handlers for the dashboard menu and populate service options.",
     "params": [],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "initializeDragAndDrop",

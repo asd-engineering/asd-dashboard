@@ -40,7 +40,7 @@ async function handleCreateView () {
   const viewName = prompt('Enter new view name:')
   if (viewName) {
     try {
-      const newView = createView(boardId, viewName)
+      const newView = await createView(boardId, viewName)
       logger.log('View created:', newView)
       updateViewSelector(boardId)
 
