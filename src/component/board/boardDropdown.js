@@ -4,8 +4,7 @@
  *
  * @module boardDropdown
  */
-import { saveBoardState } from '../../storage/localStorage.js'
-import { createBoard, renameBoard, deleteBoard, updateViewSelector, addBoardToUI, boards, switchBoard, switchView } from './boardManagement.js'
+import { createBoard, renameBoard, deleteBoard, updateViewSelector, addBoardToUI, boards } from './boardManagement.js'
 import { initializeDropdown } from '../utils/dropDownUtils.js'
 import { Logger } from '../../utils/Logger.js'
 
@@ -38,20 +37,9 @@ async function handleCreateBoard () {
   const boardName = prompt('Enter new board name:')
   if (boardName) {
     try {
-      const newBoard = createBoard(boardName)
+      const newBoard = await createBoard(boardName)
       logger.log('Board created:', newBoard)
-      saveBoardState(boards)
       addBoardToUI(newBoard)
-
-      // Switch to the new board and its default view
-      await switchBoard(newBoard.id)
-      const defaultViewId = newBoard.views[0].id
-      await switchView(newBoard.id, defaultViewId)
-
-      // Save the current board and view in localStorage
-      localStorage.setItem('lastUsedBoardId', newBoard.id)
-      localStorage.setItem('lastUsedViewId', defaultViewId)
-      logger.log(`Switched to new board ${newBoard.id} and view ${defaultViewId}`)
     } catch (error) {
       logger.error('Error creating board:', error)
     }
@@ -71,7 +59,6 @@ async function handleRenameBoard () {
     try {
       await renameBoard(boardId, newBoardName)
       logger.log('Board renamed to:', newBoardName)
-      saveBoardState(boards) // This call is redundant and can be removed, renameBoard already saves.
     } catch (error) {
       logger.error('Error renaming board:', error)
     }
@@ -90,7 +77,6 @@ async function handleDeleteBoard () {
     try {
       await deleteBoard(boardId)
       logger.log('Board deleted:', boardId)
-      // saveBoardState(boards) // This is also redundant.
       if (boards.length > 0) {
         updateViewSelector(boards[0].id)
       }
