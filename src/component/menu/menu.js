@@ -234,9 +234,9 @@ function initializeMainMenu () {
   configEditorLabel.textContent = emojiList.gear.unicode
   adminControl.appendChild(configEditorLabel)
 
-  const resetButton = document.createElement('button')
+  const resetButton = document.createElement('label')
   resetButton.id = 'reset-button'
-  resetButton.textContent = `${emojiList.crossCycle.unicode} Reset`
+  resetButton.textContent = `${emojiList.crossCycle.unicode}`
   adminControl.appendChild(resetButton)
 
   menu.appendChild(adminControl)
