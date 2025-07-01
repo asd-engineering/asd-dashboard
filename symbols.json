@@ -67,6 +67,16 @@
         "name": "dataid",
         "type": "?string",
         "desc": "- Persistent widget identifier."
+      },
+      {
+        "name": "version",
+        "type": "string|number",
+        "desc": "- Widget version for cache validation."
+      },
+      {
+        "name": "deferMount",
+        "type": "boolean",
+        "desc": "- Defer DOM insertion with cancellation support."
       }
     ],
     "returns": "Promise<void>"
@@ -193,6 +203,11 @@
         "name": "dataid",
         "type": "?string",
         "desc": "- Optional persistent widget identifier."
+      },
+      {
+        "name": "version",
+        "type": "string|number",
+        "desc": "- Widget version for cache validation."
       }
     ],
     "returns": "Promise<HTMLDivElement>"

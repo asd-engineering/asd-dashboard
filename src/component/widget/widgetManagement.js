@@ -17,8 +17,38 @@ import { toggleFullScreen } from './events/fullscreenToggle.js'
 import { initializeResizeHandles } from './events/resizeHandler.js'
 import { Logger } from '../../utils/Logger.js'
 import { showServiceModal } from '../modal/serviceLaunchModal.js'
+import { WidgetLRUCache, isCacheDisabled } from './widgetCache.js'
+import { deferredMount } from './utils/deferredMount.js'
 
 const logger = new Logger('widgetManagement.js')
+
+let cacheInstance = null
+const pendingMounts = []
+
+function getCache () {
+  if (!cacheInstance) {
+    const limit = Number(window.asd?.config?.globalSettings?.widget_cache_count) || 10
+    cacheInstance = new WidgetLRUCache(limit)
+    const dev = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) ||
+      (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production') ||
+      window.location.hostname === 'localhost'
+    if (dev) {
+      window.widgetCacheDebug = {
+        getStats: () => cacheInstance.stats(),
+        clear: () => cacheInstance.clear(),
+        getKeys: () => cacheInstance.stats().keys
+      }
+    }
+  }
+  return cacheInstance
+}
+
+function clearPendingMounts () {
+  while (pendingMounts.length) {
+    const cancel = pendingMounts.pop()
+    cancel()
+  }
+}
 
 /**
  * Build the DOM structure for a widget iframe and its controls.
@@ -28,10 +58,11 @@ const logger = new Logger('widgetManagement.js')
  * @param {number} [gridColumnSpan=1] - Number of grid columns to span.
  * @param {number} [gridRowSpan=1] - Number of grid rows to span.
  * @param {?string} [dataid=null] - Optional persistent widget identifier.
+ * @param {string|number} [version='1'] - Widget version for cache validation.
  * @function createWidget
  * @returns {Promise<HTMLDivElement>} Wrapper element containing the widget.
  */
-async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, dataid = null) {
+async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, dataid = null, version = '1') {
   logger.log('Creating widget with URL:', url)
   const config = await getConfig()
   const services = await fetchServices()
@@ -50,6 +81,7 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
   widgetWrapper.dataset.service = service
   widgetWrapper.dataset.url = url
   widgetWrapper.dataset.dataid = dataid || crypto.randomUUID() // Use existing dataid or generate a new one
+  widgetWrapper.dataset.version = String(version)
   logger.log(`Creating widget for service: ${service}`)
 
   gridColumnSpan = Math.min(Math.max(gridColumnSpan, minColumns), maxColumns)
@@ -199,10 +231,12 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
  * @param {?string} [boardId] - Board id; defaults to the active board.
  * @param {?string} [viewId] - View id; defaults to the active view.
  * @param {?string} [dataid=null] - Persistent widget identifier.
+ * @param {string|number} [version='1'] - Widget version for cache validation.
+ * @param {boolean} [deferMount=false] - Defer DOM insertion with cancellation support.
  * @function addWidget
  * @returns {Promise<void>} Resolves when the widget is added.
  */
-async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, viewId, dataid = null) {
+async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, viewId, dataid = null, version = '1', deferMount = false) {
   logger.log('Adding widget with URL:', url)
 
   const widgetContainer = document.getElementById('widget-container')
@@ -218,11 +252,57 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
   const service = await getServiceFromUrl(url)
   logger.log('Extracted service:', service)
 
-  const widgetWrapper = await createWidget(service, url, columns, rows, dataid)
-  widgetWrapper.setAttribute('data-order', String(widgetContainer.children.length))
-  widgetContainer.appendChild(widgetWrapper)
+  const cache = isCacheDisabled() ? null : getCache()
+  let widgetWrapper
+  let cacheHit = false
 
-  logger.log('Widget appended to container:', widgetWrapper)
+  if (cache && dataid) {
+    const cached = cache.get(dataid)
+    if (cached && cached.dataset.version === String(version)) {
+      widgetWrapper = cached
+      cacheHit = true
+      const iframe = cached.querySelector('iframe')
+      try {
+        if (iframe && iframe.contentWindow && iframe.contentWindow.origin === window.origin) {
+          iframe.contentWindow.postMessage({ type: 'WIDGET_REUSE' }, '*')
+        }
+      } catch {}
+    } else {
+      widgetWrapper = await createWidget(service, url, columns, rows, dataid, version)
+      cache.set(widgetWrapper.dataset.dataid, widgetWrapper)
+    }
+  } else {
+    widgetWrapper = await createWidget(service, url, columns, rows, dataid, version)
+    if (cache) {
+      cache.set(widgetWrapper.dataset.dataid, widgetWrapper)
+    }
+  }
+
+  widgetWrapper.setAttribute('data-order', String(widgetContainer.children.length))
+  widgetWrapper.dataset.cache = cacheHit ? 'hit' : 'miss'
+
+  const devOverlay = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) ||
+    (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production') ||
+    window.location.hostname === 'localhost'
+  if (devOverlay) {
+    let overlay = widgetWrapper.querySelector('.widget-debug-overlay')
+    if (!overlay) {
+      overlay = document.createElement('div')
+      overlay.className = 'widget-debug-overlay'
+      widgetWrapper.appendChild(overlay)
+    }
+    const size = cache ? cache.stats().size : 0
+    overlay.textContent = `${widgetWrapper.dataset.dataid} ${cacheHit ? 'cache hit' : 'cache miss'} ${size}`
+  }
+
+  if (deferMount) {
+    const cancelMount = deferredMount(widgetContainer, widgetWrapper)
+    pendingMounts.push(cancelMount)
+  } else {
+    widgetContainer.appendChild(widgetWrapper)
+  }
+
+  logger.log('Widget prepared and scheduled for mount:', widgetWrapper)
 
   const services = await fetchServices()
   const serviceObj = services.find(s => s.name === service)
@@ -307,4 +387,4 @@ function updateWidgetOrders () {
   saveWidgetState(boardId, viewId)
 }
 
-export { addWidget, removeWidget, updateWidgetOrders, createWidget }
+export { addWidget, removeWidget, updateWidgetOrders, createWidget, clearPendingMounts }

@@ -11,6 +11,7 @@
  * @property {string} [order]
  * @property {Record<string, any>} [metadata]
  * @property {Record<string, any>} [settings]
+ * @property {string|number} [version]
  */
 
 /**
