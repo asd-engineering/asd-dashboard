@@ -95,7 +95,7 @@ function initSW () {
  * @function initializeMainMenu
  * @returns {void}
  */
-export function initializeMainMenu () {
+function initializeMainMenu () {
   const menu = document.createElement('menu')
   menu.id = 'controls'
 
@@ -168,6 +168,7 @@ export function initializeMainMenu () {
   // Service control group
   const serviceControl = document.createElement('div')
   serviceControl.className = 'control-group'
+  serviceControl.id = 'service-control'
 
   const serviceSelector = document.createElement('select')
   serviceSelector.id = 'service-selector'
@@ -189,10 +190,6 @@ export function initializeMainMenu () {
   addWidgetButton.textContent = 'Add Widget'
   serviceControl.appendChild(addWidgetButton)
 
-  const resetButton = document.createElement('button')
-  resetButton.id = 'reset-button'
-  resetButton.textContent = 'Reset'
-  serviceControl.appendChild(resetButton)
 
   menu.appendChild(serviceControl)
 
@@ -238,8 +235,31 @@ export function initializeMainMenu () {
   configEditorLabel.textContent = emojiList.gear.unicode
   adminControl.appendChild(configEditorLabel)
 
+  const resetButton = document.createElement('button')
+  resetButton.id = 'reset-button'
+  resetButton.textContent = `${emojiList.crossCycle.unicode} Reset`
+  adminControl.appendChild(resetButton)
+
   menu.appendChild(adminControl)
 
   document.body.insertBefore(menu, document.body.firstChild) // Append as the first child
   initSW()
 }
+
+function applyControlVisibility () {
+  const settings = window.asd.config?.globalSettings || {}
+  const boardControl = document.getElementById('board-control')
+  if (boardControl) {
+    boardControl.style.display = settings.hideBoardControl === true || settings.hideBoardControl === 'true' ? 'none' : ''
+  }
+  const viewControl = document.getElementById('view-control')
+  if (viewControl) {
+    viewControl.style.display = settings.hideViewControl === true || settings.hideViewControl === 'true' ? 'none' : ''
+  }
+  const serviceControl = document.getElementById('service-control')
+  if (serviceControl) {
+    serviceControl.style.display = settings.hideServiceControl === true || settings.hideServiceControl === 'true' ? 'none' : ''
+  }
+}
+
+export { initializeMainMenu, applyControlVisibility }
