@@ -1,6 +1,7 @@
 # Justfile for asd-dashboard
 import "scripts/just/playwright.just"
 import "scripts/just/embed.just"
+import "scripts/just/repo.just"
 
 # Bootstrap the project
 setup:
