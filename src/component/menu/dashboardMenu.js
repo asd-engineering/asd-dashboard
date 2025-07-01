@@ -16,6 +16,7 @@ import { saveWidgetState } from '../../storage/localStorage.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
+import { clearConfigFragment } from '../../utils/fragmentGuard.js'
 
 const logger = new Logger('dashboardMenu.js')
 
@@ -69,6 +70,7 @@ function initializeDashboardMenu () {
 
     if (confirmed) {
       localStorage.clear()
+      clearConfigFragment()
       location.reload()
     }
   })
