@@ -62,15 +62,15 @@ async function handleCreateView () {
  * Rename the currently selected view.
  *
  * @function handleRenameView
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function handleRenameView () {
+async function handleRenameView () {
   const boardId = getCurrentBoardId()
   const viewId = getCurrentViewId()
   const newViewName = prompt('Enter new view name:')
   if (newViewName) {
     try {
-      renameView(boardId, viewId, newViewName)
+      await renameView(boardId, viewId, newViewName)
       logger.log('View renamed to:', newViewName)
     } catch (error) {
       logger.error('Error renaming view:', error)
@@ -82,14 +82,14 @@ function handleRenameView () {
  * Delete the active view after confirmation.
  *
  * @function handleDeleteView
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function handleDeleteView () {
+async function handleDeleteView () {
   const boardId = getCurrentBoardId()
   const viewId = getCurrentViewId()
   if (confirm('Are you sure you want to delete this view?')) {
     try {
-      deleteView(boardId, viewId)
+      await deleteView(boardId, viewId)
       logger.log('View deleted:', viewId)
       updateViewSelector(boardId)
     } catch (error) {
@@ -97,19 +97,18 @@ function handleDeleteView () {
     }
   }
 }
-
 /**
  * Remove all widgets from the current view.
  *
  * @function handleResetView
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function handleResetView () {
+async function handleResetView () {
   const boardId = getCurrentBoardId()
   const viewId = getCurrentViewId()
   if (confirm('Are you sure you want to reset this view?')) {
     try {
-      resetView(boardId, viewId)
+      await resetView(boardId, viewId)
       logger.log('View reset:', viewId)
     } catch (error) {
       logger.error('Error resetting view:', error)

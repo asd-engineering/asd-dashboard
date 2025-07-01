@@ -62,16 +62,16 @@ async function handleCreateBoard () {
  * Prompt for a new name and rename the selected board.
  *
  * @function handleRenameBoard
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function handleRenameBoard () {
+async function handleRenameBoard () {
   const boardId = getSelectedBoardId()
   const newBoardName = prompt('Enter new board name:')
   if (newBoardName) {
     try {
-      renameBoard(boardId, newBoardName)
+      await renameBoard(boardId, newBoardName)
       logger.log('Board renamed to:', newBoardName)
-      saveBoardState(boards)
+      saveBoardState(boards) // This call is redundant and can be removed, renameBoard already saves.
     } catch (error) {
       logger.error('Error renaming board:', error)
     }
@@ -82,15 +82,15 @@ function handleRenameBoard () {
  * Delete the currently selected board after confirmation.
  *
  * @function handleDeleteBoard
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function handleDeleteBoard () {
+async function handleDeleteBoard () {
   const boardId = getSelectedBoardId()
   if (confirm('Are you sure you want to delete this board?')) {
     try {
-      deleteBoard(boardId)
+      await deleteBoard(boardId)
       logger.log('Board deleted:', boardId)
-      saveBoardState(boards)
+      // saveBoardState(boards) // This is also redundant.
       if (boards.length > 0) {
         updateViewSelector(boards[0].id)
       }
