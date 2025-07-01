@@ -1209,5 +1209,13 @@
       }
     ],
     "returns": ""
+  },
+  {
+    "name": "WidgetCache",
+    "kind": "class",
+    "file": "src/component/widget/WidgetCache.js",
+    "description": "LRU cache for widget DOM elements.",
+    "params": [],
+    "returns": ""
   }
 ]

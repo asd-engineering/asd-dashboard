@@ -17,8 +17,15 @@ import { toggleFullScreen } from './events/fullscreenToggle.js'
 import { initializeResizeHandles } from './events/resizeHandler.js'
 import { Logger } from '../../utils/Logger.js'
 import { showServiceModal } from '../modal/serviceLaunchModal.js'
+import { WidgetCache } from './WidgetCache.js'
 
 const logger = new Logger('widgetManagement.js')
+
+export const widgetCache = new WidgetCache(10)
+
+if (import.meta.env && import.meta.env.DEV) {
+  window.widgetCacheDebug = widgetCache
+}
 
 /**
  * Build the DOM structure for a widget iframe and its controls.
@@ -215,11 +222,22 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
   boardId = boardId || window.asd.currentBoardId
   viewId = viewId || window.asd.currentViewId
 
+  const cached = dataid ? widgetCache.get(dataid) : undefined
+  if (cached) {
+    cached.dataset.cache = 'hit'
+    cached.setAttribute('data-order', String(widgetContainer.children.length))
+    widgetContainer.appendChild(cached)
+    initializeResizeHandles()
+    return cached
+  }
+
   const service = await getServiceFromUrl(url)
   logger.log('Extracted service:', service)
 
   const widgetWrapper = await createWidget(service, url, columns, rows, dataid)
+  widgetWrapper.dataset.cache = 'miss'
   widgetWrapper.setAttribute('data-order', String(widgetContainer.children.length))
+  widgetCache.set(widgetWrapper.dataset.dataid, widgetWrapper)
   widgetContainer.appendChild(widgetWrapper)
 
   logger.log('Widget appended to container:', widgetWrapper)

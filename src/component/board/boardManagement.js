@@ -5,7 +5,7 @@
  * @module boardManagement
  */
 import { saveBoardState, loadBoardState } from '../../storage/localStorage.js'
-import { addWidget } from '../widget/widgetManagement.js'
+import { addWidget, widgetCache } from '../widget/widgetManagement.js'
 import { Logger } from '../../utils/Logger.js'
 
 /** @typedef {import('../../types.js').Board} Board */
@@ -120,6 +120,7 @@ function clearWidgetContainer () {
  * @returns {Promise<void>} Resolves when widgets are loaded.
  */
 export async function switchView (boardId, viewId) {
+  boards = await loadBoardState()
   const board = boards.find(b => b.id === boardId)
   if (board) {
     logger.log(`Switching to view ${viewId} in board ${boardId}`)
@@ -209,6 +210,7 @@ export function updateViewSelector (boardId) {
  */
 export async function switchBoard (boardId, viewId = null) {
   logger.log(`Attempting to switch to board: ${boardId}`)
+  widgetCache.clear()
   const board = boards.find(b => b.id === boardId)
   if (board) {
     document.querySelector('.board').id = boardId
