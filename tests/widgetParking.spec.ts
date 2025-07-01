@@ -40,7 +40,8 @@ test.describe('Widget Parking Lot', () => {
     const reappearedIframe = await page.locator(`#widget-container iframe[src="${iframeSrc}"]`).first()
     const reappearedHandle = await reappearedIframe.elementHandle()
 
-    expect(iframeElementHandle).toBe(reappearedHandle)
+    const sameNode = await page.evaluate(({ a, b }) => a === b, { a: iframeElementHandle, b: reappearedHandle })
+    expect(sameNode).toBe(true)
 
     const wrapper = await reappearedIframe.evaluateHandle(el => el.closest('.widget-wrapper'))
     const cacheStatus = await wrapper.getProperty('dataset').then(ds => ds.jsonValue())

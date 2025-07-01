@@ -22,7 +22,7 @@ test.describe('Widget iframe cache', () => {
     await page.selectOption('#view-selector', { label: 'Default View' })
     await addServicesByName(page, 'ASD-terminal', 12)
     await expect(page.locator('.widget-wrapper')).toHaveCount(12)
-    const debugBefore = await page.evaluate(() => window.widgetCacheDebug && window.widgetCacheDebug.debugInfo())
+    const debugBefore = await page.evaluate(() => window.widgetParkingLotDebug && window.widgetParkingLotDebug.debugInfo())
     console.log('before switch', debugBefore)
 
     // switch away and back
@@ -31,7 +31,7 @@ test.describe('Widget iframe cache', () => {
     await page.selectOption('#view-selector', { label: 'Default View' })
     const widgets = page.locator('.widget-wrapper')
     await expect(widgets).toHaveCount(12)
-    const debugAfter = await page.evaluate(() => window.widgetCacheDebug && window.widgetCacheDebug.debugInfo())
+    const debugAfter = await page.evaluate(() => window.widgetParkingLotDebug && window.widgetParkingLotDebug.debugInfo())
     console.log('after switch', debugAfter)
 
     const hitCount = await page.evaluate(() => Array.from(document.querySelectorAll('.widget-wrapper')).filter(el => el.dataset.cache === 'hit').length)

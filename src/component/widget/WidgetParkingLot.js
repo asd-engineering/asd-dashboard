@@ -1,11 +1,11 @@
 // @ts-check
 /**
- * LRU cache for widget DOM elements.
+ * Parking lot for widget DOM elements.
  *
- * @module WidgetCache
- * @class WidgetCache
+ * @module WidgetParkingLot
+ * @class WidgetParkingLot
  */
-export class WidgetCache {
+export class WidgetParkingLot {
   /**
    * @param {number} limit Max number of cached widgets.
    */
@@ -16,12 +16,12 @@ export class WidgetCache {
   }
 
   /**
-   * Retrieve a cached widget and mark as recently used.
+   * Retrieve a parked widget and mark as recently used.
    *
    * @param {string} key
    * @returns {HTMLElement|undefined}
    */
-  get (key) {
+  retrieve (key) {
     const value = this.cache.get(key)
     if (value) {
       this.cache.delete(key)
@@ -31,13 +31,13 @@ export class WidgetCache {
   }
 
   /**
-   * Store a widget in the cache, evicting the least recently used if needed.
+   * Park a widget, evicting the least recently used if needed.
    *
    * @param {string} key
    * @param {HTMLElement} el
    * @returns {void}
    */
-  set (key, el) {
+  park (key, el) {
     if (this.cache.has(key)) {
       this.cache.delete(key)
     } else if (this.cache.size >= this.limit) {
@@ -60,13 +60,13 @@ export class WidgetCache {
   }
 
   /**
-   * Print debug info about the cache.
+   * Print debug info about the parking lot.
    *
    * @returns {{ size: number, keys: string[] }}
    */
   debugInfo () {
     const info = { size: this.cache.size, keys: Array.from(this.cache.keys()) }
-    console.log('WidgetCache', info)
+    console.log('WidgetParkingLot', info)
     return info
   }
 }
