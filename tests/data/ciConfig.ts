@@ -35,6 +35,7 @@ export const ciBoards = [
             {
               "order": "0",
               "url": "http://localhost:8000/asd/toolbox",
+              "version": "1",
               "minColumns": "4",
               "maxColumns": "4",
               "minRows": "4",
@@ -64,6 +65,7 @@ export const ciBoards = [
             {
               "order": "0",
               "url": "http://localhost:8000/asd/toolbox",
+              "version": "1",
               "type": "web",
               "settings": {
                 "autoRefresh": false,

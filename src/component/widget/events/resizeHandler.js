@@ -24,10 +24,11 @@ export function initializeResizeHandles () {
   logger.info(`Found ${widgets.length} widgets to initialize resize handles.`)
 
   widgets.forEach((widget, index) => {
+    const el = /** @type {HTMLElement} */(widget)
+    if (!el.isConnected) return
     logger.info(`Initializing resize handle for widget index: ${index}`)
     const resizeHandle = document.createElement('div')
     resizeHandle.className = 'resize-handle'
-    const el = /** @type {HTMLElement} */(widget)
     el.appendChild(resizeHandle)
 
     logger.info('Appended resize handle:', resizeHandle)

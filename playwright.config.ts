@@ -1,5 +1,6 @@
 import os from 'os';
 import { defineConfig, devices } from '@playwright/test';
+import './tests/helper/augment';
 
 /**
  * See https://playwright.dev/docs/test-configuration.

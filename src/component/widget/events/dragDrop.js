@@ -59,6 +59,7 @@ function handleDragEnd (e) {
  * @returns {void}
  */
 function addDragOverlay (widgetWrapper) {
+  if (widgetWrapper.querySelector('.drag-overlay')) return
   const dragOverlay = document.createElement('div')
   dragOverlay.classList.add('drag-overlay')
 

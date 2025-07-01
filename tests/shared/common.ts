@@ -36,5 +36,6 @@ export async function getBoardsFromLocalStorage(page) {
 export async function addServicesByName(page: Page, serviceName: string, count: number) {
     for (let i = 0; i < count; i++) {
         await selectServiceByName(page, serviceName);
+        await page.waitForTimeout(100);
     }
 }
