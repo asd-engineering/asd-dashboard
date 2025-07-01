@@ -227,7 +227,7 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
   const widgetWrapper = await createWidget(service, url, columns, rows, dataid)
   widgetWrapper.setAttribute('data-order', String(widgetContainer.children.length))
   widgetContainer.appendChild(widgetWrapper)
-  window.asd.widgetStore.add(widgetWrapper.dataset.dataid, widgetWrapper)
+  window.asd.widgetStore.add(widgetWrapper)
 
   logger.log('Widget appended to container:', widgetWrapper)
 
