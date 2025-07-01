@@ -137,3 +137,5 @@ export class WidgetStore {
     }
   }
 }
+
+export const widgetStore = new WidgetStore()

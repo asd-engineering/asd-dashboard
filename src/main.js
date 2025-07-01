@@ -17,7 +17,7 @@ import { initializeBoardDropdown } from './component/board/boardDropdown.js'
 import { initializeViewDropdown } from './component/view/viewDropdown.js'
 import { loadFromFragment } from './utils/fragmentLoader.js'
 import { Logger } from './utils/Logger.js'
-import { WidgetStore } from './component/widget/widgetStore.js'
+import { widgetStore } from './component/widget/widgetStore.js'
 
 const logger = new Logger('main.js')
 
@@ -29,7 +29,7 @@ window.asd = {
   boards: [],
   currentBoardId: null,
   currentViewId: null,
-  widgetStore: new WidgetStore()
+  widgetStore
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
