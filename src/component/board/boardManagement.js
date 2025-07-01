@@ -7,6 +7,7 @@
 import { saveBoardState, loadBoardState } from '../../storage/localStorage.js'
 import { addWidget } from '../widget/widgetManagement.js'
 import { Logger } from '../../utils/Logger.js'
+import { boardGetUUID, viewGetUUID } from '../../utils/id.js'
 
 /** @typedef {import('../../types.js').Board} Board */
 /** @typedef {import('../../types.js').View} View */
@@ -16,10 +17,6 @@ const logger = new Logger('boardManagement.js')
 
 /** @type {Array<Board>} */
 export let boards = []
-
-function generateUniqueId (prefix) {
-  return `${prefix}-${Date.now()}`
-}
 
 /**
  * Create a board with a default view.
@@ -32,7 +29,7 @@ function generateUniqueId (prefix) {
  * @returns {Board} The created board.
  */
 export function createBoard (boardName, boardId = null, viewId = null) {
-  const newBoardId = boardId || generateUniqueId('board')
+  const newBoardId = boardId || boardGetUUID()
   const newBoard = {
     id: newBoardId,
     name: boardName,
@@ -41,7 +38,7 @@ export function createBoard (boardName, boardId = null, viewId = null) {
   }
   boards.push(newBoard)
 
-  const defaultViewId = viewId || generateUniqueId('view')
+  const defaultViewId = viewId || viewGetUUID()
   createView(newBoardId, 'Default View', defaultViewId)
   logger.log(`Created default view ${defaultViewId} for new board ${newBoardId}`)
 
@@ -76,7 +73,7 @@ export function createBoard (boardName, boardId = null, viewId = null) {
 export function createView (boardId, viewName, viewId = null) {
   const board = boards.find(b => b.id === boardId)
   if (board) {
-    const newViewId = viewId || generateUniqueId('view')
+    const newViewId = viewId || viewGetUUID()
     const newView = {
       id: newViewId,
       name: viewName,

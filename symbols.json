@@ -100,6 +100,14 @@
     "returns": "string"
   },
   {
+    "name": "boardGetUUID",
+    "kind": "function",
+    "file": "src/utils/id.js",
+    "description": "Generate a unique board id.",
+    "params": [],
+    "returns": "string"
+  },
+  {
     "name": "checkLogStatus",
     "kind": "function",
     "file": "src/utils/Logger.js",
@@ -1197,6 +1205,14 @@
     "returns": "void"
   },
   {
+    "name": "viewGetUUID",
+    "kind": "function",
+    "file": "src/utils/id.js",
+    "description": "Generate a unique view id.",
+    "params": [],
+    "returns": "string"
+  },
+  {
     "name": "warn",
     "kind": "function",
     "file": "src/utils/Logger.js",
@@ -1209,5 +1225,13 @@
       }
     ],
     "returns": ""
+  },
+  {
+    "name": "widgetGetUUID",
+    "kind": "function",
+    "file": "src/utils/id.js",
+    "description": "Generate a unique widget id.",
+    "params": [],
+    "returns": "string"
   }
 ]

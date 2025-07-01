@@ -17,6 +17,7 @@ import { toggleFullScreen } from './events/fullscreenToggle.js'
 import { initializeResizeHandles } from './events/resizeHandler.js'
 import { Logger } from '../../utils/Logger.js'
 import { showServiceModal } from '../modal/serviceLaunchModal.js'
+import { widgetGetUUID } from '../../utils/id.js'
 
 const logger = new Logger('widgetManagement.js')
 
@@ -49,7 +50,7 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
   widgetWrapper.style.position = 'relative'
   widgetWrapper.dataset.service = service
   widgetWrapper.dataset.url = url
-  widgetWrapper.dataset.dataid = dataid || crypto.randomUUID() // Use existing dataid or generate a new one
+  widgetWrapper.dataset.dataid = dataid || widgetGetUUID()
   logger.log(`Creating widget for service: ${service}`)
 
   gridColumnSpan = Math.min(Math.max(gridColumnSpan, minColumns), maxColumns)
