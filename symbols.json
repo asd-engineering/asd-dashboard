@@ -1211,10 +1211,10 @@
     "returns": ""
   },
   {
-    "name": "WidgetCache",
+    "name": "WidgetParkingLot",
     "kind": "class",
-    "file": "src/component/widget/WidgetCache.js",
-    "description": "LRU cache for widget DOM elements.",
+    "file": "src/component/widget/WidgetParkingLot.js",
+    "description": "Parking lot for widget DOM elements.",
     "params": [],
     "returns": ""
   }

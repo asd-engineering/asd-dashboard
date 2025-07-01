@@ -5,7 +5,7 @@
  * @module boardManagement
  */
 import { saveBoardState, loadBoardState } from '../../storage/localStorage.js'
-import { addWidget, widgetCache } from '../widget/widgetManagement.js'
+import { addWidget, widgetParkingLot } from '../widget/widgetManagement.js'
 import { Logger } from '../../utils/Logger.js'
 
 /** @typedef {import('../../types.js').Board} Board */
@@ -105,9 +105,11 @@ export function createView (boardId, viewName, viewId = null) {
 
 function clearWidgetContainer () {
   const widgetContainer = document.getElementById('widget-container')
+  const parking = document.getElementById('widget-parking')
   while (widgetContainer.firstChild) {
-    widgetContainer.removeChild(widgetContainer.firstChild)
+    parking.appendChild(widgetContainer.firstChild)
   }
+  parking.lastChild?.style && (parking.lastChild.style.display = 'none')
 }
 
 /**
@@ -210,7 +212,7 @@ export function updateViewSelector (boardId) {
  */
 export async function switchBoard (boardId, viewId = null) {
   logger.log(`Attempting to switch to board: ${boardId}`)
-  widgetCache.clear()
+  widgetParkingLot.clear()
   const board = boards.find(b => b.id === boardId)
   if (board) {
     document.querySelector('.board').id = boardId
