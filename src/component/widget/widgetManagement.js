@@ -5,6 +5,7 @@
  * @module widgetManagement
  */
 import { saveWidgetState } from '../../storage/localStorage.js'
+import { boards } from '../board/boardManagement.js'
 import { fetchData } from './utils/fetchData.js'
 import { showResizeMenu, hideResizeMenu, showResizeMenuBlock, hideResizeMenuBlock } from './menu/resizeMenu.js'
 import emojiList from '../../ui/unicodeEmoji.js'
@@ -260,11 +261,16 @@ function removeWidget (widgetElement) {
   const dataid = widgetElement.dataset.dataid
   window.asd.widgetStore.requestRemoval(dataid)
   logger.log('Widget removed with dataid:', dataid)
-  updateWidgetOrders()
   const boardId = window.asd.currentBoardId
   const viewId = window.asd.currentViewId
-  logger.log(`Saving widget state after removal for board ${boardId} and view ${viewId}`)
-  saveWidgetState(boardId, viewId)
+  const board = boards.find(b => b.id === boardId)
+  const view = board?.views.find(v => v.id === viewId)
+  if (view) {
+    view.widgetState = view.widgetState.filter(w => w.dataid !== dataid)
+    updateWidgetOrders(view.widgetState)
+    logger.log(`Saving widget state after removal for board ${boardId} and view ${viewId}`)
+    saveWidgetState(boardId, viewId)
+  }
 }
 
 async function configureWidget (iframeElement) {
@@ -294,25 +300,18 @@ async function configureWidget (iframeElement) {
  * @function updateWidgetOrders
  * @returns {void}
  */
-function updateWidgetOrders () {
+function updateWidgetOrders (widgetState) {
   const widgetContainer = document.getElementById('widget-container')
-  const widgets = Array.from(widgetContainer.children)
-    .map(w => /** @type {HTMLElement} */(w))
-    .sort((a, b) => parseInt(a.style.order || '0') - parseInt(b.style.order || '0'))
-
-  widgets.forEach((widget, index) => {
-    widget.setAttribute('data-order', String(index))
-    widget.style.order = String(index)
-    logger.log('Updated widget order:', {
-      dataid: widget.dataset.dataid,
-      order: index
-    })
+  if (!widgetContainer) return
+  widgetState.forEach((widget, index) => {
+    const el = window.asd.widgetStore.get(widget.dataid)
+    if (el) {
+      el.setAttribute('data-order', String(index))
+      el.style.order = String(index)
+      widget.order = String(index)
+      logger.log('Updated widget order:', { dataid: widget.dataid, order: index })
+    }
   })
-
-  const boardId = window.asd.currentBoardId
-  const viewId = window.asd.currentViewId
-  logger.log(`Saving widget state after updating orders for board ${boardId} and view ${viewId}`)
-  saveWidgetState(boardId, viewId)
 }
 
 export { addWidget, removeWidget, updateWidgetOrders, createWidget }

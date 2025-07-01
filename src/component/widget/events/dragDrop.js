@@ -6,6 +6,7 @@
  */
 import { updateWidgetOrders } from '../widgetManagement.js'
 import { saveWidgetState } from '../../../storage/localStorage.js'
+import { boards } from '../../board/boardManagement.js'
 import { Logger } from '../../../utils/Logger.js'
 
 const logger = new Logger('dragDrop.js')
@@ -113,84 +114,47 @@ function handleDrop (e, targetWidgetWrapper) {
   logger.log('Drop event on overlay for widget:', targetWidgetWrapper)
 
   const draggedOrder = e.dataTransfer.getData('text/plain')
-  const targetOrder = targetWidgetWrapper ? targetWidgetWrapper.getAttribute('data-order') : null
-
-  logger.log(`Drop event: draggedOrder=${draggedOrder}, targetOrder=${targetOrder}`)
-
   const widgetContainer = document.getElementById('widget-container')
   const draggedWidget = widgetContainer.querySelector(`[data-order='${draggedOrder}']`)
-
   if (!(draggedWidget instanceof HTMLElement)) {
     logger.error('Invalid dragged widget element', 3000, 'error')
     return
   }
 
-  if (targetOrder !== null) {
-    const targetWidget = widgetContainer.querySelector(`[data-order='${targetOrder}']`)
-    if (!(targetWidget instanceof HTMLElement)) {
-      logger.error('Invalid target widget element', 3000, 'error')
-      return
-    }
+  const boardId = window.asd.currentBoardId
+  const viewId = window.asd.currentViewId
+  const board = boards.find(b => b.id === boardId)
+  const view = board?.views.find(v => v.id === viewId)
+  if (!view) return
 
-    logger.log('Before rearrangement:', {
-      draggedWidgetOrder: draggedWidget.getAttribute('data-order'),
-      targetWidgetOrder: targetWidget.getAttribute('data-order')
-    })
+  const draggedId = draggedWidget.dataset.dataid
+  const draggedIndex = view.widgetState.findIndex(w => w.dataid === draggedId)
+  if (draggedIndex === -1) return
 
-    draggedWidget.setAttribute('data-order', targetOrder)
-    targetWidget.setAttribute('data-order', draggedOrder)
-
-    draggedWidget.style.order = targetOrder
-    targetWidget.style.order = draggedOrder
+  if (targetWidgetWrapper) {
+    const targetId = targetWidgetWrapper.dataset.dataid
+    const targetIndex = view.widgetState.findIndex(w => w.dataid === targetId)
+    if (targetIndex === -1) return
+    const [item] = view.widgetState.splice(draggedIndex, 1)
+    view.widgetState.splice(targetIndex, 0, item)
   } else {
-    // Calculate nearest available grid position
     const gridColumnCount = parseInt(getComputedStyle(widgetContainer).getPropertyValue('grid-template-columns').split(' ').length.toString(), 10)
-    const draggedEl = /** @type {HTMLElement} */(draggedWidget)
-    let targetColumn = Math.floor(e.clientX / draggedEl.offsetWidth)
-    let targetRow = Math.floor(e.clientY / draggedEl.offsetHeight)
-
-    // Adjust to fit within grid boundaries
+    let targetColumn = Math.floor(e.clientX / draggedWidget.offsetWidth)
+    let targetRow = Math.floor(e.clientY / draggedWidget.offsetHeight)
     targetColumn = Math.min(targetColumn, gridColumnCount - 1)
     targetColumn = Math.max(targetColumn, 0)
     targetRow = Math.max(targetRow, 0)
-
-    draggedEl.style.gridColumnStart = (targetColumn + 1).toString()
-    draggedEl.style.gridRowStart = (targetRow + 1).toString()
-
-    logger.log('Widget moved to new grid position:', {
-      column: targetColumn + 1,
-      row: targetRow + 1
-    })
+    view.widgetState[draggedIndex].column = targetColumn + 1
+    view.widgetState[draggedIndex].row = targetRow + 1
+    draggedWidget.style.gridColumnStart = (targetColumn + 1).toString()
+    draggedWidget.style.gridRowStart = (targetRow + 1).toString()
   }
 
+  view.widgetState.forEach((w, idx) => { w.order = String(idx) })
+  updateWidgetOrders(view.widgetState)
+  saveWidgetState(boardId, viewId)
   const updatedWidgets = Array.from(widgetContainer.children)
   updatedWidgets.forEach(widget => widget.classList.remove('drag-over'))
-
-  updateWidgetOrders()
-
-  // Update localStorage with new widget position
-  const widgetId = (/** @type {HTMLElement} */(draggedWidget)).dataset.dataid
-  const boardId = window.asd.currentBoardId
-  const viewId = window.asd.currentViewId
-  const widgetState = JSON.parse(localStorage.getItem('widgetState')) || {}
-
-  if (!widgetState[boardId]) {
-    widgetState[boardId] = {}
-  }
-
-  if (!widgetState[boardId][viewId]) {
-    widgetState[boardId][viewId] = []
-  }
-
-  const widgetIndex = widgetState[boardId][viewId].findIndex(widget => widget.dataid === widgetId)
-  if (widgetIndex !== -1) {
-    widgetState[boardId][viewId][widgetIndex].column = parseInt((/** @type {HTMLElement} */(draggedWidget)).style.gridColumnStart)
-    widgetState[boardId][viewId][widgetIndex].row = parseInt((/** @type {HTMLElement} */(draggedWidget)).style.gridRowStart)
-  }
-
-  localStorage.setItem('widgetState', JSON.stringify(widgetState))
-  saveWidgetState(boardId, viewId)
-
   draggedWidget.classList.remove('dragging')
 }
 
@@ -246,37 +210,8 @@ function initializeDragAndDrop () {
 
   widgetContainer.addEventListener('drop', (e) => {
     e.preventDefault()
-    const draggedOrder = e.dataTransfer.getData('text/plain')
     const targetWidgetWrapper = (/** @type {HTMLElement} */(e.target)).closest('.widget-wrapper')
-    const targetOrder = targetWidgetWrapper ? targetWidgetWrapper.getAttribute('data-order') : null
-
-    if (draggedOrder !== null) {
-      const widgets = Array.from(widgetContainer.children)
-      const draggedWidgetEl = widgets.find(widget => widget.getAttribute('data-order') === draggedOrder)
-
-      if (draggedWidgetEl) {
-        const draggedWidget = /** @type {HTMLElement} */(draggedWidgetEl)
-        if (targetOrder !== null) {
-          const targetWidgetEl = widgets.find(widget => widget.getAttribute('data-order') === targetOrder)
-          if (targetWidgetEl) {
-            const targetWidget = /** @type {HTMLElement} */(targetWidgetEl)
-            // Swap orders
-            draggedWidget.setAttribute('data-order', targetOrder)
-            targetWidget.setAttribute('data-order', draggedOrder)
-
-            // Update CSS order
-            draggedWidget.style.order = targetOrder.toString()
-            targetWidget.style.order = draggedOrder.toString()
-          }
-        } else {
-          // Handle drop in open space
-          handleDrop(e, null)
-        }
-
-        // Save the new state
-        saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
-      }
-    }
+    handleDrop(e, targetWidgetWrapper)
   })
 
   logger.log('Drag and drop functionality initialized')

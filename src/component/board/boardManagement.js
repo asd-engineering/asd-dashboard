@@ -151,7 +151,7 @@ export async function switchView (boardId, viewId) {
   window.asd.currentViewId = viewId
   localStorage.setItem('lastUsedViewId', viewId)
   updateViewSelector(boardId)
-  updateWidgetOrders()
+  updateWidgetOrders(view.widgetState)
 }
 
 /**
@@ -383,7 +383,8 @@ export function deleteView (boardId, viewId) {
       logger.log(`Deleted view ${viewId} and evicted its widgets.`)
       updateViewSelector(boardId)
       if (board.views.length > 0) {
-        const nextViewId = board.views[0].id
+        const nextIndex = Math.max(0, viewIndex - 1)
+        const nextViewId = board.views[nextIndex].id
         switchView(boardId, nextViewId)
         const viewSelector = document.getElementById('view-selector')
         if (viewSelector) viewSelector.value = nextViewId
