@@ -190,7 +190,6 @@ function initializeMainMenu () {
   addWidgetButton.textContent = 'Add Widget'
   serviceControl.appendChild(addWidgetButton)
 
-
   menu.appendChild(serviceControl)
 
   // Admin control group
