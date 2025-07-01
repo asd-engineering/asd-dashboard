@@ -236,6 +236,8 @@ function initializeMainMenu () {
 
   const resetButton = document.createElement('label')
   resetButton.id = 'reset-button'
+  resetButton.ariaLabel = 'Permanently reset ASD Dashboard'
+  resetButton.title = 'Permanently reset ASD Dashboard'
   resetButton.textContent = `${emojiList.crossCycle.unicode}`
   adminControl.appendChild(resetButton)
 
