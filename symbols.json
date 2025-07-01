@@ -1,5 +1,46 @@
 [
   {
+    "name": "_ensureLimit",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Ensure the store does not exceed its capacity. Older entries are evicted first.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "_evict",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Remove a widget from the DOM and store if it exists. This is the sole method performing element.remove().",
+    "params": [
+      {
+        "name": "id",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "add",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Store a widget element by id. Existing entries are refreshed.",
+    "params": [
+      {
+        "name": "id",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "element",
+        "type": "HTMLElement",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "addBoardToUI",
     "kind": "function",
     "file": "src/component/board/boardManagement.js",
@@ -357,6 +398,20 @@
     "returns": "Promise<Array<Service>>"
   },
   {
+    "name": "get",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Retrieve a widget element and mark it as recently used.",
+    "params": [
+      {
+        "name": "id",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "HTMLElement|undefined"
+  },
+  {
     "name": "getAuthToken",
     "kind": "function",
     "file": "src/component/widget/utils/fetchData.js",
@@ -640,6 +695,34 @@
       }
     ],
     "returns": "Promise<void>"
+  },
+  {
+    "name": "has",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Check if a widget exists in the store.",
+    "params": [
+      {
+        "name": "id",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "boolean"
+  },
+  {
+    "name": "hide",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Hide a stored widget by id.",
+    "params": [
+      {
+        "name": "id",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
   },
   {
     "name": "info",
@@ -1036,6 +1119,20 @@
     "returns": "void"
   },
   {
+    "name": "requestRemoval",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Request removal of a widget from the DOM and store.",
+    "params": [
+      {
+        "name": "id",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "resetView",
     "kind": "function",
     "file": "src/component/board/boardManagement.js",
@@ -1086,6 +1183,20 @@
       }
     ],
     "returns": "Promise<void>"
+  },
+  {
+    "name": "show",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Show a stored widget by id.",
+    "params": [
+      {
+        "name": "id",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
   },
   {
     "name": "showNotification",
@@ -1233,5 +1344,13 @@
     "description": "Generate a unique widget id.",
     "params": [],
     "returns": "string"
+  },
+  {
+    "name": "WidgetStore",
+    "kind": "class",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Lightweight LRU cache storing widget elements by id. Evicts least recently used widgets when capacity is exceeded.",
+    "params": [],
+    "returns": ""
   }
 ]
