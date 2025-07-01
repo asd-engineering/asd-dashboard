@@ -24,14 +24,16 @@ export class WidgetStore {
   }
 
   /**
-   * Store a widget element by id. Existing entries are refreshed.
+   * Store a widget element using its `dataid` attribute as the key.
+   * Existing entries are refreshed.
    *
-   * @param {string} id
    * @param {HTMLElement} element
    * @function add
    * @returns {void}
    */
-  add (id, element) {
+  add (element) {
+    const id = element.dataset.dataid
+    if (!id) return
     if (this.widgets.has(id)) {
       this.widgets.delete(id)
     }

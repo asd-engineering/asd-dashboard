@@ -25,13 +25,8 @@
     "name": "add",
     "kind": "function",
     "file": "src/component/widget/widgetStore.js",
-    "description": "Store a widget element by id. Existing entries are refreshed.",
+    "description": "Store a widget element using its `dataid` attribute as the key. Existing entries are refreshed.",
     "params": [
-      {
-        "name": "id",
-        "type": "string",
-        "desc": ""
-      },
       {
         "name": "element",
         "type": "HTMLElement",

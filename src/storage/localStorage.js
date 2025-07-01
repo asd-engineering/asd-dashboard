@@ -4,9 +4,6 @@
  *
  * @module localStorage
  */
-import { createWidget } from '../component/widget/widgetManagement.js'
-import { getServiceFromUrl } from '../component/widget/utils/widgetUtils.js'
-import { initializeResizeHandles } from '../component/widget/events/resizeHandler.js'
 import { Logger } from '../utils/Logger.js'
 
 /** @typedef {import('../types.js').Widget} Widget */
@@ -65,38 +62,32 @@ function serializeWidgetState (widget) {
  * @returns {Promise<void>}
  */
 async function saveWidgetState (boardId, viewId) {
-  if (!boardId) {
-    boardId = document.querySelector('.board').id
+  if (!boardId || !viewId) {
+    return logger.error('Board ID or View ID is missing. Cannot save widget state.')
   }
-  if (!viewId) {
-    viewId = document.querySelector('.board-view').id
-  }
+
   try {
-    logger.info(`saveWidgetState function called for board: ${boardId}, view: ${viewId}`)
-    if (!viewId) {
-      logger.error('View ID is missing. Cannot save widget state.')
-      return
-    }
-    const widgetContainer = document.getElementById('widget-container')
-    const widgets = Array.from(widgetContainer.children)
-    const widgetState = widgets.map(widget => serializeWidgetState(/** @type {HTMLElement} */(widget)))
     const boards = await loadBoardState()
-    logger.info(`Loaded board state from localStorage: ${boards}`)
     const board = boards.find(b => b.id === boardId)
-    if (board) {
-      logger.info(`Found board: ${board}`)
-      const view = board.views.find(v => v.id === viewId)
-      if (view) {
-        logger.info(`Found view: ${view}`)
-        view.widgetState = widgetState
-        await saveBoardState(boards)
-        logger.info(`Saved widget state to view: ${viewId} in board: ${boardId}`)
-      } else {
-        logger.error(`View not found: ${viewId}`)
-      }
-    } else {
-      logger.error(`Board not found: ${boardId}`)
-    }
+    if (!board) return logger.error(`Board not found for saving state: ${boardId}`)
+
+    const view = board.views.find(v => v.id === viewId)
+    if (!view) return logger.error(`View not found for saving state: ${viewId}`)
+
+    const updatedWidgetState = view.widgetState
+      .map(widgetData => {
+        const widgetElement = window.asd.widgetStore.get(widgetData.dataid)
+        if (widgetElement) {
+          return serializeWidgetState(widgetElement)
+        }
+        return widgetData
+      })
+      .filter(Boolean)
+
+    view.widgetState = updatedWidgetState
+
+    await saveBoardState(boards)
+    logger.info(`Saved widget state for view: ${viewId} in board: ${boardId}`)
   } catch (error) {
     logger.error('Error saving widget state:', error)
   }
@@ -113,56 +104,8 @@ async function saveWidgetState (boardId, viewId) {
  * @returns {Promise<void>}
  */
 async function loadWidgetState (boardId, viewId) {
-  try {
-    logger.info('loadWidgetState function called for board:', boardId, 'and view:', viewId)
-
-    setBoardAndViewIds(boardId, viewId)
-
-    const boards = await loadBoardState()
-    logger.info('Loaded board state from localStorage:', boards)
-    const board = boards.find(b => b.id === boardId)
-
-    if (board) {
-      logger.info('Found board:', board)
-      const view = board.views.find(v => v.id === viewId)
-
-      if (view && view.widgetState.length > 0) {
-        logger.info('Found widget state in view:', view.widgetState)
-        const savedState = view.widgetState
-        const widgetContainer = document.getElementById('widget-container')
-        const existingWidgetIds = Array.from(widgetContainer.children).map(w => /** @type {HTMLElement} */(w).dataset.dataid)
-
-        for (const widgetData of savedState) {
-          if (!existingWidgetIds.includes(widgetData.dataid)) {
-            logger.info('Loading widget data:', widgetData)
-            const service = await getServiceFromUrl(widgetData.url)
-            const widgetWrapper = await createWidget(
-              service,
-              widgetData.url,
-              Number(widgetData.columns),
-              Number(widgetData.rows),
-              widgetData.dataid // Ensure dataid is passed to maintain widget identity
-            )
-            widgetWrapper.dataset.order = String(widgetData.order)
-            widgetWrapper.style.order = String(widgetData.order)
-            widgetWrapper.dataset.type = widgetData.type
-            widgetWrapper.dataset.metadata = JSON.stringify(widgetData.metadata)
-            widgetWrapper.dataset.settings = JSON.stringify(widgetData.settings)
-            widgetContainer.appendChild(widgetWrapper)
-          }
-        }
-
-        // Initialize resize handles after all widgets are loaded
-        initializeResizeHandles()
-      } else {
-        logger.info('No widget state found in view:', viewId)
-      }
-    } else {
-      logger.error('Board not found:', boardId)
-    }
-  } catch (error) {
-    logger.error('Error loading widget state:', error)
-  }
+  // This logic is now handled by switchView. Kept for backward compatibility.
+  logger.warn('loadWidgetState is deprecated; view switching now handles widget loading.')
 }
 
 /**
@@ -184,16 +127,6 @@ async function loadInitialConfig () {
   }
 }
 
-function setBoardAndViewIds (boardId, viewId) {
-  const boardElement = document.querySelector('.board')
-  boardElement.id = boardId
-  const viewElement = document.querySelector('.board-view')
-  viewElement.id = viewId
-  window.asd.currentBoardId = boardId
-  window.asd.currentViewId = viewId
-  logger.log(`Set currentBoardId to: ${window.asd.currentBoardId}, currentViewId to: ${window.asd.currentViewId}`)
-}
-
 /**
  * Persist the entire boards array to localStorage under the key `boards`.
  *
@@ -201,7 +134,7 @@ function setBoardAndViewIds (boardId, viewId) {
  * @param {Array<Board>} boards - Array of board objects to store.
  * @returns {Promise<void>}
  */
-export async function saveBoardState (boards) {
+async function saveBoardState (boards) {
   try {
     localStorage.setItem('boards', JSON.stringify(boards))
     logger.log('Saved board state to localStorage')
@@ -217,7 +150,7 @@ export async function saveBoardState (boards) {
  * @function loadBoardState
  * @returns {Promise<Array<Board>>} Parsed array of boards or an empty array on failure.
  */
-export async function loadBoardState () {
+async function loadBoardState () {
   try {
     const boards = localStorage.getItem('boards')
     const parsedBoards = boards ? JSON.parse(boards) : []
@@ -233,4 +166,4 @@ export async function loadBoardState () {
   }
 }
 
-export { saveWidgetState, loadWidgetState, loadInitialConfig }
+export { saveWidgetState, loadWidgetState, loadInitialConfig, saveBoardState, loadBoardState }
