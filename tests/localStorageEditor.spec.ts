@@ -47,6 +47,7 @@ test.describe('LocalStorage Editor Functionality', () => {
     // Wait for notification
     const notification = await page.locator('.user-notification span');
     await page.waitForSelector('.user-notification span', { state: 'visible', timeout });
+    await page.waitForSelector('.user-notification span:has-text("LocalStorage updated")');
     await expect(notification).toHaveText('LocalStorage updated successfully!');
   
     // Verify changes in localStorage

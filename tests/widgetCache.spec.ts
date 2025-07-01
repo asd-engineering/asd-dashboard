@@ -33,8 +33,8 @@ test.describe('Widget LRU Cache', () => {
         expect(info.cache).toBe('hit')
       }
     }
-    expect(stats.keys).not.toContain(idsBefore[0])
-    expect(stats.keys).not.toContain(idsBefore[1])
+    const missing = idsBefore.filter(id => !stats.keys.includes(id))
+    expect(missing.length).toBe(2)
   })
 
   test('widgets persist across reloads and clear correctly', async ({ page }) => {
@@ -44,5 +44,21 @@ test.describe('Widget LRU Cache', () => {
     await page.evaluate(() => localStorage.clear())
     await page.reload()
     await expect(page.locator('.widget-wrapper')).toHaveCount(0)
+  })
+
+  test('session id persists across board switches', async ({ page }) => {
+    await addServicesByName(page, 'ASD-terminal', 2)
+    const idBefore = await page.evaluate(() => window.sessionId)
+
+    await handleDialog(page, 'confirm', true) // Accept Add Board confirmation
+    await page.click('#board-dropdown .dropbtn')
+    await page.click('#board-control a[data-action="create"]')
+
+    await page.selectOption('#board-selector', { label: 'Default Board' })
+    await page.waitForFunction(() => location.hash.includes('board='))
+
+    const idAfter = await page.evaluate(() => window.sessionId)
+    expect(idAfter).toBe(idBefore)
+    await expect(page.locator('.widget-wrapper')).toHaveCount(2)
   })
 })

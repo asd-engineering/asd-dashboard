@@ -20,21 +20,16 @@ export const LAST_ID_KEY = '__lastSessionId'
  * @returns {string}
  */
 export function getSessionId () {
-  const match = location.hash.match(/^#local:([\w-]+)$/)
+  const match = location.hash.match(/^#local:([\w-]+)/)
   let id = null
   if (match) {
     id = match[1]
+    logger.debug('Reusing session id', id)
   } else {
     const stored = localStorage.getItem(LAST_ID_KEY)
-    if (stored) {
-      id = stored
-      if (!location.hash) {
-        location.hash = `#local:${id}`
-      }
-    } else {
-      id = crypto.randomUUID()
-      location.hash = `#local:${id}`
-    }
+    id = stored || crypto.randomUUID()
+    const suffix = location.hash.replace(/^#/, '')
+    location.hash = `#local:${id}${suffix ? '&' + suffix : ''}`
   }
   localStorage.setItem(LAST_ID_KEY, id)
   logger.log('Using session id:', id)

@@ -7,6 +7,7 @@
 import { saveBoardState, loadBoardState } from '../../storage/localStorage.js'
 import { addWidget, clearPendingMounts } from '../widget/widgetManagement.js'
 import { Logger } from '../../utils/Logger.js'
+import { changeUrlParams } from '../../utils/hashParams.js'
 
 /** @typedef {import('../../types.js').Board} Board */
 /** @typedef {import('../../types.js').View} View */
@@ -152,6 +153,7 @@ export async function switchView (boardId, viewId) {
       window.asd.currentViewId = viewId
       localStorage.setItem('lastUsedViewId', viewId)
       updateViewSelector(boardId)
+      location.hash = changeUrlParams(location.hash, { board: boardId, view: viewId })
     } else {
       logger.error(`View with ID ${viewId} not found in board ${boardId}`)
     }
@@ -218,6 +220,8 @@ export async function switchBoard (boardId, viewId = null) {
     const targetViewId = viewId || board.views[0].id
 
     await switchView(boardId, targetViewId)
+
+    location.hash = changeUrlParams(location.hash, { board: boardId, view: targetViewId })
 
     window.asd.currentBoardId = boardId
     window.asd.currentViewId = targetViewId

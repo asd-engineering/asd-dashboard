@@ -110,6 +110,25 @@
     "returns": "string"
   },
   {
+    "name": "changeUrlParams",
+    "kind": "function",
+    "file": "src/utils/hashParams.js",
+    "description": "Update the hash parameters while preserving the `#local:<id>` prefix.",
+    "params": [
+      {
+        "name": "oldHash",
+        "type": "string",
+        "desc": "- Existing location hash."
+      },
+      {
+        "name": "newParams",
+        "type": "Object<string,string>",
+        "desc": "- Parameters to apply."
+      }
+    ],
+    "returns": "string"
+  },
+  {
     "name": "checkLogStatus",
     "kind": "function",
     "file": "src/utils/Logger.js",
@@ -230,6 +249,20 @@
       }
     ],
     "returns": "Function"
+  },
+  {
+    "name": "debug",
+    "kind": "function",
+    "file": "src/utils/Logger.js",
+    "description": "Output debug information.",
+    "params": [
+      {
+        "name": "args",
+        "type": "...any",
+        "desc": ""
+      }
+    ],
+    "returns": ""
   },
   {
     "name": "decodeConfig",
