@@ -120,14 +120,14 @@ function handleDrop (e, targetWidgetWrapper) {
   const widgetContainer = document.getElementById('widget-container')
   const draggedWidget = widgetContainer.querySelector(`[data-order='${draggedOrder}']`)
 
-  if (!draggedWidget) {
+  if (!(draggedWidget instanceof HTMLElement)) {
     logger.error('Invalid dragged widget element', 3000, 'error')
     return
   }
 
   if (targetOrder !== null) {
     const targetWidget = widgetContainer.querySelector(`[data-order='${targetOrder}']`)
-    if (!targetWidget) {
+    if (!(targetWidget instanceof HTMLElement)) {
       logger.error('Invalid target widget element', 3000, 'error')
       return
     }
@@ -137,17 +137,11 @@ function handleDrop (e, targetWidgetWrapper) {
       targetWidgetOrder: targetWidget.getAttribute('data-order')
     })
 
-    widgetContainer.removeChild(draggedWidget)
+    draggedWidget.setAttribute('data-order', targetOrder)
+    targetWidget.setAttribute('data-order', draggedOrder)
 
-    if (parseInt(draggedOrder) < parseInt(targetOrder)) {
-      if (targetWidget.nextSibling) {
-        widgetContainer.insertBefore(draggedWidget, targetWidget.nextSibling)
-      } else {
-        widgetContainer.appendChild(draggedWidget)
-      }
-    } else {
-      widgetContainer.insertBefore(draggedWidget, targetWidget)
-    }
+    draggedWidget.style.order = targetOrder
+    targetWidget.style.order = draggedOrder
   } else {
     // Calculate nearest available grid position
     const gridColumnCount = parseInt(getComputedStyle(widgetContainer).getPropertyValue('grid-template-columns').split(' ').length.toString(), 10)

@@ -297,13 +297,14 @@ async function configureWidget (iframeElement) {
 function updateWidgetOrders () {
   const widgetContainer = document.getElementById('widget-container')
   const widgets = Array.from(widgetContainer.children)
+    .map(w => /** @type {HTMLElement} */(w))
+    .sort((a, b) => parseInt(a.style.order || '0') - parseInt(b.style.order || '0'))
 
   widgets.forEach((widget, index) => {
-    const el = /** @type {HTMLElement} */(widget)
-    el.setAttribute('data-order', String(index))
-    el.style.order = String(index)
+    widget.setAttribute('data-order', String(index))
+    widget.style.order = String(index)
     logger.log('Updated widget order:', {
-      dataid: el.dataset.dataid,
+      dataid: widget.dataset.dataid,
       order: index
     })
   })
