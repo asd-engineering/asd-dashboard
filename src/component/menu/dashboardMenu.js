@@ -36,7 +36,7 @@ function initializeDashboardMenu () {
   populateServiceDropdown()
   document.addEventListener('services-updated', populateServiceDropdown)
 
-  document.getElementById('add-widget-button').addEventListener('click', () => {
+  document.getElementById('add-widget-button').addEventListener('click', async () => {
     const serviceSelector = /** @type {HTMLSelectElement} */(document.getElementById('service-selector'))
     const widgetUrlInput = /** @type {HTMLInputElement} */(document.getElementById('widget-url'))
     const boardElement = document.querySelector('.board')
@@ -45,8 +45,8 @@ function initializeDashboardMenu () {
     const manualUrl = widgetUrlInput.value
     const url = selectedServiceUrl || manualUrl
 
-    const finalize = () => {
-      addWidget(url, 1, 1, 'iframe', boardElement.id, viewElement.id)
+    const finalize = async () => {
+      await addWidget(url, 1, 1, 'iframe', boardElement.id, viewElement.id)
       widgetUrlInput.value = ''
     }
 
@@ -75,21 +75,21 @@ function initializeDashboardMenu () {
     }
   })
 
-  document.getElementById('board-selector').addEventListener('change', (event) => {
+  document.getElementById('board-selector').addEventListener('change', async (event) => {
     const target = /** @type {HTMLSelectElement} */(event.target)
     const selectedBoardId = target.value
     const currentBoardId = getCurrentBoardId()
     saveWidgetState(currentBoardId, getCurrentViewId()) // Save current view state
-    switchBoard(selectedBoardId)
+    await switchBoard(selectedBoardId)
     updateViewSelector(selectedBoardId)
   })
 
-  document.getElementById('view-selector').addEventListener('change', (event) => {
+  document.getElementById('view-selector').addEventListener('change', async (event) => {
     const selectedBoardId = getCurrentBoardId()
     const target = /** @type {HTMLSelectElement} */(event.target)
     const selectedViewId = target.value
     logger.log(`Switching to selected view ${selectedViewId} in board ${selectedBoardId}`)
-    switchView(selectedBoardId, selectedViewId)
+    await switchView(selectedBoardId, selectedViewId)
   })
 }
 

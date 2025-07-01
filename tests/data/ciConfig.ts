@@ -8,7 +8,8 @@ export const ciConfig = {
           "loadDashboardFromConfig": "true",
           "defaultBoard": "board-1728763634657",
           "defaultView": "view-1728763634657"
-      }
+      },
+      "widget_cache_count": 10
     },
     "boards": [],
     "styling": {

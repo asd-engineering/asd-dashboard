@@ -47,6 +47,7 @@ function serializeWidgetState (widget) {
     columns: widget.dataset.columns || 1,
     rows: widget.dataset.rows || 1,
     type: widget.dataset.type || 'iframe',
+    version: widget.dataset.version || '1',
     metadata,
     settings
   }
@@ -141,11 +142,13 @@ async function loadWidgetState (boardId, viewId) {
               widgetData.url,
               Number(widgetData.columns),
               Number(widgetData.rows),
-              widgetData.dataid // Ensure dataid is passed to maintain widget identity
+              widgetData.dataid,
+              widgetData.version || '1'
             )
             widgetWrapper.dataset.order = String(widgetData.order)
             widgetWrapper.style.order = String(widgetData.order)
             widgetWrapper.dataset.type = widgetData.type
+            widgetWrapper.dataset.version = String(widgetData.version || '1')
             widgetWrapper.dataset.metadata = JSON.stringify(widgetData.metadata)
             widgetWrapper.dataset.settings = JSON.stringify(widgetData.settings)
             widgetContainer.appendChild(widgetWrapper)

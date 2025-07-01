@@ -171,3 +171,15 @@
 .resizing {
     border: 2px dotted green;
 }
+
+.widget-debug-overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 4px;
+    z-index: 100;
+    pointer-events: none;
+}

@@ -5,7 +5,7 @@
  * @module boardManagement
  */
 import { saveBoardState, loadBoardState } from '../../storage/localStorage.js'
-import { addWidget } from '../widget/widgetManagement.js'
+import { addWidget, clearPendingMounts } from '../widget/widgetManagement.js'
 import { Logger } from '../../utils/Logger.js'
 
 /** @typedef {import('../../types.js').Board} Board */
@@ -104,6 +104,7 @@ export function createView (boardId, viewName, viewId = null) {
 }
 
 function clearWidgetContainer () {
+  clearPendingMounts()
   const widgetContainer = document.getElementById('widget-container')
   while (widgetContainer.firstChild) {
     widgetContainer.removeChild(widgetContainer.firstChild)
@@ -143,7 +144,9 @@ export async function switchView (boardId, viewId) {
           widget.type,
           boardId,
           viewId,
-          widget.dataid
+          widget.dataid,
+          widget.version,
+          true
         )
       }
       window.asd.currentViewId = viewId
