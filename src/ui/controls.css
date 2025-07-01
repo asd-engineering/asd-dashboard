@@ -7,7 +7,7 @@ menu {
 #controls {
     display: flex;
     justify-content: center;
-    gap: 1rem;
+    gap: 0.5rem;
     padding: 0.5rem; 
     background-color: #fff;
     z-index: 1001;
@@ -19,6 +19,8 @@ menu {
     display: flex;
     flex-direction: row; /* Horizontal alignment */
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-between;
     gap: 0.3rem; /* Minimize spacing between elements */
     padding: 0.3rem;
     border-radius: 8px;
