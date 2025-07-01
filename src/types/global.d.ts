@@ -7,6 +7,7 @@ declare global {
       clear(): void
       getKeys(): string[]
     }
+    sessionId?: string
   }
 
   interface ImportMeta {

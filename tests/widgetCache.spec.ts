@@ -36,4 +36,13 @@ test.describe('Widget LRU Cache', () => {
     expect(stats.keys).not.toContain(idsBefore[0])
     expect(stats.keys).not.toContain(idsBefore[1])
   })
+
+  test('widgets persist across reloads and clear correctly', async ({ page }) => {
+    await addServicesByName(page, 'ASD-terminal', 2)
+    await page.reload()
+    await expect(page.locator('.widget-wrapper')).toHaveCount(2)
+    await page.evaluate(() => localStorage.clear())
+    await page.reload()
+    await expect(page.locator('.widget-wrapper')).toHaveCount(0)
+  })
 })

@@ -8,6 +8,7 @@ import { initializeMainMenu } from './component/menu/menu.js'
 import { initializeBoards, switchBoard } from './component/board/boardManagement.js'
 import { initializeDashboardMenu } from './component/menu/dashboardMenu.js'
 import { loadInitialConfig, loadBoardState } from './storage/localStorage.js'
+import { getSessionId, migrateLegacyBuckets } from './storage/sessionBuckets.js'
 import { initializeDragAndDrop } from './component/widget/events/dragDrop.js'
 import { fetchServices } from './utils/fetchServices.js'
 import { getConfig } from './utils/getConfig.js'
@@ -32,6 +33,9 @@ window.asd = {
 
 document.addEventListener('DOMContentLoaded', async () => {
   logger.log('DOMContentLoaded event fired')
+  const sessionId = getSessionId()
+  window.sessionId = sessionId
+  migrateLegacyBuckets(sessionId)
   const params = new URLSearchParams(location.search)
   const force = params.get('force') === 'true'
   await loadFromFragment(force)

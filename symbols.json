@@ -434,6 +434,14 @@
     "returns": "Promise<string>"
   },
   {
+    "name": "getSessionId",
+    "kind": "function",
+    "file": "src/storage/sessionBuckets.js",
+    "description": "Get or generate the current session id from the URL hash. The hash format should be `#local:<id>`. If missing, a new id is generated and persisted to localStorage. When no hash is provided on first load but `__lastSessionId` exists, that id is reused.",
+    "params": [],
+    "returns": "string"
+  },
+  {
     "name": "getUUID",
     "kind": "function",
     "file": "src/utils/utils.js",
@@ -778,6 +786,20 @@
     "returns": "Promise<void>"
   },
   {
+    "name": "loadWidgetsFromConfig",
+    "kind": "function",
+    "file": "src/component/widget/widgetLoader.js",
+    "description": "Instantiate widgets defined in a view configuration. Objects missing a `version` field are defaulted to \"1\" for backward compatibility.",
+    "params": [
+      {
+        "name": "widgets",
+        "type": "Array<Widget>",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
     "name": "loadWidgetState",
     "kind": "function",
     "file": "src/storage/localStorage.js",
@@ -874,6 +896,20 @@
       }
     ],
     "returns": "Array<Service>"
+  },
+  {
+    "name": "migrateLegacyBuckets",
+    "kind": "function",
+    "file": "src/storage/sessionBuckets.js",
+    "description": "Migrate data from legacy image buckets into the current session bucket. Any widget objects missing a version field will receive \"1\".",
+    "params": [
+      {
+        "name": "sessionId",
+        "type": "string",
+        "desc": "- Current session identifier."
+      }
+    ],
+    "returns": "void"
   },
   {
     "name": "openConfigModal",
