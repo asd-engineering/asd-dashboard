@@ -42,8 +42,13 @@ export class WidgetParkingLot {
       this.cache.delete(key)
     } else if (this.cache.size >= this.limit) {
       const oldestKey = this.cache.keys().next().value
+      const oldestEl = this.cache.get(oldestKey)
+      if (oldestEl) {
+        oldestEl.remove()
+      }
       this.cache.delete(oldestKey)
     }
+    el.remove()
     this.cache.set(key, el)
   }
 

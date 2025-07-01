@@ -105,11 +105,14 @@ export function createView (boardId, viewName, viewId = null) {
 
 function clearWidgetContainer () {
   const widgetContainer = document.getElementById('widget-container')
-  const parking = document.getElementById('widget-parking')
   while (widgetContainer.firstChild) {
-    parking.appendChild(widgetContainer.firstChild)
+    const widgetEl = /** @type {HTMLElement} */(widgetContainer.firstChild)
+    widgetEl.remove()
+    const dataid = widgetEl.dataset.dataid
+    if (dataid) {
+      widgetParkingLot.park(dataid, widgetEl)
+    }
   }
-  parking.lastChild?.style && (parking.lastChild.style.display = 'none')
 }
 
 /**
