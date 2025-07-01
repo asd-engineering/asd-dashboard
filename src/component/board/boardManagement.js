@@ -231,7 +231,7 @@ export async function switchBoard (boardId, viewId = null) {
  * @returns {Promise<{boardId: string, viewId: string}|undefined>} Resolves with the first board and view identifiers.
  */
 export function initializeBoards () {
-  return loadBoardState().then(loadedBoards => {
+  return loadBoardState().then(async loadedBoards => {
     boards = loadedBoards || []
 
     if (!Array.isArray(boards)) {
@@ -239,7 +239,8 @@ export function initializeBoards () {
     }
 
     if (boards.length === 0) {
-      createBoard('Default Board')
+      // createBoard is async now
+      await createBoard('Default Board')
     }
 
     boards.forEach(board => {
@@ -385,7 +386,7 @@ export async function deleteView (boardId, viewId) {
       if (board.views.length > 0) {
         const nextViewId = board.views[0].id
         await switchView(boardId, nextViewId)
-        const viewSelector = document.getElementById('view-selector')
+        const viewSelector = /** @type {HTMLSelectElement} */(document.getElementById('view-selector'))
         if (viewSelector) viewSelector.value = nextViewId
       } else {
         await createView(boardId, 'Default View')
