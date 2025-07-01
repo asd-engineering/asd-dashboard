@@ -22,6 +22,11 @@ import { WidgetCache } from './WidgetCache.js'
 const logger = new Logger('widgetManagement.js')
 
 export const widgetCache = new WidgetCache(10)
+widgetCache.debugInfo = () => ({
+  size: widgetCache.cache.size,
+  parked: document.getElementById('widget-parking').childElementCount,
+  keys: [...widgetCache.cache.keys()]
+})
 
 if (import.meta.env && import.meta.env.DEV) {
   window.widgetCacheDebug = widgetCache
@@ -222,11 +227,12 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
   boardId = boardId || window.asd.currentBoardId
   viewId = viewId || window.asd.currentViewId
 
-  const cached = dataid ? widgetCache.get(dataid) : undefined
+  const cached = dataid ? widgetCache.get(dataid) : null
   if (cached) {
+    cached.style.display = ''
+    widgetContainer.appendChild(cached)
     cached.dataset.cache = 'hit'
     cached.setAttribute('data-order', String(widgetContainer.children.length))
-    widgetContainer.appendChild(cached)
     initializeResizeHandles()
     return cached
   }
