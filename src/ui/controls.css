@@ -28,7 +28,6 @@ menu {
     width: auto; /* Auto width for tighter fit */
     max-width: 100%; /* Prevent from growing beyond container */
     flex-wrap: wrap;
-    overflow: hidden;
     word-break: break-word;
 }
 
