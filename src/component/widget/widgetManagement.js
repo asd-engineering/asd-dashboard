@@ -17,6 +17,7 @@ import { toggleFullScreen } from './events/fullscreenToggle.js'
 import { initializeResizeHandles } from './events/resizeHandler.js'
 import { Logger } from '../../utils/Logger.js'
 import { showServiceModal } from '../modal/serviceLaunchModal.js'
+import { widgetCache } from './widgetCache.js'
 
 const logger = new Logger('widgetManagement.js')
 
@@ -218,7 +219,23 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
   const service = await getServiceFromUrl(url)
   logger.log('Extracted service:', service)
 
-  const widgetWrapper = await createWidget(service, url, columns, rows, dataid)
+  let widgetWrapper
+  if (dataid) {
+    widgetWrapper = widgetCache.get(dataid)
+    if (widgetWrapper) {
+      logger.log('Reusing widget from cache with id:', dataid)
+      widgetWrapper.style.gridColumn = `span ${columns}`
+      widgetWrapper.style.gridRow = `span ${rows}`
+      widgetWrapper.dataset.columns = String(columns)
+      widgetWrapper.dataset.rows = String(rows)
+    }
+  }
+
+  if (!widgetWrapper) {
+    widgetWrapper = await createWidget(service, url, columns, rows, dataid)
+    widgetCache.add(widgetWrapper.dataset.dataid, widgetWrapper)
+  }
+
   widgetWrapper.setAttribute('data-order', String(widgetContainer.children.length))
   widgetContainer.appendChild(widgetWrapper)
 
@@ -251,6 +268,7 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
  */
 function removeWidget (widgetElement) {
   const dataid = widgetElement.dataset.dataid
+  widgetCache.remove(dataid)
   widgetElement.remove()
   logger.log('Widget removed with dataid:', dataid)
   updateWidgetOrders()

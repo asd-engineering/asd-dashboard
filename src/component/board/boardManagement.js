@@ -8,6 +8,8 @@ import { saveBoardState, loadBoardState } from '../../storage/localStorage.js'
 import { addWidget } from '../widget/widgetManagement.js'
 import { Logger } from '../../utils/Logger.js'
 
+import { widgetCache } from '../widget/widgetCache.js'
+
 /** @typedef {import('../../types.js').Board} Board */
 /** @typedef {import('../../types.js').View} View */
 /** @typedef {import('../../types.js').Widget} Widget */
@@ -106,7 +108,9 @@ export function createView (boardId, viewName, viewId = null) {
 function clearWidgetContainer () {
   const widgetContainer = document.getElementById('widget-container')
   while (widgetContainer.firstChild) {
-    widgetContainer.removeChild(widgetContainer.firstChild)
+    const widget = /** @type {HTMLElement} */(widgetContainer.firstChild)
+    widgetCache.add(widget.dataset.dataid, widget)
+    widgetContainer.removeChild(widget)
   }
 }
 

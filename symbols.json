@@ -1,5 +1,24 @@
 [
   {
+    "name": "add",
+    "kind": "function",
+    "file": "src/component/widget/widgetCache.js",
+    "description": "Add a widget to the cache. Evicts the least recently used item if the limit is exceeded.",
+    "params": [
+      {
+        "name": "id",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "element",
+        "type": "HTMLElement",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "addBoardToUI",
     "kind": "function",
     "file": "src/component/board/boardManagement.js",
@@ -347,6 +366,20 @@
     "description": "Fetch the service list and update the service selector on the page.",
     "params": [],
     "returns": "Promise<Array<Service>>"
+  },
+  {
+    "name": "get",
+    "kind": "function",
+    "file": "src/component/widget/widgetCache.js",
+    "description": "Retrieve a widget and mark it as recently used.",
+    "params": [
+      {
+        "name": "id",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "HTMLElement|undefined"
   },
   {
     "name": "getAuthToken",
@@ -957,6 +990,20 @@
     "returns": "void"
   },
   {
+    "name": "remove",
+    "kind": "function",
+    "file": "src/component/widget/widgetCache.js",
+    "description": "Remove a widget from the cache.",
+    "params": [
+      {
+        "name": "id",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "removeDragOverlay",
     "kind": "function",
     "file": "src/component/widget/events/dragDrop.js",
@@ -1078,6 +1125,20 @@
       }
     ],
     "returns": "Promise<void>"
+  },
+  {
+    "name": "setLimit",
+    "kind": "function",
+    "file": "src/component/widget/widgetCache.js",
+    "description": "Set maximum cache size and evict extra items.",
+    "params": [
+      {
+        "name": "size",
+        "type": "number",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
   },
   {
     "name": "showNotification",

@@ -51,7 +51,7 @@
 /**
  * Dashboard configuration loaded from storage or URL.
  * @typedef {Object} DashboardConfig
- * @property {object} [globalSettings]
+ * @property {{widgetCacheSize?: number}} [globalSettings]
  * @property {Array<Board>} [boards]
  * @property {{widget: {minColumns:number, maxColumns:number, minRows:number, maxRows:number}}} [styling]
 */

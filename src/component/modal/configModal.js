@@ -17,6 +17,7 @@ export const DEFAULT_CONFIG_TEMPLATE = {
     theme: 'light',
     widgetStoreUrl: [],
     database: 'localStorage',
+    widgetCacheSize: 10,
     localStorage: {
       enabled: 'true',
       loadDashboardFromConfig: 'true'

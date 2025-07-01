@@ -13,6 +13,7 @@ import { fetchServices } from './utils/fetchServices.js'
 import { getConfig } from './utils/getConfig.js'
 import { openLocalStorageModal } from './component/modal/localStorageModal.js'
 import { openConfigModal } from './component/modal/configModal.js'
+import { widgetCache } from './component/widget/widgetCache.js'
 import { initializeBoardDropdown } from './component/board/boardDropdown.js'
 import { initializeViewDropdown } from './component/view/viewDropdown.js'
 import { loadFromFragment } from './utils/fragmentLoader.js'
@@ -39,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   fetchServices()
   try {
     await getConfig()
+    widgetCache.setLimit(window.asd.config.globalSettings.widgetCacheSize || 10)
   } catch (e) {
     logger.error('Failed to load config:', e)
     openConfigModal()
