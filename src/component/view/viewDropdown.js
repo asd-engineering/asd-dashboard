@@ -4,7 +4,7 @@
  *
  * @module viewDropdown
  */
-import { createView, renameView, deleteView, resetView, updateViewSelector, switchView } from '../board/boardManagement.js'
+import { createView, renameView, deleteView, resetView } from '../board/boardManagement.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { initializeDropdown } from '../utils/dropDownUtils.js'
 import { Logger } from '../../utils/Logger.js'
@@ -41,17 +41,9 @@ async function handleCreateView () {
   if (viewName) {
     try {
       const newView = await createView(boardId, viewName)
-      logger.log('View created:', newView)
-      updateViewSelector(boardId)
-
-      // Switch to the new view
-      await switchView(boardId, newView.id)
-      logger.log(`Switched to new view ${newView.id} in board ${boardId}`)
-
-      // Save the current view in localStorage
-      localStorage.setItem('lastUsedViewId', newView.id)
-      localStorage.setItem('lastUsedBoardId', boardId)
-      logger.log(`Saved last used viewId: ${newView.id} and boardId: ${boardId} to localStorage`)
+      if (newView) {
+        logger.log('View created:', newView)
+      }
     } catch (error) {
       logger.error('Error creating view:', error)
     }
@@ -91,7 +83,6 @@ async function handleDeleteView () {
     try {
       await deleteView(boardId, viewId)
       logger.log('View deleted:', viewId)
-      updateViewSelector(boardId)
     } catch (error) {
       logger.error('Error deleting view:', error)
     }

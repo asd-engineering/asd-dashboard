@@ -5,7 +5,6 @@
  * @module dragDrop
  */
 import { updateWidgetOrders } from '../widgetManagement.js'
-import { saveWidgetState } from '../../../storage/localStorage.js'
 import { Logger } from '../../../utils/Logger.js'
 
 const logger = new Logger('dragDrop.js')
@@ -26,7 +25,8 @@ function handleDragStart (e, draggedWidgetWrapper) {
   logger.log('Data transfer set with widget order:', widgetOrder)
 
   const widgetContainer = document.getElementById('widget-container')
-  const widgets = Array.from(widgetContainer.children)
+  // Add overlays only to other visible widgets
+  const widgets = Array.from(widgetContainer.children).filter(el => (el instanceof HTMLElement) && el.style.display !== 'none')
   widgets.forEach(widget => {
     if (widget !== draggedWidgetWrapper) {
       addDragOverlay(/** @type {HTMLElement} */(widget))
@@ -62,13 +62,15 @@ function addDragOverlay (widgetWrapper) {
   const dragOverlay = document.createElement('div')
   dragOverlay.classList.add('drag-overlay')
 
-  dragOverlay.style.position = 'absolute'
-  dragOverlay.style.top = '0'
-  dragOverlay.style.left = '0'
-  dragOverlay.style.width = '100%'
-  dragOverlay.style.height = '100%'
-  dragOverlay.style.zIndex = '10000'
-  dragOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0)'
+  Object.assign(dragOverlay.style, {
+    position: 'absolute',
+    top: '0',
+    left: '0',
+    width: '100%',
+    height: '100%',
+    zIndex: '10000',
+    backgroundColor: 'rgba(0, 0, 0, 0)'
+  })
 
   dragOverlay.addEventListener('dragover', (e) => {
     e.preventDefault()
@@ -113,48 +115,34 @@ function handleDrop (e, targetWidgetWrapper) {
   logger.log('Drop event on overlay for widget:', targetWidgetWrapper)
 
   const draggedOrder = e.dataTransfer.getData('text/plain')
-  const targetOrder = targetWidgetWrapper ? targetWidgetWrapper.getAttribute('data-order') : null
-
-  logger.log(`Drop event: draggedOrder=${draggedOrder}, targetOrder=${targetOrder}`)
-
   const widgetContainer = document.getElementById('widget-container')
-  const draggedWidget = widgetContainer.querySelector(`[data-order='${draggedOrder}']`)
+  const draggedWidget = /** @type {HTMLElement} */(widgetContainer.querySelector(`[data-order='${draggedOrder}']`))
 
-  if (!(draggedWidget instanceof HTMLElement)) {
+  if (!draggedWidget) {
     logger.error('Invalid dragged widget element', 3000, 'error')
     return
   }
 
-  if (targetOrder !== null) {
-    const targetWidget = widgetContainer.querySelector(`[data-order='${targetOrder}']`)
-    if (!(targetWidget instanceof HTMLElement)) {
-      logger.error('Invalid target widget element', 3000, 'error')
-      return
-    }
-
+  // Dropping on another widget (swapping order)
+  if (targetWidgetWrapper) {
     logger.log('Before rearrangement:', {
-      draggedWidgetOrder: draggedWidget.getAttribute('data-order'),
-      targetWidgetOrder: targetWidget.getAttribute('data-order')
+      draggedWidgetOrder: draggedWidget.style.order,
+      targetWidgetOrder: targetWidgetWrapper.style.order
     })
 
-    // Swap CSS order properties. updateWidgetOrders will handle normalization and saving.
-    const draggedWidgetStyleOrder = draggedWidget.style.order
-    targetWidget.style.order = draggedWidget.style.order
-    draggedWidget.style.order = draggedWidgetStyleOrder
-  } else {
-    // Calculate nearest available grid position
+    const tempOrder = draggedWidget.style.order
+    draggedWidget.style.order = targetWidgetWrapper.style.order
+    targetWidgetWrapper.style.order = tempOrder
+  } else { // Dropping on an empty space
     const gridColumnCount = parseInt(getComputedStyle(widgetContainer).getPropertyValue('grid-template-columns').split(' ').length.toString(), 10)
-    const draggedEl = /** @type {HTMLElement} */(draggedWidget)
-    let targetColumn = Math.floor(e.clientX / draggedEl.offsetWidth)
-    let targetRow = Math.floor(e.clientY / draggedEl.offsetHeight)
+    let targetColumn = Math.floor(e.clientX / draggedWidget.offsetWidth)
+    let targetRow = Math.floor(e.clientY / draggedWidget.offsetHeight)
 
-    // Adjust to fit within grid boundaries
-    targetColumn = Math.min(targetColumn, gridColumnCount - 1)
-    targetColumn = Math.max(targetColumn, 0)
+    targetColumn = Math.min(Math.max(targetColumn, 0), gridColumnCount - 1)
     targetRow = Math.max(targetRow, 0)
 
-    draggedEl.style.gridColumnStart = (targetColumn + 1).toString()
-    draggedEl.style.gridRowStart = (targetRow + 1).toString()
+    draggedWidget.style.gridColumnStart = (targetColumn + 1).toString()
+    draggedWidget.style.gridRowStart = (targetRow + 1).toString()
 
     logger.log('Widget moved to new grid position:', {
       column: targetColumn + 1,
@@ -165,10 +153,7 @@ function handleDrop (e, targetWidgetWrapper) {
   const updatedWidgets = Array.from(widgetContainer.children)
   updatedWidgets.forEach(widget => widget.classList.remove('drag-over'))
 
-  // This function will re-calculate all widget orders based on their
-  // new positions and then call saveWidgetState.
   updateWidgetOrders()
-
   draggedWidget.classList.remove('dragging')
 }
 
@@ -182,7 +167,6 @@ function handleDrop (e, targetWidgetWrapper) {
  */
 function handleDragOver (e, widgetWrapper) {
   e.preventDefault()
-  logger.log('Drag over event on overlay for widget:', widgetWrapper)
   widgetWrapper.classList.add('drag-over', 'highlight-drop-area')
 }
 
@@ -195,7 +179,6 @@ function handleDragOver (e, widgetWrapper) {
  * @returns {void}
  */
 function handleDragLeave (e, widgetWrapper) {
-  logger.log('Drag leave event on overlay for widget:', widgetWrapper)
   widgetWrapper.classList.remove('drag-over', 'highlight-drop-area')
 }
 
@@ -207,50 +190,20 @@ function handleDragLeave (e, widgetWrapper) {
  */
 function initializeDragAndDrop () {
   const widgetContainer = document.getElementById('widget-container')
+
+  // This listener handles drag over the main container (for visual feedback)
   widgetContainer.addEventListener('dragover', (e) => {
     e.preventDefault()
-    const dragOverTarget = (/** @type {HTMLElement} */(e.target)).closest('.widget-wrapper')
-    if (dragOverTarget) {
-      dragOverTarget.classList.add('drag-over', 'highlight-drop-area')
-    }
   })
 
-  widgetContainer.addEventListener('dragleave', (e) => {
-    const dragLeaveTarget = (/** @type {HTMLElement} */(e.target)).closest('.widget-wrapper')
-    if (dragLeaveTarget) {
-      dragLeaveTarget.classList.remove('drag-over', 'highlight-drop-area')
-    }
-  })
-
+  // This listener handles drops into empty space on the container
   widgetContainer.addEventListener('drop', (e) => {
     e.preventDefault()
-    const draggedOrder = e.dataTransfer.getData('text/plain')
-    const targetWidgetWrapper = (/** @type {HTMLElement} */(e.target)).closest('.widget-wrapper')
-    const targetOrder = targetWidgetWrapper ? targetWidgetWrapper.getAttribute('data-order') : null
-
-    if (draggedOrder !== null) {
-      const widgets = Array.from(widgetContainer.children)
-      const draggedWidgetEl = widgets.find(widget => widget.getAttribute('data-order') === draggedOrder)
-
-      if (draggedWidgetEl) {
-        const draggedWidget = /** @type {HTMLElement} */(draggedWidgetEl)
-        if (targetOrder !== null) {
-          const targetWidgetEl = widgets.find(widget => widget.getAttribute('data-order') === targetOrder)
-          if (targetWidgetEl) {
-            const targetWidget = /** @type {HTMLElement} */(targetWidgetEl)
-            // Swap orders
-            const draggedWidgetStyleOrder = draggedWidget.style.order
-            targetWidget.style.order = draggedWidget.style.order
-            draggedWidget.style.order = draggedWidgetStyleOrder
-          }
-        } else {
-          // Handle drop in open space
-          handleDrop(e, null)
-        }
-
-        // Save the new state
-        saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
-      }
+    // A drop on a widget is handled by its overlay, which stops propagation.
+    // If propagation was not stopped, the event reached the container.
+    // We check if the direct target is the container itself.
+    if (e.target === widgetContainer) {
+      handleDrop(e, null)
     }
   })
 

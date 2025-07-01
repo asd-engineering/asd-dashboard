@@ -102,9 +102,9 @@ export async function createView (boardId, viewName, viewId = null) {
 }
 
 function clearWidgetContainer () {
-  const widgetContainer = document.getElementById('widget-container')
-  while (widgetContainer.firstChild) {
-    widgetContainer.removeChild(widgetContainer.firstChild)
+  // Hide all widgets in the store instead of removing from DOM
+  for (const id of widgetStore.widgets.keys()) {
+    widgetStore.hide(id)
   }
 }
 
@@ -209,14 +209,20 @@ export async function switchBoard (boardId, viewId = null) {
   const board = boards.find(b => b.id === boardId)
   if (board) {
     document.querySelector('.board').id = boardId
-    const targetViewId = viewId || board.views[0].id
+    const targetViewId = viewId || (board.views.length > 0 ? board.views[0].id : null)
 
-    await switchView(boardId, targetViewId)
+    if (targetViewId) {
+      await switchView(boardId, targetViewId)
+    } else {
+      // Handle board with no views
+      clearWidgetContainer()
+      document.querySelector('.board-view').id = ''
+      window.asd.currentViewId = null
+      localStorage.removeItem('lastUsedViewId')
+    }
 
     window.asd.currentBoardId = boardId
-    window.asd.currentViewId = targetViewId
     localStorage.setItem('lastUsedBoardId', boardId)
-    localStorage.setItem('lastUsedViewId', targetViewId)
     updateViewSelector(boardId)
   } else {
     logger.error(`Board with ID ${boardId} not found`)
@@ -382,14 +388,21 @@ export async function deleteView (boardId, viewId) {
       board.views.splice(viewIndex, 1)
       await saveBoardState(boards)
       logger.log(`Deleted view ${viewId} and evicted its widgets.`)
+
       updateViewSelector(boardId)
+
       if (board.views.length > 0) {
         const nextViewId = board.views[0].id
         await switchView(boardId, nextViewId)
         const viewSelector = /** @type {HTMLSelectElement} */(document.getElementById('view-selector'))
         if (viewSelector) viewSelector.value = nextViewId
       } else {
-        await createView(boardId, 'Default View')
+        clearWidgetContainer()
+        const viewSelector = /** @type {HTMLSelectElement} */(document.getElementById('view-selector'))
+        if (viewSelector) viewSelector.innerHTML = ''
+        document.querySelector('.board-view').id = ''
+        window.asd.currentViewId = null
+        localStorage.removeItem('lastUsedViewId')
       }
     } else {
       logger.error(`View with ID ${viewId} not found`)
