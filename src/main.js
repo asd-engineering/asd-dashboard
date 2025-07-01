@@ -4,7 +4,7 @@
  *
  * @module main
  */
-import { initializeMainMenu } from './component/menu/menu.js'
+import { initializeMainMenu, applyControlVisibility } from './component/menu/menu.js'
 import { initializeBoards, switchBoard } from './component/board/boardManagement.js'
 import { initializeDashboardMenu } from './component/menu/dashboardMenu.js'
 import { loadInitialConfig, loadBoardState } from './storage/localStorage.js'
@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     logger.error('Failed to load config:', e)
     openConfigModal()
   }
+  applyControlVisibility()
   initializeDashboardMenu()
 
   const boards = await loadBoardState()

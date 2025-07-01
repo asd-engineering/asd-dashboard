@@ -3,6 +3,9 @@
         "theme": "light",
         "widgetStoreUrl": ["*/services.json"],
         "database": "localStorage",
+        "hideBoardControl": false,
+        "hideViewControl": false,
+        "hideServiceControl": false,
         "localStorage": {
             "enabled": "true",
             "loadDashboardFromConfig": "false",

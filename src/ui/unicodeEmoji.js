@@ -3,6 +3,7 @@ const emojiList = {
   puzzle: { icon: '🧩', unicode: '\u{1F9E9}', description: 'Widget to grid' },
   satellite: { icon: '📡', unicode: '\u{1F4E1}', description: 'Serviceworker' },
   cross: { icon: '❌', unicode: '\u{274C}', description: 'Delete widget' },
+  crossCycle: { icon: '🔄', unicode: '\u{1F504}', description: 'Reset or refresh' },
   arrowDown: { icon: '⬇️', unicode: '\u{2B07}\u{FE0F}', description: 'Increase height' },
   arrowRight: { icon: '➡️', unicode: '\u{27A1}\u{FE0F}', description: 'Increase width' },
   arrowUp: { icon: '⬆️', unicode: '\u{2B06}\u{FE0F}', description: 'Decrease height' },

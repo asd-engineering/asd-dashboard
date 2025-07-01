@@ -17,6 +17,9 @@ export const DEFAULT_CONFIG_TEMPLATE = {
     theme: 'light',
     widgetStoreUrl: [],
     database: 'localStorage',
+    hideBoardControl: false,
+    hideViewControl: false,
+    hideServiceControl: false,
     localStorage: {
       enabled: 'true',
       loadDashboardFromConfig: 'true'

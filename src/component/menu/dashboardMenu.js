@@ -15,6 +15,7 @@ import {
 import { saveWidgetState } from '../../storage/localStorage.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { showNotification } from '../dialog/notification.js'
+import emojiList from '../../ui/unicodeEmoji.js'
 import { Logger } from '../../utils/Logger.js'
 import { clearConfigFragment } from '../../utils/fragmentGuard.js'
 
@@ -61,7 +62,13 @@ function initializeDashboardMenu () {
 
   document.getElementById('toggle-widget-menu').addEventListener('click', () => {
     const widgetContainer = document.getElementById('widget-container')
-    widgetContainer.classList.toggle('hide-widget-menu')
+    const toggled = widgetContainer.classList.toggle('hide-widget-menu') // true if now hidden
+
+    const message = toggled
+      ? `${emojiList.cross.unicode} Widget menu hidden`
+      : `${emojiList.edit.unicode} Widget menu shown`
+
+    showNotification(message, 500)
   })
 
   document.getElementById('reset-button').addEventListener('click', () => {
