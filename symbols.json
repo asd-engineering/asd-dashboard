@@ -899,7 +899,7 @@
     "name": "hideResizeMenu",
     "kind": "function",
     "file": "src/component/widget/menu/resizeMenu.js",
-    "description": "Hides the resize menu for a widget.",
+    "description": "",
     "params": [
       {
         "name": "icon",
