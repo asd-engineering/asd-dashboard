@@ -1,63 +1,126 @@
 # Codex Agent Development Strategy
 
+## 🎯 The Golden Path — Standard Workflow
+
+**Always start here. This workflow is optimized for fast grounding, minimal confusion, and test-driven validation.**
+
+1. **Refresh the Symbol Index**  
+   Ensures `symbols.json` reflects the latest source of truth, essential for reasoning.  
+    ```bash
+    just extract-symbols
+    ```
+
+Then:
+
+* Open `symbols.json`
+* Search for **keywords, service names, or UI concepts** from the task
+* Use matches to identify **files**, **functions**, and **interfaces**
+* Prioritize entries with **clear JSDoc** descriptions matching the problem domain
+
+> 💡 Tip: Scan the `name`, `description`, and `file` fields, they’re the fastest route to relevant code.
+
+2. **Implement Task Changes** guided by what you found in the symbol map.
+
+3. **Format, Lint, and Type-Check**
+(this also builds the indexed report automatically via the imported playwright.just recipe, db object called with zcat > jq: playwright-report-index.json.gz)
+   ```bash
+   just format check
+   ```
+
+4. **Run All Tests**
+
+   ```bash
+   just test
+   ```
+
+5. **Commit** — if blocked by an unrelated pre-commit lint failure, you may bypass (last resort):
+
+   ```bash
+   HUSKY=0 git commit -m "..."
+   ```
+
+---
+
+> 🔍 **Why symbols first?**
+> `symbols.json` is the Codex agent’s navigation system.
+> Run it early to replace slow guessing with high-fidelity code comprehension, grounded in actual names, files, and types.
+
+
 ## 🧠 AI Agent Roles & Responsibilities
 
-| Agent                        | Responsibility                                              | Inputs                                                   | Outputs                                         |
-| ---------------------------- | ----------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------------------- |
-| 🛠️ **DevelopmentAgent**     | Implements features from structured logs → passing tests    | Logs (`playwright-report-index.json.gz`), symbols, tests | Clean JS, passing tests, updated `symbols.json` |
-| 📦 **LoggerAttacher**        | Ensures structured logging (`Logger`) in UI modules         | `Logger.js`, UI modules                                  | Structured logs in Playwright reports           |
-| 🧬 **SymbolIndexMaintainer** | Keeps canonical `symbols.json` always updated               | JS sources                                               | Accurate `symbols.json`                         |
-| 💪 **TestInspector**         | Executes & indexes Playwright tests for Codex introspection | `.spec.ts`, Playwright commands                          | `playwright-report-index.json.gz`               |
-| ✅ **ValidationAgent**        | Validates symbols, tests, logs before commit                | `symbols.json`, tests, logs, JSDoc, lint                 | Commit-ready PRs with clear QA summaries        |
+| Agent                        | Responsibility                                                | Inputs                        | Outputs                                         | Function Calls                                  | Downstream Dependencies                           |
+|-----------------------------|----------------------------------------------------------------|-------------------------------|--------------------------------------------------|--------------------------------------------------|----------------------------------------------------|
+| 🧬 **SymbolIndexMaintainer** | Builds & surfaces a searchable mental map of the codebase     | JS source files               | `symbols.json`                                  | `just extract-symbols`                           | 🛠 DevelopmentAgent<br>✅ ValidationAgent            |
+| 🛠️ **DevelopmentAgent**     | Implements changes based on the task and symbol map           | Task prompt, `symbols.json`   | Updated source files                            | _manual edits_                                   | 🧼 LinterFormatter<br>🧪 TestAnalyzer                |
+| 🧼 **LinterFormatter**       | Lints, auto-formats, and runs static type checks              | Updated source files          | Clean, typed codebase                           | `just format`, `just check`                      | ✅ ValidationAgent                                  |
+| 🧪 **TestAnalyzer**          | Runs tests and generates indexed structured logs              | Codebase, `.spec.ts`          | `playwright-report-index.json.gz`               | `just test` <br> (includes index-report, list…)  | ✅ ValidationAgent                                  |
+| ✅ **ValidationAgent**       | Final gatekeeper: verifies all QA surfaces                    | All artifacts from above      | Merge-ready PR                                  | _aggregates previous steps_                      | ⛔ Terminal                                          |
+
+
+## ⚧️ AI Agent Constraints
+
+* **Client‑side only** (DOM APIs, `localStorage`, `fetch`).
+* **Pure Vanilla ES6+** — no frameworks, transpilers, or build tools.
+* **Functional‑Core / OO‑Shell**
+
+  * Pure, stateless core logic.
+  * Minimal UI orchestration via classes/objects.
 
 ---
 
-## ⚧️ AI Agent Constraints
+## 🧭 Mental‑Map Landmarks (Architecture & Key Files)
 
-* **Client-side only** (DOM APIs, localStorage, fetch).
-* **No frameworks/transpilers/build tools**. Pure ES6+ Vanilla JS.
-* **Functional-Core, OO-Shell**:
+> *Use this table first to avoid the “cold‑start” mapping cost seen in prior runs.*
 
-  * Pure, stateless core logic
-  * Minimal UI orchestration via classes/objects
+| Path                               | Why it matters                                                 |
+| ---------------------------------- | -------------------------------------------------------------- |
+| `src/main.js`                      | App bootstrap — read this first.                               |
+| `src/storage/localStorage.js`      | **Single source of persisted truth** (boards, views, widgets). |
+| `src/storage/servicesStore.js`     | In‑memory service catalogue.                                   |
+| `src/board/boardManagement.js`     | Core board/view logic — used by most features.                 |
+| `src/component/widget/…`           | Drag‑drop & widget orchestration.                              |
+| `src/utils/Logger.js`              | **Only** logging API (structured).                             |
+| `symbols.json`                     | Canonical symbol map — **never guess** signatures.             |
+| `playwright-report-index.json.gz`  | Indexed logs — primary failure‑diagnosis source.               |
+| `justfile` + `scripts/just/*.just` | All automation shortcuts.                                      |
 
 ---
 
-## 📁 File & Folder Structure (Canonical)
+## 📁 File & Folder Structure (Canonical)
 
 ```
 .
 ├── AGENTS.md
-├── src/                                  # JS sources
-│   ├── component/                        # UI orchestration
-│   ├── storage/                          # Browser storage
-│   ├── ui/                               # Styles & resources
-│   ├── utils/                            # Common utilities (Logger.js)
-│   ├── main.js                           # App bootstrap
-│   └── serviceWorker.js                  # Offline support
-├── symbols.json                          # Canonical symbol index
-├── playwright-report-index.json.gz       # Indexed summary with structured logs
-├── playwright-report.json                # Full report (read via indexing script)
-├── playwright-report/                    # HTML reports (Codex: do not read)
-├── test-results/                         # Videos only (Codex: do not read)
-├── webserver.log                         # From `serve_no_cache.js`, useful if files missing
-├── justfile                              # Commands interface
+├── src/
+│   ├── component/                # UI orchestration
+│   ├── storage/                  # Browser storage
+│   ├── ui/                       # Styles & resources
+│   ├── utils/                    # Common utilities (Logger.js)
+│   ├── main.js                   # App bootstrap
+│   └── serviceWorker.js          # Offline support
+├── symbols.json                  # Canonical symbol index
+├── playwright-report-index.json.gz
+├── playwright-report.json
+├── playwright-report/            # HTML (Codex: do not read)
+├── test-results/                 # Videos only (Codex: do not read)
+├── webserver.log                 # From serve_no_cache.js
+├── justfile                      # Command interface
 ├── scripts/
 │   ├── extract-symbol-index.mjs
-│   ├── playwright-indexer.js             # Creates playwright-report-index.json.gz
-│   ├── playwright-extract-logs.js        # Extract logs from index
-│   └── just/playwright.just              # Justfile extensions
-└── tests/                                # Playwright tests (.spec.ts)
+│   ├── playwright-indexer.js
+│   ├── playwright-extract-logs.js
+│   └── just/playwright.just
+└── tests/                        # Playwright `.spec.ts`
 ```
 
 ---
 
-## 🔖 Symbol Extraction & Validation
+## 🔖 Symbol Extraction & Validation
 
 Codex references **only canonical symbols** via `symbols.json`.
 
-* **Never guess** function names, signatures, or return values.
-* Symbols and JSDoc must exactly match actual declarations:
+* **Never guess** names, signatures, or return values.
+* JSDoc must exactly match declarations:
 
   ```js
   /**
@@ -68,175 +131,90 @@ Codex references **only canonical symbols** via `symbols.json`.
    */
   ```
 
-Update symbol index regularly:
+Refresh index:
 
 ```bash
 just extract-symbols
-# Alias: node scripts/extract-symbol-index.mjs
+# alias: node scripts/extract-symbol-index.mjs
+# updates: symbols.json
 ```
 
 ---
 
 ## 📋 Coding Guidelines
 
-* Enforce strict **Single Responsibility Principle** (SRP).
-* Explicit JSDoc-defined input/output contracts.
-* Clear, descriptive camelCase naming.
-* Include `// @ts-check` at the top of all files.
-* Define reusable shapes via `@typedef`.
+* Strict **Single Responsibility Principle (SRP)**.
+* Explicit **JSDoc** I/O contracts.
+* Descriptive camelCase naming.
+* `// @ts-check` at top of every file.
+* Reusable shapes via `@typedef`.
 
 ---
 
-## 🗃️ Logging & Debugging (Structured)
+## 🗃️ Structured Logging & Debugging
 
-* **Custom `Logger.js` only**, no direct `console.log`.
-* Explicitly declare logger per module:
-
-  ```js
-  const logger = new Logger('moduleName.js');
-  ```
-
-Structured logs (`network`, `console`, `app`) are stored within Playwright reports only:
-
-* Codex reads from compressed index (`playwright-report-index.json.gz`).
-* Codex **does not read directly**:
-
-  * `local/logs/*.json` (non-existent)
-  * `playwright-report/` (HTML reports only)
-  * `test-results/` (videos only)
-
----
-
-## 🛠️ Automation & Formatting
-
-Managed via **Justfile** commands:
-
-| Command                | Action                                                      |
-| ---------------------- | ----------------------------------------------------------- |
-| `just start`           | Run dev server (`serve_no_cache.js`)                        |
-| `just test`            | Execute all tests                                           |
-| `just test-grep <tag>` | Execute specific tests                                      |
-| `just format`          | Lint and autoformat                                         |
-| `just extract-symbols` | Update `symbols.json`                                       |
-| `just index-report`    | Create compressed index (`playwright-report-index.json.gz`) |
-
-Linting and formatting:
-
-```bash
-npm run lint-fix
+```js
+const logger = new Logger('moduleName.js');
 ```
 
-Output must always be ready-to-commit.
+* **No `console.log`** only `Logger.js`.
+* Structured logs (`network`, `console`, `app`) live inside Playwright reports and are accessed via the index(playwright-report-index.json.gz).
+
+| Command                         | Purpose                                     |
+| ------------------------------- | ------------------------------------------- |
+| `just index-report`             | Compress raw logs into the indexed summary. |
+| `just list '<regex>'`           | List tests in the index.                    |
+| `just failures '<regex>'`       | List failing tests only.                    |
+| `just logs '<regex>' [browser]` | Decode structured logs.                     |
 
 ---
 
-## Two-Phase AI-Driven Workflow
+## 🛠️ Tooling & Environment Gotchas
 
-Codex agents follow a strict workflow:
-
-### Test Execution
-
-Generate structured logs:
-
-```bash
-just test
-# or
-npx playwright test --reporter=json
-```
-
-Handle environment/dependency errors clearly:
-
-```plaintext
-DEV-ENV-ERROR: playwright dependency missing
-Proposed fix: npm install playwright
-```
-
-### Test Indexing & Inspection
-
-Create indexed logs:
-
-```bash
-just index-report
-```
-
-Structured introspection:
-
-```bash
-just list '<regex>'             # List matching tests
-just failures '<regex>'         # List failures only
-just logs '<regex>' [browser]   # Extract & view logs
-```
-
-Always re-index after test runs.
+| Gotcha                                  | Fix                                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------------------ |
+| **JSDoc tagging for `extract-symbols`** | Every module needs `/** @module … */`; every exported fn needs `/** @function … */`. |
+| **`just` working dir**                  | All paths in `justfile` are **repo‑root** relative.                                  |
+| **Linter browser globals**              | Declare missing globals (e.g. `HTMLElement`) in `package.json → standard.globals`.   |
+| **TypeScript (`// @ts-check`)**         | Use runtime guards (`instanceof`, `"prop" in obj`) — **never** blind casts.          |
+| **Pre‑commit hooks**                    | Use `HUSKY=0` only when lint failures are unrelated to your change.                  |
 
 ---
 
-## 📋 Playwright Report Helpers
+## 🌱 Extensibility & Resilience
 
-Located at: [`scripts/just/playwright.just`](scripts/just/playwright.just)
-Core scripts:
-
-* `scripts/playwright-indexer.js`
-* `scripts/playwright-extract-logs.js`
-
-| Command                         | Purpose                          |
-| ------------------------------- | -------------------------------- |
-| `just index-report`             | Compress logs into indexed JSON  |
-| `just list '<regex>'`           | List matching tests              |
-| `just failures '<regex>'`       | List failing tests               |
-| `just logs '<regex>' [browser]` | Decode structured logs for tests |
+* Design **modular, config‑driven** interfaces (no hidden globals).
+* Enable **symbolic navigation** so agents & tests can traverse code.
+* **Avoid hard‑coded paths**; rely on configuration files and dynamic lookups.
+* Architect for **simulation & validation** (functional‑core makes logic testable).
+* Keep UI orchestration thin; heavy logic lives in pure modules for easy refactor.
+* **Fail fast & loudly** — surface environment errors with actionable fixes.
+* Target **small, composable files** (≤ 50 LOC), facilitating AI refactors.
+* **Prefer data‑oriented designs** over deep object hierarchies.
+* Write **idempotent scripts** (safe to rerun without side effects).
 
 ---
 
-## 🌱 Extensibility & Resilience
+## ❌ TypeScript Error‑Handling Policy
 
-* Design modular, config-driven interfaces.
-* Enable symbolic navigation for simulation and validation.
-* Avoid hard-coded paths or options; rely on configuration files.
+* Guard properties with `instanceof`, `"prop" in obj`, optional‑chaining, etc.
+* **Never** widen types with `as HTMLElement` / `as any` unless runtime‑checked.
+* Every fix must keep tests green **and** TypeScript clean.
 
----
+## 📊 Observed Failure Modes & Mitigations
 
-## ❌ TypeScript Error Handling Policy
-
-Codex may not patch TypeScript errors using blind type assertions like `as HTMLElement` or `as any`.
-
-### 🧱 Rules:
-
-* Always use `instanceof` or other runtime-safe guards:
-
-  ```ts
-  if (target instanceof HTMLInputElement) {
-    console.log(target.value);
-  }
-  ```
-
-* Never assume properties exist on `EventTarget`, `HTMLElement`, or `Element` without guard checks.
-
-* Never silence errors via widening types unless validated by runtime contract.
-
-* Avoid introducing regressions by validating every fix.
-
-## 🔄 Iterative AI Validation (Continuous Loop)
-
-Codex continuously validates with:
-
-```bash
-just extract-symbols
-just test
-just index-report
-```
-
-* Verifies symbol accuracy.
-* Refactors based on logs and test outcomes.
-* Ignores unindexed files unless explicitly regenerated.
+1. **Cold‑start mapping cost** → Consult *Mental‑Map* table first.
+2. **Tooling gotchas** → Revisit *Gotchas* when script/lint errors appear.
+3. **Architectural ambiguity** → Remember: state‑driven UI; avoid direct DOM; locate new logic in the matching `board/` or `widget/` module.
 
 ---
 
-## ✅ AI-Driven PR Validation & QA
+## ✅ AI‑Driven PR Validation & QA
 
-**ValidationAgent** confirms PR quality by checking:
+**ValidationAgent** blocks merge unless:
 
-* Updated symbols (`symbols.json`)
-* Passing tests
-* Properly structured logs
-* Formatted and linted code
+* `symbols.json` updated & canonical.
+* All tests green.
+* Logs present & structured.
+* Lint/format clean.
+* Commit message clear.
