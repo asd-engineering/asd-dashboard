@@ -9,9 +9,9 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
 
-    # concurrency:
-    #   group: playwright-${{ github.event.pull_request.head.ref || github.ref_name }}
-    #   cancel-in-progress: true
+    concurrency:
+      group: playwright-${{ github.event.pull_request.head.ref || github.ref_name }}
+      cancel-in-progress: true
 
     steps:
     - uses: actions/checkout@v4
