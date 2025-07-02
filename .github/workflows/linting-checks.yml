@@ -6,6 +6,7 @@ on:
 
 jobs:
   lint_and_typecheck:
+    name: linting-and-typecheck
     runs-on: ubuntu-latest
 
     concurrency:
