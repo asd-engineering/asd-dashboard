@@ -8,6 +8,7 @@ on:
 
 jobs:
   test:
+    if: github.event_name != 'push' || github.event.pull_request == null
     timeout-minutes: 10
     runs-on: ubuntu-latest
 
