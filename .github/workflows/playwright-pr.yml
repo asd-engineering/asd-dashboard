@@ -6,6 +6,6 @@ on:
 
 jobs:
   call-playwright:
-    name: Playwright Tests
+    name: Playwright Tests (PR)
     uses: ./.github/workflows/playwright-core.yml
     secrets: inherit
