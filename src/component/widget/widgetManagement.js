@@ -156,7 +156,7 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
     })
   }
 
-  await saveWidgetState(boardId, viewId)
+  saveWidgetState(boardId, viewId)
   initializeResizeHandles()
 }
 
@@ -170,7 +170,7 @@ async function configureWidget (iframeElement) {
   const newUrl = prompt('Enter new URL for the widget:', iframeElement.src)
   if (newUrl) {
     iframeElement.src = newUrl
-    await saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
+    saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
   }
 }
 

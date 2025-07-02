@@ -211,7 +211,7 @@ async function showResizeMenuBlock (icon, widgetWrapper) {
       button.addEventListener('click', async () => {
         await adjustWidgetSize(widgetWrapper, option.cols, option.rows)
         menu.remove()
-        await saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
+        saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
       })
       menu.appendChild(button)
     })

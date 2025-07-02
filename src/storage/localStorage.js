@@ -35,7 +35,7 @@ function serializeWidgetState (widget) {
   return state
 }
 
-async function saveWidgetState (boardId, viewId) {
+function saveWidgetState (boardId, viewId) {
   if (!boardId || !viewId) {
     return logger.error('Board ID or View ID is missing. Cannot save widget state.')
   }
