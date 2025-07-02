@@ -35,7 +35,7 @@ function serializeWidgetState (widget) {
   return state
 }
 
-async function saveWidgetState (boardId, viewId) {
+function saveWidgetState (boardId, viewId) {
   if (!boardId || !viewId) {
     return logger.error('Board ID or View ID is missing. Cannot save widget state.')
   }
@@ -68,7 +68,7 @@ async function saveWidgetState (boardId, viewId) {
     const updatedWidgetState = sortedVisibleWidgets.map(widget => serializeWidgetState(/** @type {HTMLElement} */(widget)))
     view.widgetState = updatedWidgetState
 
-    await saveBoardState(boards)
+    saveBoardState(boards)
     logger.info(`Saved widget state for view: ${viewId} in board: ${boardId}`)
   } catch (error) {
     logger.error('Error saving widget state:', error)
@@ -79,14 +79,14 @@ async function loadInitialConfig () {
   try {
     const boards = window.asd.config.boards
     if (boards && boards.length > 0) {
-      await saveBoardState(boards)
+      saveBoardState(boards)
     }
   } catch (error) {
     logger.error('Error loading initial configuration:', error)
   }
 }
 
-async function saveBoardState (boards) {
+function saveBoardState (boards) {
   try {
     localStorage.setItem('boards', JSON.stringify(boards))
     window.asd.boards = boards // Keep global state synchronized

@@ -5,7 +5,7 @@
  * @module boardManagement
  */
 import { saveBoardState, loadBoardState } from '../../storage/localStorage.js'
-import { addWidget, updateWidgetOrders } from '../widget/widgetManagement.js'
+import { addWidget } from '../widget/widgetManagement.js'
 import { widgetStore } from '../widget/widgetStore.js'
 import { Logger } from '../../utils/Logger.js'
 import { boardGetUUID, viewGetUUID } from '../../utils/id.js'
@@ -151,7 +151,6 @@ export async function switchView (boardId, viewId) {
   window.asd.currentViewId = viewId
   localStorage.setItem('lastUsedViewId', viewId)
   updateViewSelector(boardId)
-  updateWidgetOrders()
 }
 
 /**
