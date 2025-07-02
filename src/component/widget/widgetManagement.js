@@ -156,7 +156,7 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
     })
   }
 
-  saveWidgetState(boardId, viewId)
+  await saveWidgetState(boardId, viewId)
   initializeResizeHandles()
 }
 
@@ -170,7 +170,7 @@ async function configureWidget (iframeElement) {
   const newUrl = prompt('Enter new URL for the widget:', iframeElement.src)
   if (newUrl) {
     iframeElement.src = newUrl
-    saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
+    await saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
   }
 }
 
@@ -181,24 +181,24 @@ async function configureWidget (iframeElement) {
  */
 function updateWidgetOrders () {
   const widgetContainer = document.getElementById('widget-container')
-  const widgetsInDomOrder = Array.from(widgetContainer.children);
+  const widgetsInDomOrder = Array.from(widgetContainer.children)
 
-  let visibleIndex = 0;
+  let visibleIndex = 0
   widgetsInDomOrder.forEach(widget => {
-    const el = /** @type {HTMLElement} */(widget);
+    const el = /** @type {HTMLElement} */(widget)
     if (el.style.display !== 'none') {
-      const newOrder = String(visibleIndex);
-      el.setAttribute('data-order', newOrder);
-      el.style.order = newOrder; // Keep style.order for visual consistency
-      visibleIndex++;
+      const newOrder = String(visibleIndex)
+      el.setAttribute('data-order', newOrder)
+      el.style.order = newOrder // Keep style.order for visual consistency
+      visibleIndex++
     }
-  });
+  })
 
-  const boardId = window.asd.currentBoardId;
-  const viewId = window.asd.currentViewId;
+  const boardId = window.asd.currentBoardId
+  const viewId = window.asd.currentViewId
   if (boardId && viewId) {
     // This is now a synchronous call
-    saveWidgetState(boardId, viewId);
+    saveWidgetState(boardId, viewId)
   }
 }
 
