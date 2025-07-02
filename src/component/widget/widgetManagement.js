@@ -145,7 +145,7 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
  * @param {string|null} [dataid=null] - An optional persistent identifier for the widget.
  * @returns {Promise<void>}
  */
-async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, viewId, dataid = null) {
+async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId = null, viewId = null, dataid = null) {
   logger.log('Adding widget with URL:', url)
   const widgetContainer = document.getElementById('widget-container')
   if (!widgetContainer) return logger.error('Widget container not found')
