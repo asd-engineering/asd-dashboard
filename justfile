@@ -2,6 +2,7 @@
 import "scripts/just/playwright.just"
 import "scripts/just/embed.just"
 import "scripts/just/repo.just"
+import "scripts/just/symbols.just"
 
 # Bootstrap the project
 setup:

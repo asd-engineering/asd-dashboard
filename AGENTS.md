@@ -39,8 +39,6 @@ Then:
    HUSKY=0 git commit -m "..."
    ```
 
----
-
 > 🔍 **Why symbols first?**
 > `symbols.json` is the Codex agent’s navigation system.
 > Run it early to replace slow guessing with high-fidelity code comprehension, grounded in actual names, files, and types.
@@ -51,11 +49,28 @@ Then:
 | Agent                        | Responsibility                                                | Inputs                        | Outputs                                         | Function Calls                                  | Downstream Dependencies                           |
 |-----------------------------|----------------------------------------------------------------|-------------------------------|--------------------------------------------------|--------------------------------------------------|----------------------------------------------------|
 | 🧬 **SymbolIndexMaintainer** | Builds & surfaces a searchable mental map of the codebase     | JS source files               | `symbols.json`                                  | `just extract-symbols`                           | 🛠 DevelopmentAgent<br>✅ ValidationAgent            |
+| 🔍 **SymbolResolver**        | Resolves human tasks to matching code symbols and locations   | `symbols.json`, keywords      | File/function/interface suggestions             | `just symbols-resolve <query>`                   | 🛠 DevelopmentAgent                                  |
 | 🛠️ **DevelopmentAgent**     | Implements changes based on the task and symbol map           | Task prompt, `symbols.json`   | Updated source files                            | _manual edits_                                   | 🧼 LinterFormatter<br>🧪 TestAnalyzer                |
 | 🧼 **LinterFormatter**       | Lints, auto-formats, and runs static type checks              | Updated source files          | Clean, typed codebase                           | `just format`, `just check`                      | ✅ ValidationAgent                                  |
 | 🧪 **TestAnalyzer**          | Runs tests and generates indexed structured logs              | Codebase, `.spec.ts`          | `playwright-report-index.json.gz`               | `just test` <br> (includes index-report, list…)  | ✅ ValidationAgent                                  |
 | ✅ **ValidationAgent**       | Final gatekeeper: verifies all QA surfaces                    | All artifacts from above      | Merge-ready PR                                  | _aggregates previous steps_                      | ⛔ Terminal                                          |
 
+---
+
+### 🆕 SymbolResolver Agent – Integration with the Golden Path
+
+Right after `just extract-symbols`, use:
+
+```bash
+just symbols-resolve "<your task keywords>"
+```
+
+This command:
+
+* Searches `symbols.json` for **name**, **description**, and **file** matches.
+* Falls back to scanning `src/` and `tests/` if no symbols exist (or it's a new repo).
+* Handles multiword fallbacks and test-specific queries like `test:drag`.
+* Supports rapid **task → symbol** resolution without scanning the tree manually.
 
 ## ⚧️ AI Agent Constraints
 
@@ -65,8 +80,6 @@ Then:
 
   * Pure, stateless core logic.
   * Minimal UI orchestration via classes/objects.
-
----
 
 ## 🧭 Mental‑Map Landmarks (Architecture & Key Files)
 
@@ -84,11 +97,9 @@ Then:
 | `playwright-report-index.json.gz`  | Indexed logs — primary failure‑diagnosis source.               |
 | `justfile` + `scripts/just/*.just` | All automation shortcuts.                                      |
 
----
 
 ## 📁 File & Folder Structure (Canonical)
 
-```
 .
 ├── AGENTS.md
 ├── src/
@@ -112,8 +123,6 @@ Then:
 │   └── just/playwright.just
 └── tests/                        # Playwright `.spec.ts`
 ```
-
----
 
 ## 🔖 Symbol Extraction & Validation
 
@@ -139,8 +148,6 @@ just extract-symbols
 # updates: symbols.json
 ```
 
----
-
 ## 📋 Coding Guidelines
 
 * Strict **Single Responsibility Principle (SRP)**.
@@ -148,8 +155,6 @@ just extract-symbols
 * Descriptive camelCase naming.
 * `// @ts-check` at top of every file.
 * Reusable shapes via `@typedef`.
-
----
 
 ## 🗃️ Structured Logging & Debugging
 
@@ -167,8 +172,6 @@ const logger = new Logger('moduleName.js');
 | `just failures '<regex>'`       | List failing tests only.                    |
 | `just logs '<regex>' [browser]` | Decode structured logs.                     |
 
----
-
 ## 🛠️ Tooling & Environment Gotchas
 
 | Gotcha                                  | Fix                                                                                  |
@@ -178,8 +181,6 @@ const logger = new Logger('moduleName.js');
 | **Linter browser globals**              | Declare missing globals (e.g. `HTMLElement`) in `package.json → standard.globals`.   |
 | **TypeScript (`// @ts-check`)**         | Use runtime guards (`instanceof`, `"prop" in obj`) — **never** blind casts.          |
 | **Pre‑commit hooks**                    | Use `HUSKY=0` only when lint failures are unrelated to your change.                  |
-
----
 
 ## 🌱 Extensibility & Resilience
 
@@ -193,8 +194,6 @@ const logger = new Logger('moduleName.js');
 * **Prefer data‑oriented designs** over deep object hierarchies.
 * Write **idempotent scripts** (safe to rerun without side effects).
 
----
-
 ## ❌ TypeScript Error‑Handling Policy
 
 * Guard properties with `instanceof`, `"prop" in obj`, optional‑chaining, etc.
@@ -206,8 +205,6 @@ const logger = new Logger('moduleName.js');
 1. **Cold‑start mapping cost** → Consult *Mental‑Map* table first.
 2. **Tooling gotchas** → Revisit *Gotchas* when script/lint errors appear.
 3. **Architectural ambiguity** → Remember: state‑driven UI; avoid direct DOM; locate new logic in the matching `board/` or `widget/` module.
-
----
 
 ## ✅ AI‑Driven PR Validation & QA
 
