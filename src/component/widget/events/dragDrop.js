@@ -49,8 +49,10 @@ function handleDragEnd (e) {
   logger.log('Drag End triggered. Cleaning up UI.')
   const widgetContainer = document.getElementById('widget-container')
   widgetContainer.querySelectorAll('.widget-wrapper').forEach(widget => {
-    removeDragOverlay(widget)
-    widget.classList.remove('drag-over', 'highlight-drop-area', 'dragging')
+    if (widget instanceof HTMLElement) {
+      removeDragOverlay(widget)
+      widget.classList.remove('drag-over', 'highlight-drop-area', 'dragging')
+    }
   })
 }
 
