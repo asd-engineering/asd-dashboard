@@ -1,0 +1,11 @@
+name: Playwright Tests (PR)
+
+on:
+  pull_request:
+    branches: [main, develop, feature/**]
+
+jobs:
+  call-playwright:
+    name: Playwright Tests
+    uses: ./.github/workflows/playwright-core.yml
+    secrets: inherit

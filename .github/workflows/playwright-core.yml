@@ -1,21 +1,17 @@
 name: Playwright Tests
 
 on:
-  push:
-    branches: [main, develop, feature/**]           # double-star for nested branches
-  pull_request:
-    branches: [main, develop, feature/**]
+  workflow_call:
 
 jobs:
   test:
-    name: playwright-${{ github.event_name }}
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.event.pull_request == null)
+    name: Playwright
     timeout-minutes: 10
     runs-on: ubuntu-latest
 
-    concurrency:
-      group: playwright-${{ github.event.pull_request.head.ref || github.ref_name }}
-      cancel-in-progress: true
+    # concurrency:
+    #   group: playwright-${{ github.event.pull_request.head.ref || github.ref_name }}
+    #   cancel-in-progress: true
 
     steps:
     - uses: actions/checkout@v4

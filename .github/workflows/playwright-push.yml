@@ -1,0 +1,12 @@
+name: Playwright Tests (Push)
+
+on:
+  push:
+    branches: [main, develop, feature/**, codex/**]
+
+jobs:
+  call-playwright:
+    name: Playwright Tests (Push)
+    if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/heads/develop')
+    uses: ./.github/workflows/playwright-core.yml
+    secrets: inherit
