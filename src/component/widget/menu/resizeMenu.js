@@ -8,6 +8,26 @@ import { Logger } from '../../../utils/Logger.js'
 const logger = new Logger('resizeMenu.js')
 
 /**
+ * @typedef {Object} WidgetDOM
+ * @property {string} url
+ * @property {string} columns
+ * @property {string} rows
+ */
+
+/**
+ * Extracts required widget dataset fields as typed object.
+ * @param {HTMLElement} el
+ * @returns {WidgetDOM}
+ */
+function extractWidgetDataset (el) {
+  return {
+    url: el.dataset.url,
+    columns: el.dataset.columns,
+    rows: el.dataset.rows
+  }
+}
+
+/**
  * Resizes the widget horizontally by adjusting its grid column span.
  * @function resizeHorizontally
  * @param {HTMLElement} widget - The widget element to resize.
@@ -322,8 +342,8 @@ async function adjustWidgetSize (widgetWrapper, columns, rows) {
   try {
     const config = await getConfig()
     const services = await fetchServices()
-    const widgetUrl = widgetWrapper.dataset.url
-    const serviceConfig = services.find(service => service.url === widgetUrl)?.config || {}
+    const { url } = extractWidgetDataset(widgetWrapper)
+    const serviceConfig = services.find(service => service.url === url)?.config || {}
 
     const minColumns = serviceConfig.minColumns || config.styling.widget.minColumns
     const maxColumns = serviceConfig.maxColumns || config.styling.widget.maxColumns
@@ -333,8 +353,8 @@ async function adjustWidgetSize (widgetWrapper, columns, rows) {
     columns = Math.min(Math.max(columns, minColumns), maxColumns)
     rows = Math.min(Math.max(rows, minRows), maxRows)
 
-    widgetWrapper.dataset.columns = columns
-    widgetWrapper.dataset.rows = rows
+    widgetWrapper.dataset.columns = String(columns)
+    widgetWrapper.dataset.rows = String(rows)
     widgetWrapper.style.gridColumn = `span ${columns}`
     widgetWrapper.style.gridRow = `span ${rows}`
     logger.log(`Widget resized to ${columns} columns and ${rows} rows`)
