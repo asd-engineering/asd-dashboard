@@ -5,6 +5,7 @@
  * @module widgetManagement
  */
 import { saveWidgetState } from '../../storage/localStorage.js'
+import { fetchData } from './utils/fetchData.js'
 import { showResizeMenu, hideResizeMenu, showResizeMenuBlock, hideResizeMenuBlock } from './menu/resizeMenu.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 import { debounce } from '../../utils/utils.js'
@@ -58,30 +59,22 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
   widgetMenu.classList.add('widget-menu')
 
   if (serviceObj && serviceObj.fallback) {
-    logger.log('Fallback action found for service:', service)
     const fixServiceButton = document.createElement('button')
     fixServiceButton.innerHTML = emojiList.launch.unicode
     fixServiceButton.classList.add('widget-button', 'widget-icon-action')
-    fixServiceButton.onclick = () => {
-      showServiceModal(serviceObj, widgetWrapper)
-    }
+    fixServiceButton.onclick = () => showServiceModal(serviceObj, widgetWrapper)
     widgetMenu.appendChild(fixServiceButton)
-    logger.log('Fix Service button added to widget for service:', service)
   }
 
   const removeButton = document.createElement('button')
   removeButton.innerHTML = emojiList.cross.unicode
   removeButton.classList.add('widget-button', 'widget-icon-remove')
-  removeButton.addEventListener('click', () => {
-    removeWidget(widgetWrapper)
-  })
+  removeButton.addEventListener('click', () => removeWidget(widgetWrapper))
 
   const configureButton = document.createElement('button')
   configureButton.innerHTML = emojiList.link.unicode
   configureButton.classList.add('widget-button', 'widget-icon-link')
-  configureButton.addEventListener('click', () => {
-    configureWidget(iframe)
-  })
+  configureButton.addEventListener('click', () => configureWidget(iframe))
 
   const buttonDebounce = 200
   const debouncedHideResizeMenu = debounce((icon) => hideResizeMenu(icon), buttonDebounce)
@@ -93,9 +86,7 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
   resizeMenuIcon.addEventListener('mouseenter', () => showResizeMenu(resizeMenuIcon))
   resizeMenuIcon.addEventListener('mouseleave', (event) => {
     const related = /** @type {?HTMLElement} */(event.relatedTarget)
-    if (!related || !related.closest('.resize-menu')) {
-      debouncedHideResizeMenu(resizeMenuIcon)
-    }
+    if (!related || !related.closest('.resize-menu')) debouncedHideResizeMenu(resizeMenuIcon)
   })
 
   const resizeMenuBlockIcon = document.createElement('button')
@@ -104,9 +95,7 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
   resizeMenuBlockIcon.addEventListener('mouseenter', () => showResizeMenuBlock(resizeMenuBlockIcon, widgetWrapper))
   resizeMenuBlockIcon.addEventListener('mouseleave', (event) => {
     const related = /** @type {?HTMLElement} */(event.relatedTarget)
-    if (!related || !related.closest('.resize-menu-block')) {
-      debouncedHideResizeMenuBlock(widgetWrapper)
-    }
+    if (!related || !related.closest('.resize-menu-block')) debouncedHideResizeMenuBlock(widgetWrapper)
   })
 
   const dragHandle = document.createElement('span')
@@ -117,19 +106,18 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
   const fullScreenButton = document.createElement('button')
   fullScreenButton.innerHTML = emojiList.fullscreen.unicode
   fullScreenButton.classList.add('widget-button', 'widget-icon-fullscreen')
-  fullScreenButton.addEventListener('click', event => {
+  fullScreenButton.addEventListener('click', (event) => {
     event.preventDefault()
     toggleFullScreen(widgetWrapper)
   })
 
-  widgetMenu.append(dragHandle, fullScreenButton, removeButton, configureButton, resizeMenuIcon, resizeMenuBlockIcon)
+  widgetMenu.append(fullScreenButton, removeButton, configureButton, resizeMenuIcon, resizeMenuBlockIcon, dragHandle)
   widgetWrapper.append(iframe, widgetMenu)
 
   dragHandle.addEventListener('dragstart', (e) => {
     widgetWrapper.classList.add('dragging')
     handleDragStart(e, widgetWrapper)
   })
-
   dragHandle.addEventListener('dragend', handleDragEnd)
 
   return widgetWrapper
@@ -159,6 +147,15 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
   widgetContainer.appendChild(widgetWrapper)
   window.asd.widgetStore.add(widgetWrapper)
 
+  const services = await fetchServices()
+  const serviceObj = services.find(s => s.name === service)
+  if (serviceObj && serviceObj.type === 'api') {
+    fetchData(url, data => {
+      const iframe = widgetWrapper.querySelector('iframe')
+      iframe.contentWindow.postMessage(data, '*')
+    })
+  }
+
   saveWidgetState(boardId, viewId)
   initializeResizeHandles()
 }
@@ -166,7 +163,7 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
 function removeWidget (widgetElement) {
   const dataid = widgetElement.dataset.dataid
   window.asd.widgetStore.requestRemoval(dataid)
-  updateWidgetOrders() // Re-normalize and save state
+  updateWidgetOrders()
 }
 
 async function configureWidget (iframeElement) {

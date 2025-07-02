@@ -52,15 +52,17 @@ async function saveWidgetState (boardId, viewId) {
     const visibleWidgets = Array.from(widgetContainer.children)
       .filter(el => (el instanceof HTMLElement) && el.style.display !== 'none')
 
+    // Sort widgets based on their `data-order` attribute, which is the source of truth after a swap.
     const sortedVisibleWidgets = visibleWidgets.sort((a, b) => {
       const orderA = parseInt(/** @type {HTMLElement} */(a).getAttribute('data-order') || '0', 10)
       const orderB = parseInt(/** @type {HTMLElement} */(b).getAttribute('data-order') || '0', 10)
       return orderA - orderB
     })
 
-    // Re-normalize the order attribute before saving
+    // Re-normalize the order attribute before saving to ensure it is sequential.
     sortedVisibleWidgets.forEach((widget, index) => {
       (/** @type {HTMLElement} */(widget)).setAttribute('data-order', String(index))
+      ;(/** @type {HTMLElement} */(widget)).style.order = String(index)
     })
 
     const updatedWidgetState = sortedVisibleWidgets.map(widget => serializeWidgetState(/** @type {HTMLElement} */(widget)))
