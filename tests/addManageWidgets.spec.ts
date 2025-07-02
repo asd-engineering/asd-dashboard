@@ -17,99 +17,81 @@ test.describe('Widgets', () => {
   });
 
   test(`should be able to add 4 services and drag and drop ${emojiList.pinching.unicode}`, async ({ page }) => {
-    const logs: string[] = [];
-
-    // Listen for console events // Does not work in Firefox
-    // page.on('console', msg => {
-    //   if (msg.type() === 'log') {
-    //     logs.push(msg.text());
-    //   }
-    // });
-
     const widgetCount = 4;
 
     // Add 4 services
     await addServices(page, widgetCount);
 
     const widgets = page.locator('.widget-wrapper');
-    await expect(widgets).toHaveCount(4);
+    await expect(widgets).toHaveCount(widgetCount);
 
-    // Store data-order and url attributes in a dictionary
-    const orderBeforeDragDrop = {};
-    console.log('Before Drag-and-Drop:');
-    for (let i = 0; i < widgetCount; i++) {
-      const widget = widgets.nth(i);
-      const order = await widget.getAttribute('data-order');
-      const url = await widget.getAttribute('data-url'); // Fetch the url attribute
-
-      if (url !== null) {
-        orderBeforeDragDrop[url] = order; // Use url as the key
-      } else {
-        console.error(`Widget ${i} has a null url attribute`);
+    // --- STEP 1: Capture the initial order ---
+    const getWidgetOrdersByUrl = async () => {
+      const orders = {};
+      const allWidgets = await widgets.all();
+      for (const widget of allWidgets) {
+        const url = await widget.getAttribute('data-url');
+        const order = await widget.getAttribute('data-order');
+        if (url) {
+          orders[url] = order;
+        }
       }
+      return orders;
+    };
 
-      console.log(`Widget ${i} data-order: ${order}, url: ${url}`);
-    }
+    const orderBeforeDragDrop = await getWidgetOrdersByUrl();
+    console.log('Before Drag-and-Drop:', orderBeforeDragDrop);
+    expect(orderBeforeDragDrop['http://localhost:8000/asd/toolbox']).toBe('0');
 
-    // Test drag and drop using dragAndDrop method with string selectors
-    await page.dragAndDrop('.widget-wrapper:nth-child(1) .widget-icon-drag', '.widget-wrapper:nth-child(2) .widget-icon-drag');
-    await page.dragAndDrop('.widget-wrapper:nth-child(3) .widget-icon-drag', '.widget-wrapper:nth-child(4) .widget-icon-drag');
 
-    // Log data-order attributes after drag and drop
-    const orderAfterDragDrop = {};
-    console.log('After Drag-and-Drop:');
-    for (let i = 0; i < widgetCount; i++) {
-      const widget = widgets.nth(i);
-      const order = await widget.getAttribute('data-order');
-      const url = await widget.getAttribute('data-url'); // Fetch the url attribute
+    // --- STEP 2: Perform the drag and drop actions ---
+    // FIX: Use low-level mouse actions for maximum reliability.
+    // We will also select widgets by their stable URL since their data-order changes.
 
-      if (url !== null) {
-        orderAfterDragDrop[url] = order; // Use url as the key
-      } else {
-        console.error(`Widget ${i} has a null url attribute`);
-      }
+    const toolboxWidget = page.locator('.widget-wrapper[data-url="http://localhost:8000/asd/toolbox"]');
+    const terminalWidget = page.locator('.widget-wrapper[data-url="http://localhost:8000/asd/terminal"]');
+    const tunnelWidget = page.locator('.widget-wrapper[data-url="http://localhost:8000/asd/tunnel"]');
+    const containersWidget = page.locator('.widget-wrapper[data-url="http://localhost:8000/asd/containers"]');
 
-      console.log(`Widget ${i} data-order: ${order}, url: ${url}`);
-    }
+    // --- Drag 1: Toolbox over Terminal ---
+    await toolboxWidget.locator('.widget-icon-drag').hover();
+    await page.mouse.down();
+    await terminalWidget.hover(); // Move over the target to trigger dragover
+    await page.mouse.up(); // Drop
+    await page.waitForTimeout(200); // Wait for app to save state
 
-    // Compare initial and final order by url
-    console.log('Order comparison:');
-    for (const url in orderBeforeDragDrop) {
-      console.log(`Widget url: ${url}, initial: ${orderBeforeDragDrop[url]}, final: ${orderAfterDragDrop[url]}`);
-      expect(orderBeforeDragDrop[url]).not.toBe(orderAfterDragDrop[url]);
-    }
+    // --- Drag 2: Tunnel over Containers ---
+    await tunnelWidget.locator('.widget-icon-drag').hover();
+    await page.mouse.down();
+    await containersWidget.hover();
+    await page.mouse.up();
+    await page.waitForTimeout(200);
 
-    // Reload the page to restore widgets from local storage
+
+    // --- STEP 3: Verify the new order ---
+    const orderAfterDragDrop = await getWidgetOrdersByUrl();
+    console.log('After Drag-and-Drop:', orderAfterDragDrop);
+
+    const expectedOrder = {
+      'http://localhost:8000/asd/toolbox': '1',
+      'http://localhost:8000/asd/terminal': '0',
+      'http://localhost:8000/asd/tunnel': '3',
+      'http://localhost:8000/asd/containers': '2'
+    };
+
+    expect(orderAfterDragDrop).toEqual(expectedOrder);
+
+
+    // --- STEP 4: Reload and verify persistence ---
     await page.reload();
+    await expect(widgets.first()).toBeVisible();
 
-    // Verify the order of widgets after reload
-    const orderAfterReload = {};
-    console.log('After Reload:');
-    for (let i = 0; i < widgetCount; i++) {
-      const widget = widgets.nth(i);
-      const order = await widget.getAttribute('data-order');
-      const url = await widget.getAttribute('data-url'); // Fetch the url attribute
+    const orderAfterReload = await getWidgetOrdersByUrl();
+    console.log('After Reload:', orderAfterReload);
 
-      if (url !== null) {
-        orderAfterReload[url] = order; // Use url as the key
-      } else {
-        console.error(`Widget ${i} has a null url attribute`);
-      }
-
-      console.log(`Widget ${i} data-order: ${order}, url: ${url}`);
-    }
-
-    // Compare initial and restored order by url
-    console.log('Order comparison after reload:');
-    for (const url in orderBeforeDragDrop) {
-      console.log(`Widget url: ${url}, initial: ${orderBeforeDragDrop[url]}, restored: ${orderAfterReload[url]}`);
-    }
-
-    // const uuidLog = logs.find(log => log.includes('[widgetManagement][createWidget] Widget created with grid spans'));
-    // expect(uuidLog).toBeDefined();
+    expect(orderAfterReload).toEqual(expectedOrder);
   });
-
-
+  
   test('should generate widgets with unique and persistent UUIDs', async ({ page }) => {
     // Add multiple widgets
     await addServicesByName(page, 'ASD-terminal', 10);

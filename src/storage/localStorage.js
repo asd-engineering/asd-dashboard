@@ -11,30 +11,15 @@ import { Logger } from '../utils/Logger.js'
 
 const logger = new Logger('localStorage.js')
 
-/**
- * Convert a widget DOM element to a serializable state object.
- * @param {HTMLElement} widget
- * @returns {Widget}
- */
 function serializeWidgetState (widget) {
   let metadata = {}
   if (widget.dataset.metadata) {
-    try {
-      metadata = JSON.parse(widget.dataset.metadata)
-    } catch (error) {
-      logger.error('Error parsing metadata:', error)
-      metadata = {}
-    }
+    try { metadata = JSON.parse(widget.dataset.metadata) } catch (e) { metadata = {} }
   }
 
   let settings = {}
   if (widget.dataset.settings) {
-    try {
-      settings = JSON.parse(widget.dataset.settings)
-    } catch (error) {
-      logger.error('Error parsing settings:', error)
-      settings = {}
-    }
+    try { settings = JSON.parse(widget.dataset.settings) } catch (e) { settings = {} }
   }
 
   const state = {
@@ -47,27 +32,16 @@ function serializeWidgetState (widget) {
     metadata,
     settings
   }
-  logger.info('Saving widget state:', state)
   return state
 }
 
-/**
- * Serialize widgets in the current view and store them under the given board
- * and view identifiers in localStorage. This function now reads the visible widgets
- * directly from the DOM to ensure the saved state matches the UI.
- *
- * @param {string} boardId - Board identifier.
- * @param {string} viewId - View identifier.
- * @function saveWidgetState
- * @returns {Promise<void>}
- */
 async function saveWidgetState (boardId, viewId) {
   if (!boardId || !viewId) {
     return logger.error('Board ID or View ID is missing. Cannot save widget state.')
   }
 
   try {
-    const boards = window.asd.boards
+    const boards = [...window.asd.boards] // Create a copy to avoid mutation issues
     const board = boards.find(b => b.id === boardId)
     if (!board) return logger.error(`Board not found for saving state: ${boardId}`)
 
@@ -75,13 +49,21 @@ async function saveWidgetState (boardId, viewId) {
     if (!view) return logger.error(`View not found for saving state: ${viewId}`)
 
     const widgetContainer = document.getElementById('widget-container')
-    // Get all widgets that are currently visible (not display: none)
-    // This correctly reflects the state of the current view
     const visibleWidgets = Array.from(widgetContainer.children)
       .filter(el => (el instanceof HTMLElement) && el.style.display !== 'none')
 
-    const updatedWidgetState = visibleWidgets.map(widget => serializeWidgetState(/** @type {HTMLElement} */(widget)))
+    const sortedVisibleWidgets = visibleWidgets.sort((a, b) => {
+      const orderA = parseInt(/** @type {HTMLElement} */(a).getAttribute('data-order') || '0', 10)
+      const orderB = parseInt(/** @type {HTMLElement} */(b).getAttribute('data-order') || '0', 10)
+      return orderA - orderB
+    })
 
+    // Re-normalize the order attribute before saving
+    sortedVisibleWidgets.forEach((widget, index) => {
+      (/** @type {HTMLElement} */(widget)).setAttribute('data-order', String(index))
+    })
+
+    const updatedWidgetState = sortedVisibleWidgets.map(widget => serializeWidgetState(/** @type {HTMLElement} */(widget)))
     view.widgetState = updatedWidgetState
 
     await saveBoardState(boards)
@@ -91,33 +73,10 @@ async function saveWidgetState (boardId, viewId) {
   }
 }
 
-/**
- * Restore widget DOM elements for the specified board and view from
- * localStorage. Widgets are recreated using {@link createWidget} and metadata
- * and settings are re-applied.
- *
- * @param {string} boardId - Board identifier.
- * @param {string} viewId - View identifier whose widgets should be loaded.
- * @function loadWidgetState
- * @returns {Promise<void>}
- */
-async function loadWidgetState (boardId, viewId) {
-  // This logic is now handled by switchView. Kept for backward compatibility.
-  logger.warn('loadWidgetState is deprecated; view switching now handles widget loading.')
-}
-
-/**
- * Store the initial board configuration defined in {@code window.asd.config}
- * into localStorage. This is typically called on first run to seed the
- * persistent board data.
- *
- * @function loadInitialConfig
- * @returns {Promise<void>}
- */
 async function loadInitialConfig () {
   try {
     const boards = window.asd.config.boards
-    if (boards.length > 0) {
+    if (boards && boards.length > 0) {
       await saveBoardState(boards)
     }
   } catch (error) {
@@ -125,13 +84,6 @@ async function loadInitialConfig () {
   }
 }
 
-/**
- * Persist the entire boards array to localStorage under the key `boards`.
- *
- * @function saveBoardState
- * @param {Array<Board>} boards - Array of board objects to store.
- * @returns {Promise<void>}
- */
 async function saveBoardState (boards) {
   try {
     localStorage.setItem('boards', JSON.stringify(boards))
@@ -142,22 +94,11 @@ async function saveBoardState (boards) {
   }
 }
 
-/**
- * Retrieve the array of boards from localStorage.
- * The result is also assigned to {@code window.asd.boards} for global access.
- *
- * @function loadBoardState
- * @returns {Promise<Array<Board>>} Parsed array of boards or an empty array on failure.
- */
 async function loadBoardState () {
   try {
-    const boards = localStorage.getItem('boards')
-    const parsedBoards = boards ? JSON.parse(boards) : []
-
-    if (parsedBoards) {
-      window.asd.boards = parsedBoards
-    }
-    logger.log('Loaded board state from localStorage:', parsedBoards)
+    const boardsJSON = localStorage.getItem('boards')
+    const parsedBoards = boardsJSON ? JSON.parse(boardsJSON) : []
+    window.asd.boards = parsedBoards
     return parsedBoards
   } catch (error) {
     logger.error('Error loading board state:', error)
@@ -165,4 +106,4 @@ async function loadBoardState () {
   }
 }
 
-export { saveWidgetState, loadWidgetState, loadInitialConfig, saveBoardState, loadBoardState }
+export { saveWidgetState, loadInitialConfig, saveBoardState, loadBoardState }
