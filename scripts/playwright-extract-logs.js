@@ -16,6 +16,12 @@ async function main () {
   const nameRe = new RegExp(namePattern, 'i')
   const brwRe = new RegExp(browserPattern, 'i')
 
+  /**
+   * Recursively flattens all tests from a Playwright suite.
+   * @param {object} suite - Root suite node.
+   * @param {string[]} [ancestry=[]] - Title path to the current node.
+   * @yields {{ test: any, title: string }}
+   */
   function * tests (suite, ancestry = []) {
     for (const s of suite.suites || []) yield * tests(s, ancestry.concat(suite.title))
     for (const spec of suite.specs || []) {

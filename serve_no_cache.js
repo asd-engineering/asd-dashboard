@@ -8,7 +8,12 @@ const LOGFILE = 'webserver.log'
 const PORT = 8000
 const BASEDIR = 'src'
 
-// Write log entries to file
+/**
+ * Logs an HTTP request to the logfile with status code and timestamp.
+ * @param {http.IncomingMessage} req - The HTTP request object.
+ * @param {http.ServerResponse} res - The HTTP response object.
+ * @param {number} statusCode - The HTTP status code returned.
+ */
 function logRequest (req, res, statusCode) {
   const logEntry = `[${new Date().toISOString()}] ${req.method} ${req.url} ${statusCode}\n`
   fs.appendFile(LOGFILE, logEntry, err => { if (err) console.error('Log error:', err) })

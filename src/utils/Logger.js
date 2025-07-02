@@ -5,6 +5,8 @@
  */
 export class Logger {
   /**
+   * Creates a new Logger instance for the specified file.
+   *
    * @constructor
    * @param {string} fileName - The filename where the logger is used
    */

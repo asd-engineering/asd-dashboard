@@ -180,15 +180,15 @@ async function showResizeMenu (icon) {
       widget.appendChild(menu)
 
       menu.addEventListener('mouseover', () => {
-        logger.log('Mouse over resize menu')
-        menu.style.display = 'block'
+        logger.log('Mouse over resize menu');
+        /** @type {HTMLElement} */ (menu).style.display = 'block'
       })
       /** @type {(event: MouseEvent) => void} */
       const handleMouseOut = (event) => {
         logger.log('Mouse out resize menu')
         const target = event.relatedTarget
         if (!(target instanceof HTMLElement) || !target.classList.contains('widget-icon-resize')) {
-          menu.style.display = 'none'
+          /** @type {HTMLElement} */ (menu).style.display = 'none'
         }
       }
       menu.addEventListener('mouseout', handleMouseOut)

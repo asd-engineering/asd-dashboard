@@ -6,16 +6,23 @@ module.exports = {
     sourceType: 'module'
   },
   rules: {
-    'jsdoc/require-jsdoc': ['warn', {
+    'jsdoc/require-jsdoc': ['error', {
       require: {
         FunctionDeclaration: true,
         MethodDefinition: true,
         ClassDeclaration: true,
-        ArrowFunctionExpression: false
+        ArrowFunctionExpression: false,
+        FunctionExpression: false
       }
     }],
     'jsdoc/require-param': 'warn',
     'jsdoc/require-returns': 'warn',
-    'jsdoc/require-description': 'warn'
+    'jsdoc/require-description': ['warn', {
+      contexts: [
+        'FunctionDeclaration',
+        'MethodDefinition',
+        'ClassDeclaration'
+      ]
+    }]
   }
 }
