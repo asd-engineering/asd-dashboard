@@ -142,7 +142,15 @@ async function shrink (widget) {
 async function showResizeMenu (icon) {
   try {
     const widget = icon.closest('.widget-wrapper')
+    if (!(widget instanceof HTMLElement)) {
+      logger.error('Widget wrapper not found for resize menu')
+      return
+    }
     let menu = widget.querySelector('.resize-menu')
+    if (menu && !(menu instanceof HTMLElement)) {
+      logger.error('Resize menu element is not an HTMLElement')
+      return
+    }
 
     if (!menu) {
       menu = document.createElement('div')
@@ -175,14 +183,19 @@ async function showResizeMenu (icon) {
         logger.log('Mouse over resize menu')
         menu.style.display = 'block'
       })
-      menu.addEventListener('mouseout', (event) => {
+      /** @type {(event: MouseEvent) => void} */
+      const handleMouseOut = (event) => {
         logger.log('Mouse out resize menu')
-        if (!event.relatedTarget || !event.relatedTarget.classList.contains('widget-icon-resize')) {
+        const target = event.relatedTarget
+        if (!(target instanceof HTMLElement) || !target.classList.contains('widget-icon-resize')) {
           menu.style.display = 'none'
         }
-      })
+      }
+      menu.addEventListener('mouseout', handleMouseOut)
     }
-    menu.style.display = 'block'
+    if (menu instanceof HTMLElement) {
+      menu.style.display = 'block'
+    }
     logger.log('Resize menu shown')
   } catch (error) {
     logger.error('Error showing resize menu:', error)
@@ -198,8 +211,12 @@ async function showResizeMenu (icon) {
 async function hideResizeMenu (icon) {
   try {
     const widget = icon.closest('.widget-wrapper')
+    if (!(widget instanceof HTMLElement)) {
+      logger.error('Widget wrapper not found for hideResizeMenu')
+      return
+    }
     const menu = widget.querySelector('.resize-menu')
-    if (menu) {
+    if (menu instanceof HTMLElement) {
       menu.style.display = 'none'
       logger.log('Resize menu hidden')
     }
