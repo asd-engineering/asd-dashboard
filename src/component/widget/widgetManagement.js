@@ -21,6 +21,16 @@ import { widgetGetUUID } from '../../utils/id.js'
 
 const logger = new Logger('widgetManagement.js')
 
+/**
+ * Creates the DOM structure for a new widget, including its iframe and menu.
+ * @function createWidget
+ * @param {string} service - The service identifier.
+ * @param {string} url - The URL for the widget's iframe source.
+ * @param {number} [gridColumnSpan=1] - The number of grid columns to span.
+ * @param {number} [gridRowSpan=1] - The number of grid rows to span.
+ * @param {string|null} [dataid=null] - An optional persistent identifier for the widget.
+ * @returns {Promise<HTMLDivElement>} A promise that resolves to the widget's wrapper element.
+ */
 async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, dataid = null) {
   logger.log('Creating widget with URL:', url)
   const config = await getConfig()
@@ -123,6 +133,18 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
   return widgetWrapper
 }
 
+/**
+ * Adds a new widget to the current view and persists the state.
+ * @function addWidget
+ * @param {string} url - The URL of the service to embed.
+ * @param {number} [columns=1] - The number of grid columns for the widget to span.
+ * @param {number} [rows=1] - The number of grid rows for the widget to span.
+ * @param {string} [type='iframe'] - The type of the widget.
+ * @param {string} boardId - The ID of the board to add the widget to.
+ * @param {string} viewId - The ID of the view to add the widget to.
+ * @param {string|null} [dataid=null] - An optional persistent identifier for the widget.
+ * @returns {Promise<void>}
+ */
 async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, viewId, dataid = null) {
   logger.log('Adding widget with URL:', url)
   const widgetContainer = document.getElementById('widget-container')
@@ -160,12 +182,24 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId, 
   initializeResizeHandles()
 }
 
+/**
+ * Removes a widget from the view and updates the layout.
+ * @function removeWidget
+ * @param {HTMLElement} widgetElement - The widget wrapper element to remove.
+ * @returns {void}
+ */
 function removeWidget (widgetElement) {
   const dataid = widgetElement.dataset.dataid
   window.asd.widgetStore.requestRemoval(dataid)
   updateWidgetOrders()
 }
 
+/**
+ * Prompts the user to enter a new URL for a widget's iframe.
+ * @function configureWidget
+ * @param {HTMLIFrameElement} iframeElement - The iframe element of the widget to configure.
+ * @returns {Promise<void>}
+ */
 async function configureWidget (iframeElement) {
   const newUrl = prompt('Enter new URL for the widget:', iframeElement.src)
   if (newUrl) {

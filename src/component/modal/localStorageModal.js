@@ -10,6 +10,12 @@ import { Logger } from '../../utils/Logger.js'
 
 const logger = new Logger('localStorageModal.js')
 
+/**
+ * Checks if a given string is valid JSON.
+ * @function isJSON
+ * @param {string} value - The string to check.
+ * @returns {boolean} True if the string is valid JSON, false otherwise.
+ */
 function isJSON (value) {
   try {
     JSON.parse(value)
@@ -21,6 +27,11 @@ function isJSON (value) {
   }
 }
 
+/**
+ * Retrieves and parses all JSON-formatted items from localStorage.
+ * @function getLocalStorageData
+ * @returns {Record<string, any>} An object containing the parsed localStorage data.
+ */
 function getLocalStorageData () {
   const localStorageData = {}
 
@@ -39,6 +50,12 @@ function getLocalStorageData () {
   return localStorageData
 }
 
+/**
+ * Saves a data object to localStorage, serializing each value to a JSON string.
+ * @function saveLocalStorageData
+ * @param {Record<string, any>} updatedData - The data to save.
+ * @returns {void}
+ */
 function saveLocalStorageData (updatedData) {
   for (const key in updatedData) {
     const value = updatedData[key]

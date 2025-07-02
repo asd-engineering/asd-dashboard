@@ -11,6 +11,12 @@ import { Logger } from '../utils/Logger.js'
 
 const logger = new Logger('localStorage.js')
 
+/**
+ * Converts a widget DOM element into a serializable state object.
+ * @function serializeWidgetState
+ * @param {HTMLElement} widget - The widget element.
+ * @returns {import('../types.js').Widget} A serializable widget state object.
+ */
 function serializeWidgetState (widget) {
   let metadata = {}
   if (widget.dataset.metadata) {
@@ -35,6 +41,13 @@ function serializeWidgetState (widget) {
   return state
 }
 
+/**
+ * Serializes the state of all visible widgets and saves it to localStorage.
+ * @function saveWidgetState
+ * @param {string} boardId - The ID of the current board.
+ * @param {string} viewId - The ID of the current view.
+ * @returns {void}
+ */
 function saveWidgetState (boardId, viewId) {
   if (!boardId || !viewId) {
     return logger.error('Board ID or View ID is missing. Cannot save widget state.')
@@ -75,6 +88,12 @@ function saveWidgetState (boardId, viewId) {
   }
 }
 
+/**
+ * Loads the initial board configuration from the global config object into localStorage.
+ * This is typically called on first run to seed the dashboard.
+ * @function loadInitialConfig
+ * @returns {Promise<void>}
+ */
 async function loadInitialConfig () {
   try {
     const boards = window.asd.config.boards
@@ -86,6 +105,12 @@ async function loadInitialConfig () {
   }
 }
 
+/**
+ * Persists the entire array of board objects to localStorage.
+ * @function saveBoardState
+ * @param {Array<import('../types.js').Board>} boards - The array of boards to save.
+ * @returns {void}
+ */
 function saveBoardState (boards) {
   try {
     localStorage.setItem('boards', JSON.stringify(boards))
@@ -96,6 +121,11 @@ function saveBoardState (boards) {
   }
 }
 
+/**
+ * Retrieves the array of boards from localStorage.
+ * @function loadBoardState
+ * @returns {Promise<Array<import('../types.js').Board>>} A promise that resolves to the array of boards.
+ */
 async function loadBoardState () {
   try {
     const boardsJSON = localStorage.getItem('boards')

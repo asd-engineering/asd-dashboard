@@ -53,12 +53,12 @@
     "name": "addDragOverlay",
     "kind": "function",
     "file": "src/component/widget/events/dragDrop.js",
-    "description": "Insert a transparent overlay to mark a widget as a drop target.",
+    "description": "Adds a transparent overlay to a widget to act as a drop target.",
     "params": [
       {
         "name": "widgetWrapper",
         "type": "HTMLElement",
-        "desc": "- Widget element to overlay."
+        "desc": "- The widget to add an overlay to."
       }
     ],
     "returns": "void"
@@ -67,42 +67,88 @@
     "name": "addWidget",
     "kind": "function",
     "file": "src/component/widget/widgetManagement.js",
-    "description": "Insert a widget into the current view and persist the layout.",
+    "description": "Adds a new widget to the current view and persists the state.",
     "params": [
       {
         "name": "url",
         "type": "string",
-        "desc": "- URL of the service to embed."
+        "desc": "- The URL of the service to embed."
       },
       {
         "name": "columns",
         "type": "number",
-        "desc": "- Grid columns spanned by the widget."
+        "desc": "- The number of grid columns for the widget to span."
       },
       {
         "name": "rows",
         "type": "number",
-        "desc": "- Grid rows spanned by the widget."
+        "desc": "- The number of grid rows for the widget to span."
       },
       {
         "name": "type",
         "type": "string",
-        "desc": "- Widget type, usually 'iframe'."
+        "desc": "- The type of the widget."
       },
       {
         "name": "boardId",
-        "type": "?string",
-        "desc": "- Board id; defaults to the active board."
+        "type": "string",
+        "desc": "- The ID of the board to add the widget to."
       },
       {
         "name": "viewId",
-        "type": "?string",
-        "desc": "- View id; defaults to the active view."
+        "type": "string",
+        "desc": "- The ID of the view to add the widget to."
       },
       {
         "name": "dataid",
-        "type": "?string",
-        "desc": "- Persistent widget identifier."
+        "type": "string|null",
+        "desc": "- An optional persistent identifier for the widget."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "adjustWidgetSize",
+    "kind": "function",
+    "file": "src/component/widget/menu/resizeMenu.js",
+    "description": "Adjusts the widget size to a specific column and row span.",
+    "params": [
+      {
+        "name": "widgetWrapper",
+        "type": "HTMLElement",
+        "desc": "- The widget to resize."
+      },
+      {
+        "name": "columns",
+        "type": "number",
+        "desc": "- The target number of columns."
+      },
+      {
+        "name": "rows",
+        "type": "number",
+        "desc": "- The target number of rows."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "applyControlVisibility",
+    "kind": "function",
+    "file": "src/component/menu/menu.js",
+    "description": "Applies visibility settings to control groups based on global configuration.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "applyFragment",
+    "kind": "function",
+    "file": "src/component/modal/fragmentDecisionModal.js",
+    "description": "Applies the configuration from the URL fragment, either by overwriting or merging.",
+    "params": [
+      {
+        "name": "overwrite",
+        "type": "boolean",
+        "desc": "- If true, existing data will be replaced."
       }
     ],
     "returns": "Promise<void>"
@@ -160,6 +206,36 @@
     "returns": "void"
   },
   {
+    "name": "clearWidgetContainer",
+    "kind": "function",
+    "file": "src/component/board/boardManagement.js",
+    "description": "Hides all widgets currently managed by the widgetStore. This is used to clear the view without removing elements from the DOM permanently.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "closeModal",
+    "kind": "function",
+    "file": "src/component/modal/modalFactory.js",
+    "description": "Closes the modal, removes the backdrop and event listeners, and calls the close callback.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "configureWidget",
+    "kind": "function",
+    "file": "src/component/widget/widgetManagement.js",
+    "description": "Prompts the user to enter a new URL for a widget's iframe.",
+    "params": [
+      {
+        "name": "iframeElement",
+        "type": "HTMLIFrameElement",
+        "desc": "- The iframe element of the widget to configure."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
     "name": "createBoard",
     "kind": "function",
     "file": "src/component/board/boardManagement.js",
@@ -182,6 +258,14 @@
       }
     ],
     "returns": "Promise<Board>"
+  },
+  {
+    "name": "createResizeOverlay",
+    "kind": "function",
+    "file": "src/component/widget/events/resizeHandler.js",
+    "description": "Creates a full-screen overlay to capture mouse events during resizing.",
+    "params": [],
+    "returns": "HTMLDivElement"
   },
   {
     "name": "createView",
@@ -211,32 +295,32 @@
     "name": "createWidget",
     "kind": "function",
     "file": "src/component/widget/widgetManagement.js",
-    "description": "Build the DOM structure for a widget iframe and its controls.",
+    "description": "Creates the DOM structure for a new widget, including its iframe and menu.",
     "params": [
       {
         "name": "service",
         "type": "string",
-        "desc": "- Service identifier derived from the URL."
+        "desc": "- The service identifier."
       },
       {
         "name": "url",
         "type": "string",
-        "desc": "- Iframe source URL."
+        "desc": "- The URL for the widget's iframe source."
       },
       {
         "name": "gridColumnSpan",
         "type": "number",
-        "desc": "- Number of grid columns to span."
+        "desc": "- The number of grid columns to span."
       },
       {
         "name": "gridRowSpan",
         "type": "number",
-        "desc": "- Number of grid rows to span."
+        "desc": "- The number of grid rows to span."
       },
       {
         "name": "dataid",
-        "type": "?string",
-        "desc": "- Optional persistent widget identifier."
+        "type": "string|null",
+        "desc": "- An optional persistent identifier for the widget."
       }
     ],
     "returns": "Promise<HTMLDivElement>"
@@ -344,6 +428,20 @@
     "returns": "Promise<string>"
   },
   {
+    "name": "enlarge",
+    "kind": "function",
+    "file": "src/component/widget/menu/resizeMenu.js",
+    "description": "Enlarges the widget both horizontally and vertically by one unit.",
+    "params": [
+      {
+        "name": "widget",
+        "type": "HTMLElement",
+        "desc": "- The widget element to enlarge."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
     "name": "error",
     "kind": "function",
     "file": "src/utils/Logger.js",
@@ -375,6 +473,48 @@
       }
     ],
     "returns": "void"
+  },
+  {
+    "name": "fetchJson",
+    "kind": "function",
+    "file": "src/component/widget/utils/fetchServices.js",
+    "description": "Fetches and parses a JSON file from a URL.",
+    "params": [
+      {
+        "name": "url",
+        "type": "string",
+        "desc": "- The URL to fetch the JSON from."
+      }
+    ],
+    "returns": "Promise<object|null>"
+  },
+  {
+    "name": "fetchJson",
+    "kind": "function",
+    "file": "src/utils/fetchServices.js",
+    "description": "Fetches and parses a JSON file from a URL.",
+    "params": [
+      {
+        "name": "url",
+        "type": "string",
+        "desc": "- The URL to fetch JSON from."
+      }
+    ],
+    "returns": "Promise<object|null>"
+  },
+  {
+    "name": "fetchJson",
+    "kind": "function",
+    "file": "src/utils/getConfig.js",
+    "description": "Fetches and parses a JSON file from a URL.",
+    "params": [
+      {
+        "name": "url",
+        "type": "string",
+        "desc": "- The URL to fetch JSON from."
+      }
+    ],
+    "returns": "Promise<object|null>"
   },
   {
     "name": "fetchServices",
@@ -453,6 +593,14 @@
     "description": "Get the id of the currently active view element.",
     "params": [],
     "returns": "string"
+  },
+  {
+    "name": "getLocalStorageData",
+    "kind": "function",
+    "file": "src/component/modal/localStorageModal.js",
+    "description": "Retrieves and parses all JSON-formatted items from localStorage.",
+    "params": [],
+    "returns": "Record<string, any>"
   },
   {
     "name": "getSelectedBoardId",
@@ -548,7 +696,7 @@
     "name": "handleDragEnd",
     "kind": "function",
     "file": "src/component/widget/events/dragDrop.js",
-    "description": "Clean up after a drag operation ends.",
+    "description": "Handles the end of a drag operation, cleaning up UI elements.",
     "params": [
       {
         "name": "e",
@@ -562,7 +710,7 @@
     "name": "handleDragLeave",
     "kind": "function",
     "file": "src/component/widget/events/dragDrop.js",
-    "description": "Remove highlighting when a dragged item leaves a widget.",
+    "description": "Handles the dragleave event on a potential drop target.",
     "params": [
       {
         "name": "e",
@@ -572,7 +720,7 @@
       {
         "name": "widgetWrapper",
         "type": "HTMLElement",
-        "desc": "- Widget that lost drag focus."
+        "desc": "- The widget that the cursor is leaving."
       }
     ],
     "returns": "void"
@@ -581,7 +729,7 @@
     "name": "handleDragOver",
     "kind": "function",
     "file": "src/component/widget/events/dragDrop.js",
-    "description": "Highlight a widget as a potential drop target.",
+    "description": "Handles the dragover event on a potential drop target.",
     "params": [
       {
         "name": "e",
@@ -591,7 +739,7 @@
       {
         "name": "widgetWrapper",
         "type": "HTMLElement",
-        "desc": "- The widget element hovered over."
+        "desc": "- The widget being hovered over."
       }
     ],
     "returns": "void"
@@ -600,7 +748,7 @@
     "name": "handleDragStart",
     "kind": "function",
     "file": "src/component/widget/events/dragDrop.js",
-    "description": "Begin dragging a widget by setting up transfer data and overlays.",
+    "description": "Handles the start of a drag operation.",
     "params": [
       {
         "name": "e",
@@ -610,7 +758,7 @@
       {
         "name": "draggedWidgetWrapper",
         "type": "HTMLElement",
-        "desc": "- The widget being dragged."
+        "desc": "- The widget element being dragged."
       }
     ],
     "returns": "void"
@@ -619,7 +767,7 @@
     "name": "handleDrop",
     "kind": "function",
     "file": "src/component/widget/events/dragDrop.js",
-    "description": "Drop handler to rearrange widgets or reposition them on the grid.",
+    "description": "Handles the drop event on a target widget.",
     "params": [
       {
         "name": "e",
@@ -628,8 +776,22 @@
       },
       {
         "name": "targetWidgetWrapper",
-        "type": "?HTMLElement",
-        "desc": "- Widget wrapper receiving the drop or null."
+        "type": "HTMLElement",
+        "desc": "- The widget being dropped on."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "handleEscape",
+    "kind": "function",
+    "file": "src/component/modal/modalFactory.js",
+    "description": "Handles the 'Escape' key press to close the modal.",
+    "params": [
+      {
+        "name": "e",
+        "type": "KeyboardEvent",
+        "desc": "- The keyboard event."
       }
     ],
     "returns": "void"
@@ -671,6 +833,20 @@
     "description": "Remove all widgets from the current view.",
     "params": [],
     "returns": "Promise<void>"
+  },
+  {
+    "name": "handleResize",
+    "kind": "function",
+    "file": "src/component/widget/events/resizeHandler.js",
+    "description": "Handles mouse movement during a resize operation, updating the widget's grid span.",
+    "params": [
+      {
+        "name": "event",
+        "type": "MouseEvent",
+        "desc": "- The mousemove event."
+      }
+    ],
+    "returns": "void"
   },
   {
     "name": "handleResizeStart",
@@ -720,6 +896,34 @@
     "returns": "void"
   },
   {
+    "name": "hideResizeMenu",
+    "kind": "function",
+    "file": "src/component/widget/menu/resizeMenu.js",
+    "description": "Hides the resize menu for a widget.",
+    "params": [
+      {
+        "name": "icon",
+        "type": "HTMLElement",
+        "desc": "- The icon element that triggered the event."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "hideResizeMenuBlock",
+    "kind": "function",
+    "file": "src/component/widget/menu/resizeMenu.js",
+    "description": "Hides the resize menu block for a widget.",
+    "params": [
+      {
+        "name": "widgetWrapper",
+        "type": "HTMLElement",
+        "desc": "- The widget to hide the menu from."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
     "name": "info",
     "kind": "function",
     "file": "src/utils/Logger.js",
@@ -755,13 +959,13 @@
     "file": "src/component/menu/dashboardMenu.js",
     "description": "Set up event handlers for the dashboard menu and populate service options.",
     "params": [],
-    "returns": "Promise<void>"
+    "returns": "void"
   },
   {
     "name": "initializeDragAndDrop",
     "kind": "function",
     "file": "src/component/widget/events/dragDrop.js",
-    "description": "Enable drag-and-drop events on the widget container.",
+    "description": "Initializes the drag and drop functionality. In this model, it's a placeholder as event listeners are attached dynamically during the drag operation.",
     "params": [],
     "returns": "void"
   },
@@ -817,6 +1021,20 @@
     "returns": "void"
   },
   {
+    "name": "isJSON",
+    "kind": "function",
+    "file": "src/component/modal/localStorageModal.js",
+    "description": "Checks if a given string is valid JSON.",
+    "params": [
+      {
+        "name": "value",
+        "type": "string",
+        "desc": "- The string to check."
+      }
+    ],
+    "returns": "boolean"
+  },
+  {
     "name": "listLoggedFiles",
     "kind": "function",
     "file": "src/utils/Logger.js",
@@ -825,12 +1043,20 @@
     "returns": "void"
   },
   {
+    "name": "load",
+    "kind": "function",
+    "file": "src/storage/servicesStore.js",
+    "description": "Loads the array of services from localStorage.",
+    "params": [],
+    "returns": "Array<import('../types.js').Service>"
+  },
+  {
     "name": "loadBoardState",
     "kind": "function",
     "file": "src/storage/localStorage.js",
-    "description": "Retrieve the array of boards from localStorage. The result is also assigned to {@code window.asd.boards} for global access.",
+    "description": "Retrieves the array of boards from localStorage.",
     "params": [],
-    "returns": "Promise<Array<Board>>"
+    "returns": "Promise<Array<import('../types.js').Board>>"
   },
   {
     "name": "loadFromFragment",
@@ -841,30 +1067,19 @@
     "returns": "Promise<void>"
   },
   {
+    "name": "loadFromSources",
+    "kind": "function",
+    "file": "src/utils/getConfig.js",
+    "description": "Loads configuration from various sources in a specific order: URL params, localStorage, then a default file.",
+    "params": [],
+    "returns": "Promise<object|null>"
+  },
+  {
     "name": "loadInitialConfig",
     "kind": "function",
     "file": "src/storage/localStorage.js",
-    "description": "Store the initial board configuration defined in {@code window.asd.config} into localStorage. This is typically called on first run to seed the persistent board data.",
+    "description": "Loads the initial board configuration from the global config object into localStorage. This is typically called on first run to seed the dashboard.",
     "params": [],
-    "returns": "Promise<void>"
-  },
-  {
-    "name": "loadWidgetState",
-    "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Restore widget DOM elements for the specified board and view from localStorage. Widgets are recreated using {@link createWidget} and metadata and settings are re-applied.",
-    "params": [
-      {
-        "name": "boardId",
-        "type": "string",
-        "desc": "- Board identifier."
-      },
-      {
-        "name": "viewId",
-        "type": "string",
-        "desc": "- View identifier whose widgets should be loaded."
-      }
-    ],
     "returns": "Promise<void>"
   },
   {
@@ -885,7 +1100,7 @@
     "name": "Logger",
     "kind": "class",
     "file": "src/utils/Logger.js",
-    "description": "Simple browser console logger with runtime enable/disable support. During Playwright test runs (via `navigator.webdriver`), structured logs are also stored in `window._appLogs` for later harvesting.",
+    "description": "A simple browser console logger with runtime enable/disable support.",
     "params": [],
     "returns": ""
   },
@@ -1035,6 +1250,48 @@
     "returns": "void"
   },
   {
+    "name": "parseBase64",
+    "kind": "function",
+    "file": "src/component/widget/utils/fetchServices.js",
+    "description": "Parses a base64 encoded JSON string.",
+    "params": [
+      {
+        "name": "data",
+        "type": "string",
+        "desc": "- The base64 encoded string."
+      }
+    ],
+    "returns": "object|null"
+  },
+  {
+    "name": "parseBase64",
+    "kind": "function",
+    "file": "src/utils/fetchServices.js",
+    "description": "Parses a base64 encoded JSON string.",
+    "params": [
+      {
+        "name": "data",
+        "type": "string",
+        "desc": "- The base64 encoded string."
+      }
+    ],
+    "returns": "object|null"
+  },
+  {
+    "name": "parseBase64",
+    "kind": "function",
+    "file": "src/utils/getConfig.js",
+    "description": "Parses a base64 encoded JSON string.",
+    "params": [
+      {
+        "name": "data",
+        "type": "string",
+        "desc": "- The base64 encoded string."
+      }
+    ],
+    "returns": "object|null"
+  },
+  {
     "name": "populateServiceDropdown",
     "kind": "function",
     "file": "src/component/menu/dashboardMenu.js",
@@ -1043,15 +1300,23 @@
     "returns": "void"
   },
   {
+    "name": "registerServiceWorker",
+    "kind": "function",
+    "file": "src/component/menu/menu.js",
+    "description": "Registers the service worker script.",
+    "params": [],
+    "returns": "void"
+  },
+  {
     "name": "removeDragOverlay",
     "kind": "function",
     "file": "src/component/widget/events/dragDrop.js",
-    "description": "Remove the overlay from a widget wrapper if present.",
+    "description": "Removes the drag overlay from a widget.",
     "params": [
       {
         "name": "widgetWrapper",
         "type": "HTMLElement",
-        "desc": "- Widget element to clean up."
+        "desc": "- The widget to remove the overlay from."
       }
     ],
     "returns": "void"
@@ -1060,12 +1325,12 @@
     "name": "removeWidget",
     "kind": "function",
     "file": "src/component/widget/widgetManagement.js",
-    "description": "Remove a widget from the DOM and update ordering information. Persist the resulting widget layout using {@link saveWidgetState}.",
+    "description": "Removes a widget from the view and updates the layout.",
     "params": [
       {
         "name": "widgetElement",
         "type": "HTMLElement",
-        "desc": "- Wrapper element to remove."
+        "desc": "- The widget wrapper element to remove."
       }
     ],
     "returns": "void"
@@ -1147,37 +1412,117 @@
     "returns": "Promise<void>"
   },
   {
-    "name": "saveBoardState",
+    "name": "resizeHorizontally",
     "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Persist the entire boards array to localStorage under the key `boards`.",
+    "file": "src/component/widget/menu/resizeMenu.js",
+    "description": "Resizes the widget horizontally by adjusting its grid column span.",
     "params": [
       {
-        "name": "boards",
-        "type": "Array<Board>",
-        "desc": "- Array of board objects to store."
+        "name": "widget",
+        "type": "HTMLElement",
+        "desc": "- The widget element to resize."
+      },
+      {
+        "name": "increase",
+        "type": "boolean",
+        "desc": "- Whether to increase or decrease the size."
       }
     ],
     "returns": "Promise<void>"
   },
   {
+    "name": "resizeVertically",
+    "kind": "function",
+    "file": "src/component/widget/menu/resizeMenu.js",
+    "description": "Resizes the widget vertically by adjusting its grid row span.",
+    "params": [
+      {
+        "name": "widget",
+        "type": "HTMLElement",
+        "desc": "- The widget element to resize."
+      },
+      {
+        "name": "increase",
+        "type": "boolean",
+        "desc": "- Whether to increase or decrease the size."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "save",
+    "kind": "function",
+    "file": "src/storage/servicesStore.js",
+    "description": "Saves the array of services to localStorage.",
+    "params": [
+      {
+        "name": "services",
+        "type": "Array<import('../types.js').Service>",
+        "desc": "- The array of services to save."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "saveBoardState",
+    "kind": "function",
+    "file": "src/storage/localStorage.js",
+    "description": "Persists the entire array of board objects to localStorage.",
+    "params": [
+      {
+        "name": "boards",
+        "type": "Array<import('../types.js').Board>",
+        "desc": "- The array of boards to save."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "saveLocalStorageData",
+    "kind": "function",
+    "file": "src/component/modal/localStorageModal.js",
+    "description": "Saves a data object to localStorage, serializing each value to a JSON string.",
+    "params": [
+      {
+        "name": "updatedData",
+        "type": "Record<string, any>",
+        "desc": "- The data to save."
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "saveWidgetState",
     "kind": "function",
     "file": "src/storage/localStorage.js",
-    "description": "Serialize widgets in the current view and store them under the given board and view identifiers in localStorage. This function now reads the visible widgets directly from the DOM to ensure the saved state matches the UI.",
+    "description": "Serializes the state of all visible widgets and saves it to localStorage.",
     "params": [
       {
         "name": "boardId",
         "type": "string",
-        "desc": "- Board identifier."
+        "desc": "- The ID of the current board."
       },
       {
         "name": "viewId",
         "type": "string",
-        "desc": "- View identifier."
+        "desc": "- The ID of the current view."
       }
     ],
-    "returns": "Promise<void>"
+    "returns": "void"
+  },
+  {
+    "name": "serializeWidgetState",
+    "kind": "function",
+    "file": "src/storage/localStorage.js",
+    "description": "Converts a widget DOM element into a serializable state object.",
+    "params": [
+      {
+        "name": "widget",
+        "type": "HTMLElement",
+        "desc": "- The widget element."
+      }
+    ],
+    "returns": "import('../types.js').Widget"
   },
   {
     "name": "show",
@@ -1218,6 +1563,39 @@
     "returns": "void"
   },
   {
+    "name": "showResizeMenu",
+    "kind": "function",
+    "file": "src/component/widget/menu/resizeMenu.js",
+    "description": "Shows the resize menu with directional arrows for a widget.",
+    "params": [
+      {
+        "name": "icon",
+        "type": "HTMLElement",
+        "desc": "- The icon element that triggered the event."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "showResizeMenuBlock",
+    "kind": "function",
+    "file": "src/component/widget/menu/resizeMenu.js",
+    "description": "Shows a menu block with explicit size options (e.g., \"2 columns, 3 rows\").",
+    "params": [
+      {
+        "name": "icon",
+        "type": "HTMLElement",
+        "desc": "- The icon element that triggered the event."
+      },
+      {
+        "name": "widgetWrapper",
+        "type": "HTMLElement",
+        "desc": "- The widget to show the menu for."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
     "name": "showServiceModal",
     "kind": "function",
     "file": "src/component/modal/serviceLaunchModal.js",
@@ -1234,6 +1612,28 @@
         "desc": "- Widget element to refresh."
       }
     ],
+    "returns": "void"
+  },
+  {
+    "name": "shrink",
+    "kind": "function",
+    "file": "src/component/widget/menu/resizeMenu.js",
+    "description": "Shrinks the widget both horizontally and vertically by one unit.",
+    "params": [
+      {
+        "name": "widget",
+        "type": "HTMLElement",
+        "desc": "- The widget element to shrink."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "stopResize",
+    "kind": "function",
+    "file": "src/component/widget/events/resizeHandler.js",
+    "description": "Handles the end of a resize operation, cleaning up listeners and saving state.",
+    "params": [],
     "returns": "void"
   },
   {
@@ -1289,6 +1689,36 @@
     "returns": "void"
   },
   {
+    "name": "unregisterServiceWorker",
+    "kind": "function",
+    "file": "src/component/menu/menu.js",
+    "description": "Unregisters all active service workers and clears their caches.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "updateBoardSelector",
+    "kind": "function",
+    "file": "src/component/board/boardManagement.js",
+    "description": "Rebuilds the board selector dropdown from the in-memory `boards` array.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "updateServiceWorkerUI",
+    "kind": "function",
+    "file": "src/component/menu/menu.js",
+    "description": "Updates the UI of the service worker toggle icon and attributes.",
+    "params": [
+      {
+        "name": "isEnabled",
+        "type": "boolean",
+        "desc": "- True if the service worker should be shown as enabled."
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "updateViewSelector",
     "kind": "function",
     "file": "src/component/board/boardManagement.js",
@@ -1300,14 +1730,6 @@
         "desc": "- Identifier of the board whose views will be shown."
       }
     ],
-    "returns": "void"
-  },
-  {
-    "name": "updateWidgetOrders",
-    "kind": "function",
-    "file": "src/component/widget/widgetManagement.js",
-    "description": "Recompute and store the ordering of widgets in the container. Saves the updated arrangement via {@link saveWidgetState}.",
-    "params": [],
     "returns": "void"
   },
   {

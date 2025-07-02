@@ -101,6 +101,12 @@ export async function createView (boardId, viewName, viewId = null) {
   }
 }
 
+/**
+ * Hides all widgets currently managed by the widgetStore.
+ * This is used to clear the view without removing elements from the DOM permanently.
+ * @function clearWidgetContainer
+ * @returns {void}
+ */
 function clearWidgetContainer () {
   // Hide all widgets in the store instead of removing from DOM
   for (const id of widgetStore.widgets.keys()) {
@@ -441,6 +447,11 @@ export async function resetView (boardId, viewId) {
   }
 }
 
+/**
+ * Rebuilds the board selector dropdown from the in-memory `boards` array.
+ * @function updateBoardSelector
+ * @returns {void}
+ */
 function updateBoardSelector () {
   const boardSelector = /** @type {HTMLSelectElement} */(document.getElementById('board-selector'))
   boardSelector.innerHTML = ''

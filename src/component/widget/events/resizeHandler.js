@@ -39,6 +39,11 @@ export function initializeResizeHandles () {
   })
 }
 
+/**
+ * Creates a full-screen overlay to capture mouse events during resizing.
+ * @function createResizeOverlay
+ * @returns {HTMLDivElement} The created overlay element.
+ */
 function createResizeOverlay () {
   const overlay = document.createElement('div')
   overlay.className = 'resize-overlay'
@@ -81,6 +86,12 @@ async function handleResizeStart (event, widget) {
   // Create and append an overlay to capture all mouse events
   const overlay = createResizeOverlay()
 
+  /**
+   * Handles mouse movement during a resize operation, updating the widget's grid span.
+   * @function handleResize
+   * @param {MouseEvent} event - The mousemove event.
+   * @returns {void}
+   */
   function handleResize (event) {
     try {
       const newWidth = Math.max(1, Math.round((startWidth + event.clientX - startX) / gridColumnSize))
@@ -100,6 +111,11 @@ async function handleResizeStart (event, widget) {
     }
   }
 
+  /**
+   * Handles the end of a resize operation, cleaning up listeners and saving state.
+   * @function stopResize
+   * @returns {void}
+   */
   function stopResize () {
     try {
       document.removeEventListener('mousemove', handleResize)

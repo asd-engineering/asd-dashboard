@@ -13,6 +13,13 @@ const logger = new Logger('dragDrop.js')
 
 // --- Event Handlers from Your Original Code ---
 
+/**
+ * Handles the start of a drag operation.
+ * @function handleDragStart
+ * @param {DragEvent} e - The dragstart event.
+ * @param {HTMLElement} draggedWidgetWrapper - The widget element being dragged.
+ * @returns {void}
+ */
 function handleDragStart (e, draggedWidgetWrapper) {
   // FIX #1: Use the stable `data-dataid` instead of the changing `data-order`.
   const widgetId = draggedWidgetWrapper.dataset.dataid
@@ -31,6 +38,12 @@ function handleDragStart (e, draggedWidgetWrapper) {
   })
 }
 
+/**
+ * Handles the end of a drag operation, cleaning up UI elements.
+ * @function handleDragEnd
+ * @param {DragEvent} e - The dragend event.
+ * @returns {void}
+ */
 function handleDragEnd (e) {
   // Your proven cleanup logic. This removes all visual artifacts.
   logger.log('Drag End triggered. Cleaning up UI.')
@@ -42,6 +55,14 @@ function handleDragEnd (e) {
 }
 
 // FIX #2: The drop handler MUST be async to await the state saving.
+/**
+ * Handles the drop event on a target widget.
+ * @async
+ * @function handleDrop
+ * @param {DragEvent} e - The drop event.
+ * @param {HTMLElement} targetWidgetWrapper - The widget being dropped on.
+ * @returns {Promise<void>}
+ */
 async function handleDrop (e, targetWidgetWrapper) {
   e.preventDefault()
   e.stopPropagation()
@@ -68,17 +89,37 @@ async function handleDrop (e, targetWidgetWrapper) {
   updateWidgetOrders()
 }
 
+/**
+ * Handles the dragover event on a potential drop target.
+ * @function handleDragOver
+ * @param {DragEvent} e - The dragover event.
+ * @param {HTMLElement} widgetWrapper - The widget being hovered over.
+ * @returns {void}
+ */
 function handleDragOver (e, widgetWrapper) {
   e.preventDefault()
   widgetWrapper.classList.add('drag-over', 'highlight-drop-area')
 }
 
+/**
+ * Handles the dragleave event on a potential drop target.
+ * @function handleDragLeave
+ * @param {DragEvent} e - The dragleave event.
+ * @param {HTMLElement} widgetWrapper - The widget that the cursor is leaving.
+ * @returns {void}
+ */
 function handleDragLeave (e, widgetWrapper) {
   widgetWrapper.classList.remove('drag-over', 'highlight-drop-area')
 }
 
 // --- Helper Functions (Your Original Overlay Logic) ---
 
+/**
+ * Adds a transparent overlay to a widget to act as a drop target.
+ * @function addDragOverlay
+ * @param {HTMLElement} widgetWrapper - The widget to add an overlay to.
+ * @returns {void}
+ */
 function addDragOverlay (widgetWrapper) {
   const dragOverlay = document.createElement('div')
   dragOverlay.classList.add('drag-overlay')
@@ -92,6 +133,12 @@ function addDragOverlay (widgetWrapper) {
   widgetWrapper.appendChild(dragOverlay)
 }
 
+/**
+ * Removes the drag overlay from a widget.
+ * @function removeDragOverlay
+ * @param {HTMLElement} widgetWrapper - The widget to remove the overlay from.
+ * @returns {void}
+ */
 function removeDragOverlay (widgetWrapper) {
   const dragOverlay = widgetWrapper.querySelector('.drag-overlay')
   if (dragOverlay) {
@@ -100,6 +147,12 @@ function removeDragOverlay (widgetWrapper) {
 }
 
 // No container-level listeners are needed with this correct overlay model.
+/**
+ * Initializes the drag and drop functionality. In this model, it's a placeholder
+ * as event listeners are attached dynamically during the drag operation.
+ * @function initializeDragAndDrop
+ * @returns {void}
+ */
 function initializeDragAndDrop () {
   logger.log('Drag and drop handlers are ready to be attached on drag start.')
 }

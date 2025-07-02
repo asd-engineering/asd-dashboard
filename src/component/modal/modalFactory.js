@@ -28,6 +28,12 @@ export function openModal ({ id, buildContent, onCloseCallback, showCloseIcon = 
 
   logger.log(`Opening modal ${id}`)
 
+  /**
+   * Handles the 'Escape' key press to close the modal.
+   * @function handleEscape
+   * @param {KeyboardEvent} e - The keyboard event.
+   * @returns {void}
+   */
   function handleEscape (e) {
     if (e.key === 'Escape') closeModal()
   }
@@ -79,6 +85,11 @@ export function openModal ({ id, buildContent, onCloseCallback, showCloseIcon = 
   backdrop.appendChild(modal)
   document.body.appendChild(backdrop)
 
+  /**
+   * Closes the modal, removes the backdrop and event listeners, and calls the close callback.
+   * @function closeModal
+   * @returns {void}
+   */
   function closeModal () {
     backdrop.remove()
     window.removeEventListener('keydown', handleEscape)
