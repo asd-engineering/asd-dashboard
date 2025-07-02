@@ -174,12 +174,30 @@ async function configureWidget (iframeElement) {
   }
 }
 
-function updateWidgetOrders () {
+/**
+ * Recompute and store the ordering of widgets in the container based on their DOM position.
+ * Saves the updated arrangement via saveWidgetState.
+ * @returns {Promise<void>}
+ */
+async function updateWidgetOrders () {
+  const widgetContainer = document.getElementById('widget-container')
+  const widgetsInDomOrder = Array.from(widgetContainer.children)
+
+  let visibleIndex = 0
+  widgetsInDomOrder.forEach(widget => {
+    const el = /** @type {HTMLElement} */(widget)
+    if (el.style.display !== 'none') {
+      const newOrder = String(visibleIndex)
+      el.setAttribute('data-order', newOrder)
+      el.style.order = newOrder
+      visibleIndex++
+    }
+  })
+
   const boardId = window.asd.currentBoardId
   const viewId = window.asd.currentViewId
   if (boardId && viewId) {
-    logger.log(`Triggering save widget state for board ${boardId} and view ${viewId}`)
-    saveWidgetState(boardId, viewId)
+    await saveWidgetState(boardId, viewId)
   }
 }
 
