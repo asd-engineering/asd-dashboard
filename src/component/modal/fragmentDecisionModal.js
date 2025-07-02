@@ -65,6 +65,12 @@ export function openFragmentDecisionModal (cfgParam, svcParam) {
 
         modal.append(msg1, msg2, btnGroup)
 
+        /**
+         * Applies the configuration from the URL fragment, either by overwriting or merging.
+         * @function applyFragment
+         * @param {boolean} overwrite - If true, existing data will be replaced.
+         * @returns {Promise<void>}
+         */
         async function applyFragment (overwrite) {
           try {
             if (cfgParam) {

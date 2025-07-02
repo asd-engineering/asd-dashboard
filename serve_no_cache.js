@@ -1,4 +1,5 @@
 // serve_no_cache.js
+// @ts-check
 const http = require('http')
 const fs = require('fs')
 const path = require('path')
@@ -14,7 +15,12 @@ function logRequest (req, res, statusCode) {
 }
 
 // Serve static files with no-cache headers
-http.createServer((req, res) => {
+/**
+ * A simple HTTP server that serves files with no-cache headers.
+ * This is essential for development to ensure the latest code changes are always reflected.
+ * @type {http.Server}
+ */
+const server = http.createServer((req, res) => {
   let filePath = path.join(BASEDIR, decodeURIComponent(req.url.split('?')[0]))
   if (filePath.endsWith('/')) filePath += 'index.html'
   fs.stat(filePath, (err, stats) => {
@@ -51,6 +57,8 @@ http.createServer((req, res) => {
       logRequest(req, res, 500)
     })
   })
-}).listen(PORT, () => {
+})
+
+server.listen(PORT, () => {
   console.log(`Serving ${BASEDIR} on http://localhost:${PORT}`)
 })

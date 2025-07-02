@@ -12,6 +12,12 @@ import { showNotification } from '../component/dialog/notification.js'
 const logger = new Logger('fetchServices.js')
 const STORAGE_KEY = 'services'
 
+/**
+ * Parses a base64 encoded JSON string.
+ * @function parseBase64
+ * @param {string} data - The base64 encoded string.
+ * @returns {object|null} The parsed object, or null on error.
+ */
 function parseBase64 (data) {
   try {
     return JSON.parse(atob(data))
@@ -22,6 +28,12 @@ function parseBase64 (data) {
   }
 }
 
+/**
+ * Fetches and parses a JSON file from a URL.
+ * @function fetchJson
+ * @param {string} url - The URL to fetch JSON from.
+ * @returns {Promise<object|null>} The parsed object, or null on error.
+ */
 async function fetchJson (url) {
   try {
     const response = await fetch(url)
