@@ -12,7 +12,7 @@
     "start": "node serve_no_cache.js",
     "build": "mkdir -p dist && cp *.js *.css *.html dist/",
     "deploy": "npm run build",
-    "lint": "npx standard",
+    "lint": "npx standard && npx eslint . --ext .js",
     "lint-fix": "npx standard --fix",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
@@ -24,11 +24,12 @@
   "devDependencies": {
     "@playwright/test": "^1.47.2",
     "@types/node": "^22.7.4",
+    "comment-parser": "^1.4.0",
+    "eslint-plugin-jsdoc": "^51.3.1",
+    "globby": "^13.2.2",
     "husky": "^9.1.6",
     "playwright": "^1.47.2",
     "standard": "*",
-    "comment-parser": "^1.4.0",
-    "globby": "^13.2.2",
     "typescript": "^5.8.3"
   },
   "standard": {
@@ -43,7 +44,8 @@
       "localStorage",
       "location",
       "getComputedStyle",
-      "caches"
+      "caches",
+      "HTMLElement"
     ]
   }
 }

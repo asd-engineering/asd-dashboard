@@ -1,4 +1,5 @@
 // serve_no_cache.js
+// @ts-check
 const http = require('http')
 const fs = require('fs')
 const path = require('path')
@@ -7,14 +8,24 @@ const LOGFILE = 'webserver.log'
 const PORT = 8000
 const BASEDIR = 'src'
 
-// Write log entries to file
+/**
+ * Logs an HTTP request to the logfile with status code and timestamp.
+ * @param {http.IncomingMessage} req - The HTTP request object.
+ * @param {http.ServerResponse} res - The HTTP response object.
+ * @param {number} statusCode - The HTTP status code returned.
+ */
 function logRequest (req, res, statusCode) {
   const logEntry = `[${new Date().toISOString()}] ${req.method} ${req.url} ${statusCode}\n`
   fs.appendFile(LOGFILE, logEntry, err => { if (err) console.error('Log error:', err) })
 }
 
 // Serve static files with no-cache headers
-http.createServer((req, res) => {
+/**
+ * A simple HTTP server that serves files with no-cache headers.
+ * This is essential for development to ensure the latest code changes are always reflected.
+ * @type {http.Server}
+ */
+const server = http.createServer((req, res) => {
   let filePath = path.join(BASEDIR, decodeURIComponent(req.url.split('?')[0]))
   if (filePath.endsWith('/')) filePath += 'index.html'
   fs.stat(filePath, (err, stats) => {
@@ -51,6 +62,8 @@ http.createServer((req, res) => {
       logRequest(req, res, 500)
     })
   })
-}).listen(PORT, () => {
+})
+
+server.listen(PORT, () => {
   console.log(`Serving ${BASEDIR} on http://localhost:${PORT}`)
 })

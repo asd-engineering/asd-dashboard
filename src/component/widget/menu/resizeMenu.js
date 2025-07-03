@@ -7,7 +7,33 @@ import { Logger } from '../../../utils/Logger.js'
 
 const logger = new Logger('resizeMenu.js')
 
-// Function to resize widget horizontally
+/**
+ * @typedef {Object} WidgetDOM
+ * @property {string} url
+ * @property {string} columns
+ * @property {string} rows
+ */
+
+/**
+ * Extracts required widget dataset fields as typed object.
+ * @param {HTMLElement} el
+ * @returns {WidgetDOM}
+ */
+function extractWidgetDataset (el) {
+  return {
+    url: el.dataset.url,
+    columns: el.dataset.columns,
+    rows: el.dataset.rows
+  }
+}
+
+/**
+ * Resizes the widget horizontally by adjusting its grid column span.
+ * @function resizeHorizontally
+ * @param {HTMLElement} widget - The widget element to resize.
+ * @param {boolean} [increase=true] - Whether to increase or decrease the size.
+ * @returns {Promise<void>}
+ */
 async function resizeHorizontally (widget, increase = true) {
   try {
     const config = await getConfig()
@@ -48,7 +74,13 @@ async function resizeHorizontally (widget, increase = true) {
   }
 }
 
-// Function to resize widget vertically
+/**
+ * Resizes the widget vertically by adjusting its grid row span.
+ * @function resizeVertically
+ * @param {HTMLElement} widget - The widget element to resize.
+ * @param {boolean} [increase=true] - Whether to increase or decrease the size.
+ * @returns {Promise<void>}
+ */
 async function resizeVertically (widget, increase = true) {
   try {
     const config = await getConfig()
@@ -89,6 +121,12 @@ async function resizeVertically (widget, increase = true) {
   }
 }
 
+/**
+ * Enlarges the widget both horizontally and vertically by one unit.
+ * @function enlarge
+ * @param {HTMLElement} widget - The widget element to enlarge.
+ * @returns {Promise<void>}
+ */
 async function enlarge (widget) {
   try {
     await resizeHorizontally(widget, true)
@@ -99,6 +137,12 @@ async function enlarge (widget) {
   }
 }
 
+/**
+ * Shrinks the widget both horizontally and vertically by one unit.
+ * @function shrink
+ * @param {HTMLElement} widget - The widget element to shrink.
+ * @returns {Promise<void>}
+ */
 async function shrink (widget) {
   try {
     await resizeHorizontally(widget, false)
@@ -109,11 +153,24 @@ async function shrink (widget) {
   }
 }
 
-// Function to show resize menu
+/**
+ * Shows the resize menu with directional arrows for a widget.
+ * @function showResizeMenu
+ * @param {HTMLElement} icon - The icon element that triggered the event.
+ * @returns {Promise<void>}
+ */
 async function showResizeMenu (icon) {
   try {
     const widget = icon.closest('.widget-wrapper')
+    if (!(widget instanceof HTMLElement)) {
+      logger.error('Widget wrapper not found for resize menu')
+      return
+    }
     let menu = widget.querySelector('.resize-menu')
+    if (menu && !(menu instanceof HTMLElement)) {
+      logger.error('Resize menu element is not an HTMLElement')
+      return
+    }
 
     if (!menu) {
       menu = document.createElement('div')
@@ -143,29 +200,43 @@ async function showResizeMenu (icon) {
       widget.appendChild(menu)
 
       menu.addEventListener('mouseover', () => {
-        logger.log('Mouse over resize menu')
-        menu.style.display = 'block'
+        logger.log('Mouse over resize menu');
+        /** @type {HTMLElement} */ (menu).style.display = 'block'
       })
-      menu.addEventListener('mouseout', (event) => {
+      /** @type {(event: MouseEvent) => void} */
+      const handleMouseOut = (event) => {
         logger.log('Mouse out resize menu')
-        if (!event.relatedTarget || !event.relatedTarget.classList.contains('widget-icon-resize')) {
-          menu.style.display = 'none'
+        const target = event.relatedTarget
+        if (!(target instanceof HTMLElement) || !target.classList.contains('widget-icon-resize')) {
+          /** @type {HTMLElement} */ (menu).style.display = 'none'
         }
-      })
+      }
+      menu.addEventListener('mouseout', handleMouseOut)
     }
-    menu.style.display = 'block'
+    if (menu instanceof HTMLElement) {
+      menu.style.display = 'block'
+    }
     logger.log('Resize menu shown')
   } catch (error) {
     logger.error('Error showing resize menu:', error)
   }
 }
 
-// Function to hide resize menu
+/**
+ * Hides the resize menu for a widget.
+ * @function hideResizeMenu
+ * @param {HTMLElement} icon - The icon element that triggered the event.
+ * @returns {Promise<void>}
+ */
 async function hideResizeMenu (icon) {
   try {
     const widget = icon.closest('.widget-wrapper')
+    if (!(widget instanceof HTMLElement)) {
+      logger.error('Widget wrapper not found for hideResizeMenu')
+      return
+    }
     const menu = widget.querySelector('.resize-menu')
-    if (menu) {
+    if (menu instanceof HTMLElement) {
       menu.style.display = 'none'
       logger.log('Resize menu hidden')
     }
@@ -174,7 +245,13 @@ async function hideResizeMenu (icon) {
   }
 }
 
-// Function to show resize menu block
+/**
+ * Shows a menu block with explicit size options (e.g., "2 columns, 3 rows").
+ * @function showResizeMenuBlock
+ * @param {HTMLElement} icon - The icon element that triggered the event.
+ * @param {HTMLElement} widgetWrapper - The widget to show the menu for.
+ * @returns {Promise<void>}
+ */
 async function showResizeMenuBlock (icon, widgetWrapper) {
   try {
     const widgetUrl = widgetWrapper.dataset.url
@@ -211,7 +288,7 @@ async function showResizeMenuBlock (icon, widgetWrapper) {
       button.addEventListener('click', async () => {
         await adjustWidgetSize(widgetWrapper, option.cols, option.rows)
         menu.remove()
-        await saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
+        saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
       })
       menu.appendChild(button)
     })
@@ -232,7 +309,12 @@ async function showResizeMenuBlock (icon, widgetWrapper) {
   }
 }
 
-// Function to hide resize menu block
+/**
+ * Hides the resize menu block for a widget.
+ * @function hideResizeMenuBlock
+ * @param {HTMLElement} widgetWrapper - The widget to hide the menu from.
+ * @returns {Promise<void>}
+ */
 async function hideResizeMenuBlock (widgetWrapper) {
   logger.log('Removing resize menu block')
   try {
@@ -248,13 +330,20 @@ async function hideResizeMenuBlock (widgetWrapper) {
   }
 }
 
-// Function to adjust widget size
+/**
+ * Adjusts the widget size to a specific column and row span.
+ * @function adjustWidgetSize
+ * @param {HTMLElement} widgetWrapper - The widget to resize.
+ * @param {number} columns - The target number of columns.
+ * @param {number} rows - The target number of rows.
+ * @returns {Promise<void>}
+ */
 async function adjustWidgetSize (widgetWrapper, columns, rows) {
   try {
     const config = await getConfig()
     const services = await fetchServices()
-    const widgetUrl = widgetWrapper.dataset.url
-    const serviceConfig = services.find(service => service.url === widgetUrl)?.config || {}
+    const { url } = extractWidgetDataset(widgetWrapper)
+    const serviceConfig = services.find(service => service.url === url)?.config || {}
 
     const minColumns = serviceConfig.minColumns || config.styling.widget.minColumns
     const maxColumns = serviceConfig.maxColumns || config.styling.widget.maxColumns
@@ -264,8 +353,8 @@ async function adjustWidgetSize (widgetWrapper, columns, rows) {
     columns = Math.min(Math.max(columns, minColumns), maxColumns)
     rows = Math.min(Math.max(rows, minRows), maxRows)
 
-    widgetWrapper.dataset.columns = columns
-    widgetWrapper.dataset.rows = rows
+    widgetWrapper.dataset.columns = String(columns)
+    widgetWrapper.dataset.rows = String(rows)
     widgetWrapper.style.gridColumn = `span ${columns}`
     widgetWrapper.style.gridRow = `span ${rows}`
     logger.log(`Widget resized to ${columns} columns and ${rows} rows`)

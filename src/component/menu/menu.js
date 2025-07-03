@@ -21,6 +21,12 @@ function initSW () {
   const swEnabled = localStorage.getItem('swEnabled') === 'true'
   swToggle.checked = swEnabled
 
+  /**
+   * Updates the UI of the service worker toggle icon and attributes.
+   * @function updateServiceWorkerUI
+   * @param {boolean} isEnabled - True if the service worker should be shown as enabled.
+   * @returns {void}
+   */
   function updateServiceWorkerUI (isEnabled) {
     if (isEnabled) {
       swIcon.textContent = emojiList.serviceWorkerEnabled.unicode // Network On
@@ -36,6 +42,11 @@ function initSW () {
   updateServiceWorkerUI(swEnabled)
 
   if ('serviceWorker' in navigator) {
+    /**
+     * Registers the service worker script.
+     * @function registerServiceWorker
+     * @returns {void}
+     */
     function registerServiceWorker () {
       navigator.serviceWorker.register('/serviceWorker.js', { scope: '/' })
         .then(function (registration) {
@@ -46,6 +57,11 @@ function initSW () {
         })
     }
 
+    /**
+     * Unregisters all active service workers and clears their caches.
+     * @function unregisterServiceWorker
+     * @returns {void}
+     */
     function unregisterServiceWorker () {
       navigator.serviceWorker.getRegistrations()
         .then(function (registrations) {
@@ -249,6 +265,11 @@ function initializeMainMenu () {
   initSW()
 }
 
+/**
+ * Applies visibility settings to control groups based on global configuration.
+ * @function applyControlVisibility
+ * @returns {void}
+ */
 function applyControlVisibility () {
   const settings = window.asd.config?.globalSettings || {}
   const boardControl = document.getElementById('board-control')

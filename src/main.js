@@ -17,89 +17,95 @@ import { initializeBoardDropdown } from './component/board/boardDropdown.js'
 import { initializeViewDropdown } from './component/view/viewDropdown.js'
 import { loadFromFragment } from './utils/fragmentLoader.js'
 import { Logger } from './utils/Logger.js'
+import { widgetStore } from './component/widget/widgetStore.js'
 
 const logger = new Logger('main.js')
 
-// localStorage.setItem('log', 'all')
-
+// Global state container
 window.asd = {
   services: [],
   config: {},
   boards: [],
   currentBoardId: null,
-  currentViewId: null
+  currentViewId: null,
+  widgetStore
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  logger.log('DOMContentLoaded event fired')
+/**
+ * Main application initialization function.
+ * Orchestrates loading configuration, services, and initializing the UI.
+ */
+async function main () {
+  logger.log('Application initialization started')
+
+  // 1. Handle configuration from URL fragment first
   const params = new URLSearchParams(location.search)
   const force = params.get('force') === 'true'
   await loadFromFragment(force)
+
+  // 2. Initialize core UI elements
   initializeMainMenu()
-  fetchServices()
-  try {
-    await getConfig()
-  } catch (e) {
-    logger.error('Failed to load config:', e)
-    openConfigModal()
-  }
-  applyControlVisibility()
   initializeDashboardMenu()
+  initializeBoardDropdown()
+  initializeViewDropdown()
+  initializeDragAndDrop()
 
-  const boards = await loadBoardState()
-  logger.log(`Loaded boards from localStorage: ${JSON.stringify(boards)}`)
-
-  if (boards.length === 0 && window.asd.config.globalSettings.localStorage.loadDashboardFromConfig === 'true') {
-    await loadInitialConfig()
+  // 3. Load services and configuration in parallel
+  try {
+    await Promise.all([
+      fetchServices(),
+      getConfig()
+    ])
+  } catch (e) {
+    logger.error('Failed to load critical configuration or services:', e)
+    // If config fails, getConfig() will open the modal.
+    return // Stop initialization if critical data fails
   }
+
+  // 4. Apply settings that depend on the loaded config
+  applyControlVisibility()
+
+  // 5. Load board state from localStorage or initial config
+  let boards = await loadBoardState()
+  if (boards.length === 0 && window.asd.config.globalSettings?.localStorage?.loadDashboardFromConfig === 'true') {
+    await loadInitialConfig()
+    boards = await loadBoardState() // Re-load boards after initializing from config
+  }
+
+  // 6. Initialize boards and switch to the last used or default board/view
+  const initialBoardView = await initializeBoards() // initializeBoards is now fully async
 
   const lastUsedBoardId = localStorage.getItem('lastUsedBoardId')
   const lastUsedViewId = localStorage.getItem('lastUsedViewId')
 
-  // Check if the last used board ID exists in the loaded boards
   const boardExists = boards.some(board => board.id === lastUsedBoardId)
-  if (!boardExists) {
-    logger.warn(`Board with ID ${lastUsedBoardId} does not exist. Setting currentBoardId and currentViewId to null.`)
-    window.asd.currentBoardId = null
-    window.asd.currentViewId = null
-  } else {
-    window.asd.currentBoardId = lastUsedBoardId
-    window.asd.currentViewId = lastUsedViewId
+
+  let boardIdToLoad = initialBoardView?.boardId
+  let viewIdToLoad = initialBoardView?.viewId
+
+  if (boardExists) {
+    boardIdToLoad = lastUsedBoardId
+    viewIdToLoad = lastUsedViewId
   }
 
-  initializeBoards().then(async initialBoardView => {
-    const boardIdToLoad = window.asd.currentBoardId || initialBoardView.boardId
-    const viewIdToLoad = window.asd.currentViewId || initialBoardView.viewId
-    logger.log(`Set currentBoardId to: ${window.asd.currentBoardId}, currentViewId to: ${window.asd.currentViewId}`)
-    logger.log(`Switching to boardId: ${boardIdToLoad}, viewId: ${viewIdToLoad}`)
+  window.asd.currentBoardId = boardIdToLoad
+  window.asd.currentViewId = viewIdToLoad
+
+  if (boardIdToLoad) {
+    logger.log(`Switching to initial board: ${boardIdToLoad}, view: ${viewIdToLoad}`)
     await switchBoard(boardIdToLoad, viewIdToLoad)
-  }).catch(error => {
-    logger.error('Failed to initialize boards:', error)
-  })
-
-  initializeDragAndDrop()
-
-  // Initialize dropdowns
-  initializeBoardDropdown()
-  initializeViewDropdown()
-
-  // Add event listener for the localStorage edit button
-  document.getElementById('localStorage-edit-button').addEventListener('click', () => {
-    try {
-      openLocalStorageModal()
-    } catch (error) {
-      logger.error('Error opening LocalStorage modal:', error)
-    }
-  })
-
-  const configButton = document.getElementById('open-config-modal')
-  if (configButton) {
-    configButton.addEventListener('click', () => {
-      try {
-        openConfigModal()
-      } catch (error) {
-        logger.error('Error opening config modal:', error)
-      }
-    })
+  } else {
+    logger.warn('No boards available to display.')
   }
-})
+
+  // 7. Initialize modal triggers
+  document.getElementById('localStorage-edit-button').addEventListener('click', openLocalStorageModal)
+  document.getElementById('open-config-modal').addEventListener('click', openConfigModal)
+
+  logger.log('Application initialization finished')
+  // Signal to Playwright that the initial load and render is complete.
+  document.body.setAttribute('data-ready', 'true')
+}
+
+// Start the application when the DOM is ready
+document.addEventListener('DOMContentLoaded', main)

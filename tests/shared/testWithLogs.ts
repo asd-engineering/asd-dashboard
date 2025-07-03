@@ -43,13 +43,19 @@ export const test = base.extend<{
     async ({ page }, use, testInfo) => {
       const net: NetworkLog[] = [];
       page.on('requestfinished', async r => {
-        const res = await r.response();
-        if (res)
-          net.push({
-            url: r.url(),
-            status: res.status(),
-            timing: r.timing()
-          });
+        try {
+          const res = await r.response();
+          if (res)
+            net.push({
+              url: r.url(),
+              status: res.status(),
+              timing: r.timing(),
+            });
+        } catch (e) {
+          // Silently ignore teardown race errors
+          if (!/has been closed|browser has been closed/i.test(e.message))
+            throw e; // rethrow unexpected errors
+        }
       });
       await use(net);
       if (net.length)

@@ -1,14 +1,12 @@
 // @ts-check
 /**
- * Simple browser console logger with runtime enable/disable support.
- * During Playwright test runs (via `navigator.webdriver`), structured logs are
- * also stored in `window._appLogs` for later harvesting.
- *
- * @module Logger
+ * A simple browser console logger with runtime enable/disable support.
  * @class Logger
  */
 export class Logger {
   /**
+   * Creates a new Logger instance for the specified file.
+   *
    * @constructor
    * @param {string} fileName - The filename where the logger is used
    */

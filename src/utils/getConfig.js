@@ -12,6 +12,12 @@ import { openConfigModal, DEFAULT_CONFIG_TEMPLATE } from '../component/modal/con
 const logger = new Logger('getConfig.js')
 const STORAGE_KEY = 'config'
 
+/**
+ * Parses a base64 encoded JSON string.
+ * @function parseBase64
+ * @param {string} data - The base64 encoded string.
+ * @returns {object|null} The parsed object, or null on error.
+ */
 function parseBase64 (data) {
   try {
     return JSON.parse(atob(data))
@@ -23,6 +29,12 @@ function parseBase64 (data) {
   }
 }
 
+/**
+ * Fetches and parses a JSON file from a URL.
+ * @function fetchJson
+ * @param {string} url - The URL to fetch JSON from.
+ * @returns {Promise<object|null>} The parsed object, or null on error.
+ */
 async function fetchJson (url) {
   try {
     const response = await fetch(url)
@@ -48,6 +60,12 @@ async function fetchJson (url) {
   }
 }
 
+/**
+ * Loads configuration from various sources in a specific order: URL params, localStorage, then a default file.
+ * @async
+ * @function loadFromSources
+ * @returns {Promise<object|null>} A promise that resolves to the configuration object or null.
+ */
 async function loadFromSources () {
   const params = new URLSearchParams(window.location.search)
 

@@ -1,6 +1,8 @@
 # Justfile for asd-dashboard
 import "scripts/just/playwright.just"
 import "scripts/just/embed.just"
+import "scripts/just/repo.just"
+import "scripts/just/symbols.just"
 
 # Bootstrap the project
 setup:
@@ -23,10 +25,6 @@ test-grep GREP:
 # Autoformat & fix lint errors
 format:
     npm run lint-fix
-
-# Extract symbol index
-extract-symbols:
-    node scripts/extract-symbol-index.mjs
 
 # Run static type checking
 check:
