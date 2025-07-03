@@ -117,7 +117,7 @@ menu {
 #admin-control label:hover::after {
     content: attr(aria-label);
     position: absolute;
-    top: -1.5rem;
+    top: 2.5rem;
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0, 0, 0, 0.8);
