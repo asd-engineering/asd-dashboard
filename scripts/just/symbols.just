@@ -1,5 +1,10 @@
 alias symbols := symbols-resolve
 
+# Extract symbol index
+symbols-extract:
+    node scripts/extract-symbol-index.mjs
+
+# Resolve symbols by keywords
 symbols-resolve query:
     #!/usr/bin/env node
 
@@ -12,10 +17,23 @@ symbols-resolve query:
     const RED = s => `\x1b[31m${s}\x1b[0m`;
 
     const query = "{{query}}".split(' ').filter(Boolean).join(' ').trim();
-    const symbolsFile = path.resolve(process.cwd(), 'symbols.json');
-    const srcDir = path.resolve(process.cwd(), 'src');
-    const testsDir = path.resolve(process.cwd(), 'tests');
 
+    function findUp(file, startDir) {
+        let dir = startDir;
+        while (dir !== path.dirname(dir)) {
+            const candidate = path.join(dir, file);
+            if (fs.existsSync(candidate)) return candidate;
+            dir = path.dirname(dir);
+        }
+        const candidate = path.join(dir, file);
+        return fs.existsSync(candidate) ? candidate : null;
+    }
+
+    const symbolsFile = findUp('symbols.json', process.cwd());
+    const rootDir = symbolsFile ? path.dirname(symbolsFile) : process.cwd();
+    const srcDir = path.join(rootDir, 'src');
+    const testsDir = path.join(rootDir, 'tests');
+    
     if (!query) {
     console.error(RED('Usage: just symbols-resolve <keywords>'));
     process.exit(1);

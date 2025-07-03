@@ -7,7 +7,7 @@
 1. **Refresh the Symbol Index**  
    Ensures `symbols.json` reflects the latest source of truth, essential for reasoning.  
     ```bash
-    just extract-symbols
+    just symbols-extract
     ```
 
 Then:
@@ -48,8 +48,8 @@ Then:
 
 | Agent                        | Responsibility                                                | Inputs                        | Outputs                                         | Function Calls                                  | Downstream Dependencies                           |
 |-----------------------------|----------------------------------------------------------------|-------------------------------|--------------------------------------------------|--------------------------------------------------|----------------------------------------------------|
-| 🧬 **SymbolIndexMaintainer** | Builds & surfaces a searchable mental map of the codebase     | JS source files               | `symbols.json`                                  | `just extract-symbols`                           | 🛠 DevelopmentAgent<br>✅ ValidationAgent            |
-| 🔍 **SymbolResolver**        | Resolves human tasks to matching code symbols and locations   | `symbols.json`, keywords      | File/function/interface suggestions             | `just symbols-resolve <query>`                   | 🛠 DevelopmentAgent                                  |
+| 🧬 **SymbolIndexMaintainer** | Builds & surfaces a searchable mental map of the codebase     | JS source files               | `symbols.json`                                  | `just symbols-extract`                           | 🛠 DevelopmentAgent<br>✅ ValidationAgent            |
+| 🔍 **SymbolResolver**        | Resolves human tasks to matching code symbols and locations   | `symbols.json`, keywords      | File/function/interface suggestions             | `just symbols <query>`                   | 🛠 DevelopmentAgent                                  |
 | 🛠️ **DevelopmentAgent**     | Implements changes based on the task and symbol map           | Task prompt, `symbols.json`   | Updated source files                            | _manual edits_                                   | 🧼 LinterFormatter<br>🧪 TestAnalyzer                |
 | 🧼 **LinterFormatter**       | Lints, auto-formats, and runs static type checks              | Updated source files          | Clean, typed codebase                           | `just format`, `just check`                      | ✅ ValidationAgent                                  |
 | 🧪 **TestAnalyzer**          | Runs tests and generates indexed structured logs              | Codebase, `.spec.ts`          | `playwright-report-index.json.gz`               | `just test` <br> (includes index-report, list…)  | ✅ ValidationAgent                                  |
@@ -59,10 +59,10 @@ Then:
 
 ### 🆕 SymbolResolver Agent – Integration with the Golden Path
 
-Right after `just extract-symbols`, use:
+Right after `just symbols-extract`, use:
 
 ```bash
-just symbols-resolve "<your task keywords>"
+just symbols "<your task keywords>"
 ```
 
 This command:
@@ -143,7 +143,7 @@ Codex references **only canonical symbols** via `symbols.json`.
 Refresh index:
 
 ```bash
-just extract-symbols
+just symbols-extract
 # alias: node scripts/extract-symbol-index.mjs
 # updates: symbols.json
 ```
@@ -176,7 +176,7 @@ const logger = new Logger('moduleName.js');
 
 | Gotcha                                  | Fix                                                                                  |
 | --------------------------------------- | ------------------------------------------------------------------------------------ |
-| **JSDoc tagging for `extract-symbols`** | Every module needs `/** @module … */`; every exported fn needs `/** @function … */`. |
+| **JSDoc tagging for `symbols-extract`** | Every module needs `/** @module … */`; every exported fn needs `/** @function … */`. |
 | **`just` working dir**                  | All paths in `justfile` are **repo‑root** relative.                                  |
 | **Linter browser globals**              | Declare missing globals (e.g. `HTMLElement`) in `package.json → standard.globals`.   |
 | **TypeScript (`// @ts-check`)**         | Use runtime guards (`instanceof`, `"prop" in obj`) — **never** blind casts.          |

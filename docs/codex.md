@@ -7,15 +7,6 @@
 apt update
 apt install -y lsof vim-common psmisc net-tools iproute2 jq just tree
 
-# Ensure global fallback to root Justfile from any subdirectory
-echo 'export JUSTFILE="$(git rev-parse --show-toplevel 2>/dev/null || pwd)/justfile"' >> /etc/profile.d/just.sh
-echo 'alias just="just --justfile \"$JUSTFILE\""' >> /etc/profile.d/just.sh
-chmod +x /etc/profile.d/just.sh
-
-# Optional: immediately apply for current session (not just future logins)
-export JUSTFILE="$(git rev-parse --show-toplevel 2>/dev/null || pwd)/justfile"
-alias just="just --justfile \"$JUSTFILE\""
-
 # Install Node dependencies
 npm install
 
