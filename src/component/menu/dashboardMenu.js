@@ -36,6 +36,7 @@ function initializeDashboardMenu () {
   logger.log('Dashboard menu initialized')
   populateServiceDropdown()
   document.addEventListener('services-updated', populateServiceDropdown)
+  applyWidgetMenuVisibility()
 
   document.getElementById('add-widget-button').addEventListener('click', () => {
     const serviceSelector = /** @type {HTMLSelectElement} */(document.getElementById('service-selector'))
@@ -67,6 +68,11 @@ function initializeDashboardMenu () {
     const message = toggled
       ? `${emojiList.cross.unicode} Widget menu hidden`
       : `${emojiList.edit.unicode} Widget menu shown`
+
+    if (window.asd && window.asd.config && window.asd.config.globalSettings) {
+      window.asd.config.globalSettings.showMenuWidget = !toggled
+      localStorage.setItem('config', JSON.stringify(window.asd.config))
+    }
 
     showNotification(message, 500)
   })
@@ -122,4 +128,21 @@ function populateServiceDropdown () {
   })
 }
 
-export { initializeDashboardMenu }
+/**
+ * Apply visibility of the widget menu based on configuration.
+ *
+ * @function applyWidgetMenuVisibility
+ * @returns {void}
+ */
+function applyWidgetMenuVisibility () {
+  const widgetContainer = document.getElementById('widget-container')
+  if (!widgetContainer) return
+  const show = window.asd?.config?.globalSettings?.showMenuWidget
+  if (show === false || show === 'false') {
+    widgetContainer.classList.add('hide-widget-menu')
+  } else {
+    widgetContainer.classList.remove('hide-widget-menu')
+  }
+}
+
+export { initializeDashboardMenu, applyWidgetMenuVisibility }

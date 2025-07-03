@@ -52,6 +52,14 @@
  * Dashboard configuration loaded from storage or URL.
  * @typedef {Object} DashboardConfig
  * @property {object} [globalSettings]
+ * @property {string} [globalSettings.theme]
+ * @property {Array<string>} [globalSettings.widgetStoreUrl]
+ * @property {string} [globalSettings.database]
+ * @property {boolean|string} [globalSettings.hideBoardControl]
+ * @property {boolean|string} [globalSettings.hideViewControl]
+ * @property {boolean|string} [globalSettings.hideServiceControl]
+ * @property {boolean|string} [globalSettings.showMenuWidget]
+ * @property {{enabled:string, loadDashboardFromConfig:string, defaultBoard?:string, defaultView?:string}} [globalSettings.localStorage]
  * @property {Array<Board>} [boards]
  * @property {{widget: {minColumns:number, maxColumns:number, minRows:number, maxRows:number}}} [styling]
 */

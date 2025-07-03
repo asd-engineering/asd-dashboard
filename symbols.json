@@ -154,6 +154,14 @@
     "returns": "Promise<void>"
   },
   {
+    "name": "applyWidgetMenuVisibility",
+    "kind": "function",
+    "file": "src/component/menu/dashboardMenu.js",
+    "description": "Apply visibility of the widget menu based on configuration.",
+    "params": [],
+    "returns": "void"
+  },
+  {
     "name": "base64UrlDecode",
     "kind": "function",
     "file": "src/utils/compression.js",
