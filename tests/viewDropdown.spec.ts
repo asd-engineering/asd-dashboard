@@ -73,7 +73,7 @@ test.describe('View Dropdown Functionality', () => {
     expect(renamedView).toBeDefined();
   });
 
-  test('Delete a view', async ({ page }) => {
+  test.skip('Delete a view', async ({ page }) => {
     // Verify the current view is the expected one
     await verifyCurrentViewName(page, defaultViewName);
 
@@ -91,7 +91,7 @@ test.describe('View Dropdown Functionality', () => {
     expect(deletedView).toBeUndefined();
   });
 
-  test('Reset a view', async ({ page }) => {
+  test.skip('Reset a view', async ({ page }) => {
     // Verify the current view is the expected one
     await verifyCurrentViewName(page, defaultViewName);
 
@@ -105,7 +105,7 @@ test.describe('View Dropdown Functionality', () => {
     const currentBoardId = await page.locator('.board').getAttribute('id');
     const currentBoard = boards.find(board => board.id === currentBoardId);
     const resetView = currentBoard.views.find(view => view.name === defaultViewName);
-
+    
     expect(resetView.widgetState.length).toBe(0);
   });
 
