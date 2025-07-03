@@ -21,6 +21,7 @@ export class WidgetStore {
     /** @type {Map<string, HTMLElement>} */
     this.widgets = new Map()
     this.logger = new Logger('widgetStore.js')
+    /** @private */
     this._serviceLocks = new Set()
   }
 
@@ -96,14 +97,48 @@ export class WidgetStore {
   }
 
   /**
+   * Check if a service is currently being added.
+   *
+   * @param {string} serviceName
+   * @function isAdding
+   * @returns {boolean}
+   */
+  isAdding (serviceName) {
+    return this._serviceLocks.has(serviceName)
+  }
+
+  /**
+   * Acquire the lock for a service name.
+   *
+   * @param {string} serviceName
+   * @function lock
+   * @returns {void}
+   */
+  lock (serviceName) {
+    this._serviceLocks.add(serviceName)
+  }
+
+  /**
+   * Release the lock for a service name.
+   *
+   * @param {string} serviceName
+   * @function unlock
+   * @returns {void}
+   */
+  unlock (serviceName) {
+    this._serviceLocks.delete(serviceName)
+  }
+
+  /**
    * Request removal of a widget from the DOM and store.
    *
    * @param {string} id
    * @function requestRemoval
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  requestRemoval (id) {
+  async requestRemoval (id) {
     this._evict(id)
+    await new Promise(resolve => requestAnimationFrame(resolve))
   }
 
   /**
@@ -167,7 +202,7 @@ export class WidgetStore {
       const { openEvictionModal } = await import('../modal/evictionModal.js')
       const result = await openEvictionModal(this.widgets)
       if (!result) return false
-      this.requestRemoval(result.id)
+      await this.requestRemoval(result.id)
       this._ensureLimit()
     }
 

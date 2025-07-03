@@ -201,69 +201,75 @@ async function addWidget (
   viewId = viewId || window.asd.currentViewId
 
   const serviceName = await getServiceFromUrl(url)
-  const services = await fetchServices()
-  const serviceObj = services.find((s) => s.name === serviceName) || {}
+  if (window.asd.widgetStore.isAdding(serviceName)) return
+  window.asd.widgetStore.lock(serviceName)
+  try {
+    const services = await fetchServices()
+    const serviceObj = services.find((s) => s.name === serviceName) || {}
 
-  if (typeof serviceObj.maxInstances === 'number') {
-    if (serviceObj.maxInstances === 0) return
-    const activeCount = Array.from(
-      window.asd.widgetStore.widgets.values()
-    ).filter((el) => el.dataset.service === serviceName).length
-    if (activeCount >= serviceObj.maxInstances) {
-      const existing = window.asd.widgetStore.findFirstWidgetByService(serviceName)
-      if (existing) {
-        const loc = findWidgetLocation(existing.dataset.dataid)
-        if (loc) await switchBoard(loc.boardId, loc.viewId)
+    if (typeof serviceObj.maxInstances === 'number') {
+      if (serviceObj.maxInstances === 0) return
+      const activeCount = Array.from(
+        window.asd.widgetStore.widgets.values()
+      ).filter((el) => el.dataset.service === serviceName).length
+      if (activeCount >= serviceObj.maxInstances) {
+        const existing = window.asd.widgetStore.findFirstWidgetByService(serviceName)
+        if (existing) {
+          const loc = findWidgetLocation(existing.dataset.dataid)
+          if (loc) await switchBoard(loc.boardId, loc.viewId)
+        }
+        return
       }
+    }
+
+    const proceed = await window.asd.widgetStore.confirmCapacity()
+    if (!proceed) return
+
+    if (dataid && window.asd.widgetStore.has(dataid)) {
+      window.asd.widgetStore.show(dataid)
       return
     }
+
+    const widgetWrapper = await createWidget(
+      serviceName,
+      url,
+      columns,
+      rows,
+      dataid
+    )
+
+    const visibleWidgetCount = Array.from(widgetContainer.children).filter(
+      (el) => el instanceof HTMLElement && el.style.display !== 'none'
+    ).length
+    widgetWrapper.setAttribute('data-order', String(visibleWidgetCount))
+    widgetWrapper.style.order = String(visibleWidgetCount)
+
+    widgetContainer.appendChild(widgetWrapper)
+    window.asd.widgetStore.add(widgetWrapper)
+
+    if (serviceObj && serviceObj.type === 'api') {
+      fetchData(url, (data) => {
+        const iframe = widgetWrapper.querySelector('iframe')
+        iframe.contentWindow.postMessage(data, '*')
+      })
+    }
+
+    saveWidgetState(boardId, viewId)
+    initializeResizeHandles()
+  } finally {
+    window.asd.widgetStore.unlock(serviceName)
   }
-
-  const proceed = await window.asd.widgetStore.confirmCapacity()
-  if (!proceed) return
-
-  if (dataid && window.asd.widgetStore.has(dataid)) {
-    window.asd.widgetStore.show(dataid)
-    return
-  }
-
-  const widgetWrapper = await createWidget(
-    serviceName,
-    url,
-    columns,
-    rows,
-    dataid
-  )
-
-  const visibleWidgetCount = Array.from(widgetContainer.children).filter(
-    (el) => el instanceof HTMLElement && el.style.display !== 'none'
-  ).length
-  widgetWrapper.setAttribute('data-order', String(visibleWidgetCount))
-  widgetWrapper.style.order = String(visibleWidgetCount)
-
-  widgetContainer.appendChild(widgetWrapper)
-  window.asd.widgetStore.add(widgetWrapper)
-
-  if (serviceObj && serviceObj.type === 'api') {
-    fetchData(url, (data) => {
-      const iframe = widgetWrapper.querySelector('iframe')
-      iframe.contentWindow.postMessage(data, '*')
-    })
-  }
-
-  saveWidgetState(boardId, viewId)
-  initializeResizeHandles()
 }
 
 /**
  * Removes a widget from the view and updates the layout.
  * @function removeWidget
  * @param {HTMLElement} widgetElement - The widget wrapper element to remove.
- * @returns {void}
- */
-function removeWidget (widgetElement) {
+ * @returns {Promise<void>}
+*/
+async function removeWidget (widgetElement) {
   const dataid = widgetElement.dataset.dataid
-  window.asd.widgetStore.requestRemoval(dataid)
+  await window.asd.widgetStore.requestRemoval(dataid)
   updateWidgetOrders()
 }
 

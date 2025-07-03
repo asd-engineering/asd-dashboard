@@ -63,7 +63,9 @@ test.describe("Widget limits", () => {
     await page.selectOption("#service-selector", { label: "ASD-toolbox" });
     await page.click("#add-widget-button");
 
-    await expect(page.locator(".widget-wrapper")).toHaveCount(1);
+    await page.waitForFunction(() =>
+      document.querySelectorAll('.widget-wrapper').length === 1
+    );
   });
 
   test("evicts selected widget when store is full", async ({ page }) => {
@@ -95,12 +97,13 @@ test.describe("Widget limits", () => {
     await expect(modal).toBeVisible();
     await modal.locator('button:has-text("Remove")').click();
     await expect(modal).toBeHidden();
-    await page.waitForSelector(".widget-wrapper");
-    const ids = await page.$$eval(".widget-wrapper", (els) =>
-      els.map((e) => e.getAttribute("data-dataid")),
+    await page.waitForFunction(() =>
+      document.querySelectorAll('.widget-wrapper').length === 1
     );
-    expect(ids).toHaveLength(1);
-    expect(ids[0]).not.toBe("W1");
+    const ids = await page.$$eval('.widget-wrapper', (els) =>
+      els.map((e) => e.getAttribute('data-dataid')),
+    );
+    expect(ids).not.toContain('W1');
   });
 
   test('simultaneous instance request uses single widget', async ({ page }) => {
@@ -124,7 +127,9 @@ test.describe("Widget limits", () => {
       ]);
     });
 
-    await expect(page.locator('.widget-wrapper')).toHaveCount(1);
+    await page.waitForFunction(() =>
+      document.querySelectorAll('.widget-wrapper').length === 1
+    );
     const selectedBoard = await page.locator('#board-selector').inputValue();
     const boardWithWidget = await page.evaluate(() => {
       const boards = JSON.parse(localStorage.getItem('boards') || '[]');

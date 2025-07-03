@@ -47,7 +47,8 @@
       "location",
       "getComputedStyle",
       "caches",
-      "HTMLElement"
+      "HTMLElement",
+      "requestAnimationFrame"
     ]
   }
 }
