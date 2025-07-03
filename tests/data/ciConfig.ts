@@ -3,6 +3,10 @@ export const ciConfig = {
       "theme": "light",
       "widgetStoreUrl": ["*/services.json"],
       "database": "localStorage",
+      "views": {
+          "showViewOptionsAsButtons": false,
+          "viewToShow": ""
+      },
       "localStorage": {
           "enabled": "true",
           "loadDashboardFromConfig": "true",

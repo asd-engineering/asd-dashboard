@@ -29,7 +29,7 @@ test.describe('Menu control visibility', () => {
     })
 
     await page.goto('/')
-    await page.waitForLoadState('domcontentloaded')
+    await page.waitForSelector('body[data-ready="true"]')
   })
 
   test.afterEach(async ({ page }) => {
@@ -96,29 +96,40 @@ test.describe('View button menu visibility', () => {
     hideBoardControl: true,
     hideViewControl: true,
     hideServiceControl: true,
-    showViewOptionsAsButtons: true,
+    views: {
+      showViewOptionsAsButtons: true,
+      viewToShow: 'view-B'
+    }
   }
+
+  const testBoards = [
+    {
+      id: 'board-btn',
+      name: 'Btn Board',
+      order: 0,
+      views: [
+        { id: 'view-A', name: 'View A', widgetState: [] },
+        { id: 'view-B', name: 'View B', widgetState: [] }
+      ]
+    }
+  ]
 
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(value => {
       // @ts-ignore
       window.asd = window.asd || {}
       // @ts-ignore
-      window.asd.config = { globalSettings: value }
-    }, btnSettings)
+      window.asd.config = { globalSettings: value.settings, boards: value.boards }
+      localStorage.setItem('boards', JSON.stringify(value.boards))
+    }, { settings: btnSettings, boards: testBoards })
 
     await routeServicesConfig(page)
     await page.route('**/config.json', route => {
-      route.fulfill({
-        json: {
-          ...ciConfig,
-          globalSettings: { ...ciConfig.globalSettings, ...btnSettings },
-        },
-      })
+      route.fulfill({ json: { ...ciConfig, boards: testBoards, globalSettings: { ...ciConfig.globalSettings, ...btnSettings } } })
     })
 
     await page.goto('/')
-    await page.waitForLoadState('domcontentloaded')
+    await page.waitForSelector('body[data-ready="true"]')
   })
 
   test.afterEach(async ({ page }) => {
@@ -130,5 +141,10 @@ test.describe('View button menu visibility', () => {
     await expect(page.locator('#view-control')).not.toBeVisible()
     await expect(page.locator('#service-control')).not.toBeVisible()
     await expect(page.locator('#view-button-menu')).toBeVisible()
+  })
+
+  test('activates configured default view button', async ({ page }) => {
+    const active = page.locator('#view-button-menu button.active')
+    await expect(active).toHaveAttribute('data-view-id', 'view-B')
   })
 })

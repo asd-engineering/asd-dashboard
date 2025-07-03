@@ -291,7 +291,7 @@ function applyControlVisibility () {
   }
   const viewButtonMenu = document.getElementById('view-button-menu')
   if (viewButtonMenu) {
-    viewButtonMenu.style.display = settings.showViewOptionsAsButtons === true || settings.showViewOptionsAsButtons === 'true' ? '' : 'none'
+    viewButtonMenu.style.display = settings.views?.showViewOptionsAsButtons === true || settings.views?.showViewOptionsAsButtons === 'true' ? '' : 'none'
   }
 }
 
