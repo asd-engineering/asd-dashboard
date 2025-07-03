@@ -157,13 +157,15 @@ test.describe('WidgetStore UI Tests', () => {
       }
     ]
 
+    const beforeHydration = await page.$$eval('.widget-wrapper', (els) => els.length)
+    console.log('Widget count before hydration:', beforeHydration)
+
     await routeWithLRUConfig(page, widgetState, 2)
     await page.evaluate(() => localStorage.clear())
     await page.reload()
 
-    await page.waitForTimeout(2000) // force delay
-    const count = await page.$$eval('.widget-wrapper', (els) => els.length)
-    console.log('Widget count after hydration:', count)
+    const afterHydration = await page.$$eval('.widget-wrapper', (els) => els.length)
+    console.log('Widget count after hydration:', afterHydration)
 
     await page.waitForFunction(() =>
       document.querySelectorAll('.widget-wrapper').length === 2

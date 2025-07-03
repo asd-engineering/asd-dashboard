@@ -73,7 +73,7 @@ test.describe('View Dropdown Functionality', () => {
     expect(renamedView).toBeDefined();
   });
 
-  test.skip('Delete a view', async ({ page }) => {
+  test('Delete a view', async ({ page }) => {
     // Verify the current view is the expected one
     await verifyCurrentViewName(page, defaultViewName);
 
@@ -81,6 +81,12 @@ test.describe('View Dropdown Functionality', () => {
     await page.on('dialog', dialog => dialog.accept());
     await page.click('#view-dropdown .dropbtn');
     await page.click('#view-control a[data-action="delete"]');
+
+    // Wait for DOM change: one simple way is to wait for widgets to disappear
+    await page.waitForFunction(() => {
+      const container = document.getElementById('widget-container');
+      return container && container.querySelectorAll('.widget-wrapper').length === 0;
+    });
 
     // Verify the view was deleted
     const boards = await getBoardsFromLocalStorage(page);
@@ -91,7 +97,7 @@ test.describe('View Dropdown Functionality', () => {
     expect(deletedView).toBeUndefined();
   });
 
-  test.skip('Reset a view', async ({ page }) => {
+  test('Reset a view', async ({ page }) => {
     // Verify the current view is the expected one
     await verifyCurrentViewName(page, defaultViewName);
 
@@ -99,6 +105,12 @@ test.describe('View Dropdown Functionality', () => {
     await page.on('dialog', dialog => dialog.accept());
     await page.click('#view-dropdown .dropbtn');
     await page.click('#view-control a[data-action="reset"]');
+    
+    // Wait for DOM change: one simple way is to wait for widgets to disappear
+    await page.waitForFunction(() => {
+      const container = document.getElementById('widget-container');
+      return container && container.querySelectorAll('.widget-wrapper').length === 0;
+    });
 
     // Verify the view was reset
     const boards = await getBoardsFromLocalStorage(page);
