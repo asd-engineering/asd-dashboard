@@ -29,12 +29,16 @@ test.describe('Resize Handler Functionality', () => {
     await expect(widget).toHaveAttribute('data-columns', '1');
     await expect(widget).toHaveAttribute('data-rows', '1');
   
+    const waitForSaveMax = page.evaluate(() => new Promise<void>(resolve => {
+      document.addEventListener('widget-state-saved', () => resolve(), { once: true })
+    }))
     // Resize to maximum size allowed by config using page.mouse to drag
     if (browserName === 'firefox') {
       await resizeWidgetInFirefox(page, resizeHandle, 1200, 900);
     } else {
       await resizeWidgetWithMouse(page, resizeHandle, 1200, 900);
     }
+    await waitForSaveMax
 
     // Bug: It can resize beyond maxium with corner based resize; needs fixing
     // await expect(widget).toHaveAttribute('data-columns', `${maxColumns}`);
@@ -44,6 +48,9 @@ test.describe('Resize Handler Functionality', () => {
     await expect(widget).toHaveAttribute('data-columns', `${maxColumns}`);
     await expect(widget).toHaveAttribute('data-rows', `${maxRows}`);
   
+    const waitForSaveMin = page.evaluate(() => new Promise<void>(resolve => {
+      document.addEventListener('widget-state-saved', () => resolve(), { once: true })
+    }))
     // Resize to minimum size using page.mouse
     // Perform the resize action based on the browser (Firefox might need more explicit interaction)
     if (browserName === 'firefox') {
@@ -51,6 +58,7 @@ test.describe('Resize Handler Functionality', () => {
     } else {
       await resizeWidgetWithMouse(page, resizeHandle, -1200, -900);
     }
+    await waitForSaveMin
   
     // Reload and verify persistence of the minimum size
     await page.reload({ waitUntil: 'domcontentloaded' });

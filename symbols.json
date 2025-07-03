@@ -1051,6 +1051,20 @@
     "returns": "void"
   },
   {
+    "name": "isAdding",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Check if a service is currently being added.",
+    "params": [
+      {
+        "name": "serviceName",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "boolean"
+  },
+  {
     "name": "isJSON",
     "kind": "function",
     "file": "src/component/modal/localStorageModal.js",
@@ -1111,6 +1125,20 @@
     "description": "Loads the initial board configuration from the global config object into localStorage. This is typically called on first run to seed the dashboard.",
     "params": [],
     "returns": "Promise<void>"
+  },
+  {
+    "name": "lock",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Acquire the lock for a service name.",
+    "params": [
+      {
+        "name": "serviceName",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
   },
   {
     "name": "log",
@@ -1377,7 +1405,7 @@
         "desc": "- The widget wrapper element to remove."
       }
     ],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "renameBoard",
@@ -1434,7 +1462,7 @@
         "desc": ""
       }
     ],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "resetView",
@@ -1728,6 +1756,20 @@
         "name": "widget",
         "type": "HTMLElement",
         "desc": "- The widget wrapper to modify."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "unlock",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Release the lock for a service name.",
+    "params": [
+      {
+        "name": "serviceName",
+        "type": "string",
+        "desc": ""
       }
     ],
     "returns": "void"
