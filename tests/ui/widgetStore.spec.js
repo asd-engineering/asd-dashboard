@@ -160,7 +160,9 @@ test.describe('WidgetStore UI Tests', () => {
     await routeWithLRUConfig(page, widgetState, 2)
     await page.evaluate(() => localStorage.clear())
     await page.reload()
-    await expect(page.locator('.widget-wrapper')).toHaveCount(1)
+    await page.waitForFunction(() =>
+      document.querySelectorAll('.widget-wrapper').length === 1
+    )
 
     await page.selectOption('#service-selector', { label: 'ASD-terminal' })
     await page.click('#add-widget-button')
@@ -169,12 +171,14 @@ test.describe('WidgetStore UI Tests', () => {
     await expect(modal).toBeVisible()
     await modal.locator('button:has-text("Remove")').click()
     await expect(modal).toBeHidden()
+    await page.waitForFunction(() =>
+      document.querySelectorAll('.widget-wrapper').length === 1
+    )
 
     const ids = await page.$$eval('.widget-wrapper', (els) =>
       els.map((e) => e.getAttribute('data-dataid'))
     )
-    expect(ids).toHaveLength(1)
-    expect(ids[0]).not.toBe('W1')
+    expect(ids).not.toContain('W1')
   })
 
   test('Removes widget via UI and updates widgetStore state', async ({
