@@ -46,9 +46,6 @@ export async function createBoard (boardName, boardId = null, viewId = null) {
   // Save the board state after creating the default view
   await saveBoardState(boards)
 
-  // Update the board selector
-  updateBoardSelector()
-
   // Switch to the new board
   await switchBoard(newBoardId, defaultViewId)
   logger.log(`Switched to new board ${newBoardId}`)
@@ -57,6 +54,9 @@ export async function createBoard (boardName, boardId = null, viewId = null) {
   localStorage.setItem('lastUsedBoardId', newBoardId)
   localStorage.setItem('lastUsedViewId', defaultViewId)
   logger.log(`Saved last used boardId: ${newBoardId} and viewId: ${defaultViewId} to localStorage`)
+
+  // Update the board selector
+  updateBoardSelector()
 
   return newBoard
 }
