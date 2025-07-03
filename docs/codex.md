@@ -314,6 +314,113 @@ This section documents the recommended approach for **extracting all file diffs 
         await waitForActive(btn, 'text-token-text-primary', 5000);
         await waitForDiffContentChange(beforeHtml, 7000);
       }
+      // Always select Diff tab if not already
+      const diffNav = document.querySelector('div.flex.gap-4.text-sm.font-medium.border-b');
+      const diffBtn = Array.from(diffNav.querySelectorAll('span > button')).find(b => b.textContent.trim().toLowerCase() === 'diff');
+      if (!diffBtn) { console.warn(`No 'Diff' tab for ${label}. Skipping.`); continue; }
+      if (!diffBtn.classList.contains('text-token-text-primary')) {
+        const beforeDiffHtml = Array.from(document.querySelectorAll('div[data-diff-header]')).map(x => x.innerHTML).join('');
+        diffBtn.click();
+        await waitForActive(diffBtn, 'text-token-text-primary', 3000);
+        await waitForDiffContentChange(beforeDiffHtml, 7000);
+      }
+      // Scrape instantly
+      const scraped = scrapeGitDiffs();
+      allVersionDiffs[label] = scraped;
+      console.log(`[GitDiffScraper] ${label} scraped (${scraped.diffs.length} file diffs).`);
+    }
+
+    const nonEmpty = Object.values(allVersionDiffs).some(obj =>
+      obj && typeof obj === 'object' && Array.isArray(obj.diffs) && obj.diffs.length > 0
+    );
+    if (nonEmpty) {
+      downloadJSON(allVersionDiffs, 'git-diff-multiversion.json');
+      console.log('[GitDiffScraper] All versions processed. Data:', allVersionDiffs);
+    } else {
+      console.warn('[GitDiffScraper] No diffs extracted from any version. No file downloaded.');
+      console.log('Extracted data:', allVersionDiffs);
+    }
+  })();
+})();
+```
+
+All other logic is preserved, just the diff data per file is now a single text blob.
+This reduces +/- 60% of the output without losing contect or code changes.
+
+```javascript
+(function () {
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+  async function waitForActive(el, className, timeout = 4000, interval = 60) {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      if (el.classList.contains(className)) return;
+      await sleep(interval);
+    }
+    throw new Error(`Element "${el.textContent.trim()}" did not activate (${className})`);
+  }
+  async function waitForDiffContentChange(refHtml, timeout = 7000, interval = 60) {
+    const area = 'div[data-diff-header]';
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      let html = Array.from(document.querySelectorAll(area)).map(x => x.innerHTML).join('');
+      if (html && html !== refHtml) return;
+      await sleep(interval);
+    }
+    throw new Error(`Diff content did not update in time`);
+  }
+  function downloadJSON(obj, filename) {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  }
+
+  function scrapeGitDiffsTextOnly() {
+    const activeBtn = document.querySelector('div.flex > span > button.text-token-text-primary');
+    const result = {
+      timestamp: new Date().toISOString(),
+      sourceUrl: window.location.href,
+      version: activeBtn ? activeBtn.textContent.trim() : null,
+      diffs: [],
+    };
+    document.querySelectorAll('div[data-diff-header]').forEach(container => {
+      // Compose a single string representing the visible diff table for this file
+      const diffText = Array.from(
+        container.querySelectorAll('.diff-table-body tr.diff-line')
+      ).map(row => row.innerText || '').join('\n');
+      result.diffs.push({
+        filePath: container.dataset.diffHeader,
+        additions: container.querySelector('.text-green-500')?.textContent.trim() || null,
+        deletions: container.querySelector('.text-red-500')?.textContent.trim() || null,
+        diffText: diffText,
+      });
+    });
+    return result;
+  }
+
+  (async function () {
+    const versionBtns = Array.from(document.querySelectorAll('div.flex > span > button'))
+      .filter(btn => /^Version \d+$/.test(btn.textContent.trim()));
+    if (!versionBtns.length) throw new Error('No version buttons found.');
+    const allVersionDiffs = {
+      _meta: {
+        extractedAt: new Date().toISOString(),
+        sourceUrl: window.location.href,
+        versionCount: versionBtns.length
+      }
+    };
+
+    for (const btn of versionBtns) {
+      const label = btn.textContent.trim();
+      const wasActive = btn.classList.contains('text-token-text-primary');
+      if (!wasActive) {
+        const beforeHtml = Array.from(document.querySelectorAll('div[data-diff-header]')).map(x => x.innerHTML).join('');
+        btn.click();
+        await waitForActive(btn, 'text-token-text-primary', 5000);
+        await waitForDiffContentChange(beforeHtml, 7000);
+      }
 
       // Always select Diff tab if not already
       const diffNav = document.querySelector('div.flex.gap-4.text-sm.font-medium.border-b');
@@ -326,8 +433,8 @@ This section documents the recommended approach for **extracting all file diffs 
         await waitForDiffContentChange(beforeDiffHtml, 7000);
       }
 
-      // Scrape instantly
-      const scraped = scrapeGitDiffs();
+      // Scrape as flat text only
+      const scraped = scrapeGitDiffsTextOnly();
       allVersionDiffs[label] = scraped;
       console.log(`[GitDiffScraper] ${label} scraped (${scraped.diffs.length} file diffs).`);
     }
