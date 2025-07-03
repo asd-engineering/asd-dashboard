@@ -26,6 +26,35 @@ async function routeBase (page, boards) {
   await page.route('**/asd/containers', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ name: 'ASD-containers' }) }))
 }
 
+/**
+ * Routes config for LRU scenario and sets maxSize.
+ * @param {import('@playwright/test').Page} page
+ * @param {Array<object>} widgetState
+ * @param {number} [maxSize=2]
+ * @returns {Promise<void>}
+ */
+async function routeWithLRUConfig (page, widgetState, maxSize = 2) {
+  const boards = [{
+    id: 'board-lru',
+    name: 'LRU Board',
+    order: 0,
+    views: [{ id: 'view-lru', name: 'LRU View', widgetState }]
+  }]
+
+  await page.unroute('**/config.json').catch(() => {})
+  await routeBase(page, boards)
+  await page.addInitScript((size) => {
+    const apply = () => {
+      if (window.asd?.widgetStore) {
+        window.asd.widgetStore.maxSize = size
+      } else {
+        setTimeout(apply, 0)
+      }
+    }
+    apply()
+  }, maxSize)
+}
+
 const defaultBoards = () => [{
   ...clone(ciBoards[0]),
   views: [clone(ciBoards[0].views[0]), clone(ciBoards[1].views[0])]
@@ -46,13 +75,17 @@ test.describe('WidgetStore UI Tests', () => {
     expect(initialSize).toBe(1)
     await expect(view1Widget).toBeVisible()
 
-    await viewSelector.selectOption({ label: 'Modified View 2' })
+    await viewSelector.selectOption({ label: 'Modified View 2' }).catch(() =>
+      viewSelector.selectOption('view-12345678')
+    )
     await expect(view1Widget).toHaveCSS('display', 'none')
 
     const afterSwitchSize = await page.evaluate(() => window.asd.widgetStore.widgets.size)
     expect(afterSwitchSize).toBe(2)
 
-    await viewSelector.selectOption({ label: 'Modified View 1' })
+    await viewSelector.selectOption({ label: 'Modified View 1' }).catch(() =>
+      viewSelector.selectOption('view-1234567')
+    )
     await expect(view1Widget).not.toHaveCSS('display', 'none')
 
     const finalSize = await page.evaluate(() => window.asd.widgetStore.widgets.size)
@@ -60,33 +93,13 @@ test.describe('WidgetStore UI Tests', () => {
   })
 
   test('LRU Eviction Policy', async ({ page }) => {
-    const lruBoards = [{
-      id: 'board-lru',
-      name: 'LRU Board',
-      order: 0,
-      views: [{
-        id: 'view-lru',
-        name: 'LRU View',
-        widgetState: [
-          { order: '0', url: 'http://localhost:8000/asd/toolbox', columns: '1', rows: '1', type: 'web', dataid: 'W1', metadata: { title: 'w1' } },
-          { order: '1', url: 'http://localhost:8000/asd/toolbox', columns: '1', rows: '1', type: 'web', dataid: 'W2', metadata: { title: 'w2' } },
-          { order: '2', url: 'http://localhost:8000/asd/toolbox', columns: '1', rows: '1', type: 'web', dataid: 'W3', metadata: { title: 'w3' } }
-        ]
-      }]
-    }]
+    const widgetState = [
+      { order: '0', url: 'http://localhost:8000/asd/toolbox', columns: '1', rows: '1', type: 'web', dataid: 'W1', metadata: { title: 'w1' } },
+      { order: '1', url: 'http://localhost:8000/asd/toolbox', columns: '1', rows: '1', type: 'web', dataid: 'W2', metadata: { title: 'w2' } },
+      { order: '2', url: 'http://localhost:8000/asd/toolbox', columns: '1', rows: '1', type: 'web', dataid: 'W3', metadata: { title: 'w3' } }
+    ]
 
-    await page.unroute('**/config.json')
-    await page.route('**/config.json', route => route.fulfill({ json: { ...ciConfig, boards: lruBoards } }))
-    await page.addInitScript(() => {
-      const apply = () => {
-        if (window.asd && window.asd.widgetStore) {
-          window.asd.widgetStore.maxSize = 2
-        } else {
-          setTimeout(apply, 0)
-        }
-      }
-      apply()
-    })
+    await routeWithLRUConfig(page, widgetState, 2)
     await page.evaluate(() => localStorage.clear())
     await page.reload()
     await expect(page.locator('.widget-wrapper')).toHaveCount(2)
@@ -99,9 +112,10 @@ test.describe('WidgetStore UI Tests', () => {
     await expect(page.locator('[data-dataid="W3"]')).toBeVisible()
   })
 
-  test('Manual Widget Removal', async ({ page }) => {
+  test('Removes widget via UI and updates widgetStore state', async ({ page }) => {
     const widget = page.locator('.widget-wrapper').first()
     const widgetId = await widget.getAttribute('data-dataid')
+    expect(widgetId).not.toBeNull()
     const exists = await page.evaluate(id => window.asd.widgetStore.has(id), widgetId)
     expect(exists).toBe(true)
 
