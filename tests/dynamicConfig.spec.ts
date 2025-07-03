@@ -12,6 +12,14 @@ async function clearStorage(page) {
   await page.evaluate(() => localStorage.clear());
 }
 
+test.beforeEach(async ({ page }) => {
+  // Go to the page
+  await page.goto('/');
+  
+  // Wait for the application's async initialization in main.js to complete.
+  await page.waitForSelector('body[data-ready="true"]', { timeout: 10000 });
+});
+
 // Base64 params
 
 test.describe('Dashboard Config - Base64 via URL Params', () => {
@@ -92,7 +100,6 @@ test.describe('Dashboard Config - Fallback Config Popup', () => {
   });
 
   test('export button copies encoded URL', async ({ page }) => {
-    await page.goto('/');
     await page.evaluate(({ cfg, svc }) => {
       localStorage.setItem('config', JSON.stringify(cfg));
       localStorage.setItem('services', JSON.stringify(svc));

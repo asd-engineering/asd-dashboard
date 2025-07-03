@@ -103,6 +103,8 @@ async function main () {
   document.getElementById('open-config-modal').addEventListener('click', openConfigModal)
 
   logger.log('Application initialization finished')
+  // Signal to Playwright that the initial load and render is complete.
+  document.body.setAttribute('data-ready', 'true')
 }
 
 // Start the application when the DOM is ready
