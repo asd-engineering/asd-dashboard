@@ -183,6 +183,11 @@ function initializeMainMenu () {
   viewControl.appendChild(viewDropdown)
   menu.appendChild(viewControl)
 
+  const viewButtonMenu = document.createElement('div')
+  viewButtonMenu.className = 'control-group'
+  viewButtonMenu.id = 'view-button-menu'
+  menu.appendChild(viewButtonMenu)
+
   // Service control group
   const serviceControl = document.createElement('div')
   serviceControl.className = 'control-group'
@@ -283,6 +288,10 @@ function applyControlVisibility () {
   const serviceControl = document.getElementById('service-control')
   if (serviceControl) {
     serviceControl.style.display = settings.hideServiceControl === true || settings.hideServiceControl === 'true' ? 'none' : ''
+  }
+  const viewButtonMenu = document.getElementById('view-button-menu')
+  if (viewButtonMenu) {
+    viewButtonMenu.style.display = settings.views?.showViewOptionsAsButtons === true || settings.views?.showViewOptionsAsButtons === 'true' ? '' : 'none'
   }
 }
 

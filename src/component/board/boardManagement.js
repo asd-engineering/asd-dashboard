@@ -176,6 +176,11 @@ export function updateViewSelector (boardId) {
 
   viewSelector.innerHTML = '' // Clear existing options
   const board = boards.find(b => b.id === boardId)
+  const viewButtonMenu = document.getElementById('view-button-menu')
+  const settings = window.asd.config?.globalSettings || {}
+  if (viewButtonMenu && settings.views?.showViewOptionsAsButtons) {
+    viewButtonMenu.innerHTML = ''
+  }
 
   if (board) {
     logger.log(`Found board with ID: ${boardId}, adding its views to the selector`)
@@ -185,6 +190,16 @@ export function updateViewSelector (boardId) {
       option.value = view.id
       option.textContent = view.name
       viewSelector.appendChild(option)
+      if (viewButtonMenu && settings.views?.showViewOptionsAsButtons) {
+        const btn = document.createElement('button')
+        btn.textContent = view.name
+        btn.dataset.viewId = view.id
+        if (view.id === window.asd.currentViewId) btn.classList.add('active')
+        btn.addEventListener('click', () => {
+          switchView(boardId, view.id)
+        })
+        viewButtonMenu.appendChild(btn)
+      }
     })
 
     // Select the newly created or switched view
@@ -214,7 +229,9 @@ export async function switchBoard (boardId, viewId = null) {
   const board = boards.find(b => b.id === boardId)
   if (board) {
     document.querySelector('.board').id = boardId
-    const targetViewId = viewId || (board.views.length > 0 ? board.views[0].id : null)
+    const settings = window.asd.config?.globalSettings || {}
+    const preferred = settings.views?.viewToShow
+    const targetViewId = viewId || (preferred && board.views.some(v => v.id === preferred) ? preferred : (board.views.length > 0 ? board.views[0].id : null))
 
     if (targetViewId) {
       await switchView(boardId, targetViewId)
@@ -261,7 +278,13 @@ export function initializeBoards () {
 
     if (boards.length > 0) {
       const firstBoard = boards[0]
-      const firstView = firstBoard.views.length > 0 ? firstBoard.views[0] : { id: '' }
+      let firstView = firstBoard.views.length > 0 ? firstBoard.views[0] : { id: '' }
+      const settings = window.asd.config?.globalSettings || {}
+      const preferred = settings.views?.viewToShow
+      if (preferred) {
+        const candidate = firstBoard.views.find(v => v.id === preferred)
+        if (candidate) firstView = candidate
+      }
       return { boardId: firstBoard.id, viewId: firstView.id }
     }
     return { boardId: '', viewId: '' }

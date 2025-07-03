@@ -6,7 +6,7 @@ import { ciConfig } from './data/ciConfig'
 const settings = {
   hideBoardControl: true,
   hideViewControl: true,
-  hideServiceControl: false
+  hideServiceControl: false,
 }
 
 test.describe('Menu control visibility', () => {
@@ -20,11 +20,16 @@ test.describe('Menu control visibility', () => {
 
     await routeServicesConfig(page)
     await page.route('**/config.json', route => {
-      route.fulfill({ json: { ...ciConfig, globalSettings: { ...ciConfig.globalSettings, ...settings } } })
+      route.fulfill({
+        json: {
+          ...ciConfig,
+          globalSettings: { ...ciConfig.globalSettings, ...settings },
+        },
+      })
     })
 
     await page.goto('/')
-    await page.waitForLoadState('domcontentloaded')
+    await page.waitForSelector('body[data-ready="true"]')
   })
 
   test.afterEach(async ({ page }) => {
@@ -41,12 +46,12 @@ test.describe('Menu control visibility', () => {
     await expect(resetButton).toBeVisible()
     await expect(resetButton).toHaveText(`${emojiList.crossCycle.unicode}`)
   })
-
 })
 
 test.describe('Widget menu visibility', () => {
+  const custom = { ...settings, showMenuWidget: false }
+
   test.beforeEach(async ({ page }) => {
-    const custom = { ...settings, showMenuWidget: false }
     await page.addInitScript(value => {
       // @ts-ignore
       window.asd = window.asd || {}
@@ -56,7 +61,12 @@ test.describe('Widget menu visibility', () => {
 
     await routeServicesConfig(page)
     await page.route('**/config.json', route => {
-      route.fulfill({ json: { ...ciConfig, globalSettings: { ...ciConfig.globalSettings, ...custom } } })
+      route.fulfill({
+        json: {
+          ...ciConfig,
+          globalSettings: { ...ciConfig.globalSettings, ...custom },
+        },
+      })
     })
 
     await page.goto('/')
@@ -78,5 +88,63 @@ test.describe('Widget menu visibility', () => {
       return JSON.parse(localStorage.getItem('config') || '{}').globalSettings.showMenuWidget
     })
     expect(stored).toBe(true)
+  })
+})
+
+test.describe('View button menu visibility', () => {
+  const btnSettings = {
+    hideBoardControl: true,
+    hideViewControl: true,
+    hideServiceControl: true,
+    views: {
+      showViewOptionsAsButtons: true,
+      viewToShow: 'view-B'
+    }
+  }
+
+  const testBoards = [
+    {
+      id: 'board-btn',
+      name: 'Btn Board',
+      order: 0,
+      views: [
+        { id: 'view-A', name: 'View A', widgetState: [] },
+        { id: 'view-B', name: 'View B', widgetState: [] }
+      ]
+    }
+  ]
+
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(value => {
+      // @ts-ignore
+      window.asd = window.asd || {}
+      // @ts-ignore
+      window.asd.config = { globalSettings: value.settings, boards: value.boards }
+      localStorage.setItem('boards', JSON.stringify(value.boards))
+    }, { settings: btnSettings, boards: testBoards })
+
+    await routeServicesConfig(page)
+    await page.route('**/config.json', route => {
+      route.fulfill({ json: { ...ciConfig, boards: testBoards, globalSettings: { ...ciConfig.globalSettings, ...btnSettings } } })
+    })
+
+    await page.goto('/')
+    await page.waitForSelector('body[data-ready="true"]')
+  })
+
+  test.afterEach(async ({ page }) => {
+    await page.evaluate(() => localStorage.clear())
+  })
+
+  test('shows view buttons and hides selectors', async ({ page }) => {
+    await expect(page.locator('#board-control')).not.toBeVisible()
+    await expect(page.locator('#view-control')).not.toBeVisible()
+    await expect(page.locator('#service-control')).not.toBeVisible()
+    await expect(page.locator('#view-button-menu')).toBeVisible()
+  })
+
+  test('activates configured default view button', async ({ page }) => {
+    const active = page.locator('#view-button-menu button.active')
+    await expect(active).toHaveAttribute('data-view-id', 'view-B')
   })
 })

@@ -21,6 +21,10 @@ export const DEFAULT_CONFIG_TEMPLATE = {
     hideViewControl: false,
     hideServiceControl: false,
     showMenuWidget: true,
+    views: {
+      showViewOptionsAsButtons: false,
+      viewToShow: ''
+    },
     localStorage: {
       enabled: 'true',
       loadDashboardFromConfig: 'true'
