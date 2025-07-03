@@ -102,4 +102,34 @@ test.describe("Widget limits", () => {
     expect(ids).toHaveLength(1);
     expect(ids[0]).not.toBe("W1");
   });
+
+  test('simultaneous instance request uses single widget', async ({ page }) => {
+    const boards = [
+      { id: 'b1', name: 'B1', order: 0, views: [{ id: 'v1', name: 'V1', widgetState: [] }] },
+      { id: 'b2', name: 'B2', order: 1, views: [{ id: 'v2', name: 'V2', widgetState: [] }] }
+    ];
+    const services = ciServices.map((s) =>
+      s.name === 'ASD-toolbox' ? { ...s, maxInstances: 1 } : s
+    );
+    await routeLimits(page, boards, services, 5);
+    await page.goto('/');
+    await page.waitForSelector('#service-selector');
+
+    await page.evaluate(async () => {
+      const { addWidget } = await import('/component/widget/widgetManagement.js');
+      const url = 'http://localhost:8000/asd/toolbox';
+      await Promise.all([
+        addWidget(url, 1, 1, 'web', 'b1', 'v1'),
+        addWidget(url, 1, 1, 'web', 'b2', 'v2')
+      ]);
+    });
+
+    await expect(page.locator('.widget-wrapper')).toHaveCount(1);
+    const selectedBoard = await page.locator('#board-selector').inputValue();
+    const boardWithWidget = await page.evaluate(() => {
+      const boards = JSON.parse(localStorage.getItem('boards') || '[]');
+      return boards.find(b => b.views.some(v => v.widgetState && v.widgetState.length > 0))?.id;
+    });
+    expect(selectedBoard).toBe(boardWithWidget);
+  });
 });

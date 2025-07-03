@@ -5,13 +5,14 @@
  * @module evictionModal
  */
 import { openModal } from './modalFactory.js'
+import emojiList from '../../ui/unicodeEmoji.js'
 
 /**
  * Display a modal to choose a widget for removal.
  *
  * @param {Map<string, HTMLElement>} widgets - Current widget map.
  * @function openEvictionModal
- * @returns {Promise<string|null>} Resolves with selected widget id or null if cancelled.
+ * @returns {Promise<{id:string, title:string}|null>} Resolves with selected widget info or null.
  */
 export function openEvictionModal (widgets) {
   return new Promise((resolve) => {
@@ -26,12 +27,16 @@ export function openEvictionModal (widgets) {
         const select = document.createElement('select')
         select.id = 'eviction-select'
         for (const [id, el] of widgets.entries()) {
-          let label = id
+          let title = id
           if (el.dataset.metadata) {
             try {
-              label = JSON.parse(el.dataset.metadata).title || id
+              title = JSON.parse(el.dataset.metadata).title || id
             } catch {}
           }
+          const service = el.dataset.service || ''
+          const key = service.toLowerCase().split('asd-')[1] || service.toLowerCase()
+          const emoji = emojiList[key]?.unicode || '🧱'
+          const label = `${emoji} ${service} – ${title}`
           const opt = document.createElement('option')
           opt.value = id
           opt.textContent = label
@@ -43,7 +48,7 @@ export function openEvictionModal (widgets) {
         removeBtn.classList.add('modal__btn', 'modal__btn--save')
         removeBtn.addEventListener('click', () => {
           closeModal()
-          resolve(select.value)
+          resolve({ id: select.value, title: select.selectedOptions[0].textContent || '' })
         })
 
         const cancelBtn = document.createElement('button')

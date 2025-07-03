@@ -22,7 +22,6 @@ import { toggleFullScreen } from './events/fullscreenToggle.js'
 import { initializeResizeHandles } from './events/resizeHandler.js'
 import { Logger } from '../../utils/Logger.js'
 import { showServiceModal } from '../modal/serviceLaunchModal.js'
-import { openEvictionModal } from '../modal/evictionModal.js'
 import { switchBoard } from '../board/boardManagement.js'
 import { widgetGetUUID } from '../../utils/id.js'
 
@@ -211,9 +210,7 @@ async function addWidget (
       window.asd.widgetStore.widgets.values()
     ).filter((el) => el.dataset.service === serviceName).length
     if (activeCount >= serviceObj.maxInstances) {
-      const existing = Array.from(window.asd.widgetStore.widgets.values()).find(
-        (el) => el.dataset.service === serviceName
-      )
+      const existing = window.asd.widgetStore.findFirstWidgetByService(serviceName)
       if (existing) {
         const loc = findWidgetLocation(existing.dataset.dataid)
         if (loc) await switchBoard(loc.boardId, loc.viewId)
@@ -222,11 +219,8 @@ async function addWidget (
     }
   }
 
-  if (window.asd.widgetStore.widgets.size >= window.asd.widgetStore.maxSize) {
-    const idToRemove = await openEvictionModal(window.asd.widgetStore.widgets)
-    if (!idToRemove) return
-    window.asd.widgetStore.requestRemoval(idToRemove)
-  }
+  const proceed = await window.asd.widgetStore.confirmCapacity()
+  if (!proceed) return
 
   if (dataid && window.asd.widgetStore.has(dataid)) {
     window.asd.widgetStore.show(dataid)

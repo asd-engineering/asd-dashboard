@@ -21,6 +21,7 @@ export class WidgetStore {
     /** @type {Map<string, HTMLElement>} */
     this.widgets = new Map()
     this.logger = new Logger('widgetStore.js')
+    this._serviceLocks = new Set()
   }
 
   /**
@@ -136,6 +137,41 @@ export class WidgetStore {
       const oldestId = this.widgets.keys().next().value
       this._evict(oldestId)
     }
+  }
+
+  /**
+   * Find the first widget instance for a given service name.
+   *
+   * @param {string} serviceName
+   * @function findFirstWidgetByService
+   * @returns {HTMLElement|undefined}
+   */
+  findFirstWidgetByService (serviceName) {
+    for (const el of this.widgets.values()) {
+      if (el.dataset.service === serviceName) return el
+    }
+    return undefined
+  }
+
+  /**
+   * Ensure capacity before adding a widget. Prompts for eviction when full.
+   *
+   * @function confirmCapacity
+   * @returns {Promise<boolean>} Resolves true when space is available.
+   */
+  async confirmCapacity () {
+    const maxTotal = window.asd.config?.globalSettings?.maxTotalInstances
+    const overTotal = typeof maxTotal === 'number' && this.widgets.size >= maxTotal
+
+    if (this.widgets.size >= this.maxSize || overTotal) {
+      const { openEvictionModal } = await import('../modal/evictionModal.js')
+      const result = await openEvictionModal(this.widgets)
+      if (!result) return false
+      this.requestRemoval(result.id)
+      this._ensureLimit()
+    }
+
+    return true
   }
 }
 
