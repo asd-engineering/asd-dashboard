@@ -6,7 +6,7 @@ import { ciConfig } from './data/ciConfig'
 const settings = {
   hideBoardControl: true,
   hideViewControl: true,
-  hideServiceControl: false
+  hideServiceControl: false,
 }
 
 test.describe('Menu control visibility', () => {
@@ -20,7 +20,12 @@ test.describe('Menu control visibility', () => {
 
     await routeServicesConfig(page)
     await page.route('**/config.json', route => {
-      route.fulfill({ json: { ...ciConfig, globalSettings: { ...ciConfig.globalSettings, ...settings } } })
+      route.fulfill({
+        json: {
+          ...ciConfig,
+          globalSettings: { ...ciConfig.globalSettings, ...settings },
+        },
+      })
     })
 
     await page.goto('/')
@@ -41,12 +46,12 @@ test.describe('Menu control visibility', () => {
     await expect(resetButton).toBeVisible()
     await expect(resetButton).toHaveText(`${emojiList.crossCycle.unicode}`)
   })
-
 })
 
 test.describe('Widget menu visibility', () => {
+  const custom = { ...settings, showMenuWidget: false }
+
   test.beforeEach(async ({ page }) => {
-    const custom = { ...settings, showMenuWidget: false }
     await page.addInitScript(value => {
       // @ts-ignore
       window.asd = window.asd || {}
@@ -56,7 +61,12 @@ test.describe('Widget menu visibility', () => {
 
     await routeServicesConfig(page)
     await page.route('**/config.json', route => {
-      route.fulfill({ json: { ...ciConfig, globalSettings: { ...ciConfig.globalSettings, ...custom } } })
+      route.fulfill({
+        json: {
+          ...ciConfig,
+          globalSettings: { ...ciConfig.globalSettings, ...custom },
+        },
+      })
     })
 
     await page.goto('/')
@@ -78,5 +88,47 @@ test.describe('Widget menu visibility', () => {
       return JSON.parse(localStorage.getItem('config') || '{}').globalSettings.showMenuWidget
     })
     expect(stored).toBe(true)
+  })
+})
+
+test.describe('View button menu visibility', () => {
+  const btnSettings = {
+    hideBoardControl: true,
+    hideViewControl: true,
+    hideServiceControl: true,
+    showViewOptionsAsButtons: true,
+  }
+
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(value => {
+      // @ts-ignore
+      window.asd = window.asd || {}
+      // @ts-ignore
+      window.asd.config = { globalSettings: value }
+    }, btnSettings)
+
+    await routeServicesConfig(page)
+    await page.route('**/config.json', route => {
+      route.fulfill({
+        json: {
+          ...ciConfig,
+          globalSettings: { ...ciConfig.globalSettings, ...btnSettings },
+        },
+      })
+    })
+
+    await page.goto('/')
+    await page.waitForLoadState('domcontentloaded')
+  })
+
+  test.afterEach(async ({ page }) => {
+    await page.evaluate(() => localStorage.clear())
+  })
+
+  test('shows view buttons and hides selectors', async ({ page }) => {
+    await expect(page.locator('#board-control')).not.toBeVisible()
+    await expect(page.locator('#view-control')).not.toBeVisible()
+    await expect(page.locator('#service-control')).not.toBeVisible()
+    await expect(page.locator('#view-button-menu')).toBeVisible()
   })
 })

@@ -176,6 +176,11 @@ export function updateViewSelector (boardId) {
 
   viewSelector.innerHTML = '' // Clear existing options
   const board = boards.find(b => b.id === boardId)
+  const viewButtonMenu = document.getElementById('view-button-menu')
+  const settings = window.asd.config?.globalSettings || {}
+  if (viewButtonMenu && settings.showViewOptionsAsButtons) {
+    viewButtonMenu.innerHTML = ''
+  }
 
   if (board) {
     logger.log(`Found board with ID: ${boardId}, adding its views to the selector`)
@@ -185,6 +190,15 @@ export function updateViewSelector (boardId) {
       option.value = view.id
       option.textContent = view.name
       viewSelector.appendChild(option)
+      if (viewButtonMenu && settings.showViewOptionsAsButtons) {
+        const btn = document.createElement('button')
+        btn.textContent = view.name
+        btn.dataset.viewId = view.id
+        btn.addEventListener('click', () => {
+          switchView(boardId, view.id)
+        })
+        viewButtonMenu.appendChild(btn)
+      }
     })
 
     // Select the newly created or switched view

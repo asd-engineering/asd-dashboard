@@ -6,6 +6,7 @@
         "hideBoardControl": false,
         "hideViewControl": false,
         "hideServiceControl": false,
+        "showViewOptionsAsButtons": false,
         "localStorage": {
             "enabled": "true",
             "loadDashboardFromConfig": "false",
