@@ -353,6 +353,25 @@
     "returns": "Function"
   },
   {
+    "name": "debounceLeading",
+    "kind": "function",
+    "file": "src/utils/utils.js",
+    "description": "Debounce function that executes immediately and ignores subsequent calls until the wait time has elapsed.",
+    "params": [
+      {
+        "name": "func",
+        "type": "Function",
+        "desc": "- Function to debounce."
+      },
+      {
+        "name": "wait",
+        "type": "number",
+        "desc": "- Delay in milliseconds."
+      }
+    ],
+    "returns": "Function"
+  },
+  {
     "name": "decodeConfig",
     "kind": "function",
     "file": "src/utils/compression.js",

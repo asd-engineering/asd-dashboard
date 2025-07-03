@@ -18,6 +18,7 @@ import { showNotification } from '../dialog/notification.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 import { Logger } from '../../utils/Logger.js'
 import { clearConfigFragment } from '../../utils/fragmentGuard.js'
+import { debounceLeading } from '../../utils/utils.js'
 
 const logger = new Logger('dashboardMenu.js')
 
@@ -37,6 +38,8 @@ function initializeDashboardMenu () {
   populateServiceDropdown()
   document.addEventListener('services-updated', populateServiceDropdown)
   applyWidgetMenuVisibility()
+
+  const buttonDebounce = 200
 
   document.getElementById('add-widget-button').addEventListener('click', () => {
     const serviceSelector = /** @type {HTMLSelectElement} */(document.getElementById('service-selector'))
@@ -61,7 +64,7 @@ function initializeDashboardMenu () {
     }
   })
 
-  document.getElementById('toggle-widget-menu').addEventListener('click', () => {
+  const handleToggleWidgetMenu = debounceLeading(() => {
     const widgetContainer = document.getElementById('widget-container')
     const toggled = widgetContainer.classList.toggle('hide-widget-menu') // true if now hidden
 
@@ -75,9 +78,10 @@ function initializeDashboardMenu () {
     }
 
     showNotification(message, 500)
-  })
+  }, buttonDebounce)
+  document.getElementById('toggle-widget-menu').addEventListener('click', /** @type {EventListener} */(handleToggleWidgetMenu))
 
-  document.getElementById('reset-button').addEventListener('click', () => {
+  const handleReset = debounceLeading(() => {
     // Show confirmation dialog
     const confirmed = confirm('Confirm environment reset: all configurations and services will be permanently deleted.')
 
@@ -86,7 +90,8 @@ function initializeDashboardMenu () {
       clearConfigFragment()
       location.reload()
     }
-  })
+  }, buttonDebounce)
+  document.getElementById('reset-button').addEventListener('click', /** @type {EventListener} */(handleReset))
 
   document.getElementById('board-selector').addEventListener('change', (event) => {
     const target = /** @type {HTMLSelectElement} */(event.target)
