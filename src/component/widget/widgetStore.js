@@ -40,6 +40,8 @@ export class WidgetStore {
       this.widgets.delete(id)
     }
     this.widgets.set(id, element)
+    // Ensure we never exceed the capacity during initial load
+    this._ensureLimit()
   }
 
   /**
