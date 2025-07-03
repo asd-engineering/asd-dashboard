@@ -33,6 +33,28 @@ test.describe('View Dropdown Functionality', () => {
     expect(newView).toBeDefined();
   });
 
+  test('should create a new view and set it as active', async ({ page }) => {
+     // Set the prompt to return the new view name
+    await handleDialog(page, 'prompt', newViewName);
+
+    await page.click('#view-dropdown .dropbtn');
+    await page.click('#view-control a[data-action="create"]');
+
+    // **VERIFICATION**: Verify that the new view is the SELECTED option
+    await verifyCurrentViewName(page, newViewName);
+
+    // Verifieer dat de view correct is opgeslagen in localStorage
+    const boards = await getBoardsFromLocalStorage(page);
+    const currentBoardId = await page.locator('.board').getAttribute('id');
+    const currentBoard = boards.find(board => board.id === currentBoardId);
+    const newView = currentBoard.views.find(view => view.name === newViewName);
+    expect(newView).toBeDefined();
+
+    // Verify that 'lastUsedViewId' matches the new view
+    const lastUsedViewId = await page.evaluate(() => localStorage.getItem('lastUsedViewId'));
+    expect(lastUsedViewId).toBe(newView.id);
+  });
+
   test('Rename a view', async ({ page }) => {
     // Verify the current view is the expected one
     await verifyCurrentViewName(page, defaultViewName);
