@@ -38,7 +38,6 @@ export class WidgetStore {
       this.widgets.delete(id)
     }
     this.widgets.set(id, element)
-    this._ensureLimit()
   }
 
   /**
