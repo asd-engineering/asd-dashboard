@@ -18,6 +18,7 @@ import { initializeViewDropdown } from './component/view/viewDropdown.js'
 import { loadFromFragment } from './utils/fragmentLoader.js'
 import { Logger } from './utils/Logger.js'
 import { widgetStore } from './component/widget/widgetStore.js'
+import { debounce } from './utils/utils.js'
 
 const logger = new Logger('main.js')
 
@@ -100,8 +101,11 @@ async function main () {
   }
 
   // 7. Initialize modal triggers
-  document.getElementById('localStorage-edit-button').addEventListener('click', openLocalStorageModal)
-  document.getElementById('open-config-modal').addEventListener('click', openConfigModal)
+  const buttonDebounce = 200
+  const handleLocalStorageModal = debounce(openLocalStorageModal, buttonDebounce)
+  const handleConfigModal = debounce(openConfigModal, buttonDebounce)
+  document.getElementById('localStorage-edit-button').addEventListener('click', /** @type {EventListener} */(handleLocalStorageModal))
+  document.getElementById('open-config-modal').addEventListener('click', /** @type {EventListener} */(handleConfigModal))
 
   logger.log('Application initialization finished')
   // Signal to Playwright that the initial load and render is complete.

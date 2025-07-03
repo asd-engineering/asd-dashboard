@@ -6,6 +6,7 @@
  */
 import emojiList from '../../ui/unicodeEmoji.js'
 import { showNotification } from '../dialog/notification.js'
+import { debounce } from '../../utils/utils.js'
 
 /**
  * Initialize service worker controls in the menu.
@@ -20,6 +21,8 @@ function initSW () {
   const swCheckbox = document.querySelector('.icon-checkbox')
   const swEnabled = localStorage.getItem('swEnabled') === 'true'
   swToggle.checked = swEnabled
+
+  const buttonDebounce = 200
 
   /**
    * Updates the UI of the service worker toggle icon and attributes.
@@ -92,7 +95,7 @@ function initSW () {
       unregisterServiceWorker()
     }
 
-    swToggle.addEventListener('change', function () {
+    const handleSwChange = debounce(() => {
       const isEnabled = swToggle.checked
       localStorage.setItem('swEnabled', String(isEnabled))
       updateServiceWorkerUI(isEnabled)
@@ -103,7 +106,8 @@ function initSW () {
       } else {
         unregisterServiceWorker()
       }
-    })
+    }, buttonDebounce)
+    swToggle.addEventListener('change', /** @type {EventListener} */(handleSwChange))
   }
 }
 
