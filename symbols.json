@@ -244,6 +244,14 @@
     "returns": "Promise<void>"
   },
   {
+    "name": "confirmCapacity",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Ensure capacity before adding a widget. Prompts for eviction when full.",
+    "params": [],
+    "returns": "Promise<boolean>"
+  },
+  {
     "name": "createBoard",
     "kind": "function",
     "file": "src/component/board/boardManagement.js",
@@ -539,6 +547,20 @@
     "description": "Fetch the service list and update the service selector on the page.",
     "params": [],
     "returns": "Promise<Array<Service>>"
+  },
+  {
+    "name": "findFirstWidgetByService",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Find the first widget instance for a given service name.",
+    "params": [
+      {
+        "name": "serviceName",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "HTMLElement|undefined"
   },
   {
     "name": "get",
@@ -1176,6 +1198,20 @@
     "description": "Open a modal dialog allowing the user to edit and save configuration JSON.",
     "params": [],
     "returns": "void"
+  },
+  {
+    "name": "openEvictionModal",
+    "kind": "function",
+    "file": "src/component/modal/evictionModal.js",
+    "description": "Display a modal to choose a widget for removal.",
+    "params": [
+      {
+        "name": "widgets",
+        "type": "Map<string, HTMLElement>",
+        "desc": "- Current widget map."
+      }
+    ],
+    "returns": "Promise<{id:string, title:string}|null>"
   },
   {
     "name": "openFragmentDecisionModal",
