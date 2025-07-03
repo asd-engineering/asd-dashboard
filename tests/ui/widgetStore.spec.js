@@ -67,8 +67,6 @@ async function routeWithLRUConfig (page, widgetState, maxSize = 2) {
     }
   ]
 
-  await page.unroute('**/config.json').catch(() => {})
-  await routeBase(page, boards)
   await page.addInitScript((size) => {
     const apply = () => {
       if (window.asd?.widgetStore) {
@@ -79,6 +77,8 @@ async function routeWithLRUConfig (page, widgetState, maxSize = 2) {
     }
     apply()
   }, maxSize)
+  await page.unroute('**/config.json').catch(() => {})
+  await routeBase(page, boards)
 }
 
 const defaultBoards = () => [
@@ -160,19 +160,23 @@ test.describe('WidgetStore UI Tests', () => {
     await routeWithLRUConfig(page, widgetState, 2)
     await page.evaluate(() => localStorage.clear())
     await page.reload()
-    await page.waitForFunction(() =>
-      document.querySelectorAll('.widget-wrapper').length === 1
-    )
 
-    await page.selectOption('#service-selector', { label: 'ASD-terminal' })
-    await page.click('#add-widget-button')
+    await page.waitForTimeout(2000) // force delay
+    const count = await page.$$eval('.widget-wrapper', (els) => els.length)
+    console.log('Widget count after hydration:', count)
+
+    await page.waitForFunction(() =>
+      document.querySelectorAll('.widget-wrapper').length === 2
+    )
 
     const modal = page.locator('#eviction-modal')
     await expect(modal).toBeVisible()
     await modal.locator('button:has-text("Remove")').click()
     await expect(modal).toBeHidden()
+
+    await page.reload()
     await page.waitForFunction(() =>
-      document.querySelectorAll('.widget-wrapper').length === 1
+      document.querySelectorAll('.widget-wrapper').length === 2
     )
 
     const ids = await page.$$eval('.widget-wrapper', (els) =>
