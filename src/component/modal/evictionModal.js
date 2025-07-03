@@ -16,10 +16,16 @@ import emojiList from '../../ui/unicodeEmoji.js'
  */
 export function openEvictionModal (widgets) {
   return new Promise((resolve) => {
+    let settled = false
+    const finalize = (result) => {
+      if (settled) return
+      settled = true
+      resolve(result)
+    }
     openModal({
       id: 'eviction-modal',
       showCloseIcon: false,
-      onCloseCallback: () => resolve(null),
+      onCloseCallback: () => finalize(null),
       buildContent: (modal, closeModal) => {
         const msg = document.createElement('p')
         msg.textContent = 'Select a widget to remove:'
@@ -47,16 +53,16 @@ export function openEvictionModal (widgets) {
         removeBtn.textContent = 'Remove'
         removeBtn.classList.add('modal__btn', 'modal__btn--save')
         removeBtn.addEventListener('click', () => {
+          finalize({ id: select.value, title: select.selectedOptions[0].textContent || '' })
           closeModal()
-          resolve({ id: select.value, title: select.selectedOptions[0].textContent || '' })
         })
 
         const cancelBtn = document.createElement('button')
         cancelBtn.textContent = 'Cancel'
         cancelBtn.classList.add('modal__btn', 'modal__btn--cancel')
         cancelBtn.addEventListener('click', () => {
+          finalize(null)
           closeModal()
-          resolve(null)
         })
 
         const btnGroup = document.createElement('div')
