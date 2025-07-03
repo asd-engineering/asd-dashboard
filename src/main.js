@@ -6,7 +6,7 @@
  */
 import { initializeMainMenu, applyControlVisibility } from './component/menu/menu.js'
 import { initializeBoards, switchBoard } from './component/board/boardManagement.js'
-import { initializeDashboardMenu } from './component/menu/dashboardMenu.js'
+import { initializeDashboardMenu, applyWidgetMenuVisibility } from './component/menu/dashboardMenu.js'
 import { loadInitialConfig, loadBoardState } from './storage/localStorage.js'
 import { initializeDragAndDrop } from './component/widget/events/dragDrop.js'
 import { fetchServices } from './utils/fetchServices.js'
@@ -64,6 +64,7 @@ async function main () {
 
   // 4. Apply settings that depend on the loaded config
   applyControlVisibility()
+  applyWidgetMenuVisibility()
 
   // 5. Load board state from localStorage or initial config
   let boards = await loadBoardState()
