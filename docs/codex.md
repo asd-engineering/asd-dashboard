@@ -1,4 +1,32 @@
-# Tips and Tricks for OpenAI Codex Teams
+# Codex
+
+## OpenAI Codex teams environment
+
+```bash
+# Install core dependencies
+apt update
+apt install -y lsof vim-common psmisc net-tools iproute2 jq just tree
+
+# Ensure global fallback to root Justfile from any subdirectory
+echo 'export JUSTFILE="$(git rev-parse --show-toplevel 2>/dev/null || pwd)/justfile"' >> /etc/profile.d/just.sh
+echo 'alias just="just --justfile \"$JUSTFILE\""' >> /etc/profile.d/just.sh
+chmod +x /etc/profile.d/just.sh
+
+# Optional: immediately apply for current session (not just future logins)
+export JUSTFILE="$(git rev-parse --show-toplevel 2>/dev/null || pwd)/justfile"
+alias just="just --justfile \"$JUSTFILE\""
+
+# Install Node dependencies
+npm install
+
+# Install only Chromium and Firefox (not WebKit)
+npx playwright install chromium firefox
+
+# Install OS-level dependencies needed for browser automation
+npx playwright install-deps
+```
+
+## Tips and Tricks for OpenAI Codex Teams
 
 ## Extracting and Analyzing Codex Reasoning Logs
 

@@ -1,3 +1,5 @@
+alias symbols := symbols-resolve
+
 symbols-resolve query:
     #!/usr/bin/env node
 
