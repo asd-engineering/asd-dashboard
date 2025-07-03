@@ -82,6 +82,7 @@ function saveWidgetState (boardId, viewId) {
     view.widgetState = updatedWidgetState
 
     saveBoardState(boards)
+    document.dispatchEvent(new CustomEvent('widget-state-saved'))
     logger.info(`Saved widget state for view: ${viewId} in board: ${boardId}`)
   } catch (error) {
     logger.error('Error saving widget state:', error)
