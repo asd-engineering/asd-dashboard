@@ -18,7 +18,7 @@ import { showNotification } from '../dialog/notification.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 import { Logger } from '../../utils/Logger.js'
 import { clearConfigFragment } from '../../utils/fragmentGuard.js'
-import { debounce } from '../../utils/utils.js'
+import { debounceLeading } from '../../utils/utils.js'
 
 const logger = new Logger('dashboardMenu.js')
 
@@ -64,7 +64,7 @@ function initializeDashboardMenu () {
     }
   })
 
-  const handleToggleWidgetMenu = debounce(() => {
+  const handleToggleWidgetMenu = debounceLeading(() => {
     const widgetContainer = document.getElementById('widget-container')
     const toggled = widgetContainer.classList.toggle('hide-widget-menu') // true if now hidden
 
@@ -81,7 +81,7 @@ function initializeDashboardMenu () {
   }, buttonDebounce)
   document.getElementById('toggle-widget-menu').addEventListener('click', /** @type {EventListener} */(handleToggleWidgetMenu))
 
-  const handleReset = debounce(() => {
+  const handleReset = debounceLeading(() => {
     // Show confirmation dialog
     const confirmed = confirm('Confirm environment reset: all configurations and services will be permanently deleted.')
 

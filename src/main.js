@@ -18,7 +18,7 @@ import { initializeViewDropdown } from './component/view/viewDropdown.js'
 import { loadFromFragment } from './utils/fragmentLoader.js'
 import { Logger } from './utils/Logger.js'
 import { widgetStore } from './component/widget/widgetStore.js'
-import { debounce } from './utils/utils.js'
+import { debounceLeading } from './utils/utils.js'
 
 const logger = new Logger('main.js')
 
@@ -102,8 +102,8 @@ async function main () {
 
   // 7. Initialize modal triggers
   const buttonDebounce = 200
-  const handleLocalStorageModal = debounce(openLocalStorageModal, buttonDebounce)
-  const handleConfigModal = debounce(openConfigModal, buttonDebounce)
+  const handleLocalStorageModal = debounceLeading(openLocalStorageModal, buttonDebounce)
+  const handleConfigModal = debounceLeading(openConfigModal, buttonDebounce)
   document.getElementById('localStorage-edit-button').addEventListener('click', /** @type {EventListener} */(handleLocalStorageModal))
   document.getElementById('open-config-modal').addEventListener('click', /** @type {EventListener} */(handleConfigModal))
 

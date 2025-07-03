@@ -26,6 +26,23 @@ function debounce (func, wait) {
 }
 
 /**
+ * Debounce function that executes immediately and ignores subsequent calls until the wait time has elapsed.
+ *
+ * @function debounceLeading
+ * @param {Function} func - Function to debounce.
+ * @param {number} wait - Delay in milliseconds.
+ * @returns {Function}
+ */
+function debounceLeading (func, wait) {
+  let timeout
+  return function executedFunction (...args) {
+    if (!timeout) func(...args)
+    clearTimeout(timeout)
+    timeout = setTimeout(() => { timeout = null }, wait)
+  }
+}
+
+/**
  * Generate a UUID using the browser crypto API when available.
  *
  * @function getUUID
@@ -43,4 +60,4 @@ function getUUID () {
   })
 }
 
-export { debounce, getUUID }
+export { debounce, debounceLeading, getUUID }

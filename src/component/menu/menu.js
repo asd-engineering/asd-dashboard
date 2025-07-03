@@ -6,7 +6,7 @@
  */
 import emojiList from '../../ui/unicodeEmoji.js'
 import { showNotification } from '../dialog/notification.js'
-import { debounce } from '../../utils/utils.js'
+import { debounceLeading } from '../../utils/utils.js'
 
 /**
  * Initialize service worker controls in the menu.
@@ -95,7 +95,7 @@ function initSW () {
       unregisterServiceWorker()
     }
 
-    const handleSwChange = debounce(() => {
+    const handleSwChange = debounceLeading(() => {
       const isEnabled = swToggle.checked
       localStorage.setItem('swEnabled', String(isEnabled))
       updateServiceWorkerUI(isEnabled)
