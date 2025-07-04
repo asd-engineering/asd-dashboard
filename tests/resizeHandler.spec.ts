@@ -1,14 +1,10 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures';
 import { routeServicesConfig } from './shared/mocking';
 import { addServicesByName } from './shared/common';
 import { ciServices } from './data/ciServices';
 
 export async function waitForWidgetStateSaved(page: Page): Promise<void> {
-    await page.evaluate(() => {
-    return new Promise<void>((resolve) => {
-      document.addEventListener('widget-state-saved', () => resolve(), { once: true });
-    });
-  });
+  await page.evaluate(() => window.asd.widgetStore.idle())
 }
 
 test.describe('Resize Handler Functionality', () => {

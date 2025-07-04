@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { ciConfig } from "./data/ciConfig";
 import { ciServices } from "./data/ciServices";
 
@@ -96,6 +96,7 @@ test.describe("Widget limits", () => {
     const modal = page.locator("#eviction-modal");
     await expect(modal).toBeVisible();
     await modal.locator('button:has-text("Remove")').click();
+    await page.evaluate(() => window.asd.widgetStore.idle());
     await expect(modal).toBeHidden();
     await page.waitForFunction(() =>
       document.querySelectorAll('.widget-wrapper').length === 1

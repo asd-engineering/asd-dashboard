@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { handleDialog, getBoardsFromLocalStorage } from './shared/common';
 import { routeServicesConfig } from './shared/mocking';
 import { addServices } from './shared/common';

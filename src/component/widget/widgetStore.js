@@ -22,8 +22,11 @@ export class WidgetStore {
     this.widgets = new Map()
     this.logger = new Logger('widgetStore.js')
     /** @private */
-    this._serviceLocks = new Set()
+    this._serviceLocks = new Map() // service → ref-count
   }
+
+  /** Resolve after all pending RAF removals */
+  idle () { return new Promise(resolve => requestAnimationFrame(resolve)) }
 
   /**
    * Store a widget element using its `dataid` attribute as the key.
@@ -117,7 +120,10 @@ export class WidgetStore {
    * @returns {void}
    */
   lock (serviceName) {
-    this._serviceLocks.add(serviceName)
+    this._serviceLocks.set(
+      serviceName,
+      (this._serviceLocks.get(serviceName) ?? 0) + 1
+    )
   }
 
   /**
@@ -128,7 +134,10 @@ export class WidgetStore {
    * @returns {void}
    */
   unlock (serviceName) {
-    this._serviceLocks.delete(serviceName)
+    const n = (this._serviceLocks.get(serviceName) ?? 1) - 1
+    n === 0
+      ? this._serviceLocks.delete(serviceName)
+      : this._serviceLocks.set(serviceName, n)
   }
 
   /**
