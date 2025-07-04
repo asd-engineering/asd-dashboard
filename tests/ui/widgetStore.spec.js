@@ -108,7 +108,7 @@ test.describe('WidgetStore UI Tests', () => {
     await viewSelector
       .selectOption({ label: 'Modified View 2' })
       .catch(() => viewSelector.selectOption('view-12345678'))
-    await expect(view1Widget).toHaveCSS('display', 'none')
+    await expect(view1Widget).toBeHidden()
 
     const afterSwitchSize = await page.evaluate(
       () => window.asd.widgetStore.widgets.size
@@ -118,7 +118,7 @@ test.describe('WidgetStore UI Tests', () => {
     await viewSelector
       .selectOption({ label: 'Modified View 1' })
       .catch(() => viewSelector.selectOption('view-1234567'))
-    await expect(view1Widget).not.toHaveCSS('display', 'none')
+    await expect(view1Widget).not.toBeVisible
 
     const finalSize = await page.evaluate(
       () => window.asd.widgetStore.widgets.size
@@ -172,7 +172,7 @@ test.describe('WidgetStore UI Tests', () => {
     )
 
     const modal = page.locator('#eviction-modal')
-    await expect(modal).toBeVisible()
+    await modal.waitFor({ state: 'visible' })
     await modal.locator('button:has-text("Remove")').click()
     await expect(modal).toBeHidden()
 
