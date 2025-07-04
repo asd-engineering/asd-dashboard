@@ -111,6 +111,7 @@ test.describe('View Dropdown Functionality', () => {
       const container = document.getElementById('widget-container');
       return container && container.querySelectorAll('.widget-wrapper').length === 0;
     });
+    await page.evaluate(() => window.asd.widgetStore.idle())
 
     // Verify the view was reset
     const boards = await getBoardsFromLocalStorage(page);
