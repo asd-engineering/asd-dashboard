@@ -86,15 +86,16 @@ export const fetchServices = async () => {
   const serviceSelector = document.getElementById('service-selector')
   if (serviceSelector) {
     serviceSelector.innerHTML = ''
-    const defaultOption = document.createElement('option')
-    defaultOption.value = ''
-    defaultOption.textContent = 'Select a Service'
-    serviceSelector.appendChild(defaultOption)
+    const newItem = document.createElement('div')
+    newItem.textContent = 'New Service'
+    newItem.className = 'service-option new-service'
+    serviceSelector.appendChild(newItem)
     services.forEach(service => {
-      const option = document.createElement('option')
-      option.value = service.url
-      option.textContent = service.name
-      serviceSelector.appendChild(option)
+      const item = document.createElement('div')
+      item.textContent = service.name
+      item.className = 'service-option'
+      item.dataset.url = service.url
+      serviceSelector.appendChild(item)
     })
   }
 
