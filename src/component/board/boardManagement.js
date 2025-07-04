@@ -46,9 +46,6 @@ export async function createBoard (boardName, boardId = null, viewId = null) {
   // Save the board state after creating the default view
   await saveBoardState(boards)
 
-  // Update the board selector
-  updateBoardSelector()
-
   // Switch to the new board
   await switchBoard(newBoardId, defaultViewId)
   logger.log(`Switched to new board ${newBoardId}`)
@@ -57,6 +54,9 @@ export async function createBoard (boardName, boardId = null, viewId = null) {
   localStorage.setItem('lastUsedBoardId', newBoardId)
   localStorage.setItem('lastUsedViewId', defaultViewId)
   logger.log(`Saved last used boardId: ${newBoardId} and viewId: ${defaultViewId} to localStorage`)
+
+  // Update the board selector
+  updateBoardSelector()
 
   return newBoard
 }
@@ -176,6 +176,11 @@ export function updateViewSelector (boardId) {
 
   viewSelector.innerHTML = '' // Clear existing options
   const board = boards.find(b => b.id === boardId)
+  const viewButtonMenu = document.getElementById('view-button-menu')
+  const settings = window.asd.config?.globalSettings || {}
+  if (viewButtonMenu && settings.views?.showViewOptionsAsButtons) {
+    viewButtonMenu.innerHTML = ''
+  }
 
   if (board) {
     logger.log(`Found board with ID: ${boardId}, adding its views to the selector`)
@@ -185,6 +190,16 @@ export function updateViewSelector (boardId) {
       option.value = view.id
       option.textContent = view.name
       viewSelector.appendChild(option)
+      if (viewButtonMenu && settings.views?.showViewOptionsAsButtons) {
+        const btn = document.createElement('button')
+        btn.textContent = view.name
+        btn.dataset.viewId = view.id
+        if (view.id === window.asd.currentViewId) btn.classList.add('active')
+        btn.addEventListener('click', () => {
+          switchView(boardId, view.id)
+        })
+        viewButtonMenu.appendChild(btn)
+      }
     })
 
     // Select the newly created or switched view
@@ -214,7 +229,9 @@ export async function switchBoard (boardId, viewId = null) {
   const board = boards.find(b => b.id === boardId)
   if (board) {
     document.querySelector('.board').id = boardId
-    const targetViewId = viewId || (board.views.length > 0 ? board.views[0].id : null)
+    const settings = window.asd.config?.globalSettings || {}
+    const preferred = settings.views?.viewToShow
+    const targetViewId = viewId || (preferred && board.views.some(v => v.id === preferred) ? preferred : (board.views.length > 0 ? board.views[0].id : null))
 
     if (targetViewId) {
       await switchView(boardId, targetViewId)
@@ -261,7 +278,13 @@ export function initializeBoards () {
 
     if (boards.length > 0) {
       const firstBoard = boards[0]
-      const firstView = firstBoard.views.length > 0 ? firstBoard.views[0] : { id: '' }
+      let firstView = firstBoard.views.length > 0 ? firstBoard.views[0] : { id: '' }
+      const settings = window.asd.config?.globalSettings || {}
+      const preferred = settings.views?.viewToShow
+      if (preferred) {
+        const candidate = firstBoard.views.find(v => v.id === preferred)
+        if (candidate) firstView = candidate
+      }
       return { boardId: firstBoard.id, viewId: firstView.id }
     }
     return { boardId: '', viewId: '' }
@@ -383,11 +406,11 @@ export async function deleteView (boardId, viewId) {
       const viewToDelete = board.views[viewIndex]
 
       if (viewToDelete.widgetState) {
-        viewToDelete.widgetState.forEach(widget => {
+        for (const widget of viewToDelete.widgetState) {
           if (widget.dataid) {
-            widgetStore.requestRemoval(widget.dataid)
+            await widgetStore.requestRemoval(widget.dataid)
           }
-        })
+        }
       }
 
       board.views.splice(viewIndex, 1)
@@ -430,11 +453,11 @@ export async function resetView (boardId, viewId) {
   if (board) {
     const view = board.views.find(v => v.id === viewId)
     if (view) {
-      view.widgetState.forEach(widget => {
+      for (const widget of view.widgetState) {
         if (widget.dataid) {
-          widgetStore.requestRemoval(widget.dataid)
+          await widgetStore.requestRemoval(widget.dataid)
         }
-      })
+      }
 
       view.widgetState = []
       await saveBoardState(boards)

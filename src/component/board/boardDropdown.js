@@ -4,7 +4,7 @@
  *
  * @module boardDropdown
  */
-import { createBoard, renameBoard, deleteBoard, updateViewSelector, addBoardToUI, boards } from './boardManagement.js'
+import { createBoard, renameBoard, deleteBoard, updateViewSelector, boards } from './boardManagement.js'
 import { initializeDropdown } from '../utils/dropDownUtils.js'
 import { Logger } from '../../utils/Logger.js'
 
@@ -39,7 +39,6 @@ async function handleCreateBoard () {
     try {
       const newBoard = await createBoard(boardName)
       logger.log('Board created:', newBoard)
-      addBoardToUI(newBoard)
     } catch (error) {
       logger.error('Error creating board:', error)
     }

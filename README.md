@@ -18,6 +18,7 @@ ASD Dashboard is architected with a focus on simplicity and adaptability:
 - **Widget Management**: Add, resize, reorder, and remove widgets dynamically. Widgets can be customized with properties such as size, metadata, and settings. Resizing is facilitated via mouse cursor dragging, adhering to grid standards.
 - **Board and View Structure**: Manage multiple boards and views, akin to tabs, allowing users to switch, rename, delete, or reset configurations. State is persistently stored.
 - **Global Configuration**: Centralized configuration through `config.json` for global settings like themes and widget store URLs.
+- **Widget Menu Toggle**: `showMenuWidget` controls whether widget menus are visible by default.
 - **LocalStorage Integration**: Persistent storage of dashboard preferences, with a modal for editing localStorage, enabling import/export and modification of JSON data.
 - **Responsive Grid Layout**: Widgets are arranged in a grid that adapts to screen size, with default configurations and options for customization.
 - **Service Selection**: Widgets can be added from a predefined JSON file, custom URL, or remote services, with support for merging multiple sources.

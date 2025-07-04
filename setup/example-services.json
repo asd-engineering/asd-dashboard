@@ -3,6 +3,7 @@
         "name": "ASD-toolbox",
         "url": "http://localhost:8000/asd/toolbox",
         "type": "api",
+        "maxInstances": 1,
         "config": {
           "minColumns": 1,
           "maxColumns": 4,
@@ -19,6 +20,7 @@
       {
         "name": "ASD-terminal",
         "url": "http://localhost:8000/asd/terminal",
+        "maxInstances": 10,
         "type": "web",
         "config": {
           "minColumns": 2,
@@ -36,6 +38,7 @@
       {
         "name": "ASD-tunnel",
         "url": "http://localhost:8000/asd/tunnel",
+        "maxInstances": 4,
         "type": "web",
         "config": {
           "minColumns": 1,
@@ -48,6 +51,7 @@
         "name": "ASD-containers",
         "url": "http://localhost:8000/asd/containers",
         "type": "web",
+        "maxInstances": 1,
         "config": {
           "minColumns": 2,
           "maxColumns": 4,

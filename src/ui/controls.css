@@ -67,6 +67,23 @@ menu {
     background-color: #45a049;
 }
 
+#view-button-menu button {
+    background: #fff;
+    color: #333;
+    border: 2px solid #31a840;
+    border-radius: 8px;
+    padding: 8px 18px;
+    margin: 2px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+#view-button-menu button.active {
+    background: #31a840;
+    color: #fff;
+}
+
 .dropdown-content a {
     font-size: 0.8rem;
     padding: 6px 10px;
@@ -87,4 +104,27 @@ menu {
     font-size: 1.2rem; /* Adjust the icon size */
     display: inline-block;
     user-select: none;
+}
+
+#admin-control label {
+    position: relative;
+}
+
+#admin-control label:hover {
+    font-size: 1.4rem;
+}
+
+#admin-control label:hover::after {
+    content: attr(aria-label);
+    position: absolute;
+    top: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 10;
 }

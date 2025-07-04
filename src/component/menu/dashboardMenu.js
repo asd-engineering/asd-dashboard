@@ -18,6 +18,7 @@ import { showNotification } from '../dialog/notification.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 import { Logger } from '../../utils/Logger.js'
 import { clearConfigFragment } from '../../utils/fragmentGuard.js'
+import { debounceLeading } from '../../utils/utils.js'
 
 const logger = new Logger('dashboardMenu.js')
 
@@ -36,6 +37,9 @@ function initializeDashboardMenu () {
   logger.log('Dashboard menu initialized')
   populateServiceDropdown()
   document.addEventListener('services-updated', populateServiceDropdown)
+  applyWidgetMenuVisibility()
+
+  const buttonDebounce = 200
 
   document.getElementById('add-widget-button').addEventListener('click', () => {
     const serviceSelector = /** @type {HTMLSelectElement} */(document.getElementById('service-selector'))
@@ -60,7 +64,7 @@ function initializeDashboardMenu () {
     }
   })
 
-  document.getElementById('toggle-widget-menu').addEventListener('click', () => {
+  const handleToggleWidgetMenu = debounceLeading(() => {
     const widgetContainer = document.getElementById('widget-container')
     const toggled = widgetContainer.classList.toggle('hide-widget-menu') // true if now hidden
 
@@ -68,10 +72,16 @@ function initializeDashboardMenu () {
       ? `${emojiList.cross.unicode} Widget menu hidden`
       : `${emojiList.edit.unicode} Widget menu shown`
 
-    showNotification(message, 500)
-  })
+    if (window.asd && window.asd.config && window.asd.config.globalSettings) {
+      window.asd.config.globalSettings.showMenuWidget = !toggled
+      localStorage.setItem('config', JSON.stringify(window.asd.config))
+    }
 
-  document.getElementById('reset-button').addEventListener('click', () => {
+    showNotification(message, 500)
+  }, buttonDebounce)
+  document.getElementById('toggle-widget-menu').addEventListener('click', /** @type {EventListener} */(handleToggleWidgetMenu))
+
+  const handleReset = debounceLeading(() => {
     // Show confirmation dialog
     const confirmed = confirm('Confirm environment reset: all configurations and services will be permanently deleted.')
 
@@ -80,7 +90,8 @@ function initializeDashboardMenu () {
       clearConfigFragment()
       location.reload()
     }
-  })
+  }, buttonDebounce)
+  document.getElementById('reset-button').addEventListener('click', /** @type {EventListener} */(handleReset))
 
   document.getElementById('board-selector').addEventListener('change', (event) => {
     const target = /** @type {HTMLSelectElement} */(event.target)
@@ -122,4 +133,21 @@ function populateServiceDropdown () {
   })
 }
 
-export { initializeDashboardMenu }
+/**
+ * Apply visibility of the widget menu based on configuration.
+ *
+ * @function applyWidgetMenuVisibility
+ * @returns {void}
+ */
+function applyWidgetMenuVisibility () {
+  const widgetContainer = document.getElementById('widget-container')
+  if (!widgetContainer) return
+  const show = window.asd?.config?.globalSettings?.showMenuWidget
+  if (show === false || show === 'false') {
+    widgetContainer.classList.add('hide-widget-menu')
+  } else {
+    widgetContainer.classList.remove('hide-widget-menu')
+  }
+}
+
+export { initializeDashboardMenu, applyWidgetMenuVisibility }

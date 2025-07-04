@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { handleDialog, getBoardsFromLocalStorage } from './shared/common';
 import { routeServicesConfig } from './shared/mocking';
 import { addServices } from './shared/common';
@@ -33,6 +33,28 @@ test.describe('View Dropdown Functionality', () => {
     expect(newView).toBeDefined();
   });
 
+  test('should create a new view and set it as active', async ({ page }) => {
+     // Set the prompt to return the new view name
+    await handleDialog(page, 'prompt', newViewName);
+
+    await page.click('#view-dropdown .dropbtn');
+    await page.click('#view-control a[data-action="create"]');
+
+    // **VERIFICATION**: Verify that the new view is the SELECTED option
+    await verifyCurrentViewName(page, newViewName);
+
+    // Verifieer dat de view correct is opgeslagen in localStorage
+    const boards = await getBoardsFromLocalStorage(page);
+    const currentBoardId = await page.locator('.board').getAttribute('id');
+    const currentBoard = boards.find(board => board.id === currentBoardId);
+    const newView = currentBoard.views.find(view => view.name === newViewName);
+    expect(newView).toBeDefined();
+
+    // Verify that 'lastUsedViewId' matches the new view
+    const lastUsedViewId = await page.evaluate(() => localStorage.getItem('lastUsedViewId'));
+    expect(lastUsedViewId).toBe(newView.id);
+  });
+
   test('Rename a view', async ({ page }) => {
     // Verify the current view is the expected one
     await verifyCurrentViewName(page, defaultViewName);
@@ -60,6 +82,12 @@ test.describe('View Dropdown Functionality', () => {
     await page.click('#view-dropdown .dropbtn');
     await page.click('#view-control a[data-action="delete"]');
 
+    // Wait for DOM change: one simple way is to wait for widgets to disappear
+    await page.waitForFunction(() => {
+      const container = document.getElementById('widget-container');
+      return container && container.querySelectorAll('.widget-wrapper').length === 0;
+    });
+
     // Verify the view was deleted
     const boards = await getBoardsFromLocalStorage(page);
     const currentBoardId = await page.locator('.board').getAttribute('id');
@@ -77,13 +105,20 @@ test.describe('View Dropdown Functionality', () => {
     await page.on('dialog', dialog => dialog.accept());
     await page.click('#view-dropdown .dropbtn');
     await page.click('#view-control a[data-action="reset"]');
+    
+    // Wait for DOM change: one simple way is to wait for widgets to disappear
+    await page.waitForFunction(() => {
+      const container = document.getElementById('widget-container');
+      return container && container.querySelectorAll('.widget-wrapper').length === 0;
+    });
+    await page.evaluate(() => window.asd.widgetStore.idle())
 
     // Verify the view was reset
     const boards = await getBoardsFromLocalStorage(page);
     const currentBoardId = await page.locator('.board').getAttribute('id');
     const currentBoard = boards.find(board => board.id === currentBoardId);
     const resetView = currentBoard.views.find(view => view.name === defaultViewName);
-
+    
     expect(resetView.widgetState.length).toBe(0);
   });
 

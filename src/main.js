@@ -6,7 +6,7 @@
  */
 import { initializeMainMenu, applyControlVisibility } from './component/menu/menu.js'
 import { initializeBoards, switchBoard } from './component/board/boardManagement.js'
-import { initializeDashboardMenu } from './component/menu/dashboardMenu.js'
+import { initializeDashboardMenu, applyWidgetMenuVisibility } from './component/menu/dashboardMenu.js'
 import { loadInitialConfig, loadBoardState } from './storage/localStorage.js'
 import { initializeDragAndDrop } from './component/widget/events/dragDrop.js'
 import { fetchServices } from './utils/fetchServices.js'
@@ -18,6 +18,7 @@ import { initializeViewDropdown } from './component/view/viewDropdown.js'
 import { loadFromFragment } from './utils/fragmentLoader.js'
 import { Logger } from './utils/Logger.js'
 import { widgetStore } from './component/widget/widgetStore.js'
+import { debounceLeading } from './utils/utils.js'
 
 const logger = new Logger('main.js')
 
@@ -64,6 +65,7 @@ async function main () {
 
   // 4. Apply settings that depend on the loaded config
   applyControlVisibility()
+  applyWidgetMenuVisibility()
 
   // 5. Load board state from localStorage or initial config
   let boards = await loadBoardState()
@@ -99,8 +101,11 @@ async function main () {
   }
 
   // 7. Initialize modal triggers
-  document.getElementById('localStorage-edit-button').addEventListener('click', openLocalStorageModal)
-  document.getElementById('open-config-modal').addEventListener('click', openConfigModal)
+  const buttonDebounce = 200
+  const handleLocalStorageModal = debounceLeading(openLocalStorageModal, buttonDebounce)
+  const handleConfigModal = debounceLeading(openConfigModal, buttonDebounce)
+  document.getElementById('localStorage-edit-button').addEventListener('click', /** @type {EventListener} */(handleLocalStorageModal))
+  document.getElementById('open-config-modal').addEventListener('click', /** @type {EventListener} */(handleConfigModal))
 
   logger.log('Application initialization finished')
   // Signal to Playwright that the initial load and render is complete.

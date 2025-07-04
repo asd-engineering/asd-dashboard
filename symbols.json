@@ -154,6 +154,14 @@
     "returns": "Promise<void>"
   },
   {
+    "name": "applyWidgetMenuVisibility",
+    "kind": "function",
+    "file": "src/component/menu/dashboardMenu.js",
+    "description": "Apply visibility of the widget menu based on configuration.",
+    "params": [],
+    "returns": "void"
+  },
+  {
     "name": "base64UrlDecode",
     "kind": "function",
     "file": "src/utils/compression.js",
@@ -234,6 +242,14 @@
       }
     ],
     "returns": "Promise<void>"
+  },
+  {
+    "name": "confirmCapacity",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Ensure capacity before adding a widget. Prompts for eviction when full.",
+    "params": [],
+    "returns": "Promise<boolean>"
   },
   {
     "name": "createBoard",
@@ -330,6 +346,25 @@
     "kind": "function",
     "file": "src/utils/utils.js",
     "description": "Create a debounced version of a function.",
+    "params": [
+      {
+        "name": "func",
+        "type": "Function",
+        "desc": "- Function to debounce."
+      },
+      {
+        "name": "wait",
+        "type": "number",
+        "desc": "- Delay in milliseconds."
+      }
+    ],
+    "returns": "Function"
+  },
+  {
+    "name": "debounceLeading",
+    "kind": "function",
+    "file": "src/utils/utils.js",
+    "description": "Debounce function that executes immediately and ignores subsequent calls until the wait time has elapsed.",
     "params": [
       {
         "name": "func",
@@ -531,6 +566,20 @@
     "description": "Fetch the service list and update the service selector on the page.",
     "params": [],
     "returns": "Promise<Array<Service>>"
+  },
+  {
+    "name": "findFirstWidgetByService",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Find the first widget instance for a given service name.",
+    "params": [
+      {
+        "name": "serviceName",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "HTMLElement|undefined"
   },
   {
     "name": "get",
@@ -1021,6 +1070,20 @@
     "returns": "void"
   },
   {
+    "name": "isAdding",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Check if a service is currently being added.",
+    "params": [
+      {
+        "name": "serviceName",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "boolean"
+  },
+  {
     "name": "isJSON",
     "kind": "function",
     "file": "src/component/modal/localStorageModal.js",
@@ -1081,6 +1144,20 @@
     "description": "Loads the initial board configuration from the global config object into localStorage. This is typically called on first run to seed the dashboard.",
     "params": [],
     "returns": "Promise<void>"
+  },
+  {
+    "name": "lock",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Acquire the lock for a service name.",
+    "params": [
+      {
+        "name": "serviceName",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
   },
   {
     "name": "log",
@@ -1168,6 +1245,20 @@
     "description": "Open a modal dialog allowing the user to edit and save configuration JSON.",
     "params": [],
     "returns": "void"
+  },
+  {
+    "name": "openEvictionModal",
+    "kind": "function",
+    "file": "src/component/modal/evictionModal.js",
+    "description": "Display a modal to choose a widget for removal.",
+    "params": [
+      {
+        "name": "widgets",
+        "type": "Map<string, HTMLElement>",
+        "desc": "- Current widget map."
+      }
+    ],
+    "returns": "Promise<{id:string, title:string}|null>"
   },
   {
     "name": "openFragmentDecisionModal",
@@ -1333,7 +1424,7 @@
         "desc": "- The widget wrapper element to remove."
       }
     ],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "renameBoard",
@@ -1390,7 +1481,7 @@
         "desc": ""
       }
     ],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "resetView",
@@ -1684,6 +1775,20 @@
         "name": "widget",
         "type": "HTMLElement",
         "desc": "- The widget wrapper to modify."
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "unlock",
+    "kind": "function",
+    "file": "src/component/widget/widgetStore.js",
+    "description": "Release the lock for a service name.",
+    "params": [
+      {
+        "name": "serviceName",
+        "type": "string",
+        "desc": ""
       }
     ],
     "returns": "void"

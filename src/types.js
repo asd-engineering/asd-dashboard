@@ -46,15 +46,26 @@
  * @property {string} url
  * @property {string} [type]
  * @property {ServiceConfig} [config]
+ * @property {number} [maxInstances] Maximum allowed widget instances
  */
 
 /**
  * Dashboard configuration loaded from storage or URL.
  * @typedef {Object} DashboardConfig
  * @property {object} [globalSettings]
+ * @property {string} [globalSettings.theme]
+ * @property {Array<string>} [globalSettings.widgetStoreUrl]
+ * @property {string} [globalSettings.database]
+ * @property {boolean|string} [globalSettings.hideBoardControl]
+ * @property {boolean|string} [globalSettings.hideViewControl]
+ * @property {boolean|string} [globalSettings.hideServiceControl]
+ * @property {boolean|string} [globalSettings.showMenuWidget]
+ * @property {{showViewOptionsAsButtons:boolean|string, viewToShow:string}} [globalSettings.views]
+ * @property {{enabled:string, loadDashboardFromConfig:string, defaultBoard?:string, defaultView?:string}} [globalSettings.localStorage]
+ * @property {number} [globalSettings.maxTotalInstances]
  * @property {Array<Board>} [boards]
  * @property {{widget: {minColumns:number, maxColumns:number, minRows:number, maxRows:number}}} [styling]
-*/
+ */
 
 /**
  * Structured entry written by {@link Logger} during tests.

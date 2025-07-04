@@ -6,9 +6,7 @@
  */
 import { saveWidgetState } from '../../../storage/localStorage.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../../utils/elements.js'
-// import { debounce } from '../../../utils/utils.js'
-// The logger and debounce function makes resizeHandler.spec.ts flaky. Need to research why.
-// Does the test not wait for the correct size of the widget?
+import { debounce } from '../../../utils/utils.js'
 import { Logger } from '../../../utils/Logger.js'
 
 const logger = new Logger('resizeHandler.js')
@@ -86,6 +84,13 @@ async function handleResizeStart (event, widget) {
   // Create and append an overlay to capture all mouse events
   const overlay = createResizeOverlay()
 
+  const debouncedSave = debounce(() => {
+    const boardId = getCurrentBoardId()
+    const viewId = getCurrentViewId()
+    saveWidgetState(boardId, viewId)
+    logger.info('Resize stopped and widget state saved.')
+  }, 300)
+
   /**
    * Handles mouse movement during a resize operation, updating the widget's grid span.
    * @function handleResize
@@ -127,10 +132,7 @@ async function handleResizeStart (event, widget) {
       // Remove the overlay
       document.body.removeChild(overlay)
 
-      const boardId = getCurrentBoardId()
-      const viewId = getCurrentViewId()
-      saveWidgetState(boardId, viewId)
-      logger.info('Resize stopped and widget state saved.')
+      debouncedSave()
     } catch (error) {
       logger.error('Error stopping resize:', error)
     }

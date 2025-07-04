@@ -6,6 +6,7 @@
  */
 import emojiList from '../../ui/unicodeEmoji.js'
 import { showNotification } from '../dialog/notification.js'
+import { debounceLeading } from '../../utils/utils.js'
 
 /**
  * Initialize service worker controls in the menu.
@@ -20,6 +21,8 @@ function initSW () {
   const swCheckbox = document.querySelector('.icon-checkbox')
   const swEnabled = localStorage.getItem('swEnabled') === 'true'
   swToggle.checked = swEnabled
+
+  const buttonDebounce = 200
 
   /**
    * Updates the UI of the service worker toggle icon and attributes.
@@ -92,7 +95,7 @@ function initSW () {
       unregisterServiceWorker()
     }
 
-    swToggle.addEventListener('change', function () {
+    const handleSwChange = debounceLeading(() => {
       const isEnabled = swToggle.checked
       localStorage.setItem('swEnabled', String(isEnabled))
       updateServiceWorkerUI(isEnabled)
@@ -103,7 +106,8 @@ function initSW () {
       } else {
         unregisterServiceWorker()
       }
-    })
+    }, buttonDebounce)
+    swToggle.addEventListener('change', /** @type {EventListener} */(handleSwChange))
   }
 }
 
@@ -182,6 +186,11 @@ function initializeMainMenu () {
   viewDropdown.appendChild(viewDropdownContent)
   viewControl.appendChild(viewDropdown)
   menu.appendChild(viewControl)
+
+  const viewButtonMenu = document.createElement('div')
+  viewButtonMenu.className = 'control-group'
+  viewButtonMenu.id = 'view-button-menu'
+  menu.appendChild(viewButtonMenu)
 
   // Service control group
   const serviceControl = document.createElement('div')
@@ -283,6 +292,10 @@ function applyControlVisibility () {
   const serviceControl = document.getElementById('service-control')
   if (serviceControl) {
     serviceControl.style.display = settings.hideServiceControl === true || settings.hideServiceControl === 'true' ? 'none' : ''
+  }
+  const viewButtonMenu = document.getElementById('view-button-menu')
+  if (viewButtonMenu) {
+    viewButtonMenu.style.display = settings.views?.showViewOptionsAsButtons === true || settings.views?.showViewOptionsAsButtons === 'true' ? '' : 'none'
   }
 }
 

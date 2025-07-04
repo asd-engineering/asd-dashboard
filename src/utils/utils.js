@@ -14,6 +14,7 @@
  * @returns {Function}
  */
 function debounce (func, wait) {
+  if (typeof window !== 'undefined' && '__disableDebounce__' in window) return func
   let timeout
   return function executedFunction (...args) {
     const later = () => {
@@ -22,6 +23,23 @@ function debounce (func, wait) {
     }
     clearTimeout(timeout)
     timeout = setTimeout(later, wait)
+  }
+}
+
+/**
+ * Debounce function that executes immediately and ignores subsequent calls until the wait time has elapsed.
+ *
+ * @function debounceLeading
+ * @param {Function} func - Function to debounce.
+ * @param {number} wait - Delay in milliseconds.
+ * @returns {Function}
+ */
+function debounceLeading (func, wait) {
+  let timeout
+  return function executedFunction (...args) {
+    if (!timeout) func(...args)
+    clearTimeout(timeout)
+    timeout = setTimeout(() => { timeout = null }, wait)
   }
 }
 
@@ -43,4 +61,4 @@ function getUUID () {
   })
 }
 
-export { debounce, getUUID }
+export { debounce, debounceLeading, getUUID }
