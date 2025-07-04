@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { ciConfig, ciBoards } from './data/ciConfig';
 import { ciServices } from './data/ciServices';
 import { gunzipSync } from 'zlib';

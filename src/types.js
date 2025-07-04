@@ -46,6 +46,7 @@
  * @property {string} url
  * @property {string} [type]
  * @property {ServiceConfig} [config]
+ * @property {number} [maxInstances] Maximum allowed widget instances
  */
 
 /**
@@ -61,9 +62,10 @@
  * @property {boolean|string} [globalSettings.showMenuWidget]
  * @property {{showViewOptionsAsButtons:boolean|string, viewToShow:string}} [globalSettings.views]
  * @property {{enabled:string, loadDashboardFromConfig:string, defaultBoard?:string, defaultView?:string}} [globalSettings.localStorage]
+ * @property {number} [globalSettings.maxTotalInstances]
  * @property {Array<Board>} [boards]
  * @property {{widget: {minColumns:number, maxColumns:number, minRows:number, maxRows:number}}} [styling]
-*/
+ */
 
 /**
  * Structured entry written by {@link Logger} during tests.

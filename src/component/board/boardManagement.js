@@ -406,11 +406,11 @@ export async function deleteView (boardId, viewId) {
       const viewToDelete = board.views[viewIndex]
 
       if (viewToDelete.widgetState) {
-        viewToDelete.widgetState.forEach(widget => {
+        for (const widget of viewToDelete.widgetState) {
           if (widget.dataid) {
-            widgetStore.requestRemoval(widget.dataid)
+            await widgetStore.requestRemoval(widget.dataid)
           }
-        })
+        }
       }
 
       board.views.splice(viewIndex, 1)
@@ -453,11 +453,11 @@ export async function resetView (boardId, viewId) {
   if (board) {
     const view = board.views.find(v => v.id === viewId)
     if (view) {
-      view.widgetState.forEach(widget => {
+      for (const widget of view.widgetState) {
         if (widget.dataid) {
-          widgetStore.requestRemoval(widget.dataid)
+          await widgetStore.requestRemoval(widget.dataid)
         }
-      })
+      }
 
       view.widgetState = []
       await saveBoardState(boards)

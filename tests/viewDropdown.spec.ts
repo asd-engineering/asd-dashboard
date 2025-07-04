@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { handleDialog, getBoardsFromLocalStorage } from './shared/common';
 import { routeServicesConfig } from './shared/mocking';
 import { addServices } from './shared/common';
@@ -82,6 +82,12 @@ test.describe('View Dropdown Functionality', () => {
     await page.click('#view-dropdown .dropbtn');
     await page.click('#view-control a[data-action="delete"]');
 
+    // Wait for DOM change: one simple way is to wait for widgets to disappear
+    await page.waitForFunction(() => {
+      const container = document.getElementById('widget-container');
+      return container && container.querySelectorAll('.widget-wrapper').length === 0;
+    });
+
     // Verify the view was deleted
     const boards = await getBoardsFromLocalStorage(page);
     const currentBoardId = await page.locator('.board').getAttribute('id');
@@ -99,13 +105,20 @@ test.describe('View Dropdown Functionality', () => {
     await page.on('dialog', dialog => dialog.accept());
     await page.click('#view-dropdown .dropbtn');
     await page.click('#view-control a[data-action="reset"]');
+    
+    // Wait for DOM change: one simple way is to wait for widgets to disappear
+    await page.waitForFunction(() => {
+      const container = document.getElementById('widget-container');
+      return container && container.querySelectorAll('.widget-wrapper').length === 0;
+    });
+    await page.evaluate(() => window.asd.widgetStore.idle())
 
     // Verify the view was reset
     const boards = await getBoardsFromLocalStorage(page);
     const currentBoardId = await page.locator('.board').getAttribute('id');
     const currentBoard = boards.find(board => board.id === currentBoardId);
     const resetView = currentBoard.views.find(view => view.name === defaultViewName);
-
+    
     expect(resetView.widgetState.length).toBe(0);
   });
 

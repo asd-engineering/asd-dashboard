@@ -21,7 +21,12 @@ export class WidgetStore {
     /** @type {Map<string, HTMLElement>} */
     this.widgets = new Map()
     this.logger = new Logger('widgetStore.js')
+    /** @private */
+    this._serviceLocks = new Map() // service → ref-count
   }
+
+  /** Resolve after all pending RAF removals */
+  idle () { return new Promise(resolve => requestAnimationFrame(resolve)) }
 
   /**
    * Store a widget element using its `dataid` attribute as the key.
@@ -38,6 +43,7 @@ export class WidgetStore {
       this.widgets.delete(id)
     }
     this.widgets.set(id, element)
+    // Ensure we never exceed the capacity during initial load
     this._ensureLimit()
   }
 
@@ -96,14 +102,54 @@ export class WidgetStore {
   }
 
   /**
+   * Check if a service is currently being added.
+   *
+   * @param {string} serviceName
+   * @function isAdding
+   * @returns {boolean}
+   */
+  isAdding (serviceName) {
+    return this._serviceLocks.has(serviceName)
+  }
+
+  /**
+   * Acquire the lock for a service name.
+   *
+   * @param {string} serviceName
+   * @function lock
+   * @returns {void}
+   */
+  lock (serviceName) {
+    this._serviceLocks.set(
+      serviceName,
+      (this._serviceLocks.get(serviceName) ?? 0) + 1
+    )
+  }
+
+  /**
+   * Release the lock for a service name.
+   *
+   * @param {string} serviceName
+   * @function unlock
+   * @returns {void}
+   */
+  unlock (serviceName) {
+    const n = (this._serviceLocks.get(serviceName) ?? 1) - 1
+    n === 0
+      ? this._serviceLocks.delete(serviceName)
+      : this._serviceLocks.set(serviceName, n)
+  }
+
+  /**
    * Request removal of a widget from the DOM and store.
    *
    * @param {string} id
    * @function requestRemoval
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  requestRemoval (id) {
+  async requestRemoval (id) {
     this._evict(id)
+    await new Promise(resolve => requestAnimationFrame(resolve))
   }
 
   /**
@@ -137,6 +183,41 @@ export class WidgetStore {
       const oldestId = this.widgets.keys().next().value
       this._evict(oldestId)
     }
+  }
+
+  /**
+   * Find the first widget instance for a given service name.
+   *
+   * @param {string} serviceName
+   * @function findFirstWidgetByService
+   * @returns {HTMLElement|undefined}
+   */
+  findFirstWidgetByService (serviceName) {
+    for (const el of this.widgets.values()) {
+      if (el.dataset.service === serviceName) return el
+    }
+    return undefined
+  }
+
+  /**
+   * Ensure capacity before adding a widget. Prompts for eviction when full.
+   *
+   * @function confirmCapacity
+   * @returns {Promise<boolean>} Resolves true when space is available.
+   */
+  async confirmCapacity () {
+    const maxTotal = window.asd.config?.globalSettings?.maxTotalInstances
+    const overTotal = typeof maxTotal === 'number' && this.widgets.size >= maxTotal
+
+    if (this.widgets.size >= this.maxSize || overTotal) {
+      const { openEvictionModal } = await import('../modal/evictionModal.js')
+      const result = await openEvictionModal(this.widgets)
+      if (!result) return false
+      await this.requestRemoval(result.id)
+      this._ensureLimit()
+    }
+
+    return true
   }
 }
 

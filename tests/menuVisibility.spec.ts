@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 import emojiList from '../src/ui/unicodeEmoji.js'
 import { routeServicesConfig } from './shared/mocking.js'
 import { ciConfig } from './data/ciConfig'

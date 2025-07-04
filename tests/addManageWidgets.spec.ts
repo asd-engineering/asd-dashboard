@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './fixtures';
 import emojiList from '../src/ui/unicodeEmoji.js';
 import { routeServicesConfig } from './shared/mocking.js';
 import { addServices, selectServiceByName, addServicesByName } from './shared/common.js';

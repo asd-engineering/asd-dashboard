@@ -27,9 +27,12 @@ export async function handleDialog(page, type, inputText = '') {
   
   // Helper function to get boards from localStorage
 export async function getBoardsFromLocalStorage(page) {
-    return await page.evaluate(() => {
-        const item = localStorage.getItem('boards');
-        return item ? JSON.parse(item) : [];
+    return await page.evaluate(async () => {
+      const result = window.asd.widgetStore.idle();
+      if (result && typeof result.then === "function") await result;
+
+      const item = localStorage.getItem('boards');
+      return item ? JSON.parse(item) : [];
     });
 }
 

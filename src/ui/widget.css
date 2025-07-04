@@ -24,6 +24,7 @@
     #widget-container {
         grid-template-columns: repeat(8, 2fr);
         grid-template-rows: repeat(6, 200px);
+        overflow: visible;
     }
 }
 

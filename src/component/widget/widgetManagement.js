@@ -6,7 +6,12 @@
  */
 import { saveWidgetState } from '../../storage/localStorage.js'
 import { fetchData } from './utils/fetchData.js'
-import { showResizeMenu, hideResizeMenu, showResizeMenuBlock, hideResizeMenuBlock } from './menu/resizeMenu.js'
+import {
+  showResizeMenu,
+  hideResizeMenu,
+  showResizeMenuBlock,
+  hideResizeMenuBlock
+} from './menu/resizeMenu.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 import { debounce } from '../../utils/utils.js'
 import { fetchServices } from './utils/fetchServices.js'
@@ -17,6 +22,7 @@ import { toggleFullScreen } from './events/fullscreenToggle.js'
 import { initializeResizeHandles } from './events/resizeHandler.js'
 import { Logger } from '../../utils/Logger.js'
 import { showServiceModal } from '../modal/serviceLaunchModal.js'
+import { switchBoard } from '../board/boardManagement.js'
 import { widgetGetUUID } from '../../utils/id.js'
 
 const logger = new Logger('widgetManagement.js')
@@ -31,14 +37,22 @@ const logger = new Logger('widgetManagement.js')
  * @param {string|null} [dataid=null] - An optional persistent identifier for the widget.
  * @returns {Promise<HTMLDivElement>} A promise that resolves to the widget's wrapper element.
  */
-async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, dataid = null) {
+async function createWidget (
+  service,
+  url,
+  gridColumnSpan = 1,
+  gridRowSpan = 1,
+  dataid = null
+) {
   logger.log('Creating widget with URL:', url)
   const config = await getConfig()
   const services = await fetchServices()
-  const serviceObj = services.find(s => s.name === service) || {}
+  const serviceObj = services.find((s) => s.name === service) || {}
 
-  const minColumns = serviceObj.config?.minColumns || config.styling.widget.minColumns
-  const maxColumns = serviceObj.config?.maxColumns || config.styling.widget.maxColumns
+  const minColumns =
+    serviceObj.config?.minColumns || config.styling.widget.minColumns
+  const maxColumns =
+    serviceObj.config?.maxColumns || config.styling.widget.maxColumns
   const minRows = serviceObj.config?.minRows || config.styling.widget.minRows
   const maxRows = serviceObj.config?.maxRows || config.styling.widget.maxRows
 
@@ -72,7 +86,8 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
     const fixServiceButton = document.createElement('button')
     fixServiceButton.innerHTML = emojiList.launch.unicode
     fixServiceButton.classList.add('widget-button', 'widget-icon-action')
-    fixServiceButton.onclick = () => showServiceModal(serviceObj, widgetWrapper)
+    fixServiceButton.onclick = () =>
+      showServiceModal(serviceObj, widgetWrapper)
     widgetMenu.appendChild(fixServiceButton)
   }
 
@@ -87,25 +102,42 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
   configureButton.addEventListener('click', () => configureWidget(iframe))
 
   const buttonDebounce = 200
-  const debouncedHideResizeMenu = debounce((icon) => hideResizeMenu(icon), buttonDebounce)
-  const debouncedHideResizeMenuBlock = debounce((widgetWrapper) => hideResizeMenuBlock(widgetWrapper), buttonDebounce)
+  const debouncedHideResizeMenu = debounce(
+    (icon) => hideResizeMenu(icon),
+    buttonDebounce
+  )
+  const debouncedHideResizeMenuBlock = debounce(
+    (widgetWrapper) => hideResizeMenuBlock(widgetWrapper),
+    buttonDebounce
+  )
 
   const resizeMenuIcon = document.createElement('button')
   resizeMenuIcon.innerHTML = emojiList.triangularRuler.unicode
   resizeMenuIcon.classList.add('widget-button', 'widget-icon-resize')
-  resizeMenuIcon.addEventListener('mouseenter', () => showResizeMenu(resizeMenuIcon))
+  resizeMenuIcon.addEventListener('mouseenter', () =>
+    showResizeMenu(resizeMenuIcon)
+  )
   resizeMenuIcon.addEventListener('mouseleave', (event) => {
-    const related = /** @type {?HTMLElement} */(event.relatedTarget)
-    if (!related || !related.closest('.resize-menu')) debouncedHideResizeMenu(resizeMenuIcon)
+    const related = /** @type {?HTMLElement} */ (event.relatedTarget)
+    if (!related || !related.closest('.resize-menu')) {
+      debouncedHideResizeMenu(resizeMenuIcon)
+    }
   })
 
   const resizeMenuBlockIcon = document.createElement('button')
   resizeMenuBlockIcon.innerHTML = emojiList.puzzle.unicode
-  resizeMenuBlockIcon.classList.add('widget-button', 'widget-icon-resize-block')
-  resizeMenuBlockIcon.addEventListener('mouseenter', () => showResizeMenuBlock(resizeMenuBlockIcon, widgetWrapper))
+  resizeMenuBlockIcon.classList.add(
+    'widget-button',
+    'widget-icon-resize-block'
+  )
+  resizeMenuBlockIcon.addEventListener('mouseenter', () =>
+    showResizeMenuBlock(resizeMenuBlockIcon, widgetWrapper)
+  )
   resizeMenuBlockIcon.addEventListener('mouseleave', (event) => {
-    const related = /** @type {?HTMLElement} */(event.relatedTarget)
-    if (!related || !related.closest('.resize-menu-block')) debouncedHideResizeMenuBlock(widgetWrapper)
+    const related = /** @type {?HTMLElement} */ (event.relatedTarget)
+    if (!related || !related.closest('.resize-menu-block')) {
+      debouncedHideResizeMenuBlock(widgetWrapper)
+    }
   })
 
   const dragHandle = document.createElement('span')
@@ -121,7 +153,14 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
     toggleFullScreen(widgetWrapper)
   })
 
-  widgetMenu.append(fullScreenButton, removeButton, configureButton, resizeMenuIcon, resizeMenuBlockIcon, dragHandle)
+  widgetMenu.append(
+    fullScreenButton,
+    removeButton,
+    configureButton,
+    resizeMenuIcon,
+    resizeMenuBlockIcon,
+    dragHandle
+  )
   widgetWrapper.append(iframe, widgetMenu)
 
   dragHandle.addEventListener('dragstart', (e) => {
@@ -145,7 +184,15 @@ async function createWidget (service, url, gridColumnSpan = 1, gridRowSpan = 1, 
  * @param {string|null} [dataid=null] - An optional persistent identifier for the widget.
  * @returns {Promise<void>}
  */
-async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId = null, viewId = null, dataid = null) {
+async function addWidget (
+  url,
+  columns = 1,
+  rows = 1,
+  type = 'iframe',
+  boardId = null,
+  viewId = null,
+  dataid = null
+) {
   logger.log('Adding widget with URL:', url)
   const widgetContainer = document.getElementById('widget-container')
   if (!widgetContainer) return logger.error('Widget container not found')
@@ -153,44 +200,76 @@ async function addWidget (url, columns = 1, rows = 1, type = 'iframe', boardId =
   boardId = boardId || window.asd.currentBoardId
   viewId = viewId || window.asd.currentViewId
 
-  if (dataid && window.asd.widgetStore.has(dataid)) {
-    window.asd.widgetStore.show(dataid)
-    return
+  const serviceName = await getServiceFromUrl(url)
+  if (window.asd.widgetStore.isAdding(serviceName)) return
+  window.asd.widgetStore.lock(serviceName)
+  try {
+    const services = await fetchServices()
+    const serviceObj = services.find((s) => s.name === serviceName) || {}
+
+    if (typeof serviceObj.maxInstances === 'number') {
+      if (serviceObj.maxInstances === 0) return
+      const activeCount = Array.from(
+        window.asd.widgetStore.widgets.values()
+      ).filter((el) => el.dataset.service === serviceName).length
+      if (activeCount >= serviceObj.maxInstances) {
+        const existing = window.asd.widgetStore.findFirstWidgetByService(serviceName)
+        if (existing) {
+          const loc = findWidgetLocation(existing.dataset.dataid)
+          if (loc) await switchBoard(loc.boardId, loc.viewId)
+        }
+        return
+      }
+    }
+
+    const proceed = await window.asd.widgetStore.confirmCapacity()
+    if (!proceed) return
+
+    if (dataid && window.asd.widgetStore.has(dataid)) {
+      window.asd.widgetStore.show(dataid)
+      return
+    }
+
+    const widgetWrapper = await createWidget(
+      serviceName,
+      url,
+      columns,
+      rows,
+      dataid
+    )
+
+    const visibleWidgetCount = Array.from(widgetContainer.children).filter(
+      (el) => el instanceof HTMLElement && el.style.display !== 'none'
+    ).length
+    widgetWrapper.setAttribute('data-order', String(visibleWidgetCount))
+    widgetWrapper.style.order = String(visibleWidgetCount)
+
+    widgetContainer.appendChild(widgetWrapper)
+    window.asd.widgetStore.add(widgetWrapper)
+
+    if (serviceObj && serviceObj.type === 'api') {
+      fetchData(url, (data) => {
+        const iframe = widgetWrapper.querySelector('iframe')
+        iframe.contentWindow.postMessage(data, '*')
+      })
+    }
+
+    saveWidgetState(boardId, viewId)
+    initializeResizeHandles()
+  } finally {
+    window.asd.widgetStore.unlock(serviceName)
   }
-
-  const service = await getServiceFromUrl(url)
-  const widgetWrapper = await createWidget(service, url, columns, rows, dataid)
-
-  const visibleWidgetCount = Array.from(widgetContainer.children)
-    .filter(el => (el instanceof HTMLElement) && el.style.display !== 'none').length
-  widgetWrapper.setAttribute('data-order', String(visibleWidgetCount))
-  widgetWrapper.style.order = String(visibleWidgetCount)
-
-  widgetContainer.appendChild(widgetWrapper)
-  window.asd.widgetStore.add(widgetWrapper)
-
-  const services = await fetchServices()
-  const serviceObj = services.find(s => s.name === service)
-  if (serviceObj && serviceObj.type === 'api') {
-    fetchData(url, data => {
-      const iframe = widgetWrapper.querySelector('iframe')
-      iframe.contentWindow.postMessage(data, '*')
-    })
-  }
-
-  saveWidgetState(boardId, viewId)
-  initializeResizeHandles()
 }
 
 /**
  * Removes a widget from the view and updates the layout.
  * @function removeWidget
  * @param {HTMLElement} widgetElement - The widget wrapper element to remove.
- * @returns {void}
- */
-function removeWidget (widgetElement) {
+ * @returns {Promise<void>}
+*/
+async function removeWidget (widgetElement) {
   const dataid = widgetElement.dataset.dataid
-  window.asd.widgetStore.requestRemoval(dataid)
+  await window.asd.widgetStore.requestRemoval(dataid)
   updateWidgetOrders()
 }
 
@@ -218,8 +297,8 @@ function updateWidgetOrders () {
   const widgetsInDomOrder = Array.from(widgetContainer.children)
 
   let visibleIndex = 0
-  widgetsInDomOrder.forEach(widget => {
-    const el = /** @type {HTMLElement} */(widget)
+  widgetsInDomOrder.forEach((widget) => {
+    const el = /** @type {HTMLElement} */ (widget)
     if (el.style.display !== 'none') {
       const newOrder = String(visibleIndex)
       el.setAttribute('data-order', newOrder)
@@ -234,6 +313,23 @@ function updateWidgetOrders () {
     // This is now a synchronous call
     saveWidgetState(boardId, viewId)
   }
+}
+
+/**
+ * Locate the board and view containing a widget id.
+ * @param {string} id
+ * @returns {{boardId:string, viewId:string}|null}
+ */
+function findWidgetLocation (id) {
+  const boards = window.asd.boards || []
+  for (const board of boards) {
+    for (const view of board.views) {
+      if (view.widgetState.some((w) => w.dataid === id)) {
+        return { boardId: board.id, viewId: view.id }
+      }
+    }
+  }
+  return null
 }
 
 export { addWidget, removeWidget, updateWidgetOrders, createWidget }

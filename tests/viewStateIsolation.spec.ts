@@ -1,5 +1,5 @@
 // @ts-check
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { routeServicesConfig } from './shared/mocking.js';
 import { selectServiceByName } from './shared/common.js';
 

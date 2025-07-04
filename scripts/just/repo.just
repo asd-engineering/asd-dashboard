@@ -6,3 +6,6 @@ src-list dir="src":
 
 src-exports dir="src":
   bash scripts/just/list-and-export.sh {{dir}} export
+
+src-tests dir="tests":
+  bash scripts/just/list-and-export.sh {{dir}} export

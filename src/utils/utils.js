@@ -14,6 +14,7 @@
  * @returns {Function}
  */
 function debounce (func, wait) {
+  if (typeof window !== 'undefined' && '__disableDebounce__' in window) return func
   let timeout
   return function executedFunction (...args) {
     const later = () => {
