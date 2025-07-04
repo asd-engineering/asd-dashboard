@@ -3,14 +3,12 @@ import { type Page, expect } from '@playwright/test';
 // Helper function to add services
 export async function addServices(page: Page, count: number) {
     for (let i = 0; i < count; i++) {
-      await page.selectOption('#service-selector', { index: i + 1 });
-      await page.click('#add-widget-button');
+      await page.click(`#service-selector button:nth-of-type(${i + 2})`);
     }
   }
   
 export async function selectServiceByName(page: Page, serviceName: string) {
-    await page.selectOption('#service-selector', { label: serviceName });
-    await page.click('#add-widget-button');
+    await page.click(`#service-selector button:has-text("${serviceName}")`);
 }
 
 // Helper function to handle dialog interactions

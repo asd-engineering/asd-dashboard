@@ -197,25 +197,10 @@ function initializeMainMenu () {
   serviceControl.className = 'control-group'
   serviceControl.id = 'service-control'
 
-  const serviceSelector = document.createElement('select')
+  const serviceSelector = document.createElement('div')
   serviceSelector.id = 'service-selector'
-
-  const defaultOption = document.createElement('option')
-  defaultOption.value = ''
-  defaultOption.textContent = 'Select a Service'
-  serviceSelector.appendChild(defaultOption)
+  serviceSelector.className = 'service-dropdown'
   serviceControl.appendChild(serviceSelector)
-
-  const widgetUrlInput = document.createElement('input')
-  widgetUrlInput.type = 'text'
-  widgetUrlInput.id = 'widget-url'
-  widgetUrlInput.placeholder = 'Or enter URL manually'
-  serviceControl.appendChild(widgetUrlInput)
-
-  const addWidgetButton = document.createElement('button')
-  addWidgetButton.id = 'add-widget-button'
-  addWidgetButton.textContent = 'Add Widget'
-  serviceControl.appendChild(addWidgetButton)
 
   menu.appendChild(serviceControl)
 

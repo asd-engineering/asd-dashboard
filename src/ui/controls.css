@@ -128,3 +128,24 @@ menu {
     white-space: nowrap;
     z-index: 10;
 }
+
+/* Service dropdown */
+.service-dropdown {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.service-dropdown button {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+    border: none;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.service-dropdown button:hover {
+    background-color: #45a049;
+}

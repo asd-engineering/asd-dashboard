@@ -60,8 +60,7 @@ test.describe("Widget limits", () => {
     await page.locator(".widget-wrapper").first().waitFor();
 
     await page.locator("#board-selector").selectOption("b2");
-    await page.selectOption("#service-selector", { label: "ASD-toolbox" });
-    await page.click("#add-widget-button");
+    await page.click('#service-selector button:has-text("ASD-toolbox")');
 
     await page.waitForFunction(() =>
       document.querySelectorAll('.widget-wrapper').length === 1
@@ -90,8 +89,7 @@ test.describe("Widget limits", () => {
     await page.goto("/");
     await page.locator(".widget-wrapper").first().waitFor();
 
-    await page.selectOption("#service-selector", { label: "ASD-terminal" });
-    await page.click("#add-widget-button");
+    await page.click('#service-selector button:has-text("ASD-terminal")');
 
     const modal = page.locator("#eviction-modal");
     await expect(modal).toBeVisible();

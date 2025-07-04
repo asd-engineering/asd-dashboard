@@ -9,20 +9,25 @@ test.describe('Save Service Modal', () => {
     await page.waitForLoadState('domcontentloaded')
   })
 
-  test('opens when adding widget with manual URL', async ({ page }) => {
-    await page.fill('#widget-url', 'http://localhost/manual')
-    await page.click('#add-widget-button')
+  test('legacy url input not present', async ({ page }) => {
+    await expect(page.locator('#widget-url')).toHaveCount(0)
+    await expect(page.locator('#add-widget-button')).toHaveCount(0)
+  })
+
+  test('opens when creating new service', async ({ page }) => {
+    await page.click('#service-selector button:has-text("New Service")')
     const modal = page.locator('#save-service-modal')
     await expect(modal).toBeVisible()
     await expect(modal.locator('input#save-service-name')).toBeVisible()
+    await expect(modal.locator('input#save-service-url')).toBeVisible()
   })
 
   test('saves manual service when confirmed', async ({ page }) => {
     const url = 'http://localhost/manual-save'
-    await page.fill('#widget-url', url)
-    await page.click('#add-widget-button')
+    await page.click('#service-selector button:has-text("New Service")')
     const modal = page.locator('#save-service-modal')
     await expect(modal).toBeVisible()
+    await page.fill('#save-service-url', url)
     await page.fill('#save-service-name', 'Manual Service')
     await page.click('#save-service-modal button:has-text("Save & Close")')
     await expect(modal).toBeHidden()
@@ -30,7 +35,7 @@ test.describe('Save Service Modal', () => {
     const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services') || '[]'))
     expect(services.some(s => s.url === url && s.name === 'Manual Service')).toBeTruthy()
 
-    const options = await page.$$eval('#service-selector option', opts => opts.map(o => o.textContent))
+    const options = await page.$$eval('#service-selector button', opts => opts.map(o => o.textContent))
     expect(options).toContain('Manual Service')
 
     const iframe = page.locator('.widget-wrapper iframe').first()
@@ -39,20 +44,18 @@ test.describe('Save Service Modal', () => {
 
   test('skipping manual service does not store it', async ({ page }) => {
     const url = 'http://localhost/manual-skip'
-    await page.fill('#widget-url', url)
-    await page.click('#add-widget-button')
+    await page.click('#service-selector button:has-text("New Service")')
     const modal = page.locator('#save-service-modal')
     await expect(modal).toBeVisible()
+    await page.fill('#save-service-url', url)
     await page.click('#save-service-modal button:has-text("Skip")')
     await expect(modal).toBeHidden()
 
     const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services') || '[]'))
     expect(services.some(s => s.url === url)).toBeFalsy()
 
-    const options = await page.$$eval('#service-selector option', opts => opts.map(o => o.textContent))
+    const options = await page.$$eval('#service-selector button', opts => opts.map(o => o.textContent))
     expect(options).not.toContain('Manual Service')
-
-    const iframe = page.locator('.widget-wrapper iframe').first()
-    await expect(iframe).toHaveAttribute('src', url)
+    await expect(page.locator('.widget-wrapper')).toHaveCount(0)
   })
 })
