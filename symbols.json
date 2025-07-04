@@ -1330,7 +1330,7 @@
       {
         "name": "url",
         "type": "string",
-        "desc": "- The service URL to save."
+        "desc": "- Optional service URL to prefill."
       },
       {
         "name": "onClose",

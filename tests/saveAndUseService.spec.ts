@@ -14,8 +14,7 @@ test.describe('Use saved service', () => {
   })
 
   test('selects saved service and adds widget', async ({ page }) => {
-    await page.selectOption('#service-selector', { label: saved[0].name })
-    await page.click('#add-widget-button')
+    await page.click(`#service-selector button:has-text("${saved[0].name}")`)
     const iframe = page.locator('.widget-wrapper iframe').first()
     await expect(iframe).toHaveAttribute('src', saved[0].url)
   })

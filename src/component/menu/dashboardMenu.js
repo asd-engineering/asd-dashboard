@@ -41,29 +41,6 @@ function initializeDashboardMenu () {
 
   const buttonDebounce = 200
 
-  document.getElementById('add-widget-button').addEventListener('click', () => {
-    const serviceSelector = /** @type {HTMLSelectElement} */(document.getElementById('service-selector'))
-    const widgetUrlInput = /** @type {HTMLInputElement} */(document.getElementById('widget-url'))
-    const boardElement = document.querySelector('.board')
-    const viewElement = document.querySelector('.board-view')
-    const selectedServiceUrl = serviceSelector.value
-    const manualUrl = widgetUrlInput.value
-    const url = selectedServiceUrl || manualUrl
-
-    const finalize = () => {
-      addWidget(url, 1, 1, 'iframe', boardElement.id, viewElement.id)
-      widgetUrlInput.value = ''
-    }
-
-    if (selectedServiceUrl) {
-      finalize()
-    } else if (manualUrl) {
-      openSaveServiceModal(manualUrl, finalize)
-    } else {
-      showNotification('Please select a service or enter a URL.')
-    }
-  })
-
   const handleToggleWidgetMenu = debounceLeading(() => {
     const widgetContainer = document.getElementById('widget-container')
     const toggled = widgetContainer.classList.toggle('hide-widget-menu') // true if now hidden
@@ -121,15 +98,24 @@ function populateServiceDropdown () {
   const selector = document.getElementById('service-selector')
   if (!selector) return
   selector.innerHTML = ''
-  const defaultOption = document.createElement('option')
-  defaultOption.value = ''
-  defaultOption.textContent = 'Select a Service'
-  selector.appendChild(defaultOption)
+  const newServiceBtn = document.createElement('button')
+  newServiceBtn.textContent = 'New Service'
+  newServiceBtn.addEventListener('click', () => {
+    openSaveServiceModal('', () => {
+      populateServiceDropdown()
+      const all = servicesStore.load()
+      const latest = all[all.length - 1]
+      if (latest) addWidget(latest.url)
+    })
+  })
+  selector.appendChild(newServiceBtn)
   servicesStore.load().forEach(service => {
-    const opt = document.createElement('option')
-    opt.value = service.url
-    opt.textContent = service.name
-    selector.appendChild(opt)
+    const btn = document.createElement('button')
+    btn.textContent = service.name
+    btn.addEventListener('click', () => {
+      addWidget(service.url)
+    })
+    selector.appendChild(btn)
   })
 }
 
