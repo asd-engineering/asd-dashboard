@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../fixtures'
 import { ciConfig, ciBoards } from '../data/ciConfig'
 import { ciServices } from '../data/ciServices'
 
@@ -67,6 +67,8 @@ async function routeWithLRUConfig (page, widgetState, maxSize = 2) {
     }
   ]
 
+  await page.unroute('**/config.json').catch(() => {})
+  await routeBase(page, boards)
   await page.addInitScript((size) => {
     const apply = () => {
       if (window.asd?.widgetStore) {
@@ -77,8 +79,6 @@ async function routeWithLRUConfig (page, widgetState, maxSize = 2) {
     }
     apply()
   }, maxSize)
-  await page.unroute('**/config.json').catch(() => {})
-  await routeBase(page, boards)
 }
 
 const defaultBoards = () => [
@@ -174,6 +174,7 @@ test.describe('WidgetStore UI Tests', () => {
     const modal = page.locator('#eviction-modal')
     await modal.waitFor({ state: 'visible' })
     await modal.locator('button:has-text("Remove")').click()
+    await page.evaluate(() => window.asd.widgetStore.idle())
     await expect(modal).toBeHidden()
 
     await page.reload()
@@ -200,6 +201,7 @@ test.describe('WidgetStore UI Tests', () => {
     expect(exists).toBe(true)
 
     await widget.locator('.widget-icon-remove').click()
+    await page.evaluate(() => window.asd.widgetStore.idle())
     await expect(page.locator(`[data-dataid="${widgetId}"]`)).toHaveCount(0)
 
     const removed = await page.evaluate(

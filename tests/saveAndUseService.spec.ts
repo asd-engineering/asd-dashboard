@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking.js'
 
 const saved = [{ name: 'Saved Service', url: 'http://localhost/saved' }]
