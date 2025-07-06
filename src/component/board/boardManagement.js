@@ -9,6 +9,7 @@ import { addWidget } from '../widget/widgetManagement.js'
 import { widgetStore } from '../widget/widgetStore.js'
 import { Logger } from '../../utils/Logger.js'
 import { boardGetUUID, viewGetUUID } from '../../utils/id.js'
+import StorageManager from '../../storage/StorageManager.js'
 
 /** @typedef {import('../../types.js').Board} Board */
 /** @typedef {import('../../types.js').View} View */
@@ -50,10 +51,10 @@ export async function createBoard (boardName, boardId = null, viewId = null) {
   await switchBoard(newBoardId, defaultViewId)
   logger.log(`Switched to new board ${newBoardId}`)
 
-  // Save the current board and view in localStorage
-  localStorage.setItem('lastUsedBoardId', newBoardId)
-  localStorage.setItem('lastUsedViewId', defaultViewId)
-  logger.log(`Saved last used boardId: ${newBoardId} and viewId: ${defaultViewId} to localStorage`)
+  // Save the current board and view
+  StorageManager.misc.setLastBoardId(newBoardId)
+  StorageManager.misc.setLastViewId(defaultViewId)
+  logger.log(`Saved last used boardId: ${newBoardId} and viewId: ${defaultViewId}`)
 
   // Update the board selector
   updateBoardSelector()
@@ -91,9 +92,9 @@ export async function createView (boardId, viewName, viewId = null) {
     await switchView(boardId, newViewId)
     logger.log(`Switched to new view ${newViewId} in board ${boardId}`)
 
-    // Save the current view in localStorage
-    localStorage.setItem('lastUsedViewId', newViewId)
-    logger.log(`Saved last used viewId: ${newViewId} to localStorage`)
+    // Save the current view id
+    StorageManager.misc.setLastViewId(newViewId)
+    logger.log(`Saved last used viewId: ${newViewId}`)
 
     return newView
   } else {
@@ -155,7 +156,7 @@ export async function switchView (boardId, viewId) {
   }
 
   window.asd.currentViewId = viewId
-  localStorage.setItem('lastUsedViewId', viewId)
+  StorageManager.misc.setLastViewId(viewId)
   updateViewSelector(boardId)
 }
 
@@ -203,12 +204,12 @@ export function updateViewSelector (boardId) {
     })
 
     // Select the newly created or switched view
-    const lastUsedViewId = localStorage.getItem('lastUsedViewId')
+    const lastUsedViewId = StorageManager.misc.getLastViewId()
     if (lastUsedViewId) {
       viewSelector.value = lastUsedViewId
       logger.log(`Set view selector value to last used viewId: ${lastUsedViewId}`)
     } else {
-      logger.log('No last used viewId found in localStorage')
+      logger.log('No last used viewId found in storage')
     }
   } else {
     logger.error(`Board with ID ${boardId} not found`)
@@ -240,11 +241,11 @@ export async function switchBoard (boardId, viewId = null) {
       clearWidgetContainer()
       document.querySelector('.board-view').id = ''
       window.asd.currentViewId = null
-      localStorage.removeItem('lastUsedViewId')
+      StorageManager.misc.setLastViewId(null)
     }
 
     window.asd.currentBoardId = boardId
-    localStorage.setItem('lastUsedBoardId', boardId)
+    StorageManager.misc.setLastBoardId(boardId)
     updateViewSelector(boardId)
   } else {
     logger.error(`Board with ID ${boardId} not found`)
@@ -310,7 +311,7 @@ export function addBoardToUI (board) {
   boardSelector.appendChild(option)
 
   // Select the newly created or switched board
-  const lastUsedBoardId = localStorage.getItem('lastUsedBoardId')
+  const lastUsedBoardId = StorageManager.misc.getLastBoardId()
   if (lastUsedBoardId) {
     boardSelector.value = lastUsedBoardId
   }
@@ -430,7 +431,7 @@ export async function deleteView (boardId, viewId) {
         if (viewSelector) viewSelector.innerHTML = ''
         document.querySelector('.board-view').id = ''
         window.asd.currentViewId = null
-        localStorage.removeItem('lastUsedViewId')
+        StorageManager.misc.setLastViewId(null)
       }
     } else {
       logger.error(`View with ID ${viewId} not found`)
@@ -486,7 +487,7 @@ function updateBoardSelector () {
   })
 
   // Select the newly created or switched board
-  const lastUsedBoardId = localStorage.getItem('lastUsedBoardId')
+  const lastUsedBoardId = StorageManager.misc.getLastBoardId()
   if (lastUsedBoardId) {
     boardSelector.value = lastUsedBoardId
   }

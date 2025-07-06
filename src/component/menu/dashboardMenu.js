@@ -18,6 +18,7 @@ import { showNotification } from '../dialog/notification.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 import { Logger } from '../../utils/Logger.js'
 import { clearConfigFragment } from '../../utils/fragmentGuard.js'
+import StorageManager from '../../storage/StorageManager.js'
 import { debounceLeading } from '../../utils/utils.js'
 
 const logger = new Logger('dashboardMenu.js')
@@ -74,7 +75,7 @@ function initializeDashboardMenu () {
 
     if (window.asd && window.asd.config && window.asd.config.globalSettings) {
       window.asd.config.globalSettings.showMenuWidget = !toggled
-      localStorage.setItem('config', JSON.stringify(window.asd.config))
+      StorageManager.setConfig(window.asd.config)
     }
 
     showNotification(message, 500)
@@ -86,7 +87,7 @@ function initializeDashboardMenu () {
     const confirmed = confirm('Confirm environment reset: all configurations and services will be permanently deleted.')
 
     if (confirmed) {
-      localStorage.clear()
+      StorageManager.clearAll()
       clearConfigFragment()
       location.reload()
     }

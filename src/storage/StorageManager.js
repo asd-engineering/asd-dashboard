@@ -1,0 +1,230 @@
+// @ts-check
+/**
+ * Centralized manager for loading and saving dashboard state.
+ *
+ * @module storage/StorageManager
+ */
+
+/**
+ * CURRENT_VERSION for stored data schema.
+ * @constant {number}
+ */
+export const CURRENT_VERSION = 1
+
+const KEYS = {
+  CONFIG: 'config',
+  BOARDS: 'boards',
+  SERVICES: 'services',
+  STATES: 'asd-dashboard-state',
+  LAST_BOARD: 'lastUsedBoardId',
+  LAST_VIEW: 'lastUsedViewId'
+}
+
+/**
+ * Read and parse JSON value from localStorage.
+ * @function jsonGet
+ * @param {string} key
+ * @param {any|null} [fallback=null]
+ * @returns {any}
+ */
+function jsonGet (key, fallback = null) {
+  const value = localStorage.getItem(key)
+  if (!value) return fallback
+  try {
+    return JSON.parse(value)
+  } catch (_) {
+    return fallback
+  }
+}
+
+/**
+ * Stringify and store value in localStorage.
+ * @function jsonSet
+ * @param {string} key
+ * @param {any} obj
+ * @returns {void}
+ */
+function jsonSet (key, obj) {
+  if (obj === undefined || obj === null) {
+    localStorage.removeItem(key)
+  } else {
+    localStorage.setItem(key, JSON.stringify(obj))
+  }
+}
+
+/** @typedef {import('../types.js').DashboardConfig} DashboardConfig */
+/** @typedef {import('../types.js').Board} Board */
+/** @typedef {import('../types.js').Service} Service */
+
+/**
+ * Singleton API for storing and retrieving dashboard data.
+ */
+const StorageManager = {
+  /**
+   * Get the persisted dashboard configuration.
+   * @function getConfig
+   * @returns {DashboardConfig}
+   */
+  getConfig () {
+    const raw = jsonGet(KEYS.CONFIG)
+    if (!raw) return null
+    if (typeof raw === 'object' && raw !== null && 'version' in raw) {
+      return raw.data
+    }
+    return raw
+  },
+
+  /**
+   * Persist the dashboard configuration.
+   * @function setConfig
+   * @param {DashboardConfig} cfg
+   * @returns {void}
+   */
+  setConfig (cfg) {
+    jsonSet(KEYS.CONFIG, { version: CURRENT_VERSION, data: cfg })
+    if (Array.isArray(cfg.boards)) {
+      StorageManager.setBoards(cfg.boards)
+    }
+  },
+
+  /**
+   * Retrieve stored boards array.
+   * @function getBoards
+   * @returns {Array<Board>}
+   */
+  getBoards () {
+    const boards = jsonGet(KEYS.BOARDS, [])
+    window.asd.boards = Array.isArray(boards) ? boards : []
+    return window.asd.boards
+  },
+
+  /**
+   * Persist the provided boards array.
+   * @function setBoards
+   * @param {Array<Board>} boards
+   * @returns {void}
+   */
+  setBoards (boards) {
+    jsonSet(KEYS.BOARDS, boards)
+    window.asd.boards = Array.isArray(boards) ? boards : []
+  },
+
+  /**
+   * Retrieve stored services array.
+   * @function getServices
+   * @returns {Array<Service>}
+   */
+  getServices () {
+    const services = jsonGet(KEYS.SERVICES, [])
+    window.asd.services = Array.isArray(services) ? services : []
+    return window.asd.services
+  },
+
+  /**
+   * Persist the provided services array.
+   * @function setServices
+   * @param {Array<Service>} services
+   * @returns {void}
+   */
+  setServices (services) {
+    jsonSet(KEYS.SERVICES, services)
+    window.asd.services = Array.isArray(services) ? services : []
+  },
+
+  /**
+  * Load and return the entire state store.
+  * @function loadStateStore
+   * @returns {Promise<{version:number,states:Array}>}
+   */
+  async loadStateStore () {
+    const store = jsonGet(KEYS.STATES, { version: CURRENT_VERSION, states: [] })
+    if (typeof store === 'object' && store !== null && !('version' in store)) {
+      store.version = 1
+    }
+    return store
+  },
+
+  /**
+   * Persist the entire state store object.
+   * @function saveStateStore
+   * @param {{version:number,states:Array}} store
+   * @returns {Promise<void>}
+   */
+  async saveStateStore (store) {
+    jsonSet(KEYS.STATES, store)
+  },
+
+  /**
+  * Save the current state snapshot.
+  * @function saveStateSnapshot
+   * @param {{name:string,type:string,cfg:string,svc:string}} snapshot
+   * @returns {Promise<string>} Hash of the snapshot
+   */
+  async saveStateSnapshot ({ name, type, cfg, svc }) {
+    const store = await StorageManager.loadStateStore()
+    const blob = cfg + svc
+    const md5 = await crypto.subtle.digest('MD5', new TextEncoder().encode(blob))
+    const hash = Array.from(new Uint8Array(md5))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('')
+    store.states.unshift({ name, ts: Date.now(), type, md5: hash, cfg, svc })
+    jsonSet(KEYS.STATES, store)
+    return hash
+  },
+
+  /**
+   * Remove all persisted data.
+   * @function clearAll
+   * @returns {void}
+   */
+  clearAll () {
+    Object.values(KEYS).forEach(key => localStorage.removeItem(key))
+  },
+
+  /**
+   * Miscellaneous helpers for simple string keys.
+   */
+  misc: {
+    /**
+     * Retrieve the last used board id.
+     * @function getLastBoardId
+     * @returns {string|null}
+     */
+    getLastBoardId () {
+      return localStorage.getItem(KEYS.LAST_BOARD)
+    },
+
+    /**
+     * Persist the last used board id.
+     * @function setLastBoardId
+     * @param {string|null} id
+     * @returns {void}
+     */
+    setLastBoardId (id) {
+      if (id) localStorage.setItem(KEYS.LAST_BOARD, id)
+      else localStorage.removeItem(KEYS.LAST_BOARD)
+    },
+
+    /**
+     * Retrieve the last used view id.
+     * @function getLastViewId
+     * @returns {string|null}
+     */
+    getLastViewId () {
+      return localStorage.getItem(KEYS.LAST_VIEW)
+    },
+
+    /**
+     * Persist the last used view id.
+     * @function setLastViewId
+     * @param {string|null} id
+     * @returns {void}
+     */
+    setLastViewId (id) {
+      if (id) localStorage.setItem(KEYS.LAST_VIEW, id)
+      else localStorage.removeItem(KEYS.LAST_VIEW)
+    }
+  }
+}
+
+export default StorageManager

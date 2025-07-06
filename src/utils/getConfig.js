@@ -8,9 +8,9 @@ import { Logger } from './Logger.js'
 import { openLocalStorageModal } from '../component/modal/localStorageModal.js'
 import { showNotification } from '../component/dialog/notification.js'
 import { openConfigModal, DEFAULT_CONFIG_TEMPLATE } from '../component/modal/configModal.js'
+import StorageManager from '../storage/StorageManager.js'
 
 const logger = new Logger('getConfig.js')
-const STORAGE_KEY = 'config'
 
 /**
  * Parses a base64 encoded JSON string.
@@ -72,10 +72,7 @@ async function loadFromSources () {
   if (params.has('config_base64')) {
     const cfg = parseBase64(params.get('config_base64'))
     if (cfg) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg))
-      if (Array.isArray(cfg.boards)) {
-        localStorage.setItem('boards', JSON.stringify(cfg.boards))
-      }
+      StorageManager.setConfig(cfg)
       window.history.replaceState(null, '', location.pathname)
       return cfg
     }
@@ -85,23 +82,16 @@ async function loadFromSources () {
   if (params.has('config_url')) {
     const cfgU = await fetchJson(params.get('config_url'))
     if (cfgU) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cfgU))
-      if (Array.isArray(cfgU.boards)) {
-        localStorage.setItem('boards', JSON.stringify(cfgU.boards))
-      }
+      StorageManager.setConfig(cfgU)
       window.history.replaceState(null, '', location.pathname)
       return cfgU
     }
     return null
   }
 
-  const stored = localStorage.getItem(STORAGE_KEY)
+  const stored = StorageManager.getConfig()
   if (stored) {
-    try {
-      return JSON.parse(stored)
-    } catch (e) {
-      logger.error('Failed to parse config from localStorage:', e)
-    }
+    return stored
   }
 
   const cfgJ = await fetchJson('config.json')
@@ -109,7 +99,7 @@ async function loadFromSources () {
   if (!cfgJ) {
     showNotification('Default configuration has been loaded. Please review and save.')
     const cfg = DEFAULT_CONFIG_TEMPLATE
-    localStorage.setItem('config', JSON.stringify(cfg))
+    StorageManager.setConfig(cfg)
     openConfigModal()
     return cfg
   } else {
@@ -136,7 +126,7 @@ export async function getConfig () {
   }
 
   window.asd.config = config
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+  StorageManager.setConfig(config)
   logger.log('Config loaded successfully')
   return config
 }
