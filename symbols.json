@@ -1062,6 +1062,14 @@
     "returns": "void"
   },
   {
+    "name": "initializeWidgetSelectorPanel",
+    "kind": "function",
+    "file": "src/component/menu/widgetSelectorPanel.js",
+    "description": "Set up click handler for selecting services.",
+    "params": [],
+    "returns": "void"
+  },
+  {
     "name": "initSW",
     "kind": "function",
     "file": "src/component/menu/menu.js",
@@ -1387,6 +1395,14 @@
     "kind": "function",
     "file": "src/component/menu/dashboardMenu.js",
     "description": "Populate the service drop-down with saved services.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "populateWidgetSelectorPanel",
+    "kind": "function",
+    "file": "src/component/menu/widgetSelectorPanel.js",
+    "description": "Populate dropdown list with saved services.",
     "params": [],
     "returns": "void"
   },
@@ -1835,6 +1851,14 @@
         "desc": "- Identifier of the board whose views will be shown."
       }
     ],
+    "returns": "void"
+  },
+  {
+    "name": "updateWidgetCounter",
+    "kind": "function",
+    "file": "src/component/menu/widgetSelectorPanel.js",
+    "description": "Update the Active/Max counter in the panel.",
+    "params": [],
     "returns": "void"
   },
   {

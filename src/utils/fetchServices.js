@@ -95,6 +95,9 @@ export const fetchServices = async () => {
       item.textContent = service.name
       item.className = 'widget-option'
       item.dataset.url = service.url
+      item.dataset.name = service.name
+      if (service.category) item.dataset.category = service.category
+      if (Array.isArray(service.tags)) item.dataset.tags = service.tags.join(',')
       container.appendChild(item)
     })
     const { updateWidgetCounter } = await import('../component/menu/widgetSelectorPanel.js')
