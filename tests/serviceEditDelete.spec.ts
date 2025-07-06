@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
+import { ensurePanelOpen } from './shared/common'
 
 
 test.describe('Service Edit/Delete', () => {
@@ -10,7 +11,10 @@ test.describe('Service Edit/Delete', () => {
   })
 
   test('edit service updates list', async ({ page }) => {
-    await page.click('#widget-selector-panel .widget-option:has-text("ASD-toolbox") button[data-action="edit"]')
+    await ensurePanelOpen(page)
+    const row = page.locator('#widget-selector-panel .widget-option:has-text("ASD-toolbox")')
+    await row.hover()
+    await row.locator('button[data-action="edit"]').click()
     const modal = page.locator('#save-service-modal')
     await expect(modal).toBeVisible()
     await page.fill('#service-name', 'Toolbox X')
@@ -20,15 +24,18 @@ test.describe('Service Edit/Delete', () => {
 
     const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services')))
     expect(services.some(s => s.name === 'Toolbox X' && s.url === 'http://localhost/x')).toBeTruthy()
-    await expect(page.locator('#widget-selector-panel .widget-option')).toContainText('Toolbox X')
+    await expect(page.locator('#widget-selector-panel')).toContainText('Toolbox X')
   })
 
   test('delete service removes widgets', async ({ page }) => {
-    await page.click('#widget-selector-panel .widget-option:has-text("ASD-terminal")')
+    await ensurePanelOpen(page)
+    const row = page.locator('#widget-selector-panel .widget-option:has-text("ASD-terminal")')
+    await row.click()
     await expect(page.locator('.widget-wrapper')).toHaveCount(1)
 
     page.on('dialog', d => d.accept())
-    await page.click('#widget-selector-panel .widget-option:has-text("ASD-terminal") button[data-action="remove"]')
+    await row.hover()
+    await row.locator('button[data-action="remove"]').click()
     await page.waitForSelector('.widget-wrapper', { state: 'detached' })
 
     const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services')))

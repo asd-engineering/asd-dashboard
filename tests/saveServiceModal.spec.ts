@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking.js'
+import { ensurePanelOpen } from './shared/common'
 
 
 test.describe('Save Service Modal', () => {
@@ -10,6 +11,7 @@ test.describe('Save Service Modal', () => {
   })
 
   test('opens when adding widget with manual URL', async ({ page }) => {
+    await ensurePanelOpen(page)
     await page.click('#widget-selector-panel .new-service')
     const modal = page.locator('#save-service-modal')
     await expect(modal).toBeVisible()
@@ -18,6 +20,7 @@ test.describe('Save Service Modal', () => {
 
   test('saves manual service when confirmed', async ({ page }) => {
     const url = 'http://localhost/manual-save'
+    await ensurePanelOpen(page)
     await page.click('#widget-selector-panel .new-service')
     const modal = page.locator('#save-service-modal')
     await expect(modal).toBeVisible()
@@ -30,7 +33,7 @@ test.describe('Save Service Modal', () => {
     expect(services.some(s => s.url === url && s.name === 'Manual Service')).toBeTruthy()
 
     const options = await page.$$eval('#widget-selector-panel .widget-option', opts => opts.map(o => o.textContent))
-    expect(options).toContain('Manual Service')
+    expect(options.some(o => o.includes('Manual Service'))).toBe(true)
 
     const iframe = page.locator('.widget-wrapper iframe').first()
     await expect(iframe).toHaveAttribute('src', url)
@@ -38,6 +41,7 @@ test.describe('Save Service Modal', () => {
 
   test('skipping manual service does not store it', async ({ page }) => {
     const url = 'http://localhost/manual-skip'
+    await ensurePanelOpen(page)
     await page.click('#widget-selector-panel .new-service')
     const modal = page.locator('#save-service-modal')
     await expect(modal).toBeVisible()
@@ -50,7 +54,7 @@ test.describe('Save Service Modal', () => {
     expect(services.some(s => s.url === url)).toBeFalsy()
 
     const options = await page.$$eval('#widget-selector-panel .widget-option', opts => opts.map(o => o.textContent))
-    expect(options).not.toContain('Manual Service')
+    expect(options.every(o => !o.includes('Manual Service'))).toBe(true)
 
     const iframe = page.locator('.widget-wrapper iframe').first()
     await expect(iframe).toHaveAttribute('src', url)

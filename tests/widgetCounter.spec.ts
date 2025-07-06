@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
+import { ensurePanelOpen } from './shared/common'
 
 
 test.describe('Widget counters', () => {
@@ -21,12 +22,14 @@ test.describe('Widget counters', () => {
 
   test('row and global counts update', async ({ page }) => {
     await page.click('#widget-dropdown-toggle')
+    await ensurePanelOpen(page)
     await page.click('#widget-selector-panel .widget-option:has-text("ASD-toolbox")')
     await page.locator('.widget-wrapper').first().waitFor()
 
     await expect(page.locator('#widget-count')).toHaveText('Active: 1 / Max: 1')
 
     await page.click('#widget-dropdown-toggle')
+    await ensurePanelOpen(page)
     const row = page.locator('#widget-selector-panel .widget-option:has-text("ASD-toolbox")')
     await expect(row).toContainText('(1/20)')
     await row.click()

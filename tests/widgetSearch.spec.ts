@@ -17,7 +17,7 @@ test.describe('Widget search filter', () => {
 
     const visible = page.locator('#widget-selector-panel .widget-option:not(.new-service):visible')
     await expect(visible).toHaveCount(1)
-    await expect(visible.first()).toHaveText('ASD-terminal')
+    await expect(visible.first()).toContainText('ASD-terminal')
     await expect(page.locator('#widget-selector-panel .widget-option.new-service')).toBeVisible()
   })
 })

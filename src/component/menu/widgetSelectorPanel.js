@@ -27,6 +27,15 @@ export function updateWidgetCounter () {
 }
 
 /**
+ * Open the widget selector panel for automated tests.
+ * @function __openForTests
+ * @returns {void}
+ */
+export function __openForTests () {
+  const panel = document.getElementById('widget-selector-panel')
+  panel?.classList.add('open')
+}
+/**
  * Update the instance count labels for each service row.
  * @function refreshRowCounts
  * @returns {void}

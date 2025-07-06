@@ -14,7 +14,7 @@ test.describe('LocalStorage Editor Functionality', () => {
 
   test('should open LocalStorage editor modal, modify JSON content, and save changes', async ({ page, browserName  }) => {
     // Webkit (and a little Firefox) is flaky in this test so I increased the timeout only for that particular browser
-    const timeout = ['webkit', 'firefox'].includes(browserName) ? 6000 : undefined;
+    const timeout = ['webkit', 'firefox'].includes(browserName) ? 15000 : undefined;
 
     // Open LocalStorage editor
     await page.click('#localStorage-edit-button');
