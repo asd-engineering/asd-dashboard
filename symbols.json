@@ -582,6 +582,20 @@
     "returns": "HTMLElement|undefined"
   },
   {
+    "name": "findWidgetLocation",
+    "kind": "function",
+    "file": "src/component/widget/widgetManagement.js",
+    "description": "Locate the board and view containing a widget id.",
+    "params": [
+      {
+        "name": "id",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "{boardId:string, viewId:string}|null"
+  },
+  {
     "name": "get",
     "kind": "function",
     "file": "src/component/widget/widgetStore.js",
@@ -1352,17 +1366,32 @@
     "name": "openSaveServiceModal",
     "kind": "function",
     "file": "src/component/modal/saveServiceModal.js",
-    "description": "Open a modal allowing the user to name and store a service URL.",
+    "description": "Open a modal to create or edit a service definition.",
     "params": [
       {
-        "name": "url",
-        "type": "string",
-        "desc": "- The service URL to save."
+        "name": "options",
+        "type": "object|string",
+        "desc": "- Options or legacy URL string."
       },
       {
-        "name": "onClose",
+        "name": "options.mode",
+        "type": "'new'|'edit'",
+        "desc": ""
+      },
+      {
+        "name": "options.service",
+        "type": "import('../../types.js').Service",
+        "desc": ""
+      },
+      {
+        "name": "options.url",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "options.onClose",
         "type": "Function",
-        "desc": "- Callback when the modal closes."
+        "desc": ""
       }
     ],
     "returns": "void"

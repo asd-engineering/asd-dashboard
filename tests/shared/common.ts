@@ -2,12 +2,14 @@ import { type Page, expect } from '@playwright/test';
 
 // Helper function to add services
 export async function addServices(page: Page, count: number) {
+    await page.click('#widget-dropdown-toggle');
     for (let i = 0; i < count; i++) {
       await page.locator('#widget-selector-panel .widget-option').nth(i + 1).click();
     }
   }
   
 export async function selectServiceByName(page: Page, serviceName: string) {
+    await page.click('#widget-dropdown-toggle');
     await page.click(`#widget-selector-panel .widget-option:has-text("${serviceName}")`);
 }
 
