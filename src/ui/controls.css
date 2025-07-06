@@ -1,186 +1,235 @@
+/* Reset */
 menu {
-    padding: 0;
-    margin: 0;
-}
-
-/* Wrapper for all controls */
-#controls {
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.5rem; 
-    background-color: #fff;
-    z-index: 1001;
-    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Each control group aligned horizontally for buttons */
-.control-group {
-    display: flex;
-    flex-direction: row; /* Horizontal alignment */
-    align-items: center;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 0.3rem; /* Minimize spacing between elements */
-    padding: 0.3rem;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-    width: auto; /* Auto width for tighter fit */
-    max-width: 100%; /* Prevent from growing beyond container */
-    flex-wrap: wrap;
-    word-break: break-word;
-}
-
-/* Styles for select, input, and button elements */
-#controls select,
-#controls input {
-    padding: 0.3rem;
-    font-size: 0.8rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    max-width: 100%;
-    box-sizing: border-box;
-    min-width: 0; /* allows flex to shrink */
-    flex-shrink: 1;
-}
-
-/* Ellipsis on overly long items */
-#controls select {
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-}
-
-#controls button {
-    padding: 0.3rem 0.6rem; /* Smaller padding for buttons */
-    font-size: 0.8rem;
-    border: none;
-    background-color: #4CAF50;
-    color: white;
-    cursor: pointer;
-    border-radius: 4px;
-    width: auto; /* Auto width to fit content */
-    transition: background-color 0.3s ease;
-}
-
-#controls button:hover{
-    background-color: #45a049;
-}
-
-#view-button-menu button {
-    background: #fff;
-    color: #333;
-    border: 2px solid #31a840;
-    border-radius: 8px;
-    padding: 8px 18px;
-    margin: 2px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-}
-
-#view-button-menu button.active {
-    background: #31a840;
-    color: #fff;
-}
-
-.dropdown-content a {
-    font-size: 0.8rem;
-    padding: 6px 10px;
-}
-
-
-/* Service Worker Toggle */
-/* Hide the original checkbox input */
-#sw-toggle {
-    display: none;
-}
-
-/* Style the label to act as a clickable icon */
-#toggle-widget-menu,
-#localStorage-edit-button,
-.icon-checkbox {
-    cursor: pointer;
-    font-size: 1.2rem; /* Adjust the icon size */
-    display: inline-block;
-    user-select: none;
-}
-
-#admin-control label {
-    position: relative;
-}
-
-#admin-control label:hover {
-    font-size: 1.4rem;
-}
-
-#admin-control label:hover::after {
-    content: attr(aria-label);
-    position: absolute;
-    top: 2.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    color: #fff;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    z-index: 10;
+  margin: 0;
+  padding: 0;
 }
 
 /* --------------------------------------------------
-   Widget selector panel
+   Global Controls Wrapper
    -------------------------------------------------- */
+#controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background-color: #fff;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+}
 
-/* Layout container similar to other control groups */
+/* --------------------------------------------------
+   Control Groups & Form Elements
+   -------------------------------------------------- */
+.control-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0.3rem;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  width: auto;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+#controls select,
+#controls input,
+#controls button {
+  font-size: 0.8rem;
+  box-sizing: border-box;
+}
+
+/* Inputs & Selects */
+#controls select,
+#controls input {
+  padding: 0.3rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  max-width: 100%;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+#controls select {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Standard Buttons */
+#controls button {
+  padding: 0.3rem 0.6rem;
+  background-color: #4caf50;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#controls button:hover {
+  background-color: #45a049;
+}
+
+/* View-Button-Menu Overrides */
+#view-button-menu button {
+  margin: 2px;
+  padding: 8px 18px;
+  border: 2px solid #31a840;
+  border-radius: 8px;
+  background: #fff;
+  color: #333;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+#view-button-menu button.active {
+  background: #31a840;
+  color: #fff;
+}
+
+/* Dropdown Links */
+.dropdown-content a {
+  display: block;
+  font-size: 0.8rem;
+  padding: 6px 10px;
+}
+
+/* --------------------------------------------------
+   Icon Toggles & Admin Labels
+   -------------------------------------------------- */
+#sw-toggle {
+  display: none;
+}
+
+#toggle-widget-menu,
+#localStorage-edit-button,
+.icon-checkbox {
+  display: inline-block;
+  cursor: pointer;
+  font-size: 1.2rem;
+  user-select: none;
+}
+
+#admin-control label {
+  position: relative;
+  cursor: pointer;
+  transition: font-size 0.2s;
+}
+#admin-control label:hover {
+  font-size: 1.4rem;
+}
+#admin-control label:hover::after {
+  content: attr(aria-label);
+  position: absolute;
+  top: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+/* --------------------------------------------------
+   Widget-Selector Panel
+   -------------------------------------------------- */
 #widget-selector-panel {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
 }
 
-/* Search input expands to fill available space */
 #widget-search {
-    flex: 1 1 auto;
+  flex: 1 1 auto;
 }
 
-/* Counter aligned to the right */
 #widget-count {
-    margin-left: auto;
-    font-size: 0.8rem;
-    white-space: nowrap;
+  margin-left: auto;
+  font-size: 0.8rem;
+  white-space: nowrap;
 }
 
-/* Dropdown toggle icon */
 #widget-dropdown-toggle {
-    cursor: pointer;
-    user-select: none;
-    transition: transform 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s ease;
 }
-
-/* Rotate icon when panel open */
 #widget-selector-panel.open #widget-dropdown-toggle {
-    transform: rotate(180deg);
+  transform: rotate(180deg);
 }
 
-/* Service option layout */
+/* --------------------------------------------------
+   Widget Options (hover, select, actions)
+   -------------------------------------------------- */
 #widget-selector-panel .widget-option {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
 }
 
-#widget-selector-panel .widget-option.active {
-    background-color: #e0e0e0;
+#widget-selector-panel .widget-option > span:first-child {
+  flex: 1 1 auto;
+  margin-right: 0.5rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#widget-selector-panel .widget-option:hover {
+  background-color: #eef7ff;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+#widget-selector-panel .widget-option.selected {
+  background-color: #e0f7fa;
+  outline: 2px solid #31a840;
+  transform: scale(1.01);
+}
+
+/* Actions (🔍 ✏️ ❌) */
+#widget-selector-panel .widget-option-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  opacity: 0;
+  pointer-events: none;
+  position: relative;
+  z-index: 1;
+  transition: opacity 0.15s ease;
+}
+#widget-selector-panel .widget-option:hover .widget-option-actions,
+#widget-selector-panel .widget-option.selected .widget-option-actions {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 #widget-selector-panel .widget-option-actions button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1rem;
+  background: none;
+  border: none;
+  padding: 0.2rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+#widget-selector-panel .widget-option-actions button:hover {
+  transform: scale(1.2);
+  background-color: rgba(0,0,0,0.05);
+}
+#widget-selector-panel .widget-option-actions button[data-action="navigate"]:hover {
+  transform: scale(1.2) rotate(10deg);
 }
