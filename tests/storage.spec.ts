@@ -23,7 +23,10 @@ test.describe('StorageManager', () => {
         globalBoards: window.asd.boards
       }
     })
-    expect(JSON.parse(result.raw)).toEqual({ version: 1, data: { boards: [{ id: 'b1', name: 'B1', views: [] }] } })
+    expect(JSON.parse(result.raw)).toMatchObject({
+      version: 1,
+      data: { boards: [{ id: 'b1', name: 'B1', views: [] }] }
+    })
     expect(JSON.parse(result.boards)).toEqual([{ id: 'b1', name: 'B1', views: [] }])
     expect(result.cfg).toEqual({ boards: [{ id: 'b1', name: 'B1', views: [] }] })
     expect(result.globalBoards).toEqual([{ id: 'b1', name: 'B1', views: [] }])

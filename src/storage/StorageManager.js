@@ -5,6 +5,7 @@
  * @module storage/StorageManager
  */
 
+import { md5Hex } from '../utils/hash.js'
 /**
  * CURRENT_VERSION for stored data schema.
  * @constant {number}
@@ -81,9 +82,14 @@ const StorageManager = {
    * @returns {void}
    */
   setConfig (cfg) {
-    jsonSet(KEYS.CONFIG, { version: CURRENT_VERSION, data: cfg })
+    // Flatten + wrap for backward compatibility
+    const wrapped = { version: CURRENT_VERSION, data: cfg, ...cfg }
+    jsonSet(KEYS.CONFIG, wrapped)
+
     if (Array.isArray(cfg.boards)) {
       StorageManager.setBoards(cfg.boards)
+    } else {
+      jsonSet(KEYS.BOARDS, null)
     }
   },
 
@@ -163,10 +169,7 @@ const StorageManager = {
   async saveStateSnapshot ({ name, type, cfg, svc }) {
     const store = await StorageManager.loadStateStore()
     const blob = cfg + svc
-    const md5 = await crypto.subtle.digest('MD5', new TextEncoder().encode(blob))
-    const hash = Array.from(new Uint8Array(md5))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('')
+    const hash = md5Hex(blob)
     store.states.unshift({ name, ts: Date.now(), type, md5: hash, cfg, svc })
     jsonSet(KEYS.STATES, store)
     return hash
