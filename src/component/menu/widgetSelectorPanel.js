@@ -27,6 +27,36 @@ export function updateWidgetCounter () {
 }
 
 /**
+ * Update the instance count labels for each service row.
+ * @function refreshRowCounts
+ * @returns {void}
+ */
+export function refreshRowCounts () {
+  const container = document.querySelector('#widget-selector-panel .dropdown-content')
+  if (!container) return
+  const services = servicesStore.load()
+  const overGlobal = widgetStore.widgets.size >= widgetStore.maxSize
+  services.forEach(service => {
+    const item = container.querySelector(`.widget-option[data-name="${service.name}"]`)
+    if (!(item instanceof HTMLElement)) return
+    const label = item.querySelector('span')
+    if (!(label instanceof HTMLElement)) return
+    const activeCount = (window.asd.boards || []).reduce((c, b) =>
+      c + b.views.reduce((s, v) => s + v.widgetState.filter(w => w.url === service.url).length, 0), 0)
+    const max = service.maxInstances ?? '∞'
+    label.textContent = `${service.name} (${activeCount}/${max})`
+    const overService = typeof service.maxInstances === 'number' && activeCount >= service.maxInstances
+    if (overGlobal || overService) {
+      item.removeAttribute('data-url')
+      item.classList.add('limit-reached')
+    } else {
+      item.dataset.url = service.url
+      item.classList.remove('limit-reached')
+    }
+  })
+}
+
+/**
  * Populate dropdown list with saved services.
  * @function populateWidgetSelectorPanel
  * @returns {void}
@@ -42,16 +72,18 @@ export function populateWidgetSelectorPanel () {
   servicesStore.load().forEach(service => {
     const item = document.createElement('div')
     item.className = 'widget-option'
-    item.dataset.url = service.url
     item.dataset.name = service.name
     if (service.category) item.dataset.category = service.category
     if (service.subcategory) item.dataset.subcategory = service.subcategory
     if (Array.isArray(service.tags)) item.dataset.tags = service.tags.join(',')
-    const active = (window.asd.boards || []).reduce((c, b) =>
+    const activeCount = (window.asd.boards || []).reduce((c, b) =>
       c + b.views.reduce((s, v) => s + v.widgetState.filter(w => w.url === service.url).length, 0), 0)
-    const max = service.maxInstances
+    const max = service.maxInstances ?? '∞'
+    const overService = typeof service.maxInstances === 'number' && activeCount >= service.maxInstances
+    const overGlobal = widgetStore.widgets.size >= widgetStore.maxSize
+    if (!overService && !overGlobal) item.dataset.url = service.url
     const label = document.createElement('span')
-    label.textContent = `${service.name} (${active}/${typeof max === 'number' ? max : '∞'})`
+    label.textContent = `${service.name} (${activeCount}/${max})`
     const actions = document.createElement('span')
     actions.className = 'widget-option-actions'
 
@@ -77,6 +109,7 @@ export function populateWidgetSelectorPanel () {
     item.append(label, actions)
     container.appendChild(item)
   })
+  refreshRowCounts()
   updateWidgetCounter()
 }
 
@@ -105,7 +138,7 @@ export function initializeWidgetSelectorPanel () {
     panel.classList.add('open')
   }
 
-  panel.addEventListener('click', event => {
+  panel.addEventListener('click', async event => {
     const target = /** @type {?HTMLElement} */(event.target)
     if (!target) return
     const item = target.closest('.widget-option')
@@ -142,6 +175,7 @@ export function initializeWidgetSelectorPanel () {
         const updated = servicesStore.load().filter(s => !(s.url === url && s.name === name))
         servicesStore.save(updated)
         document.dispatchEvent(new CustomEvent('services-updated'))
+        refreshRowCounts()
         updateWidgetCounter()
       }
       return
@@ -154,15 +188,18 @@ export function initializeWidgetSelectorPanel () {
         if (loc) switchBoard(loc.boardId, loc.viewId)
       }
       closePanel()
+      refreshRowCounts()
+      updateWidgetCounter()
       return
     }
 
     if (item.classList.contains('new-service')) {
-      import('../modal/saveServiceModal.js').then(m => m.openSaveServiceModal({ mode: 'new', onClose: null }))
+      import('../modal/saveServiceModal.js').then(m => m.openSaveServiceModal({ mode: 'new', url: '' }))
       return
     }
     if (url) {
-      addWidget(url, 1, 1, 'iframe', getCurrentBoardId(), getCurrentViewId())
+      await addWidget(url, 1, 1, 'iframe', getCurrentBoardId(), getCurrentViewId())
+      refreshRowCounts()
       updateWidgetCounter()
     }
     closePanel()
@@ -221,6 +258,7 @@ export function initializeWidgetSelectorPanel () {
 
   document.addEventListener('services-updated', () => {
     populateWidgetSelectorPanel()
+    refreshRowCounts()
     updateWidgetCounter()
   })
 }
