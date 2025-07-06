@@ -9,6 +9,7 @@ import { clearConfigFragment } from '../../utils/fragmentGuard.js'
 import { gunzipBase64urlToJson } from '../../utils/compression.js'
 import { mergeBoards, mergeServices } from '../../utils/merge.js'
 import { Logger } from '../../utils/Logger.js'
+import StorageManager from '../../storage/StorageManager.js'
 
 /** @typedef {import('../../types.js').DashboardConfig} DashboardConfig */
 /** @typedef {import('../../types.js').Service} Service */
@@ -19,12 +20,14 @@ const logger = new Logger('fragmentDecisionModal.js')
 /**
  * Display modal asking user to overwrite or merge fragment data.
  *
- * @param {string|null} cfgParam - Encoded config fragment.
- * @param {string|null} svcParam - Encoded service fragment.
+ * @param {{cfgParam:string|null,svcParam:string|null,nameParam:string}} params
+ *        cfgParam - Encoded config fragment.
+ *        svcParam - Encoded service fragment.
+ *        nameParam - Default snapshot name.
  * @function openFragmentDecisionModal
  * @returns {Promise<void>}
  */
-export function openFragmentDecisionModal (cfgParam, svcParam) {
+export function openFragmentDecisionModal ({ cfgParam, svcParam, nameParam }) {
   return new Promise(resolve => {
     openModal({
       id: 'fragment-decision-modal',
@@ -39,6 +42,10 @@ export function openFragmentDecisionModal (cfgParam, svcParam) {
         msg1.textContent = 'A dashboard configuration was detected in the URL.'
         const msg2 = document.createElement('p')
         msg2.textContent = 'What would you like to do?'
+
+        const nameInput = document.createElement('input')
+        nameInput.id = 'importName'
+        nameInput.value = nameParam
 
         const overwriteBtn = document.createElement('button')
         overwriteBtn.textContent = '⬇ Overwrite existing data'
@@ -63,7 +70,7 @@ export function openFragmentDecisionModal (cfgParam, svcParam) {
         btnGroup.classList.add('modal__btn-group')
         btnGroup.append(overwriteBtn, mergeBtn, cancelBtn)
 
-        modal.append(msg1, msg2, btnGroup)
+        modal.append(msg1, msg2, nameInput, btnGroup)
 
         /**
          * Applies the configuration from the URL fragment, either by overwriting or merging.
@@ -73,45 +80,41 @@ export function openFragmentDecisionModal (cfgParam, svcParam) {
          */
         async function applyFragment (overwrite) {
           try {
+            let cfgObj = StorageManager.getConfig() || {}
+            let svcArr = StorageManager.getServices()
+
             if (cfgParam) {
-              const cfg = /** @type {DashboardConfig} */(await gunzipBase64urlToJson(cfgParam))
+              const decoded = /** @type {DashboardConfig} */(await gunzipBase64urlToJson(cfgParam))
               if (overwrite) {
-                localStorage.setItem('config', JSON.stringify(cfg))
-                if (Array.isArray(cfg.boards)) {
-                  localStorage.setItem('boards', JSON.stringify(cfg.boards))
-                } else {
-                  localStorage.removeItem('boards')
-                }
+                cfgObj = decoded
               } else {
-                const existingCfgStr = localStorage.getItem('config')
-                const existingBoardsStr = localStorage.getItem('boards')
-                /** @type {DashboardConfig} */
-                const currentCfg = existingCfgStr ? JSON.parse(existingCfgStr) : {}
-                const currentBoards = existingBoardsStr ? JSON.parse(existingBoardsStr) : []
-                const mergedBoards = mergeBoards(currentBoards, cfg.boards || [])
-                currentCfg.boards = mergedBoards
-                currentCfg.globalSettings = currentCfg.globalSettings || cfg.globalSettings
-                localStorage.setItem('config', JSON.stringify(currentCfg))
-                localStorage.setItem('boards', JSON.stringify(mergedBoards))
+                const currentBoards = StorageManager.getBoards()
+                const mergedBoards = mergeBoards(currentBoards, decoded.boards || [])
+                cfgObj = { ...cfgObj, ...decoded, boards: mergedBoards }
               }
             }
 
             if (svcParam) {
-              const svc = /** @type {Array<Service>} */(await gunzipBase64urlToJson(svcParam))
+              const decodedSvc = /** @type {Array<Service>} */(await gunzipBase64urlToJson(svcParam))
               if (overwrite) {
-                localStorage.setItem('services', JSON.stringify(svc))
+                svcArr = decodedSvc
               } else {
-                const existingStr = localStorage.getItem('services')
-                const existing = existingStr ? JSON.parse(existingStr) : []
-                const merged = mergeServices(existing, svc)
-                localStorage.setItem('services', JSON.stringify(merged))
+                svcArr = mergeServices(svcArr, decodedSvc)
               }
             }
+
+            const nameEl = document.getElementById('importName')
+            const finalName = nameEl && 'value' in nameEl && typeof nameEl.value === 'string'
+              ? nameEl.value.trim() || 'Imported'
+              : 'Imported'
+            StorageManager.setConfig(cfgObj)
+            StorageManager.setServices(svcArr)
+            await StorageManager.saveStateSnapshot({ name: finalName, type: 'imported', cfg: cfgParam || '', svc: svcParam || '' })
           } catch (e) {
             logger.error('Error applying fragment:', e)
           } finally {
             closeModal()
-            setTimeout(() => location.reload(), 200)
+            location.reload()
           }
         }
       }

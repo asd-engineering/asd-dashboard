@@ -19,6 +19,7 @@ import { loadFromFragment } from './utils/fragmentLoader.js'
 import { Logger } from './utils/Logger.js'
 import { widgetStore } from './component/widget/widgetStore.js'
 import { debounceLeading } from './utils/utils.js'
+import StorageManager from './storage/StorageManager.js'
 
 const logger = new Logger('main.js')
 
@@ -31,6 +32,8 @@ window.asd = {
   currentViewId: null,
   widgetStore
 }
+
+window.addEventListener('hashchange', () => loadFromFragment(false))
 
 /**
  * Main application initialization function.
@@ -77,8 +80,8 @@ async function main () {
   // 6. Initialize boards and switch to the last used or default board/view
   const initialBoardView = await initializeBoards() // initializeBoards is now fully async
 
-  const lastUsedBoardId = localStorage.getItem('lastUsedBoardId')
-  const lastUsedViewId = localStorage.getItem('lastUsedViewId')
+  const lastUsedBoardId = StorageManager.misc.getLastBoardId()
+  const lastUsedViewId = StorageManager.misc.getLastViewId()
 
   const boardExists = boards.some(board => board.id === lastUsedBoardId)
 

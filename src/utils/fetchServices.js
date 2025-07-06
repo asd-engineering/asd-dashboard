@@ -6,11 +6,11 @@
  */
 import { Logger } from './Logger.js'
 import { showNotification } from '../component/dialog/notification.js'
+import StorageManager from '../storage/StorageManager.js'
 
 /** @typedef {import('../types.js').Service} Service */
 
 const logger = new Logger('fetchServices.js')
-const STORAGE_KEY = 'services'
 
 /**
  * Parses a base64 encoded JSON string.
@@ -65,13 +65,9 @@ export const fetchServices = async () => {
   }
 
   if (!services) {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      try {
-        services = JSON.parse(stored)
-      } catch (e) {
-        logger.error('Failed to parse services from localStorage:', e)
-      }
+    const stored = StorageManager.getServices()
+    if (stored.length > 0) {
+      services = stored
     }
   }
 
@@ -80,7 +76,7 @@ export const fetchServices = async () => {
   }
 
   services = services || []
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(services))
+  StorageManager.setServices(services)
   window.asd.services = services
 
   const serviceSelector = document.getElementById('service-selector')

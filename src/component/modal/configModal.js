@@ -8,7 +8,9 @@ import { openModal } from './modalFactory.js'
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
 import { clearConfigFragment } from '../../utils/fragmentGuard.js'
-import { gzipJsonToBase64url } from '../../utils/compression.js'
+import StorageManager from '../../storage/StorageManager.js'
+import { exportConfig } from '../configModal/exportConfig.js'
+import { openFragmentDecisionModal } from './fragmentDecisionModal.js'
 
 /** @typedef {import('../../types.js').DashboardConfig} DashboardConfig */
 
@@ -42,33 +44,47 @@ const logger = new Logger('configModal.js')
  * Open a modal dialog allowing the user to edit and save configuration JSON.
  *
  * @function openConfigModal
- * @returns {void}
+ * @returns {Promise<void>}
  */
-export function openConfigModal () {
-  const storedConfig = localStorage.getItem('config')
-  const storedBoards = localStorage.getItem('boards')
-  const configData = storedConfig ? JSON.parse(storedConfig) : { ...DEFAULT_CONFIG_TEMPLATE }
+export async function openConfigModal () {
+  const storedConfig = StorageManager.getConfig()
+  const storedBoards = StorageManager.getBoards()
+  const configData = storedConfig || { ...DEFAULT_CONFIG_TEMPLATE }
 
-  if (storedBoards) {
-    try {
-      const boards = JSON.parse(storedBoards)
-      if (Array.isArray(boards)) {
-        configData.boards = boards
-      }
-    } catch (e) {
-      logger.error('Failed to parse boards from localStorage:', e)
-    }
+  if (Array.isArray(storedBoards) && storedBoards.length > 0) {
+    configData.boards = storedBoards
   }
 
+  const last = localStorage.getItem('configModalTab') || 'cfg'
   openModal({
     id: 'config-modal',
     onCloseCallback: () => logger.log('Config modal closed'),
-    buildContent: (modal, closeModal) => {
+    buildContent: async (modal, closeModal) => {
+      const tabs = document.createElement('div')
+      tabs.className = 'tabs'
+      const cfgBtn = document.createElement('button')
+      cfgBtn.dataset.tab = 'cfg'
+      cfgBtn.textContent = 'Configuration'
+      const stateBtn = document.createElement('button')
+      stateBtn.dataset.tab = 'state'
+      stateBtn.textContent = 'Saved States'
+      tabs.append(cfgBtn, stateBtn)
+      modal.appendChild(tabs)
+
+      const cfgTab = document.createElement('div')
+      cfgTab.id = 'cfgTab'
       const textarea = document.createElement('textarea')
       textarea.id = 'config-json'
       textarea.classList.add('modal__textarea--grow')
       textarea.value = JSON.stringify(configData, null, 2)
-      modal.appendChild(textarea)
+      cfgTab.appendChild(textarea)
+      modal.appendChild(cfgTab)
+
+      const stateTab = document.createElement('div')
+      stateTab.id = 'stateTab'
+      stateTab.hidden = true
+      modal.appendChild(stateTab)
+      await populateStateTab(stateTab)
 
       const saveButton = document.createElement('button')
       saveButton.textContent = 'Save'
@@ -76,14 +92,7 @@ export function openConfigModal () {
       saveButton.addEventListener('click', () => {
         try {
           const cfg = JSON.parse(textarea.value)
-          localStorage.setItem('config', JSON.stringify(cfg))
-
-          if (Array.isArray(cfg.boards)) {
-            localStorage.setItem('boards', JSON.stringify(cfg.boards))
-          } else {
-            localStorage.removeItem('boards')
-          }
-
+          StorageManager.setConfig(cfg)
           showNotification('Config saved to localStorage')
           closeModal()
           clearConfigFragment()
@@ -98,40 +107,7 @@ export function openConfigModal () {
       exportButton.textContent = 'Export'
       exportButton.title = 'Genereer deelbare URL'
       exportButton.classList.add('modal__btn', 'modal__btn--export')
-      exportButton.addEventListener('click', async () => {
-        try {
-          const cfgStr = localStorage.getItem('config')
-          const svcStr = localStorage.getItem('services')
-          let cfg, svc
-          try { cfg = cfgStr && JSON.parse(cfgStr) } catch { cfg = null }
-          try { svc = svcStr && JSON.parse(svcStr) } catch { svc = null }
-
-          if (!cfg || !svc) {
-            logger.warn('Export aborted: missing config or services')
-            showNotification('❌ Cannot export: config or services are missing', 4000, 'error')
-            return
-          }
-
-          const [cfgEnc, svcEnc] = await Promise.all([
-            gzipJsonToBase64url(cfg),
-            gzipJsonToBase64url(svc)
-          ])
-          const url = `${location.origin}${location.pathname}#cfg=${cfgEnc}&svc=${svcEnc}`
-          await navigator.clipboard.writeText(url)
-
-          const kb = (url.length / 1024).toFixed(1)
-          showNotification(`✅ URL copied to clipboard! (${kb} KB)`, 4000, 'success')
-          logger.info(`Exported config URL (${url.length} chars)`)
-
-          if (url.length > 60000) {
-            showNotification('⚠️ URL is very large and may not work in all browsers', 6000, 'error')
-            logger.warn(`Exported URL length: ${url.length}`)
-          }
-        } catch (e) {
-          showNotification('❌ Failed to export config', 4000, 'error')
-          logger.error('Export failed', e)
-        }
-      })
+      exportButton.addEventListener('click', exportConfig)
 
       const closeButton = document.createElement('button')
       closeButton.textContent = 'Close'
@@ -142,6 +118,83 @@ export function openConfigModal () {
       buttonContainer.classList.add('modal__btn-group')
       buttonContainer.append(saveButton, exportButton, closeButton)
       modal.appendChild(buttonContainer)
+
+      const switchTab = tab => {
+        cfgBtn.classList.toggle('active', tab === 'cfg')
+        stateBtn.classList.toggle('active', tab === 'state')
+        cfgTab.hidden = tab !== 'cfg'
+        stateTab.hidden = tab !== 'state'
+        localStorage.setItem('configModalTab', tab)
+      }
+      cfgBtn.addEventListener('click', () => switchTab('cfg'))
+      stateBtn.addEventListener('click', () => switchTab('state'))
+      switchTab(last)
     }
   })
+}
+
+/**
+ * Populate the saved states tab with stored snapshots.
+ * @param {HTMLElement} tab
+ * @returns {Promise<void>}
+ */
+async function populateStateTab (tab) {
+  const store = await StorageManager.loadStateStore()
+  const list = Array.isArray(store.states) ? store.states : []
+
+  const filter = document.createElement('input')
+  filter.id = 'stateFilter'
+  tab.appendChild(filter)
+
+  const table = document.createElement('table')
+  const tbody = document.createElement('tbody')
+  table.appendChild(tbody)
+  tab.appendChild(table)
+
+  /** @returns {void} */
+  function render () {
+    tbody.innerHTML = ''
+    list.forEach(row => {
+      const tr = document.createElement('tr')
+      tr.dataset.name = row.name
+
+      const restore = document.createElement('button')
+      restore.textContent = 'Restore'
+      restore.addEventListener('click', () => {
+        openFragmentDecisionModal({ cfgParam: row.cfg, svcParam: row.svc, nameParam: row.name })
+      })
+
+      const del = document.createElement('button')
+      del.textContent = 'Delete'
+      del.addEventListener('click', async () => {
+        if (confirm('Delete snapshot?')) {
+          const idx = list.indexOf(row)
+          if (idx !== -1) list.splice(idx, 1)
+          await StorageManager.saveStateStore({ version: store.version, states: list })
+          tr.remove()
+        }
+      })
+
+      const cells = [restore, del, row.name, row.type, new Date(row.ts).toLocaleString(), row.md5]
+      cells.forEach(c => {
+        const td = document.createElement('td')
+        if (c instanceof HTMLElement) td.appendChild(c)
+        else td.textContent = String(c)
+        tr.appendChild(td)
+      })
+
+      tbody.appendChild(tr)
+    })
+  }
+
+  filter.addEventListener('keyup', () => {
+    const q = filter.value.toLowerCase()
+    Array.from(tbody.children).forEach(el => {
+      const row = /** @type {HTMLElement} */(el)
+      const t = row.dataset.name || ''
+      row.hidden = !t.toLowerCase().includes(q)
+    })
+  })
+
+  render()
 }
