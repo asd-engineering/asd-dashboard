@@ -1255,6 +1255,25 @@
     "returns": "void"
   },
   {
+    "name": "openEditServiceModal",
+    "kind": "function",
+    "file": "src/component/modal/editServiceModal.js",
+    "description": "Open a modal allowing the user to edit a service definition.",
+    "params": [
+      {
+        "name": "service",
+        "type": "import('../../types.js').Service",
+        "desc": "- Service to edit."
+      },
+      {
+        "name": "onClose",
+        "type": "Function",
+        "desc": "- Callback when modal closes."
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "openEvictionModal",
     "kind": "function",
     "file": "src/component/modal/evictionModal.js",

@@ -206,6 +206,12 @@ function initializeMainMenu () {
   widgetInput.placeholder = 'Search or Select Widget'
   widgetPanel.appendChild(widgetInput)
 
+  const widgetToggle = document.createElement('span')
+  widgetToggle.id = 'widget-dropdown-toggle'
+  widgetToggle.className = 'dropdown-arrow'
+  widgetToggle.textContent = '\u25BC'
+  widgetPanel.appendChild(widgetToggle)
+
   const counter = document.createElement('span')
   counter.id = 'widget-count'
   counter.style.marginLeft = 'auto'

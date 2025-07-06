@@ -76,6 +76,23 @@ export function populateWidgetSelectorPanel () {
 export function initializeWidgetSelectorPanel () {
   const panel = document.getElementById('widget-selector-panel')
   if (!panel) return
+
+  const toggle = panel.querySelector('#widget-dropdown-toggle')
+  const search = panel.querySelector('#widget-search')
+  let focusIndex = -1
+
+  const closePanel = () => {
+    panel.classList.remove('open')
+    focusIndex = -1
+    panel.querySelectorAll('.widget-option').forEach(el => {
+      el.classList.remove('active')
+    })
+  }
+
+  const openPanel = () => {
+    panel.classList.add('open')
+  }
+
   panel.addEventListener('click', event => {
     const target = /** @type {?HTMLElement} */(event.target)
     if (!target) return
@@ -139,10 +156,11 @@ export function initializeWidgetSelectorPanel () {
       addWidget(url, 1, 1, 'iframe', getCurrentBoardId(), getCurrentViewId())
       updateWidgetCounter()
     }
+    closePanel()
   })
 
-  const search = panel.querySelector('#widget-search')
   if (search instanceof HTMLInputElement) {
+    search.addEventListener('focus', openPanel)
     search.addEventListener('input', event => {
       const term = (/** @type {HTMLInputElement} */(event.target)).value.toLowerCase()
       panel.querySelectorAll('.widget-option').forEach(el => {
@@ -154,6 +172,40 @@ export function initializeWidgetSelectorPanel () {
         const match = !term || name.includes(term) || category.includes(term) || tags.includes(term)
         item.style.display = match ? '' : 'none'
       })
+      focusIndex = -1
+    })
+    search.addEventListener('keydown', e => {
+      if (!panel.classList.contains('open')) return
+      const options = Array.from(panel.querySelectorAll('.widget-option')).filter(el => el instanceof HTMLElement && el.style.display !== 'none')
+      if (options.length === 0) return
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        focusIndex = Math.min(options.length - 1, focusIndex + 1)
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        focusIndex = Math.max(0, focusIndex - 1)
+      } else if (e.key === 'Enter' && focusIndex >= 0) {
+        e.preventDefault()
+        const el = /** @type {HTMLElement} */(options[focusIndex])
+        el.click()
+        return
+      } else {
+        return
+      }
+      options.forEach((el, idx) => {
+        el.classList.toggle('active', idx === focusIndex)
+      })
     })
   }
+
+  if (toggle instanceof HTMLElement) {
+    toggle.addEventListener('click', () => {
+      panel.classList.toggle('open')
+    })
+  }
+
+  document.addEventListener('click', event => {
+    const target = /** @type {Node} */(event.target)
+    if (!panel.contains(target)) closePanel()
+  })
 }
