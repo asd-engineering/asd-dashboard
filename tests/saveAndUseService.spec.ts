@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking.js'
+import { ensurePanelOpen } from './shared/common'
 
 const saved = [{ name: 'Saved Service', url: 'http://localhost/saved' }]
 
@@ -11,6 +12,7 @@ test.describe('Use saved service', () => {
     await routeServicesConfig(page)
     await page.goto('/')
     await page.waitForLoadState('domcontentloaded')
+    await ensurePanelOpen(page)
   })
 
   test('selects saved service and adds widget', async ({ page }) => {

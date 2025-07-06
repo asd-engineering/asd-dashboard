@@ -1,6 +1,7 @@
 import { test, expect } from './fixtures';
 import { ciConfig, ciBoards } from './data/ciConfig';
 import { ciServices } from './data/ciServices';
+import { ensurePanelOpen } from './shared/common';
 import { gunzipSync } from 'zlib';
 
 function b64(obj: any) {
@@ -185,6 +186,7 @@ test.describe('Dashboard Functionality - Building from Services', () => {
   test('user can add board, view, and widget from services', async ({ page }) => {
     const cfg = { ...ciConfig, boards: [{ id: 'b1', name: 'b1', order: 0, views: [{ id: 'v1', name: 'v1', widgetState: [] }] }] };
     await page.goto(`/?config_base64=${b64(cfg)}&services_base64=${b64(ciServices)}`);
+    await ensurePanelOpen(page);
     await page.locator('#widget-selector-panel .widget-option').nth(1).click();
     await expect(page.locator('.widget-wrapper')).toHaveCount(1);
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('boards')||'[]'));

@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking.js'
+import { ensurePanelOpen } from './shared/common'
 
 
 test.describe('Save Service Modal', () => {
@@ -7,6 +8,7 @@ test.describe('Save Service Modal', () => {
     await routeServicesConfig(page)
     await page.goto('/')
     await page.waitForLoadState('domcontentloaded')
+    await ensurePanelOpen(page)
   })
 
   test('opens when adding widget with manual URL', async ({ page }) => {
@@ -29,7 +31,7 @@ test.describe('Save Service Modal', () => {
     const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services') || '[]'))
     expect(services.some(s => s.url === url && s.name === 'Manual Service')).toBeTruthy()
 
-    const options = await page.$$eval('#widget-selector-panel .widget-option', opts => opts.map(o => o.textContent))
+    const options = await page.$$eval('#widget-selector-panel .widget-option', opts => opts.map(o => (o as HTMLElement).dataset.label || o.textContent))
     expect(options).toContain('Manual Service')
 
     const iframe = page.locator('.widget-wrapper iframe').first()
@@ -49,7 +51,7 @@ test.describe('Save Service Modal', () => {
     const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services') || '[]'))
     expect(services.some(s => s.url === url)).toBeFalsy()
 
-    const options = await page.$$eval('#widget-selector-panel .widget-option', opts => opts.map(o => o.textContent))
+    const options = await page.$$eval('#widget-selector-panel .widget-option', opts => opts.map(o => (o as HTMLElement).dataset.label || o.textContent))
     expect(options).not.toContain('Manual Service')
 
     const iframe = page.locator('.widget-wrapper iframe').first()

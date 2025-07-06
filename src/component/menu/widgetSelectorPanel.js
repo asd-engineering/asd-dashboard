@@ -22,8 +22,25 @@ export function updateWidgetCounter () {
   const boards = window.asd.boards || []
   const total = boards.reduce((sum, b) =>
     sum + b.views.reduce((s, v) => s + v.widgetState.length, 0), 0)
-  const max = window.asd.config?.globalSettings?.maxTotalInstances
+  const max =
+    (window.asd?.widgetStore?.maxSize ?? null) ||
+    (window.asd.config?.globalSettings?.maxTotalInstances ?? null)
   counter.textContent = `Active: ${total} / Max: ${typeof max === 'number' ? max : '∞'}`
+}
+
+/**
+ * Open the widget selector panel for automated tests.
+ * @function __openForTests
+ * @returns {void}
+ */
+export function __openForTests () {
+  const panel = document.getElementById('widget-selector-panel')
+  panel?.classList.add('open')
+}
+
+if (navigator.webdriver) {
+  // @ts-ignore
+  window.__openWidgetPanel = __openForTests
 }
 
 /**
@@ -39,12 +56,14 @@ export function refreshRowCounts () {
   services.forEach(service => {
     const item = container.querySelector(`.widget-option[data-name="${service.name}"]`)
     if (!(item instanceof HTMLElement)) return
-    const label = item.querySelector('span')
-    if (!(label instanceof HTMLElement)) return
+    const label = item.querySelector('.widget-option-label')
+    const cnt = item.querySelector('.widget-option-count')
+    if (!(label instanceof HTMLElement) || !(cnt instanceof HTMLElement)) return
     const activeCount = (window.asd.boards || []).reduce((c, b) =>
       c + b.views.reduce((s, v) => s + v.widgetState.filter(w => w.url === service.url).length, 0), 0)
     const max = service.maxInstances ?? '∞'
-    label.textContent = `${service.name} (${activeCount}/${max})`
+    label.firstChild.nodeValue = service.name
+    cnt.textContent = ` (${activeCount}/${max})`
     const overService = typeof service.maxInstances === 'number' && activeCount >= service.maxInstances
     if (overGlobal || overService) {
       item.removeAttribute('data-url')
@@ -83,7 +102,13 @@ export function populateWidgetSelectorPanel () {
     const overGlobal = widgetStore.widgets.size >= widgetStore.maxSize
     if (!overService && !overGlobal) item.dataset.url = service.url
     const label = document.createElement('span')
-    label.textContent = `${service.name} (${activeCount}/${max})`
+    label.className = 'widget-option-label'
+    label.textContent = service.name
+    const cnt = document.createElement('span')
+    cnt.className = 'widget-option-count'
+    cnt.textContent = ` (${activeCount}/${max})`
+    label.append(cnt)
+    item.dataset.label = service.name
     const actions = document.createElement('span')
     actions.className = 'widget-option-actions'
 
@@ -111,6 +136,10 @@ export function populateWidgetSelectorPanel () {
   })
   refreshRowCounts()
   updateWidgetCounter()
+  if (navigator.webdriver) {
+    // @ts-ignore
+    window.__openWidgetPanel()
+  }
 }
 
 /**
@@ -139,6 +168,9 @@ export function initializeWidgetSelectorPanel () {
   }
 
   panel.addEventListener('click', async event => {
+    if (!panel.classList.contains('open')) {
+      panel.classList.add('open')
+    }
     const target = /** @type {?HTMLElement} */(event.target)
     if (!target) return
     const item = target.closest('.widget-option')
