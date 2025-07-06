@@ -45,6 +45,9 @@
  * @property {string} name
  * @property {string} url
  * @property {string} [type]
+ * @property {string} [category]
+ * @property {string} [subcategory]
+ * @property {Array<string>} [tags]
  * @property {ServiceConfig} [config]
  * @property {number} [maxInstances] Maximum allowed widget instances
  */

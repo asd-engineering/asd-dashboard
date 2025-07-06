@@ -197,10 +197,25 @@ function initializeMainMenu () {
   serviceControl.className = 'control-group'
   serviceControl.id = 'service-control'
 
-  const serviceSelector = document.createElement('div')
-  serviceSelector.id = 'service-selector'
-  serviceSelector.className = 'service-dropdown'
-  serviceControl.appendChild(serviceSelector)
+  const widgetPanel = document.createElement('div')
+  widgetPanel.id = 'widget-selector-panel'
+  widgetPanel.className = 'dropdown'
+
+  const widgetInput = document.createElement('input')
+  widgetInput.id = 'widget-search'
+  widgetInput.placeholder = 'Search or Select Widget'
+  widgetPanel.appendChild(widgetInput)
+
+  const counter = document.createElement('span')
+  counter.id = 'widget-count'
+  counter.style.marginLeft = 'auto'
+  widgetPanel.appendChild(counter)
+
+  const dropdown = document.createElement('div')
+  dropdown.className = 'dropdown-content'
+  widgetPanel.appendChild(dropdown)
+
+  serviceControl.appendChild(widgetPanel)
 
   menu.appendChild(serviceControl)
 

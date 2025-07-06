@@ -4,9 +4,11 @@
  *
  * @module dashboardMenu
  */
-import { addWidget } from '../widget/widgetManagement.js'
-import { openSaveServiceModal } from '../modal/saveServiceModal.js'
-import * as servicesStore from '../../storage/servicesStore.js'
+import {
+  populateWidgetSelectorPanel,
+  initializeWidgetSelectorPanel,
+  updateWidgetCounter
+} from './widgetSelectorPanel.js'
 import {
   switchBoard,
   switchView,
@@ -35,32 +37,17 @@ function initializeDashboardMenu () {
   uiInitialized = true
 
   logger.log('Dashboard menu initialized')
-  populateServiceDropdown()
-  document.addEventListener('services-updated', populateServiceDropdown)
+  populateWidgetSelectorPanel()
+  initializeWidgetSelectorPanel()
+  document.addEventListener('services-updated', () => {
+    populateWidgetSelectorPanel()
+    updateWidgetCounter()
+  })
   applyWidgetMenuVisibility()
 
   const buttonDebounce = 200
 
-  document.getElementById('service-selector').addEventListener('click', (event) => {
-    const target = /** @type {?HTMLElement} */(event.target)
-    if (!target) return
-    const item = target.closest('.service-option')
-    if (!(item instanceof HTMLElement)) return
-    const url = item.dataset.url
-    if (item.classList.contains('new-service')) {
-      const entered = prompt('Enter service URL:')
-      if (!entered) return
-      openSaveServiceModal(entered, () => {
-        servicesStore.load()
-        populateServiceDropdown()
-        addWidget(entered, 1, 1, 'iframe', getCurrentBoardId(), getCurrentViewId())
-      })
-      return
-    }
-    if (url) {
-      addWidget(url, 1, 1, 'iframe', getCurrentBoardId(), getCurrentViewId())
-    }
-  })
+  // events handled inside widgetSelectorPanel
 
   const handleToggleWidgetMenu = debounceLeading(() => {
     const widgetContainer = document.getElementById('widget-container')
@@ -115,22 +102,6 @@ function initializeDashboardMenu () {
  * @function populateServiceDropdown
  * @returns {void}
  */
-function populateServiceDropdown () {
-  const selector = document.getElementById('service-selector')
-  if (!selector) return
-  selector.innerHTML = ''
-  const newItem = document.createElement('div')
-  newItem.textContent = 'New Service'
-  newItem.className = 'service-option new-service'
-  selector.appendChild(newItem)
-  servicesStore.load().forEach(service => {
-    const item = document.createElement('div')
-    item.textContent = service.name
-    item.className = 'service-option'
-    item.dataset.url = service.url
-    selector.appendChild(item)
-  })
-}
 
 /**
  * Apply visibility of the widget menu based on configuration.
