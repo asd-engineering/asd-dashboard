@@ -114,3 +114,19 @@ main {
 .dropdown:hover .dropdown-content {
     display: block;
 }
+
+/* Service option layout */
+.widget-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px;
+}
+
+.widget-option-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+}
