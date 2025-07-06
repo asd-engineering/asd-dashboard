@@ -5,6 +5,7 @@
  * @module localStorage
  */
 import { Logger } from '../utils/Logger.js'
+import StorageManager from './StorageManager.js'
 
 /** @typedef {import('../types.js').Widget} Widget */
 /** @typedef {import('../types.js').Board} Board */
@@ -113,9 +114,8 @@ async function loadInitialConfig () {
  */
 function saveBoardState (boards) {
   try {
-    localStorage.setItem('boards', JSON.stringify(boards))
-    window.asd.boards = boards // Keep global state synchronized
-    logger.log('Saved board state to localStorage')
+    StorageManager.setBoards(boards)
+    logger.log('Saved board state')
   } catch (error) {
     logger.error('Error saving board state:', error)
   }
@@ -128,9 +128,7 @@ function saveBoardState (boards) {
  */
 async function loadBoardState () {
   try {
-    const boardsJSON = localStorage.getItem('boards')
-    const parsedBoards = boardsJSON ? JSON.parse(boardsJSON) : []
-    window.asd.boards = parsedBoards
+    const parsedBoards = StorageManager.getBoards()
     return parsedBoards
   } catch (error) {
     logger.error('Error loading board state:', error)

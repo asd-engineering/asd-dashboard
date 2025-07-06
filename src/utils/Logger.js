@@ -1,4 +1,5 @@
 // @ts-check
+import StorageManager from '../storage/StorageManager.js'
 /**
  * A simple browser console logger with runtime enable/disable support.
  * @class Logger
@@ -25,7 +26,7 @@ export class Logger {
    * @returns {boolean}
    */
   checkLogStatus () {
-    const logSetting = localStorage.getItem('log')
+    const logSetting = StorageManager.misc.getItem('log')
     if (logSetting === 'all') {
       return true
     } else if (logSetting) {
@@ -136,7 +137,7 @@ export class Logger {
    * @returns {void}
    */
   static enableLogs (files = 'all') {
-    localStorage.setItem('log', files)
+    StorageManager.misc.setItem('log', files)
   }
 
   /**
@@ -146,7 +147,7 @@ export class Logger {
    * @returns {void}
    */
   static disableLogs () {
-    localStorage.removeItem('log')
+    StorageManager.misc.setItem('log', null)
   }
 
   /**
@@ -156,7 +157,7 @@ export class Logger {
    * @returns {void}
    */
   static listLoggedFiles () {
-    const logSetting = localStorage.getItem('log')
+    const logSetting = StorageManager.misc.getItem('log')
     if (logSetting === 'all') {
       console.log('Logging is enabled for all files')
     } else if (logSetting) {
