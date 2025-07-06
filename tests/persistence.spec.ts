@@ -21,4 +21,14 @@ test.describe('Board persistence', () => {
     const boards = await getBoardsFromLocalStorage(page)
     expect(boards.some(b => b.name === boardName)).toBeTruthy()
   })
+
+  test('last view persists after reload', async ({ page }) => {
+    await handleDialog(page, 'prompt', 'Second View')
+    await page.click('#view-dropdown .dropbtn')
+    await page.click('#view-control a[data-action="create"]')
+    await expect(page.locator('#view-selector option:checked')).toHaveText('Second View')
+
+    await page.reload()
+    await expect(page.locator('#view-selector option:checked')).toHaveText('Second View')
+  })
 })

@@ -1,5 +1,5 @@
 // @ts-check
-const STORAGE_KEY = 'services'
+import StorageManager from './StorageManager.js'
 
 /**
  * Loads the array of services from localStorage.
@@ -8,10 +8,9 @@ const STORAGE_KEY = 'services'
  */
 export function load () {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    return stored ? JSON.parse(stored) : []
+    return StorageManager.getServices()
   } catch (e) {
-    console.error('Failed to parse services from localStorage:', e)
+    console.error('Failed to parse services from storage:', e)
     return []
   }
 }
@@ -23,5 +22,5 @@ export function load () {
  * @returns {void}
  */
 export function save (services) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(services))
+  StorageManager.setServices(services)
 }

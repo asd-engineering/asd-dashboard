@@ -7,25 +7,9 @@
 import { openModal } from './modalFactory.js'
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
+import StorageManager from '../../storage/StorageManager.js'
 
 const logger = new Logger('localStorageModal.js')
-
-/**
- * Checks if a given string is valid JSON.
- * @function isJSON
- * @param {string} value - The string to check.
- * @returns {boolean} True if the string is valid JSON, false otherwise.
- */
-function isJSON (value) {
-  try {
-    JSON.parse(value)
-    logger.log('Valid JSON:', value)
-    return true
-  } catch (e) {
-    logger.error('Invalid JSON:', value)
-    return false
-  }
-}
 
 /**
  * Retrieves and parses all JSON-formatted items from localStorage.
@@ -33,21 +17,8 @@ function isJSON (value) {
  * @returns {Record<string, any>} An object containing the parsed localStorage data.
  */
 function getLocalStorageData () {
-  const localStorageData = {}
-
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i)
-    const value = localStorage.getItem(key)
-    logger.log(`Checking key: ${key}, value: ${value}`)
-
-    if (isJSON(value)) {
-      localStorageData[key] = JSON.parse(value)
-    } else {
-      logger.warn(`Non-JSON value detected for key: ${key}. This entry will not be editable in the modal.`)
-    }
-  }
-
-  return localStorageData
+  const data = StorageManager.misc.getAllJson()
+  return data
 }
 
 /**
@@ -57,10 +28,7 @@ function getLocalStorageData () {
  * @returns {void}
  */
 function saveLocalStorageData (updatedData) {
-  for (const key in updatedData) {
-    const value = updatedData[key]
-    localStorage.setItem(key, JSON.stringify(value))
-  }
+  StorageManager.misc.setJsonRecord(updatedData)
 }
 
 /**

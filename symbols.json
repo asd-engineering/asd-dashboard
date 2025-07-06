@@ -612,6 +612,14 @@
     "returns": "HTMLElement|undefined"
   },
   {
+    "name": "getAllJson",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Get all JSON-parsable items from localStorage.",
+    "params": [],
+    "returns": "Record<string, any>"
+  },
+  {
     "name": "getAuthToken",
     "kind": "function",
     "file": "src/component/widget/utils/fetchData.js",
@@ -674,6 +682,20 @@
     "description": "Get the id of the currently active view element.",
     "params": [],
     "returns": "string"
+  },
+  {
+    "name": "getItem",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Retrieve a raw string value from localStorage.",
+    "params": [
+      {
+        "name": "key",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "string|null"
   },
   {
     "name": "getLastBoardId",
@@ -1346,7 +1368,7 @@
     "file": "src/component/modal/configModal.js",
     "description": "Open a modal dialog allowing the user to edit and save configuration JSON.",
     "params": [],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "openEvictionModal",
@@ -1763,6 +1785,39 @@
       {
         "name": "cfg",
         "type": "DashboardConfig",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "setItem",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist a raw string value under a custom key.",
+    "params": [
+      {
+        "name": "key",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "value",
+        "type": "string|null",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "setJsonRecord",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist an object of key/value pairs as JSON strings.",
+    "params": [
+      {
+        "name": "record",
+        "type": "Record<string, any>",
         "desc": ""
       }
     ],

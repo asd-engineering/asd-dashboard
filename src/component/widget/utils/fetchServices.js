@@ -5,12 +5,12 @@
  * @module fetchServices
  */
 import { Logger } from '../../../utils/Logger.js'
+import StorageManager from '../../../storage/StorageManager.js'
 
 const logger = new Logger('fetchServices.js')
 
 let serviceCache = null
 let lastFetchTime = 0
-const STORAGE_KEY = 'services'
 
 /**
  * Parses a base64 encoded JSON string.
@@ -71,13 +71,9 @@ export async function fetchServices () {
   }
 
   if (!services) {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      try {
-        services = JSON.parse(stored)
-      } catch (e) {
-        logger.error('Failed to parse services from localStorage:', e)
-      }
+    const stored = StorageManager.getServices()
+    if (stored.length) {
+      services = stored
     }
   }
 
@@ -86,7 +82,7 @@ export async function fetchServices () {
   }
 
   services = services || []
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(services))
+  StorageManager.setServices(services)
   serviceCache = services
   lastFetchTime = currentTime
   return serviceCache

@@ -223,6 +223,67 @@ const StorageManager = {
     setLastViewId (id) {
       if (id) localStorage.setItem(KEYS.LAST_VIEW, id)
       else localStorage.removeItem(KEYS.LAST_VIEW)
+    },
+
+    /**
+     * Retrieve a raw string value from localStorage.
+     *
+     * @function getItem
+     * @param {string} key
+     * @returns {string|null}
+     */
+    getItem (key) {
+      return localStorage.getItem(key)
+    },
+
+    /**
+     * Persist a raw string value under a custom key.
+     *
+     * @function setItem
+     * @param {string} key
+     * @param {string|null} value
+     * @returns {void}
+     */
+    setItem (key, value) {
+      if (value === null || value === undefined) {
+        localStorage.removeItem(key)
+      } else {
+        localStorage.setItem(key, String(value))
+      }
+    },
+
+    /**
+     * Get all JSON-parsable items from localStorage.
+     *
+     * @function getAllJson
+     * @returns {Record<string, any>}
+     */
+    getAllJson () {
+      const data = {}
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (!key) continue
+        const value = localStorage.getItem(key)
+        try {
+          data[key] = JSON.parse(value)
+        } catch {
+          // ignore unparsable entries
+        }
+      }
+      return data
+    },
+
+    /**
+     * Persist an object of key/value pairs as JSON strings.
+     *
+     * @function setJsonRecord
+     * @param {Record<string, any>} record
+     * @returns {void}
+     */
+    setJsonRecord (record) {
+      for (const key in record) {
+        localStorage.setItem(key, JSON.stringify(record[key]))
+      }
     }
   }
 }

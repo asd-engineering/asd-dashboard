@@ -55,7 +55,7 @@ export async function openConfigModal () {
     configData.boards = storedBoards
   }
 
-  const last = localStorage.getItem('configModalTab') || 'cfg'
+  const last = StorageManager.misc.getItem('configModalTab') || 'cfg'
   openModal({
     id: 'config-modal',
     onCloseCallback: () => logger.log('Config modal closed'),
@@ -124,7 +124,7 @@ export async function openConfigModal () {
         stateBtn.classList.toggle('active', tab === 'state')
         cfgTab.hidden = tab !== 'cfg'
         stateTab.hidden = tab !== 'state'
-        localStorage.setItem('configModalTab', tab)
+        StorageManager.misc.setItem('configModalTab', tab)
       }
       cfgBtn.addEventListener('click', () => switchTab('cfg'))
       stateBtn.addEventListener('click', () => switchTab('state'))

@@ -7,6 +7,7 @@
 import emojiList from '../../ui/unicodeEmoji.js'
 import { showNotification } from '../dialog/notification.js'
 import { debounceLeading } from '../../utils/utils.js'
+import StorageManager from '../../storage/StorageManager.js'
 
 /**
  * Initialize service worker controls in the menu.
@@ -19,7 +20,7 @@ function initSW () {
   const swIcon = document.querySelector('.sw-icon')
   /** @type {HTMLElement} */
   const swCheckbox = document.querySelector('.icon-checkbox')
-  const swEnabled = localStorage.getItem('swEnabled') === 'true'
+  const swEnabled = StorageManager.misc.getItem('swEnabled') === 'true'
   swToggle.checked = swEnabled
 
   const buttonDebounce = 200
@@ -97,7 +98,7 @@ function initSW () {
 
     const handleSwChange = debounceLeading(() => {
       const isEnabled = swToggle.checked
-      localStorage.setItem('swEnabled', String(isEnabled))
+      StorageManager.misc.setItem('swEnabled', String(isEnabled))
       updateServiceWorkerUI(isEnabled)
       showNotification(`Service Worker ${isEnabled ? 'Enabled' : 'Disabled'}`, 500)
 
