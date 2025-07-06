@@ -72,6 +72,7 @@ export function openSaveServiceModal (options, onCloseDeprecated) {
       const startCheck = document.createElement('input')
       startCheck.type = 'checkbox'
       startCheck.id = 'service-start'
+      startCheck.checked = true
 
       const startLabel = document.createElement('label')
       startLabel.textContent = 'Start in current board'
@@ -154,7 +155,14 @@ export function openSaveServiceModal (options, onCloseDeprecated) {
       const cancelButton = document.createElement('button')
       cancelButton.textContent = 'Cancel'
       cancelButton.classList.add('modal__btn', 'modal__btn--cancel')
-      cancelButton.addEventListener('click', closeModal)
+      cancelButton.addEventListener('click', async () => {
+        if (startCheck.checked && urlInput.value.trim()) {
+          await addWidget(urlInput.value.trim(), 1, 1, 'iframe', getCurrentBoardId(), getCurrentViewId())
+          refreshRowCounts()
+          updateWidgetCounter()
+        }
+        closeModal()
+      })
 
       const btnGroup = document.createElement('div')
       btnGroup.classList.add('modal__btn-group')

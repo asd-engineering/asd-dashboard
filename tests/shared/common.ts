@@ -1,17 +1,27 @@
 import { type Page, expect } from '@playwright/test';
 
+export async function ensurePanelOpen(page: Page) {
+  await page.evaluate(() => (window as any).__openWidgetPanel?.());
+}
+
 // Helper function to add services
-export async function addServices(page: Page, count: number) {
-    await page.click('#widget-dropdown-toggle');
-    for (let i = 0; i < count; i++) {
-      await page.locator('#widget-selector-panel .widget-option').nth(i + 1).click();
+  export async function addServices(page: Page, count: number) {
+      await page.click('#widget-dropdown-toggle');
+      await ensurePanelOpen(page);
+      for (let i = 0; i < count; i++) {
+      const opt = page.locator('#widget-selector-panel .widget-option').nth(i + 1);
+      await opt.waitFor({ state: 'visible' });
+      await opt.click();
+      }
     }
-  }
-  
+
 export async function selectServiceByName(page: Page, serviceName: string) {
     await page.click('#widget-dropdown-toggle');
-    await page.click(`#widget-selector-panel .widget-option:has-text("${serviceName}")`);
-}
+    await ensurePanelOpen(page);
+    const option = page.locator(`#widget-selector-panel .widget-option:has-text("${serviceName}")`).first();
+    await option.waitFor({ state: 'visible' });
+    await option.click();
+  }
 
 // Helper function to handle dialog interactions
 export async function handleDialog(page, type, inputText = '') {

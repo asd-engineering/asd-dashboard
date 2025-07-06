@@ -1,6 +1,7 @@
 import { test, expect } from "./fixtures";
 import { ciConfig } from "./data/ciConfig";
 import { ciServices } from "./data/ciServices";
+import { ensurePanelOpen } from "./shared/common";
 
 async function routeLimits(page, boards, services, maxSize = 2) {
   await page.route("**/services.json", (route) =>
@@ -60,6 +61,7 @@ test.describe("Widget limits", () => {
     await page.locator(".widget-wrapper").first().waitFor();
 
     await page.locator("#board-selector").selectOption("b2");
+    await ensurePanelOpen(page);
     await page.click('#widget-selector-panel .widget-option:has-text("ASD-toolbox")');
 
     await page.waitForFunction(() =>
@@ -88,7 +90,7 @@ test.describe("Widget limits", () => {
     await routeLimits(page, boards, ciServices, 1);
     await page.goto("/");
     await page.locator(".widget-wrapper").first().waitFor();
-
+    await ensurePanelOpen(page);
     await page.click('#widget-selector-panel .widget-option:has-text("ASD-terminal")');
 
     const modal = page.locator("#eviction-modal");
