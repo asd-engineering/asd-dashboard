@@ -7,6 +7,7 @@
 import { openModal } from './modalFactory.js'
 import { load, save } from '../../storage/servicesStore.js'
 import { addWidget } from '../widget/widgetManagement.js'
+import { refreshRowCounts, updateWidgetCounter } from '../menu/widgetSelectorPanel.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 
 /**
@@ -117,6 +118,15 @@ export function openSaveServiceModal (options, onCloseDeprecated) {
                 const hw = /** @type {HTMLElement} */(el)
                 if (hw.dataset.service === oldName) hw.dataset.service = nameVal
               })
+              const boards = JSON.parse(localStorage.getItem('boards') || '[]')
+              boards.forEach(b => {
+                b.views.forEach(v => {
+                  v.widgetState.forEach(w => {
+                    if (w.type === oldName) w.type = nameVal
+                  })
+                })
+              })
+              localStorage.setItem('boards', JSON.stringify(boards))
             }
             document.dispatchEvent(new CustomEvent('services-updated'))
           }
@@ -134,6 +144,8 @@ export function openSaveServiceModal (options, onCloseDeprecated) {
           document.dispatchEvent(new CustomEvent('services-updated'))
           if (startCheck.checked) {
             await addWidget(urlVal, 1, 1, 'iframe', getCurrentBoardId(), getCurrentViewId())
+            refreshRowCounts()
+            updateWidgetCounter()
           }
         }
         closeModal()

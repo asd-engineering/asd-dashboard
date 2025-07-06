@@ -1370,8 +1370,8 @@
     "params": [
       {
         "name": "options",
-        "type": "object|string",
-        "desc": "- Options or legacy URL string."
+        "type": "object",
+        "desc": "- Modal configuration."
       },
       {
         "name": "options.mode",
@@ -1451,6 +1451,14 @@
     "kind": "function",
     "file": "src/component/menu/widgetSelectorPanel.js",
     "description": "Populate dropdown list with saved services.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "refreshRowCounts",
+    "kind": "function",
+    "file": "src/component/menu/widgetSelectorPanel.js",
+    "description": "Update the instance count labels for each service row.",
     "params": [],
     "returns": "void"
   },
