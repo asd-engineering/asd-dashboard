@@ -41,6 +41,9 @@ export function populateWidgetSelectorPanel () {
     item.textContent = service.name
     item.className = 'widget-option'
     item.dataset.url = service.url
+    item.dataset.name = service.name
+    if (service.category) item.dataset.category = service.category
+    if (Array.isArray(service.tags)) item.dataset.tags = service.tags.join(',')
     container.appendChild(item)
   })
   updateWidgetCounter()
@@ -77,4 +80,20 @@ export function initializeWidgetSelectorPanel () {
       updateWidgetCounter()
     }
   })
+
+  const search = panel.querySelector('#widget-search')
+  if (search instanceof HTMLInputElement) {
+    search.addEventListener('input', event => {
+      const term = (/** @type {HTMLInputElement} */(event.target)).value.toLowerCase()
+      panel.querySelectorAll('.widget-option').forEach(el => {
+        const item = /** @type {HTMLElement} */(el)
+        if (item.classList.contains('new-service')) return
+        const name = item.dataset.name?.toLowerCase() || ''
+        const category = item.dataset.category?.toLowerCase() || ''
+        const tags = item.dataset.tags?.toLowerCase() || ''
+        const match = !term || name.includes(term) || category.includes(term) || tags.includes(term)
+        item.style.display = match ? '' : 'none'
+      })
+    })
+  }
 }
