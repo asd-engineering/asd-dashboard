@@ -83,20 +83,22 @@ export const fetchServices = async () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(services))
   window.asd.services = services
 
-  const serviceSelector = document.getElementById('service-selector')
-  if (serviceSelector) {
-    serviceSelector.innerHTML = ''
+  const container = document.querySelector('#widget-selector-panel .dropdown-content')
+  if (container) {
+    container.innerHTML = ''
     const newItem = document.createElement('div')
     newItem.textContent = 'New Service'
-    newItem.className = 'service-option new-service'
-    serviceSelector.appendChild(newItem)
+    newItem.className = 'widget-option new-service'
+    container.appendChild(newItem)
     services.forEach(service => {
       const item = document.createElement('div')
       item.textContent = service.name
-      item.className = 'service-option'
+      item.className = 'widget-option'
       item.dataset.url = service.url
-      serviceSelector.appendChild(item)
+      container.appendChild(item)
     })
+    const { updateWidgetCounter } = await import('../component/menu/widgetSelectorPanel.js')
+    updateWidgetCounter()
   }
 
   return services
