@@ -4,7 +4,9 @@
  *
  * @module widgetSelectorPanel
  */
-import { addWidget, removeWidget } from '../widget/widgetManagement.js'
+import { addWidget, removeWidget, findWidgetLocation } from '../widget/widgetManagement.js'
+import { widgetStore } from '../widget/widgetStore.js'
+import { switchBoard } from '../board/boardManagement.js'
 import * as servicesStore from '../../storage/servicesStore.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import emojiList from '../../ui/unicodeEmoji.js'
@@ -34,7 +36,7 @@ export function populateWidgetSelectorPanel () {
   if (!container) return
   container.innerHTML = ''
   const newItem = document.createElement('div')
-  newItem.textContent = 'New Service'
+  newItem.textContent = '➕ Create New Widget'
   newItem.className = 'widget-option new-service'
   container.appendChild(newItem)
   servicesStore.load().forEach(service => {
@@ -43,25 +45,35 @@ export function populateWidgetSelectorPanel () {
     item.dataset.url = service.url
     item.dataset.name = service.name
     if (service.category) item.dataset.category = service.category
+    if (service.subcategory) item.dataset.subcategory = service.subcategory
     if (Array.isArray(service.tags)) item.dataset.tags = service.tags.join(',')
+    const active = (window.asd.boards || []).reduce((c, b) =>
+      c + b.views.reduce((s, v) => s + v.widgetState.filter(w => w.url === service.url).length, 0), 0)
+    const max = service.maxInstances
     const label = document.createElement('span')
-    label.textContent = service.name
+    label.textContent = `${service.name} (${active}/${typeof max === 'number' ? max : '∞'})`
     const actions = document.createElement('span')
     actions.className = 'widget-option-actions'
+
+    const navBtn = document.createElement('button')
+    navBtn.textContent = emojiList.magnifyingGlass.unicode
+    navBtn.dataset.action = 'navigate'
+    navBtn.title = 'Locate widget'
+    navBtn.setAttribute('aria-label', 'Locate widget')
 
     const editBtn = document.createElement('button')
     editBtn.textContent = emojiList.edit.unicode
     editBtn.dataset.action = 'edit'
+    editBtn.title = 'Edit widget'
+    editBtn.setAttribute('aria-label', 'Edit widget')
 
     const removeBtn = document.createElement('button')
     removeBtn.textContent = emojiList.cross.unicode
     removeBtn.dataset.action = 'remove'
+    removeBtn.title = 'Delete widget type'
+    removeBtn.setAttribute('aria-label', 'Delete widget type')
 
-    const navBtn = document.createElement('button')
-    navBtn.textContent = emojiList.link.unicode
-    navBtn.dataset.action = 'navigate'
-
-    actions.append(editBtn, removeBtn, navBtn)
+    actions.append(navBtn, editBtn, removeBtn)
     item.append(label, actions)
     container.appendChild(item)
   })
@@ -102,10 +114,10 @@ export function initializeWidgetSelectorPanel () {
     const url = item.dataset.url
     const name = item.dataset.name
 
-    if (action === 'edit' && url && name) {
-      const svc = servicesStore.load().find(s => s.url === url && s.name === name)
+    if (action === 'edit' && name) {
+      const svc = servicesStore.load().find(s => s.name === name)
       if (svc) {
-        import('../modal/editServiceModal.js').then(m => m.openEditServiceModal(svc))
+        import('../modal/saveServiceModal.js').then(m => m.openSaveServiceModal({ mode: 'edit', service: svc }))
       }
       return
     }
@@ -135,21 +147,18 @@ export function initializeWidgetSelectorPanel () {
       return
     }
 
-    if (action === 'navigate' && url) {
-      window.open(url, '_blank')
+    if (action === 'navigate' && name) {
+      const el = widgetStore.findFirstWidgetByService(name)
+      if (el) {
+        const loc = findWidgetLocation(el.dataset.dataid)
+        if (loc) switchBoard(loc.boardId, loc.viewId)
+      }
+      closePanel()
       return
     }
 
     if (item.classList.contains('new-service')) {
-      const entered = prompt('Enter service URL:')
-      if (!entered) return
-      import('../modal/saveServiceModal.js').then(m => {
-        m.openSaveServiceModal(entered, () => {
-          servicesStore.load()
-          populateWidgetSelectorPanel()
-          addWidget(entered, 1, 1, 'iframe', getCurrentBoardId(), getCurrentViewId())
-        })
-      })
+      import('../modal/saveServiceModal.js').then(m => m.openSaveServiceModal({ mode: 'new', onClose: null }))
       return
     }
     if (url) {
@@ -168,8 +177,9 @@ export function initializeWidgetSelectorPanel () {
         if (item.classList.contains('new-service')) return
         const name = item.dataset.name?.toLowerCase() || ''
         const category = item.dataset.category?.toLowerCase() || ''
+        const subcategory = item.dataset.subcategory?.toLowerCase() || ''
         const tags = item.dataset.tags?.toLowerCase() || ''
-        const match = !term || name.includes(term) || category.includes(term) || tags.includes(term)
+        const match = !term || name.includes(term) || category.includes(term) || subcategory.includes(term) || tags.includes(term)
         item.style.display = match ? '' : 'none'
       })
       focusIndex = -1
@@ -207,5 +217,10 @@ export function initializeWidgetSelectorPanel () {
   document.addEventListener('click', event => {
     const target = /** @type {Node} */(event.target)
     if (!panel.contains(target)) closePanel()
+  })
+
+  document.addEventListener('services-updated', () => {
+    populateWidgetSelectorPanel()
+    updateWidgetCounter()
   })
 }

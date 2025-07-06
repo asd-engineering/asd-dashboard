@@ -11,11 +11,11 @@ test.describe('Service Edit/Delete', () => {
 
   test('edit service updates list', async ({ page }) => {
     await page.click('#widget-selector-panel .widget-option:has-text("ASD-toolbox") button[data-action="edit"]')
-    const modal = page.locator('#edit-service-modal')
+    const modal = page.locator('#save-service-modal')
     await expect(modal).toBeVisible()
-    await page.fill('#edit-service-name', 'Toolbox X')
-    await page.fill('#edit-service-url', 'http://localhost/x')
-    await page.click('#edit-service-modal button:has-text("Save")')
+    await page.fill('#service-name', 'Toolbox X')
+    await page.fill('#service-url', 'http://localhost/x')
+    await page.click('#save-service-modal button:has-text("Save")')
     await expect(modal).toBeHidden()
 
     const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services')))
