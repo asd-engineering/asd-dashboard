@@ -38,6 +38,7 @@ export function __openForTests () {
   panel?.classList.add('open')
 }
 
+// Used in: tests/shared/common.ts to open the panel for testing purposes
 if (navigator.webdriver) {
   // @ts-ignore
   window.__openWidgetPanel = __openForTests
@@ -136,10 +137,6 @@ export function populateWidgetSelectorPanel () {
   })
   refreshRowCounts()
   updateWidgetCounter()
-  if (navigator.webdriver) {
-    // @ts-ignore
-    window.__openWidgetPanel()
-  }
 }
 
 /**

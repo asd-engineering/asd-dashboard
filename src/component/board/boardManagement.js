@@ -9,6 +9,7 @@ import { addWidget } from '../widget/widgetManagement.js'
 import { widgetStore } from '../widget/widgetStore.js'
 import { Logger } from '../../utils/Logger.js'
 import { boardGetUUID, viewGetUUID } from '../../utils/id.js'
+import { refreshRowCounts, updateWidgetCounter } from '../../component/menu/widgetSelectorPanel.js'
 
 /** @typedef {import('../../types.js').Board} Board */
 /** @typedef {import('../../types.js').View} View */
@@ -246,6 +247,8 @@ export async function switchBoard (boardId, viewId = null) {
     window.asd.currentBoardId = boardId
     localStorage.setItem('lastUsedBoardId', boardId)
     updateViewSelector(boardId)
+    /* Update widget-counter & per-row counts once boards are hydrated */
+    refreshRowCounts(); updateWidgetCounter()
   } else {
     logger.error(`Board with ID ${boardId} not found`)
   }
