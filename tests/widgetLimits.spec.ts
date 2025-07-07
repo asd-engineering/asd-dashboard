@@ -1,6 +1,7 @@
 import { test, expect } from "./fixtures";
 import { ciConfig } from "./data/ciConfig";
 import { ciServices } from "./data/ciServices";
+import { ensurePanelOpen } from "./shared/common";
 
 async function routeLimits(page, boards, services, maxSize = 2) {
   await page.route("**/services.json", (route) =>
@@ -55,13 +56,13 @@ test.describe("Widget limits", () => {
     const services = ciServices.map((s) =>
       s.name === "ASD-toolbox" ? { ...s, maxInstances: 1 } : s,
     );
-    await routeLimits(page, boards, services, 5);
-    await page.goto("/");
-    await page.locator(".widget-wrapper").first().waitFor();
+  await routeLimits(page, boards, services, 5);
+  await page.goto("/");
+  await page.locator(".widget-wrapper").first().waitFor();
+  await ensurePanelOpen(page);
 
     await page.locator("#board-selector").selectOption("b2");
-    await page.selectOption("#service-selector", { label: "ASD-toolbox" });
-    await page.click("#add-widget-button");
+    await page.click('#widget-selector-panel .widget-option:has-text("ASD-toolbox")');
 
     await page.waitForFunction(() =>
       document.querySelectorAll('.widget-wrapper').length === 1
@@ -86,12 +87,12 @@ test.describe("Widget limits", () => {
         views: [{ id: "v", name: "V", widgetState }],
       },
     ];
-    await routeLimits(page, boards, ciServices, 1);
-    await page.goto("/");
-    await page.locator(".widget-wrapper").first().waitFor();
+  await routeLimits(page, boards, ciServices, 1);
+  await page.goto("/");
+  await page.locator(".widget-wrapper").first().waitFor();
+  await ensurePanelOpen(page);
 
-    await page.selectOption("#service-selector", { label: "ASD-terminal" });
-    await page.click("#add-widget-button");
+    await page.click('#widget-selector-panel .widget-option:has-text("ASD-terminal")');
 
     const modal = page.locator("#eviction-modal");
     await expect(modal).toBeVisible();
@@ -115,9 +116,10 @@ test.describe("Widget limits", () => {
     const services = ciServices.map((s) =>
       s.name === 'ASD-toolbox' ? { ...s, maxInstances: 1 } : s
     );
-    await routeLimits(page, boards, services, 5);
-    await page.goto('/');
-    await page.waitForSelector('#service-selector');
+  await routeLimits(page, boards, services, 5);
+  await page.goto('/');
+  await page.waitForSelector('#widget-selector-panel');
+  await ensurePanelOpen(page);
 
     await page.evaluate(async () => {
       const { addWidget } = await import('/component/widget/widgetManagement.js');

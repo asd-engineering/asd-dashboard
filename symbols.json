@@ -582,6 +582,20 @@
     "returns": "HTMLElement|undefined"
   },
   {
+    "name": "findWidgetLocation",
+    "kind": "function",
+    "file": "src/component/widget/widgetManagement.js",
+    "description": "Locate the board and view containing a widget id.",
+    "params": [
+      {
+        "name": "id",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "{boardId:string, viewId:string}|null"
+  },
+  {
     "name": "get",
     "kind": "function",
     "file": "src/component/widget/widgetStore.js",
@@ -1062,6 +1076,14 @@
     "returns": "void"
   },
   {
+    "name": "initializeWidgetSelectorPanel",
+    "kind": "function",
+    "file": "src/component/menu/widgetSelectorPanel.js",
+    "description": "Set up click handler for selecting services.",
+    "params": [],
+    "returns": "void"
+  },
+  {
     "name": "initSW",
     "kind": "function",
     "file": "src/component/menu/menu.js",
@@ -1247,6 +1269,25 @@
     "returns": "void"
   },
   {
+    "name": "openEditServiceModal",
+    "kind": "function",
+    "file": "src/component/modal/editServiceModal.js",
+    "description": "Open a modal allowing the user to edit a service definition.",
+    "params": [
+      {
+        "name": "service",
+        "type": "import('../../types.js').Service",
+        "desc": "- Service to edit."
+      },
+      {
+        "name": "onClose",
+        "type": "Function",
+        "desc": "- Callback when modal closes."
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "openEvictionModal",
     "kind": "function",
     "file": "src/component/modal/evictionModal.js",
@@ -1325,17 +1366,32 @@
     "name": "openSaveServiceModal",
     "kind": "function",
     "file": "src/component/modal/saveServiceModal.js",
-    "description": "Open a modal allowing the user to name and store a service URL.",
+    "description": "Open a modal to create or edit a service definition.",
     "params": [
       {
-        "name": "url",
-        "type": "string",
-        "desc": "- The service URL to save."
+        "name": "options",
+        "type": "object",
+        "desc": "- Modal configuration."
       },
       {
-        "name": "onClose",
+        "name": "options.mode",
+        "type": "'new'|'edit'",
+        "desc": ""
+      },
+      {
+        "name": "options.service",
+        "type": "import('../../types.js').Service",
+        "desc": ""
+      },
+      {
+        "name": "options.url",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "options.onClose",
         "type": "Function",
-        "desc": "- Callback when the modal closes."
+        "desc": ""
       }
     ],
     "returns": "void"
@@ -1387,6 +1443,22 @@
     "kind": "function",
     "file": "src/component/menu/dashboardMenu.js",
     "description": "Populate the service drop-down with saved services.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "populateWidgetSelectorPanel",
+    "kind": "function",
+    "file": "src/component/menu/widgetSelectorPanel.js",
+    "description": "Populate dropdown list with saved services.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "refreshRowCounts",
+    "kind": "function",
+    "file": "src/component/menu/widgetSelectorPanel.js",
+    "description": "Update the instance count labels for each service row.",
     "params": [],
     "returns": "void"
   },
@@ -1835,6 +1907,14 @@
         "desc": "- Identifier of the board whose views will be shown."
       }
     ],
+    "returns": "void"
+  },
+  {
+    "name": "updateWidgetCounter",
+    "kind": "function",
+    "file": "src/component/menu/widgetSelectorPanel.js",
+    "description": "Update the Active/Max counter in the panel.",
+    "params": [],
     "returns": "void"
   },
   {

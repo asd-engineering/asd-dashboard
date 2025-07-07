@@ -46,9 +46,10 @@
       "localStorage",
       "location",
       "getComputedStyle",
-      "caches",
-      "HTMLElement",
-      "requestAnimationFrame"
-    ]
+        "caches",
+        "HTMLElement",
+        "requestAnimationFrame",
+        "HTMLInputElement"
+      ]
+    }
   }
-}

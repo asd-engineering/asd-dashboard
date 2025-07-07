@@ -1,6 +1,7 @@
 import { test, expect } from './fixtures';
 import { ciConfig, ciBoards } from './data/ciConfig';
 import { ciServices } from './data/ciServices';
+import { ensurePanelOpen } from './shared/common';
 import { gunzipSync } from 'zlib';
 
 function b64(obj: any) {
@@ -28,7 +29,7 @@ test.describe('Dashboard Config - Base64 via URL Params', () => {
     const config = b64(cfg);
     const services = b64(ciServices);
     await page.goto(`/?config_base64=${config}&services_base64=${services}`);
-    await expect(page.locator('#service-selector option')).toHaveCount(ciServices.length + 1);
+    await expect(page.locator('#widget-selector-panel .widget-option')).toHaveCount(ciServices.length + 1);
     const boards = await page.evaluate(() => window.asd.boards);
     expect(boards.length).toBe(ciBoards.length);
     const names = await page.$$eval('#board-selector option', opts => opts.map(o => o.textContent));
@@ -134,7 +135,7 @@ test.describe('Dashboard Config - Fallback Config Popup', () => {
     await page.waitForSelector('#config-json');
     await page.fill('#config-json', JSON.stringify(ciConfig));
     await page.click('#config-modal .modal__btn--save');
-    await page.waitForSelector('#service-selector');
+    await page.waitForSelector('#widget-selector-panel');
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('config') || '{}'));
     expect(stored.globalSettings.theme).toBe(ciConfig.globalSettings.theme);
   });
@@ -158,7 +159,7 @@ test.describe('Dashboard Config - LocalStorage Behavior', () => {
     const config = b64(ciConfig);
     await page.goto(`/?config_base64=${config}`);
     await page.reload();
-    await expect(page.locator('#service-selector')).toBeVisible();
+    await expect(page.locator('#widget-selector-panel')).toBeVisible();
   });
 
   test('changes via modal are saved and persist', async ({ page }) => {
@@ -185,8 +186,8 @@ test.describe('Dashboard Functionality - Building from Services', () => {
   test('user can add board, view, and widget from services', async ({ page }) => {
     const cfg = { ...ciConfig, boards: [{ id: 'b1', name: 'b1', order: 0, views: [{ id: 'v1', name: 'v1', widgetState: [] }] }] };
     await page.goto(`/?config_base64=${b64(cfg)}&services_base64=${b64(ciServices)}`);
-    await page.selectOption('#service-selector', { index: 1 });
-    await page.click('#add-widget-button');
+    await ensurePanelOpen(page);
+    await page.locator('#widget-selector-panel .widget-option').nth(1).click();
     await expect(page.locator('.widget-wrapper')).toHaveCount(1);
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('boards')||'[]'));
     expect(stored.length).toBeGreaterThan(0);
