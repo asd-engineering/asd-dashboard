@@ -4,7 +4,7 @@
  *
  * @module resizeHandler
  */
-import { saveWidgetState } from '../../../storage/localStorage.js'
+import { saveWidgetState } from '../../../storage/widgetStatePersister.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../../utils/elements.js'
 import { debounce } from '../../../utils/utils.js'
 import { Logger } from '../../../utils/Logger.js'

@@ -4,7 +4,7 @@
  *
  * @module widgetManagement
  */
-import { saveWidgetState } from '../../storage/localStorage.js'
+import { saveWidgetState } from '../../storage/widgetStatePersister.js'
 import { fetchData } from './utils/fetchData.js'
 import {
   showResizeMenu,

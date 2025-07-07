@@ -4,12 +4,15 @@
  *
  * @module boardManagement
  */
-import { saveBoardState, loadBoardState } from '../../storage/localStorage.js'
+import { saveWidgetState } from '../../storage/widgetStatePersister.js'
 import { addWidget } from '../widget/widgetManagement.js'
 import { widgetStore } from '../widget/widgetStore.js'
 import { Logger } from '../../utils/Logger.js'
 import { boardGetUUID, viewGetUUID } from '../../utils/id.js'
 import StorageManager from '../../storage/StorageManager.js'
+
+// eslint-disable-next-line no-unused-vars
+const _unused = saveWidgetState
 
 /** @typedef {import('../../types.js').Board} Board */
 /** @typedef {import('../../types.js').View} View */
@@ -18,7 +21,6 @@ import StorageManager from '../../storage/StorageManager.js'
 const logger = new Logger('boardManagement.js')
 
 /** @type {Array<Board>} */
-export let boards = []
 
 /**
  * Create a board with a default view.
@@ -35,17 +37,17 @@ export async function createBoard (boardName, boardId = null, viewId = null) {
   const newBoard = {
     id: newBoardId,
     name: boardName,
-    order: boards.length,
+    order: window.asd.boards.length,
     views: []
   }
-  boards.push(newBoard)
+  window.asd.boards.push(newBoard)
 
   const defaultViewId = viewId || viewGetUUID()
   await createView(newBoardId, 'Default View', defaultViewId)
   logger.log(`Created default view ${defaultViewId} for new board ${newBoardId}`)
 
   // Save the board state after creating the default view
-  await saveBoardState(boards)
+  StorageManager.setBoards(window.asd.boards)
 
   // Switch to the new board
   await switchBoard(newBoardId, defaultViewId)
@@ -73,7 +75,7 @@ export async function createBoard (boardName, boardId = null, viewId = null) {
  * @returns {Promise<View|undefined>} The created view or undefined if the board is not found.
  */
 export async function createView (boardId, viewName, viewId = null) {
-  const board = boards.find(b => b.id === boardId)
+  const board = window.asd.boards.find(b => b.id === boardId)
   if (board) {
     const newViewId = viewId || viewGetUUID()
     const newView = {
@@ -82,7 +84,7 @@ export async function createView (boardId, viewName, viewId = null) {
       widgetState: []
     }
     board.views.push(newView)
-    await saveBoardState(boards)
+    StorageManager.setBoards(window.asd.boards)
     logger.log('Created new view:', newView)
 
     // Update the view selector
@@ -125,7 +127,7 @@ function clearWidgetContainer () {
  * @returns {Promise<void>} Resolves when widgets are loaded.
  */
 export async function switchView (boardId, viewId) {
-  const board = boards.find(b => b.id === boardId)
+  const board = window.asd.boards.find(b => b.id === boardId)
   const view = board?.views.find(v => v.id === viewId)
   if (!view) return logger.warn(`Invalid view ${viewId} on board ${boardId}`)
 
@@ -176,7 +178,7 @@ export function updateViewSelector (boardId) {
   }
 
   viewSelector.innerHTML = '' // Clear existing options
-  const board = boards.find(b => b.id === boardId)
+  const board = window.asd.boards.find(b => b.id === boardId)
   const viewButtonMenu = document.getElementById('view-button-menu')
   const settings = window.asd.config?.globalSettings || {}
   if (viewButtonMenu && settings.views?.showViewOptionsAsButtons) {
@@ -227,7 +229,7 @@ export function updateViewSelector (boardId) {
  */
 export async function switchBoard (boardId, viewId = null) {
   logger.log(`Attempting to switch to board: ${boardId}`)
-  const board = boards.find(b => b.id === boardId)
+  const board = window.asd.boards.find(b => b.id === boardId)
   if (board) {
     document.querySelector('.board').id = boardId
     const settings = window.asd.config?.globalSettings || {}
@@ -260,25 +262,24 @@ export async function switchBoard (boardId, viewId = null) {
  * @returns {Promise<{boardId: string, viewId: string}|undefined>} Resolves with the first board and view identifiers.
  */
 export function initializeBoards () {
-  return loadBoardState().then(async loadedBoards => {
-    boards = loadedBoards || []
+  return (async () => {
+    window.asd.boards = StorageManager.getBoards()
 
-    if (!Array.isArray(boards)) {
-      boards = []
+    if (!Array.isArray(window.asd.boards)) {
+      window.asd.boards = []
     }
 
-    if (boards.length === 0) {
-      // createBoard is async now
+    if (window.asd.boards.length === 0) {
       await createBoard('Default Board')
     }
 
-    boards.forEach(board => {
+    window.asd.boards.forEach(board => {
       logger.log('Initializing board:', board)
       addBoardToUI(board)
     })
 
-    if (boards.length > 0) {
-      const firstBoard = boards[0]
+    if (window.asd.boards.length > 0) {
+      const firstBoard = window.asd.boards[0]
       let firstView = firstBoard.views.length > 0 ? firstBoard.views[0] : { id: '' }
       const settings = window.asd.config?.globalSettings || {}
       const preferred = settings.views?.viewToShow
@@ -287,9 +288,10 @@ export function initializeBoards () {
         if (candidate) firstView = candidate
       }
       return { boardId: firstBoard.id, viewId: firstView.id }
+    } else {
+      return { boardId: '', viewId: '' }
     }
-    return { boardId: '', viewId: '' }
-  }).catch(error => {
+  })().catch(error => {
     logger.error('Error initializing boards:', error)
     return { boardId: '', viewId: '' }
   })
@@ -326,10 +328,10 @@ export function addBoardToUI (board) {
  * @returns {Promise<void>}
  */
 export async function renameBoard (boardId, newBoardName) {
-  const board = boards.find(b => b.id === boardId)
+  const board = window.asd.boards.find(b => b.id === boardId)
   if (board) {
     board.name = newBoardName
-    await saveBoardState(boards)
+    StorageManager.setBoards(window.asd.boards)
     logger.log(`Renamed board ${boardId} to ${newBoardName}`)
     updateBoardSelector()
   } else {
@@ -346,14 +348,14 @@ export async function renameBoard (boardId, newBoardName) {
  * @returns {Promise<void>}
  */
 export async function deleteBoard (boardId) {
-  const boardIndex = boards.findIndex(b => b.id === boardId)
+  const boardIndex = window.asd.boards.findIndex(b => b.id === boardId)
   if (boardIndex !== -1) {
-    boards.splice(boardIndex, 1)
-    await saveBoardState(boards)
+    window.asd.boards.splice(boardIndex, 1)
+    StorageManager.setBoards(window.asd.boards)
     logger.log(`Deleted board ${boardId}`)
     updateBoardSelector()
-    if (boards.length > 0) {
-      const firstBoardId = boards[0].id
+    if (window.asd.boards.length > 0) {
+      const firstBoardId = window.asd.boards[0].id
       await switchBoard(firstBoardId)
     } else {
       clearWidgetContainer()
@@ -375,12 +377,12 @@ export async function deleteBoard (boardId) {
  * @returns {Promise<void>}
  */
 export async function renameView (boardId, viewId, newViewName) {
-  const board = boards.find(b => b.id === boardId)
+  const board = window.asd.boards.find(b => b.id === boardId)
   if (board) {
     const view = board.views.find(v => v.id === viewId)
     if (view) {
       view.name = newViewName
-      await saveBoardState(boards)
+      StorageManager.setBoards(window.asd.boards)
       logger.log(`Renamed view ${viewId} to ${newViewName}`)
       updateViewSelector(boardId)
     } else {
@@ -400,7 +402,7 @@ export async function renameView (boardId, viewId, newViewName) {
  * @returns {Promise<void>}
  */
 export async function deleteView (boardId, viewId) {
-  const board = boards.find(b => b.id === boardId)
+  const board = window.asd.boards.find(b => b.id === boardId)
   if (board) {
     const viewIndex = board.views.findIndex(v => v.id === viewId)
     if (viewIndex !== -1) {
@@ -415,7 +417,7 @@ export async function deleteView (boardId, viewId) {
       }
 
       board.views.splice(viewIndex, 1)
-      await saveBoardState(boards)
+      StorageManager.setBoards(window.asd.boards)
       logger.log(`Deleted view ${viewId} and evicted its widgets.`)
 
       updateViewSelector(boardId)
@@ -450,7 +452,7 @@ export async function deleteView (boardId, viewId) {
  * @returns {Promise<void>}
  */
 export async function resetView (boardId, viewId) {
-  const board = boards.find(b => b.id === boardId)
+  const board = window.asd.boards.find(b => b.id === boardId)
   if (board) {
     const view = board.views.find(v => v.id === viewId)
     if (view) {
@@ -461,7 +463,7 @@ export async function resetView (boardId, viewId) {
       }
 
       view.widgetState = []
-      await saveBoardState(boards)
+      StorageManager.setBoards(window.asd.boards)
       logger.log(`Reset view ${viewId} and evicted its widgets.`)
     } else {
       logger.error(`View with ID ${viewId} not found`)
@@ -479,7 +481,7 @@ export async function resetView (boardId, viewId) {
 function updateBoardSelector () {
   const boardSelector = /** @type {HTMLSelectElement} */(document.getElementById('board-selector'))
   boardSelector.innerHTML = ''
-  boards.forEach(board => {
+  window.asd.boards.forEach(board => {
     const option = document.createElement('option')
     option.value = board.id
     option.textContent = board.name

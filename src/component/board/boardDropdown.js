@@ -4,7 +4,7 @@
  *
  * @module boardDropdown
  */
-import { createBoard, renameBoard, deleteBoard, updateViewSelector, boards } from './boardManagement.js'
+import { createBoard, renameBoard, deleteBoard, updateViewSelector } from './boardManagement.js'
 import { initializeDropdown } from '../utils/dropDownUtils.js'
 import { Logger } from '../../utils/Logger.js'
 
@@ -76,8 +76,8 @@ async function handleDeleteBoard () {
     try {
       await deleteBoard(boardId)
       logger.log('Board deleted:', boardId)
-      if (boards.length > 0) {
-        updateViewSelector(boards[0].id)
+      if (window.asd.boards.length > 0) {
+        updateViewSelector(window.asd.boards[0].id)
       }
     } catch (error) {
       logger.error('Error deleting board:', error)
