@@ -320,6 +320,13 @@ function updateWidgetOrders () {
  * @param {string} id
  * @returns {{boardId:string, viewId:string}|null}
  */
+/**
+ * Locate the board and view containing a widget id.
+ *
+ * @param {string} id
+ * @function findWidgetLocation
+ * @returns {{boardId:string, viewId:string}|null}
+ */
 function findWidgetLocation (id) {
   const boards = window.asd.boards || []
   for (const board of boards) {
@@ -332,4 +339,4 @@ function findWidgetLocation (id) {
   return null
 }
 
-export { addWidget, removeWidget, updateWidgetOrders, createWidget }
+export { addWidget, removeWidget, updateWidgetOrders, createWidget, findWidgetLocation }

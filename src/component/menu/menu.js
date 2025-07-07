@@ -197,25 +197,31 @@ function initializeMainMenu () {
   serviceControl.className = 'control-group'
   serviceControl.id = 'service-control'
 
-  const serviceSelector = document.createElement('select')
-  serviceSelector.id = 'service-selector'
+  const widgetPanel = document.createElement('div')
+  widgetPanel.id = 'widget-selector-panel'
+  widgetPanel.className = 'dropdown'
 
-  const defaultOption = document.createElement('option')
-  defaultOption.value = ''
-  defaultOption.textContent = 'Select a Service'
-  serviceSelector.appendChild(defaultOption)
-  serviceControl.appendChild(serviceSelector)
+  const widgetInput = document.createElement('input')
+  widgetInput.id = 'widget-search'
+  widgetInput.placeholder = 'Search or Select Widget'
+  widgetPanel.appendChild(widgetInput)
 
-  const widgetUrlInput = document.createElement('input')
-  widgetUrlInput.type = 'text'
-  widgetUrlInput.id = 'widget-url'
-  widgetUrlInput.placeholder = 'Or enter URL manually'
-  serviceControl.appendChild(widgetUrlInput)
+  const widgetToggle = document.createElement('span')
+  widgetToggle.id = 'widget-dropdown-toggle'
+  widgetToggle.className = 'dropdown-arrow'
+  widgetToggle.textContent = '\u25BC'
+  widgetPanel.appendChild(widgetToggle)
 
-  const addWidgetButton = document.createElement('button')
-  addWidgetButton.id = 'add-widget-button'
-  addWidgetButton.textContent = 'Add Widget'
-  serviceControl.appendChild(addWidgetButton)
+  const counter = document.createElement('span')
+  counter.id = 'widget-count'
+  counter.style.marginLeft = 'auto'
+  widgetPanel.appendChild(counter)
+
+  const dropdown = document.createElement('div')
+  dropdown.className = 'dropdown-content'
+  widgetPanel.appendChild(dropdown)
+
+  serviceControl.appendChild(widgetPanel)
 
   menu.appendChild(serviceControl)
 

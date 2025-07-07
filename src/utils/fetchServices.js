@@ -82,21 +82,7 @@ export const fetchServices = async () => {
   services = services || []
   localStorage.setItem(STORAGE_KEY, JSON.stringify(services))
   window.asd.services = services
-
-  const serviceSelector = document.getElementById('service-selector')
-  if (serviceSelector) {
-    serviceSelector.innerHTML = ''
-    const defaultOption = document.createElement('option')
-    defaultOption.value = ''
-    defaultOption.textContent = 'Select a Service'
-    serviceSelector.appendChild(defaultOption)
-    services.forEach(service => {
-      const option = document.createElement('option')
-      option.value = service.url
-      option.textContent = service.name
-      serviceSelector.appendChild(option)
-    })
-  }
+  document.dispatchEvent(new CustomEvent('services-updated'))
 
   return services
 }
