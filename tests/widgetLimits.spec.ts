@@ -1,8 +1,10 @@
+// tests/widgetLimits.spec.ts
 import { test, expect } from "./fixtures";
 import { ciConfig } from "./data/ciConfig";
 import { ciServices } from "./data/ciServices";
-import { getUnwrappedConfig, selectServiceByName, navigate } from "./shared/common";
+import { getUnwrappedConfig, navigate } from "./shared/common";
 import { waitForWidgetStoreIdle } from "./shared/state.js";
+import { ensurePanelOpen } from "./shared/common";
 
 async function routeLimits(page, boards, services, maxSize = 2) {
   await page.route("**/services.json", (route) =>
@@ -24,9 +26,7 @@ async function routeLimits(page, boards, services, maxSize = 2) {
 }
 
 test.describe("Widget limits", () => {
-  test("per service maxInstances navigates to existing widget", async ({
-    page,
-  }) => {
+  test("per service maxInstances navigates to existing widget", async ({ page }) => {
     const boards = [
       {
         id: "b1",
@@ -57,16 +57,18 @@ test.describe("Widget limits", () => {
     const services = ciServices.map((s) =>
       s.name === "ASD-toolbox" ? { ...s, maxInstances: 1 } : s,
     );
+
     await routeLimits(page, boards, services, 5);
-    await navigate(page,"/");
-    
+    await navigate(page, "/");
+
     await page.locator(".widget-wrapper").first().waitFor();
+    await ensurePanelOpen(page);
 
     await page.locator("#board-selector").selectOption("b2");
-    await selectServiceByName(page, "ASD-toolbox");
+    await page.click('#widget-selector-panel .widget-option:has-text("ASD-toolbox")');
 
-    await page.waitForFunction(() =>
-      document.querySelectorAll('.widget-wrapper').length === 1
+    await page.waitForFunction(
+      () => document.querySelectorAll(".widget-wrapper").length === 1
     );
   });
 
@@ -88,55 +90,59 @@ test.describe("Widget limits", () => {
         views: [{ id: "v", name: "V", widgetState }],
       },
     ];
-    await routeLimits(page, boards, ciServices, 1);
-    await navigate(page,"/");
-    
-    await page.locator(".widget-wrapper").first().waitFor();
 
-    await selectServiceByName(page, "ASD-terminal");
+    await routeLimits(page, boards, ciServices, 1);
+    await navigate(page, "/");
+
+    await page.locator(".widget-wrapper").first().waitFor();
+    await ensurePanelOpen(page);
+
+    await page.click('#widget-selector-panel .widget-option:has-text("ASD-terminal")');
 
     const modal = page.locator("#eviction-modal");
     await expect(modal).toBeVisible();
     await modal.locator('button:has-text("Remove")').click();
     await waitForWidgetStoreIdle(page);
     await expect(modal).toBeHidden();
-    await page.waitForFunction(() =>
-      document.querySelectorAll('.widget-wrapper').length === 1
+    await page.waitForFunction(
+      () => document.querySelectorAll(".widget-wrapper").length === 1
     );
-    const ids = await page.$$eval('.widget-wrapper', (els) =>
-      els.map((e) => e.getAttribute('data-dataid')),
+    const ids = await page.$$eval(".widget-wrapper", (els) =>
+      els.map((e) => e.getAttribute("data-dataid")),
     );
-    expect(ids).not.toContain('W1');
+    expect(ids).not.toContain("W1");
   });
 
-  test('simultaneous instance request uses single widget', async ({ page }) => {
+  test("simultaneous instance request uses single widget", async ({ page }) => {
     const boards = [
-      { id: 'b1', name: 'B1', order: 0, views: [{ id: 'v1', name: 'V1', widgetState: [] }] },
-      { id: 'b2', name: 'B2', order: 1, views: [{ id: 'v2', name: 'V2', widgetState: [] }] }
+      { id: "b1", name: "B1", order: 0, views: [{ id: "v1", name: "V1", widgetState: [] }] },
+      { id: "b2", name: "B2", order: 1, views: [{ id: "v2", name: "V2", widgetState: [] }] },
     ];
     const services = ciServices.map((s) =>
-      s.name === 'ASD-toolbox' ? { ...s, maxInstances: 1 } : s
+      s.name === "ASD-toolbox" ? { ...s, maxInstances: 1 } : s
     );
+
     await routeLimits(page, boards, services, 5);
-    await navigate(page,'/');
-    
+    await navigate(page, "/");
+    await page.waitForSelector("#widget-selector-panel");
+    await ensurePanelOpen(page);
 
     await page.evaluate(async () => {
-      const { addWidget } = await import('/component/widget/widgetManagement.js');
-      const url = 'http://localhost:8000/asd/toolbox';
+      const { addWidget } = await import("/component/widget/widgetManagement.js");
+      const url = "http://localhost:8000/asd/toolbox";
       await Promise.all([
-        addWidget(url, 1, 1, 'web', 'b1', 'v1'),
-        addWidget(url, 1, 1, 'web', 'b2', 'v2')
+        addWidget(url, 1, 1, "web", "b1", "v1"),
+        addWidget(url, 1, 1, "web", "b2", "v2"),
       ]);
     });
 
-    await page.waitForFunction(() =>
-      document.querySelectorAll('.widget-wrapper').length === 1
+    await page.waitForFunction(
+      () => document.querySelectorAll(".widget-wrapper").length === 1
     );
-    const selectedBoard = await page.locator('#board-selector').inputValue();
-    const cfg = await getUnwrappedConfig(page)
-    const boardWithWidget = cfg.boards.find(b =>
-      b.views.some(v => v.widgetState?.length > 0)
+    const selectedBoard = await page.locator("#board-selector").inputValue();
+    const cfg = await getUnwrappedConfig(page);
+    const boardWithWidget = cfg.boards.find((b) =>
+      b.views.some((v) => v.widgetState?.length > 0)
     )?.id;
     expect(selectedBoard).toBe(boardWithWidget);
   });

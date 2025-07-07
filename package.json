@@ -50,57 +50,10 @@
       "localStorage",
       "location",
       "getComputedStyle",
-      "caches",
-      "HTMLElement",
-      "requestAnimationFrame"
-    ]
-  },
- "eslintConfig": {
-    "root": true,
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "ecmaVersion": "latest",
-      "sourceType": "module",
-      "project": "./tsconfig.json"
-    },
-    "plugins": ["jsdoc", "@typescript-eslint"],
-    "overrides": [
-      {
-        "files": ["*.js", "**/*.js"],
-        "rules": {
-          "@typescript-eslint/no-floating-promises": "error"
-        }
-      }
-    ],
-    "rules": {
-      "jsdoc/require-jsdoc": [
-        "error",
-        {
-          "require": {
-            "FunctionDeclaration": true,
-            "MethodDefinition": true,
-            "ClassDeclaration": true,
-            "ArrowFunctionExpression": false,
-            "FunctionExpression": false
-          }
-        }
-      ],
-      "jsdoc/require-param": "warn",
-      "jsdoc/require-returns": "warn",
-      "jsdoc/require-description": [
-        "warn",
-        {
-          "contexts": [
-            "FunctionDeclaration",
-            "MethodDefinition",
-            "ClassDeclaration"
-          ]
-        }
+        "caches",
+        "HTMLElement",
+        "requestAnimationFrame",
+        "HTMLInputElement"
       ]
-    },
-    "ignorePatterns": [
-      ".eslintrc.js",
-      "scripts/"
-    ]
+    }
   }
-}

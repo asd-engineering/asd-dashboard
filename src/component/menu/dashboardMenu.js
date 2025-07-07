@@ -1,16 +1,24 @@
+// dashboardMenu.js
 // @ts-check
+
 /**
  * Menu actions for adding widgets and switching boards/views.
  *
  * @module dashboardMenu
  */
-import { addWidget } from '../widget/widgetManagement.js'
-import { openSaveServiceModal } from '../modal/saveServiceModal.js'
+
+import {
+  populateWidgetSelectorPanel,
+  initializeWidgetSelectorPanel,
+  updateWidgetCounter
+} from './widgetSelectorPanel.js'
+
 import {
   switchBoard,
   switchView,
   updateViewSelector
 } from '../../component/board/boardManagement.js'
+
 import { saveWidgetState } from '../../storage/widgetStatePersister.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { showNotification } from '../dialog/notification.js'
@@ -22,53 +30,37 @@ import { debounceLeading } from '../../utils/utils.js'
 
 const logger = new Logger('dashboardMenu.js')
 
-let uiInitialized = false // Guard variable
+let uiInitialized = false // Guard variable to avoid duplicate bindings
 
 /**
- * Set up event handlers for the dashboard menu and populate service options.
+ * Set up event handlers for the dashboard menu and populate widget selector.
  *
  * @function initializeDashboardMenu
  * @returns {void}
  */
 function initializeDashboardMenu () {
-  if (uiInitialized) return // Guard clause
+  if (uiInitialized) return
   uiInitialized = true
 
   logger.log('Dashboard menu initialized')
-  populateServiceDropdown()
+
+  // New searchable widget selector panel
+  populateWidgetSelectorPanel()
+  initializeWidgetSelectorPanel()
+  document.addEventListener('services-updated', () => {
+    populateWidgetSelectorPanel()
+    updateWidgetCounter()
+  })
+
   applyWidgetMenuVisibility()
 
   const buttonDebounce = 200
 
-  document.getElementById('add-widget-button').addEventListener('click', async () => {
-    const serviceSelector = /** @type {HTMLSelectElement} */(document.getElementById('service-selector'))
-    const widgetUrlInput = /** @type {HTMLInputElement} */(document.getElementById('widget-url'))
-    const boardElement = document.querySelector('.board')
-    const viewElement = document.querySelector('.board-view')
-    const selectedServiceUrl = serviceSelector.value
-    const manualUrl = widgetUrlInput.value
-    const url = selectedServiceUrl || manualUrl
-
-    const finalize = async () => {
-      try {
-        await addWidget(url, 1, 1, 'iframe', boardElement.id, viewElement.id)
-      } catch (error) {
-        logger.error('Error adding widget:', error)
-      }
-      widgetUrlInput.value = ''
-    }
-
-    if (selectedServiceUrl) {
-      await finalize()
-    } else if (manualUrl) {
-      openSaveServiceModal(manualUrl, finalize)
-    } else {
-      showNotification('Please select a service or enter a URL.')
-    }
-  })
-
+  // Toggle widget menu visibility
   const handleToggleWidgetMenu = debounceLeading(() => {
     const widgetContainer = document.getElementById('widget-container')
+    if (!widgetContainer) return
+
     const isHidden = widgetContainer.classList.toggle('hide-widget-menu')
 
     const message = isHidden
@@ -77,76 +69,72 @@ function initializeDashboardMenu () {
 
     // Safe read-modify-write: get latest from storage, modify, then save.
     const currentConfig = StorageManager.getConfig() || { globalSettings: {} }
-    if (!currentConfig.globalSettings) {
-      currentConfig.globalSettings = {}
-    }
+    if (!currentConfig.globalSettings) currentConfig.globalSettings = {}
     currentConfig.globalSettings.showMenuWidget = !isHidden
     StorageManager.setConfig(currentConfig)
 
     showNotification(message, 500)
   }, buttonDebounce)
 
-  document.getElementById('toggle-widget-menu').addEventListener('click', /** @type {EventListener} */(handleToggleWidgetMenu))
+  const toggleBtn = document.getElementById('toggle-widget-menu')
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', /** @type {EventListener} */(handleToggleWidgetMenu))
+  }
 
+  // Reset environment
   const handleReset = debounceLeading(() => {
-    // Show confirmation dialog
-    const confirmed = confirm('Confirm environment reset: all configurations and services will be permanently deleted.')
-
+    // eslint-disable-next-line no-alert
+    const confirmed = confirm(
+      'Confirm environment reset: all configurations and services will be permanently deleted.'
+    )
     if (confirmed) {
       StorageManager.clearAll()
       clearConfigFragment()
       location.reload()
     }
   }, buttonDebounce)
-  document.getElementById('reset-button').addEventListener('click', /** @type {EventListener} */(handleReset))
 
-  document.getElementById('board-selector').addEventListener('change', async (event) => {
-    const target = /** @type {HTMLSelectElement} */(event.target)
-    const selectedBoardId = target.value
-    const currentBoardId = getCurrentBoardId()
-    saveWidgetState(currentBoardId, getCurrentViewId()) // Save current view state
-    try {
-      await switchBoard(selectedBoardId)
-    } catch (error) {
-      logger.error('Error switching board:', error)
-    }
-    updateViewSelector(selectedBoardId)
-  })
+  const resetBtn = document.getElementById('reset-button')
+  if (resetBtn) {
+    resetBtn.addEventListener('click', /** @type {EventListener} */(handleReset))
+  }
 
-  document.getElementById('view-selector').addEventListener('change', async (event) => {
-    const selectedBoardId = getCurrentBoardId()
-    const target = /** @type {HTMLSelectElement} */(event.target)
-    const selectedViewId = target.value
+  // Board switcher
+  const boardSelector = document.getElementById('board-selector')
+  if (boardSelector) {
+    boardSelector.addEventListener('change', async (event) => {
+      const target = /** @type {HTMLSelectElement} */(event.target)
+      const selectedBoardId = target.value
+      const currentBoardId = getCurrentBoardId()
 
-    logger.log(`Switching to selected view ${selectedViewId} in board ${selectedBoardId}`)
-    await switchView(selectedBoardId, selectedViewId)
-  })
+      // Persist current view state before switching
+      saveWidgetState(currentBoardId, getCurrentViewId())
+
+      try {
+        await switchBoard(selectedBoardId)
+      } catch (error) {
+        logger.error('Error switching board:', error)
+      }
+      updateViewSelector(selectedBoardId)
+    })
+  }
+
+  // View switcher
+  const viewSelector = document.getElementById('view-selector')
+  if (viewSelector) {
+    viewSelector.addEventListener('change', async (event) => {
+      const selectedBoardId = getCurrentBoardId()
+      const target = /** @type {HTMLSelectElement} */(event.target)
+      const selectedViewId = target.value
+
+      logger.log(`Switching to selected view ${selectedViewId} in board ${selectedBoardId}`)
+      await switchView(selectedBoardId, selectedViewId)
+    })
+  }
 }
 
 /**
- * Populate the service drop-down with saved services.
- *
- * @function populateServiceDropdown
- * @returns {void}
- */
-export function populateServiceDropdown () {
-  const selector = document.getElementById('service-selector')
-  if (!selector) return
-  selector.innerHTML = ''
-  const defaultOption = document.createElement('option')
-  defaultOption.value = ''
-  defaultOption.textContent = 'Select a Service'
-  selector.appendChild(defaultOption)
-  StorageManager.getServices().forEach(service => {
-    const opt = document.createElement('option')
-    opt.value = service.url
-    opt.textContent = service.name
-    selector.appendChild(opt)
-  })
-}
-
-/**
- * Apply visibility of the widget menu based on configuration.
+ * Apply visibility of the widget menu based on persisted config.
  *
  * @function applyWidgetMenuVisibility
  * @returns {void}

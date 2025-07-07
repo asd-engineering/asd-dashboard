@@ -1,80 +1,53 @@
+// tests/shared/common.ts
 import { type Page, expect } from "@playwright/test";
 
-// Helper function to add services
+export async function ensurePanelOpen(page: Page) {
+  // Triggers a test-only hook in the app (if present) to open the panel,
+  // then waits for the CSS "open" state to be applied.
+  await page.evaluate(() => (window as any).__openWidgetPanel?.());
+  await page.waitForSelector("#widget-selector-panel.open");
+}
+
+// Helper function to add services via the widget selector panel
 /**
- *
- * @param page
- * @param count
+ * Add the first `count` services by clicking options in the widget selector panel.
+ * Skips index 0 if it’s a placeholder/search row.
  */
 export async function addServices(page: Page, count: number) {
+  await ensurePanelOpen(page);
+  // If your panel requires an explicit toggle click to render items, uncomment:
+  // await page.click("#widget-dropdown-toggle");
   for (let i = 0; i < count; i++) {
-    await page.selectOption("#service-selector", { index: i + 1 });
-    await page.click("#add-widget-button");
+    await page.locator("#widget-selector-panel .widget-option").nth(i + 1).click();
   }
 }
 
 /**
- * Select a service by its label and click the add widget button.
- *
- * @param {Page} page - Playwright page instance.
- * @param {string} serviceName - Service display name.
- * @returns {Promise<void>} Resolves when the widget is added.
+ * Select a service by its label using the widget selector panel.
  */
 export async function selectServiceByName(page: Page, serviceName: string) {
-  // wait until the <select> actually holds options
-  await page.waitForFunction(
-    (sel) => document.querySelector(sel)?.querySelectorAll("option").length > 0,
-    "#service-selector",
-    { timeout: 5000 },
-  );
-  await page.selectOption("#service-selector", { label: serviceName });
-  await page.click("#add-widget-button");
-}
-
-/**
- * Change the current view by selecting it from the dropdown and
- * wait until the DOM reflects the new active view.
- *
- * @param {Page} page - Playwright page instance.
- * @param {string} viewLabel - Visible name of the view to select.
- * @returns {Promise<void>} Resolves when the view is switched.
- */
-export async function selectViewByLabel(page: Page, viewLabel: string) {
-  await page.waitForFunction(
-    (sel) => document.querySelector(sel)?.querySelectorAll("option").length > 0,
-    "#view-selector",
-    { timeout: 5000 },
-  );
-  await page.selectOption("#view-selector", { label: viewLabel });
+  await ensurePanelOpen(page);
+  // If a toggle is needed in your build, uncomment:
+  // await page.click("#widget-dropdown-toggle");
+  await page.click(`#widget-selector-panel .widget-option:has-text("${serviceName}")`);
 }
 
 /**
  * Navigates to the specified URL and waits until the dashboard is fully hydrated.
  *
- * This helper observes two events emitted by the dashboard:
- *   - `main:ready` is fired after core initialization finishes (menu, drag/drop, config)
- *   - `view:ready` is fired after the active board/view is fully rendered (widgets hydrated)
+ * This helper observes:
+ *  - `main:ready` after core initialization (menu, config, etc)
+ *  - `view:ready` after the active board/view is fully rendered
  *
- * It resolves in one of two ways:
- *   1. Immediately if `<body>` already has the `data-ready` attribute (fast path)
- *   2. After either `main:ready` or `view:ready` is emitted (whichever comes first)
- *
- * Only one listener wins — both events are attached once, and the first one to fire resolves.
- * A shared DOM flag ensures listeners are attached only once, even if Playwright re-evaluates.
- *
- * Console logs prefixed with `[navigate]` are forwarded from the browser to aid debugging.
- *
- * @param {import('@playwright/test').Page} page - Playwright Page instance.
- * @param {string} destination - URL to navigate to.
- * @param {import('@playwright/test').WaitForURLOptions} [gotoOptions] - Optional Playwright `goto` options.
- * @returns {Promise<void>} Resolves when hydration is detected via event or DOM.
+ * It resolves either immediately if <body data-ready="true"> is set, or once one of the events fires.
  */
 export async function navigate(
   page: Page,
   destination: string,
-  gotoOptions?: Parameters<Page['goto']>[1]
+  gotoOptions?: Parameters<Page["goto"]>[1]
 ): Promise<void> {
-  const allowedPrefixes = ['[navigate]', '[hydrate]', '[modal]']
+  // Optional console proxy (kept commented to avoid noisy CI logs)
+  // const allowedPrefixes = ['[navigate]', '[hydrate]', '[modal]']
   // page.on('console', msg => {
   //   const text = msg.text()
   //   if (msg.type() === 'log' && allowedPrefixes.some(p => text.startsWith(p))) {
@@ -82,45 +55,37 @@ export async function navigate(
   //   }
   // })
 
-  await page.goto(destination, gotoOptions)
+  await page.goto(destination, gotoOptions);
 
   try {
     await page.waitForFunction(() => {
       // Fast path: view hydration already complete
-      if (document.body.getAttribute('data-ready') === 'true') {
-        // console.log('[navigate] fast path: data-view-id present')
-        return true
+      if (document.body.getAttribute("data-ready") === "true") {
+        return true;
       }
 
       // Attach event listeners only once across retries
       if (!(document as any).__NAVIGATE_ATTACHED__) {
-        (document as any).__NAVIGATE_ATTACHED__ = true
+        (document as any).__NAVIGATE_ATTACHED__ = true;
 
         const handler = (e: Event) => {
-          console.log(`[navigate] resolved via ${e.type}`)
-          ;(document as any).__NAVIGATE_READY__ = true
-        }
+          // console.log(`[navigate] resolved via ${e.type}`)
+          (document as any).__NAVIGATE_READY__ = true;
+        };
 
-        document.addEventListener('main:ready', handler, { once: true })
-        document.addEventListener('view:ready', handler, { once: true })
+        document.addEventListener("main:ready", handler, { once: true });
+        document.addEventListener("view:ready", handler, { once: true });
       }
 
-      return !!(document as any).__NAVIGATE_READY__
-    }, { timeout: 100 })
+      return !!(document as any).__NAVIGATE_READY__;
+    }, { timeout: 100 });
   } catch {
-    // Soft timeout: test continues, but hydration may be delayed
-    // console.warn(`[navigate] Soft timeout waiting for hydration at ${destination}`)
+    // Soft timeout: continue; some tests may rely on explicit waits later
   }
 }
 
 // Helper function to handle dialog interactions
-/**
- *
- * @param page
- * @param type
- * @param inputText
- */
-export async function handleDialog(page, type, inputText = "") {
+export async function handleDialog(page: Page, type: string, inputText = "") {
   page.on("dialog", async (dialog) => {
     expect(dialog.type()).toBe(type);
     if (type === "prompt") {
@@ -132,48 +97,29 @@ export async function handleDialog(page, type, inputText = "") {
 }
 
 /**
- *
- * @param page
- * @param serviceName
- * @param count
+ * Click a specific service multiple times using the widget selector panel.
  */
-export async function addServicesByName(
-  page: Page,
-  serviceName: string,
-  count: number,
-) {
+export async function addServicesByName(page: Page, serviceName: string, count: number) {
   for (let i = 0; i < count; i++) {
     await selectServiceByName(page, serviceName);
   }
 }
 
-/**
- *
- * @param obj
- */
 export function b64(obj: any) {
   return Buffer.from(JSON.stringify(obj)).toString("base64");
 }
 
-/**
- *
- * @param page
- */
-export async function clearStorage(page) {
-  await navigate(page,"/");
+export async function clearStorage(page: Page) {
+  await navigate(page, "/");
   await page.evaluate(() => localStorage.clear());
 }
 
-/**
- *
- * @param page
- */
-export async function getUnwrappedConfig(page) {
+export async function getUnwrappedConfig(page: Page) {
   return await page.evaluate(() => {
     const raw = localStorage.getItem("config");
     const parsed = raw ? JSON.parse(raw) : null;
 
-    const cfg = parsed?.data || parsed;
+    const cfg = (parsed as any)?.data || parsed;
 
     if (!cfg || typeof cfg !== "object") return { boards: [] };
     if (!Array.isArray(cfg.boards)) cfg.boards = [];
@@ -182,29 +128,17 @@ export async function getUnwrappedConfig(page) {
   });
 }
 
-/**
- *
- * @param page
- */
-export async function getConfigBoards(page) {
+export async function getConfigBoards(page: Page) {
   const cfg = await getUnwrappedConfig(page);
   return Array.isArray(cfg.boards) ? cfg.boards : [];
 }
 
-/**
- *
- * @param page
- */
-export async function getConfigTheme(page) {
+export async function getConfigTheme(page: Page) {
   const cfg = await getUnwrappedConfig(page);
   return cfg?.globalSettings?.theme;
 }
 
-/**
- *
- * @param page
- */
-export async function getBoardWithWidgets(page) {
+export async function getBoardWithWidgets(page: Page) {
   const cfg = await getUnwrappedConfig(page);
   const boards = Array.isArray(cfg.boards) ? cfg.boards : [];
   return (
@@ -213,36 +147,20 @@ export async function getBoardWithWidgets(page) {
   );
 }
 
-/**
- *
- * @param page
- */
-export async function getBoardCount(page) {
+export async function getBoardCount(page: Page) {
   const cfg = await getUnwrappedConfig(page);
   return Array.isArray(cfg.boards) ? cfg.boards.length : 0;
 }
 
-/**
- *
- * @param page
- */
-export async function getShowMenuWidgetFlag(page) {
+export async function getShowMenuWidgetFlag(page: Page) {
   const cfg = await getUnwrappedConfig(page);
   return !!cfg?.globalSettings?.showMenuWidget;
 }
 
-/**
- *
- * @param page
- */
-export async function getLastUsedViewId(page) {
+export async function getLastUsedViewId(page: Page) {
   return await page.evaluate(() => localStorage.getItem("lastUsedViewId"));
 }
 
-/**
- *
- * @param page
- */
-export async function getLastUsedBoardId(page) {
+export async function getLastUsedBoardId(page: Page) {
   return await page.evaluate(() => localStorage.getItem("lastUsedBoardId"));
 }
