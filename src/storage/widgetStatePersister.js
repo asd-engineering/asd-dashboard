@@ -54,7 +54,8 @@ export function saveWidgetState (boardId, viewId) {
 
   try {
     // ALWAYS operate on the in-memory "live" state.
-    const board = window.asd.boards.find(b => b.id === boardId)
+    const currentBoards = StorageManager.getBoards()
+    const board = currentBoards.find(b => b.id === boardId)
     if (!board) return logger.error(`Board not found for saving state: ${boardId}`)
 
     const view = board.views.find(v => v.id === viewId)
@@ -79,7 +80,7 @@ export function saveWidgetState (boardId, viewId) {
     view.widgetState = sortedVisibleWidgets.map(widget => serializeWidgetState(/** @type {HTMLElement} */(widget)))
 
     // Persist the entire updated boards structure.
-    StorageManager.setBoards(window.asd.boards)
+    StorageManager.setBoards(currentBoards)
 
     logger.info(`Saved widget state for view: ${viewId} in board: ${boardId}`)
   } catch (error) {

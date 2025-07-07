@@ -1208,22 +1208,6 @@
     "returns": "void"
   },
   {
-    "name": "load",
-    "kind": "function",
-    "file": "src/storage/servicesStore.js",
-    "description": "Loads the array of services from localStorage.",
-    "params": [],
-    "returns": "Array<import('../types.js').Service>"
-  },
-  {
-    "name": "loadBoardState",
-    "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Retrieves the array of boards from localStorage.",
-    "params": [],
-    "returns": "Promise<Array<import('../types.js').Board>>"
-  },
-  {
     "name": "loadFromFragment",
     "kind": "function",
     "file": "src/utils/fragmentLoader.js",
@@ -1238,14 +1222,6 @@
     "description": "Loads configuration from various sources in a specific order: URL params, localStorage, then a default file.",
     "params": [],
     "returns": "Promise<object|null>"
-  },
-  {
-    "name": "loadInitialConfig",
-    "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Loads the initial board configuration from the global config object into localStorage. This is typically called on first run to seed the dashboard.",
-    "params": [],
-    "returns": "Promise<void>"
   },
   {
     "name": "loadStateStore",
@@ -1646,34 +1622,6 @@
     "returns": "Promise<void>"
   },
   {
-    "name": "save",
-    "kind": "function",
-    "file": "src/storage/servicesStore.js",
-    "description": "Saves the array of services to localStorage.",
-    "params": [
-      {
-        "name": "services",
-        "type": "Array<import('../types.js').Service>",
-        "desc": "- The array of services to save."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "saveBoardState",
-    "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Persists the entire array of board objects to localStorage.",
-    "params": [
-      {
-        "name": "boards",
-        "type": "Array<import('../types.js').Board>",
-        "desc": "- The array of boards to save."
-      }
-    ],
-    "returns": "void"
-  },
-  {
     "name": "saveLocalStorageData",
     "kind": "function",
     "file": "src/component/modal/localStorageModal.js",
@@ -1714,39 +1662,6 @@
       }
     ],
     "returns": "Promise<void>"
-  },
-  {
-    "name": "saveWidgetState",
-    "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Serializes the state of all visible widgets and saves it to localStorage.",
-    "params": [
-      {
-        "name": "boardId",
-        "type": "string",
-        "desc": "- The ID of the current board."
-      },
-      {
-        "name": "viewId",
-        "type": "string",
-        "desc": "- The ID of the current view."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "serializeWidgetState",
-    "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Converts a widget DOM element into a serializable state object.",
-    "params": [
-      {
-        "name": "widget",
-        "type": "HTMLElement",
-        "desc": "- The widget element."
-      }
-    ],
-    "returns": "import('../types.js').Widget"
   },
   {
     "name": "setBoards",

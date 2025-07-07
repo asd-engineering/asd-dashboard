@@ -92,7 +92,7 @@ function initializeDashboardMenu () {
       // 4. Save only the updated config, but let's do better (see Rec 2)
       // This still has the side-effect problem, but at least the data is less stale.
       // The BEST fix is to change StorageManager.
-      StorageManager.setConfig(window.asd.config)
+      StorageManager.setConfig(updatedConfig)
     }
     // --- FIX ENDS HERE ---
 
