@@ -1,4 +1,10 @@
-declare module 'https://cdn.jsdelivr.net/npm/spark-md5@3.0.2/+esm' {
-  const SparkMD5: { hash: (str: string) => string }
+declare module 'spark-md5' {
+  const SparkMD5: {
+    hash(str: string): string
+    hashBinary(str: string): string
+    ArrayBuffer: {
+      hash(buf: ArrayBuffer): string
+    }
+  }
   export default SparkMD5
 }
