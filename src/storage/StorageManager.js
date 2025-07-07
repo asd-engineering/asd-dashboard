@@ -108,6 +108,19 @@ const StorageManager = {
   },
 
   /**
+   * Atomically update boards via callback.
+   * @function updateBoards
+   * @param {(boards: Array<Board>) => Array<Board>|void} updater
+   * @returns {void}
+   */
+  updateBoards (updater) {
+    const boards = StorageManager.getBoards()
+    const result = updater(boards)
+    const finalBoards = Array.isArray(result) ? result : boards
+    StorageManager.setBoards(finalBoards)
+  },
+
+  /**
    * Retrieve stored services array.
    * @function getServices
    * @returns {Array<Service>}
