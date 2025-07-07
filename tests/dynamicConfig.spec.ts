@@ -29,7 +29,10 @@ test.describe('Dashboard Config - Base64 via URL Params', () => {
     const services = b64(ciServices);
     await page.goto(`/?config_base64=${config}&services_base64=${services}`);
     await expect(page.locator('#service-selector option')).toHaveCount(ciServices.length + 1);
-    const boards = await page.evaluate(() => window.asd.boards);
+    const boards = await page.evaluate(() => {
+      const raw = localStorage.getItem('boards') || '[]';
+      return JSON.parse(raw);
+    });
     expect(boards.length).toBe(ciBoards.length);
     const names = await page.$$eval('#board-selector option', opts => opts.map(o => o.textContent));
     expect(names).toContain(ciBoards[0].name);

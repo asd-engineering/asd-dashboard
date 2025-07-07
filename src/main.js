@@ -28,7 +28,6 @@ Logger.enableLogs('all')
 window.asd = {
   services: [],
   config: {},
-  boards: [],
   currentBoardId: null,
   currentViewId: null,
   widgetStore
@@ -71,12 +70,14 @@ async function main () {
   applyControlVisibility()
   applyWidgetMenuVisibility()
 
-  // 5. Load boards from storage into the global state.
-  window.asd.boards = StorageManager.getBoards()
+  // 5. Load boards from storage.
+  let boards = StorageManager.getBoards()
   // If no boards exist and config specifies to load from itself, do so.
-  if (window.asd.boards.length === 0 && window.asd.config.globalSettings?.localStorage?.loadDashboardFromConfig === 'true') {
-    if (Array.isArray(window.asd.config.boards) && window.asd.config.boards.length > 0) {
-      StorageManager.setBoards(window.asd.config.boards)
+  if (boards.length === 0 && window.asd.config.globalSettings?.localStorage?.loadDashboardFromConfig === 'true') {
+    const cfgBoards = (StorageManager.getConfig() || {}).boards || []
+    if (Array.isArray(cfgBoards) && cfgBoards.length > 0) {
+      StorageManager.setBoards(cfgBoards)
+      boards = cfgBoards
     }
   }
 
@@ -86,7 +87,7 @@ async function main () {
   const lastUsedBoardId = StorageManager.misc.getLastBoardId()
   const lastUsedViewId = StorageManager.misc.getLastViewId()
 
-  const boardExists = window.asd.boards.some(board => board.id === lastUsedBoardId)
+  const boardExists = StorageManager.getBoards().some(board => board.id === lastUsedBoardId)
 
   let boardIdToLoad = initialBoardView?.boardId
   let viewIdToLoad = initialBoardView?.viewId
