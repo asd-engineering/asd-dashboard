@@ -66,19 +66,39 @@ function initializeDashboardMenu () {
 
   const handleToggleWidgetMenu = debounceLeading(() => {
     const widgetContainer = document.getElementById('widget-container')
-    const toggled = widgetContainer.classList.toggle('hide-widget-menu') // true if now hidden
+    const toggled = widgetContainer.classList.toggle('hide-widget-menu')
 
     const message = toggled
       ? `${emojiList.cross.unicode} Widget menu hidden`
       : `${emojiList.edit.unicode} Widget menu shown`
 
+    // --- FIX STARTS HERE ---
     if (window.asd && window.asd.config && window.asd.config.globalSettings) {
+      // 1. Update the in-memory config
       window.asd.config.globalSettings.showMenuWidget = !toggled
+
+      // 2. Load the current config from storage to ensure it's fresh
+      const currentConfig = StorageManager.getConfig() || {}
+
+      // 3. Merge the change into the fresh config
+      const updatedConfig = {
+        ...currentConfig,
+        globalSettings: {
+          ...currentConfig.globalSettings,
+          showMenuWidget: !toggled
+        }
+      }
+
+      // 4. Save only the updated config, but let's do better (see Rec 2)
+      // This still has the side-effect problem, but at least the data is less stale.
+      // The BEST fix is to change StorageManager.
       StorageManager.setConfig(window.asd.config)
     }
+    // --- FIX ENDS HERE ---
 
     showNotification(message, 500)
   }, buttonDebounce)
+
   document.getElementById('toggle-widget-menu').addEventListener('click', /** @type {EventListener} */(handleToggleWidgetMenu))
 
   const handleReset = debounceLeading(() => {

@@ -89,10 +89,17 @@ export async function openConfigModal () {
       const saveButton = document.createElement('button')
       saveButton.textContent = 'Save'
       saveButton.classList.add('modal__btn', 'modal__btn--save')
+
       saveButton.addEventListener('click', () => {
         try {
           const cfg = JSON.parse(textarea.value)
+
+          // Be explicit about what you are saving
           StorageManager.setConfig(cfg)
+          if (cfg.boards) {
+            StorageManager.setBoards(cfg.boards)
+          }
+
           showNotification('Config saved to localStorage')
           closeModal()
           clearConfigFragment()

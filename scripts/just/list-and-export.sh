@@ -3,10 +3,9 @@ set -euo pipefail
 
 OUTDIR="local"
 OUTPUT="$OUTDIR/list-and-export.src"
-ROOT="${1:-.}"
-MODE="${2:-list}"
+MODE="${1:-list}"   # First arg is mode
+shift               # Remaining args are folders
 
-# Optional: comma-separated list of files and folders to exclude
 EXCLUDE_FILES="${EXCLUDE_FILES:-}"
 EXCLUDE_FOLDERS="${EXCLUDE_FOLDERS:-}"
 
@@ -33,40 +32,42 @@ should_exclude_folder() {
 }
 
 mkdir -p "$OUTDIR"
-
-if [[ ! -d "$ROOT" ]]; then
-  echo "❌ Directory '$ROOT' does not exist."
-  exit 1
-fi
-
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-# Find all matching source files
-mapfile -t FILES < <(
-  find "$ROOT" -type f \
-    \( -iname '*.ts' -o -iname '*.js' -o -iname '*.css' -o -iname '*.yaml' -o -iname '*.yml' -o -iname '*.json' -o -iname '*.html' -o -iname '*.svelte' \) \
-    | sort
-)
 
 {
   echo "%%%%list_and_export"
-  echo "%%%%root: $ROOT"
   echo "%%%%mode: $MODE"
   echo "%%%%generated_at: $NOW"
-  echo "%%%%total_files: ${#FILES[@]}"
-  echo "%%%%files:"
-  for FILE in "${FILES[@]}"; do
-    REL_FILE="${FILE#$ROOT/}"
-    if should_exclude "$REL_FILE" || should_exclude_folder "$REL_FILE"; then
+
+  for ROOT in "$@"; do
+    if [[ ! -d "$ROOT" ]]; then
+      echo "❌ Directory '$ROOT' does not exist." >&2
       continue
     fi
-    echo "$REL_FILE:"
-    if [[ "$MODE" == "export" ]]; then
-      echo -e '```'
-      cat "$FILE"
-      echo -e '```'
-    fi
+
+    mapfile -t FILES < <(
+      find "$ROOT" -type f \
+        \( -iname '*.ts' -o -iname '*.js' -o -iname '*.css' -o -iname '*.yaml' -o -iname '*.yml' -o -iname '*.json' -o -iname '*.html' -o -iname '*.svelte' \) \
+        | sort
+    )
+
+    echo "%%%%root: $ROOT"
+    echo "%%%%total_files: ${#FILES[@]}"
+    echo "%%%%files:"
+
+    for FILE in "${FILES[@]}"; do
+      REL_FILE="${FILE#$ROOT/}"
+      if should_exclude "$REL_FILE" || should_exclude_folder "$REL_FILE"; then
+        continue
+      fi
+      echo "$ROOT/$REL_FILE:"
+      if [[ "$MODE" == "export" ]]; then
+        echo -e '```'
+        cat "$FILE"
+        echo -e '```'
+      fi
+    done
   done
 } > "$OUTPUT"
 
-echo "✅ $MODE for '$ROOT' written to $OUTPUT"
+echo "✅ $MODE for [$*] written to $OUTPUT"

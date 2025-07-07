@@ -85,12 +85,6 @@ const StorageManager = {
     // Flatten + wrap for backward compatibility
     const wrapped = { version: CURRENT_VERSION, data: cfg, ...cfg }
     jsonSet(KEYS.CONFIG, wrapped)
-
-    if (Array.isArray(cfg.boards)) {
-      StorageManager.setBoards(cfg.boards)
-    } else {
-      jsonSet(KEYS.BOARDS, null)
-    }
   },
 
   /**

@@ -1,11 +1,11 @@
 see *args:
   bash scripts/just/search-and-export.sh {{args}}
 
-src-list dir="src":
-  bash scripts/just/list-and-export.sh {{dir}} list
+src-list dirs="src":
+  bash scripts/just/list-and-export.sh list {{dirs}}
 
-src-exports dir="src":
-  bash scripts/just/list-and-export.sh {{dir}} export
+src-export dirs="src":
+  bash scripts/just/list-and-export.sh export {{dirs}}
 
-src-tests dir="tests":
-  bash scripts/just/list-and-export.sh {{dir}} export
+src-all dirs="src tests":
+  bash scripts/just/list-and-export.sh export {{dirs}}
