@@ -6,13 +6,12 @@
  */
 import { addWidget } from '../widget/widgetManagement.js'
 import { openSaveServiceModal } from '../modal/saveServiceModal.js'
-import * as servicesStore from '../../storage/servicesStore.js'
 import {
   switchBoard,
   switchView,
   updateViewSelector
 } from '../../component/board/boardManagement.js'
-import { saveWidgetState } from '../../storage/localStorage.js'
+import { saveWidgetState } from '../../storage/widgetStatePersister.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { showNotification } from '../dialog/notification.js'
 import emojiList from '../../ui/unicodeEmoji.js'
@@ -126,7 +125,7 @@ function populateServiceDropdown () {
   defaultOption.value = ''
   defaultOption.textContent = 'Select a Service'
   selector.appendChild(defaultOption)
-  servicesStore.load().forEach(service => {
+  StorageManager.getServices().forEach(service => {
     const opt = document.createElement('option')
     opt.value = service.url
     opt.textContent = service.name

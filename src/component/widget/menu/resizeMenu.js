@@ -1,6 +1,6 @@
 // @ts-check
 import emojiList from '../../../ui/unicodeEmoji.js'
-import { saveWidgetState } from '../../../storage/localStorage.js'
+import { saveWidgetState } from '../../../storage/widgetStatePersister.js'
 import { fetchServices } from '../utils/fetchServices.js'
 import { getConfig } from '../../../utils/getConfig.js'
 import { Logger } from '../../../utils/Logger.js'

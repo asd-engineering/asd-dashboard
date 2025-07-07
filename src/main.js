@@ -7,7 +7,6 @@
 import { initializeMainMenu, applyControlVisibility } from './component/menu/menu.js'
 import { initializeBoards, switchBoard } from './component/board/boardManagement.js'
 import { initializeDashboardMenu, applyWidgetMenuVisibility } from './component/menu/dashboardMenu.js'
-import { loadInitialConfig, loadBoardState } from './storage/localStorage.js'
 import { initializeDragAndDrop } from './component/widget/events/dragDrop.js'
 import { fetchServices } from './utils/fetchServices.js'
 import { getConfig } from './utils/getConfig.js'
@@ -72,11 +71,13 @@ async function main () {
   applyControlVisibility()
   applyWidgetMenuVisibility()
 
-  // 5. Load board state from localStorage or initial config
-  let boards = await loadBoardState()
-  if (boards.length === 0 && window.asd.config.globalSettings?.localStorage?.loadDashboardFromConfig === 'true') {
-    await loadInitialConfig()
-    boards = await loadBoardState() // Re-load boards after initializing from config
+  // 5. Load boards from storage into the global state.
+  window.asd.boards = StorageManager.getBoards()
+  // If no boards exist and config specifies to load from itself, do so.
+  if (window.asd.boards.length === 0 && window.asd.config.globalSettings?.localStorage?.loadDashboardFromConfig === 'true') {
+    if (Array.isArray(window.asd.config.boards) && window.asd.config.boards.length > 0) {
+      StorageManager.setBoards(window.asd.config.boards)
+    }
   }
 
   // 6. Initialize boards and switch to the last used or default board/view
@@ -85,7 +86,7 @@ async function main () {
   const lastUsedBoardId = StorageManager.misc.getLastBoardId()
   const lastUsedViewId = StorageManager.misc.getLastViewId()
 
-  const boardExists = boards.some(board => board.id === lastUsedBoardId)
+  const boardExists = window.asd.boards.some(board => board.id === lastUsedBoardId)
 
   let boardIdToLoad = initialBoardView?.boardId
   let viewIdToLoad = initialBoardView?.viewId
