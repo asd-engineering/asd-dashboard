@@ -23,6 +23,8 @@ import StorageManager from './storage/StorageManager.js'
 
 const logger = new Logger('main.js')
 
+Logger.enableLogs('all')
+
 // Global state container
 window.asd = {
   services: [],

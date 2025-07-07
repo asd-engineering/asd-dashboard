@@ -1162,20 +1162,6 @@
     "returns": "boolean"
   },
   {
-    "name": "isJSON",
-    "kind": "function",
-    "file": "src/component/modal/localStorageModal.js",
-    "description": "Checks if a given string is valid JSON.",
-    "params": [
-      {
-        "name": "value",
-        "type": "string",
-        "desc": "- The string to check."
-      }
-    ],
-    "returns": "boolean"
-  },
-  {
     "name": "jsonGet",
     "kind": "function",
     "file": "src/storage/StorageManager.js",
