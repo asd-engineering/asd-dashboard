@@ -94,8 +94,7 @@ const StorageManager = {
    */
   getBoards () {
     const boards = jsonGet(KEYS.BOARDS, [])
-    window.asd.boards = Array.isArray(boards) ? boards : []
-    return window.asd.boards
+    return Array.isArray(boards) ? boards : []
   },
 
   /**
@@ -106,7 +105,6 @@ const StorageManager = {
    */
   setBoards (boards) {
     jsonSet(KEYS.BOARDS, boards)
-    window.asd.boards = Array.isArray(boards) ? boards : []
   },
 
   /**

@@ -13,14 +13,12 @@ test.describe('StorageManager', () => {
     const result = await page.evaluate(async () => {
       const { default: sm } = await import('/storage/StorageManager.js')
       localStorage.clear()
-      window.asd.boards = []
       const cfg = { boards: [{ id: 'b1', name: 'B1', views: [] }] }
       sm.setConfig(cfg)
       return {
         raw: localStorage.getItem('config'),
         boards: localStorage.getItem('boards'),
-        cfg: sm.getConfig(),
-        globalBoards: window.asd.boards
+        cfg: sm.getConfig()
       }
     })
     expect(JSON.parse(result.raw)).toMatchObject({
@@ -29,7 +27,6 @@ test.describe('StorageManager', () => {
     })
     expect(JSON.parse(result.boards)).toEqual([{ id: 'b1', name: 'B1', views: [] }])
     expect(result.cfg).toEqual({ boards: [{ id: 'b1', name: 'B1', views: [] }] })
-    expect(result.globalBoards).toEqual([{ id: 'b1', name: 'B1', views: [] }])
   })
 
   test('saveStateSnapshot persists and hashes', async ({ page }) => {

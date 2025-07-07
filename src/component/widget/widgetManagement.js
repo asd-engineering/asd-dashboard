@@ -24,6 +24,7 @@ import { Logger } from '../../utils/Logger.js'
 import { showServiceModal } from '../modal/serviceLaunchModal.js'
 import { switchBoard } from '../board/boardManagement.js'
 import { widgetGetUUID } from '../../utils/id.js'
+import StorageManager from '../../storage/StorageManager.js'
 
 const logger = new Logger('widgetManagement.js')
 
@@ -321,7 +322,7 @@ function updateWidgetOrders () {
  * @returns {{boardId:string, viewId:string}|null}
  */
 function findWidgetLocation (id) {
-  const boards = window.asd.boards || []
+  const boards = StorageManager.getBoards()
   for (const board of boards) {
     for (const view of board.views) {
       if (view.widgetState.some((w) => w.dataid === id)) {
