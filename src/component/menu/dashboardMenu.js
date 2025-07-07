@@ -124,8 +124,12 @@ function initializeDashboardMenu () {
 
   document.getElementById('view-selector').addEventListener('change', async (event) => {
     const selectedBoardId = getCurrentBoardId()
+    const currentViewId = getCurrentViewId() // Get the current view ID *before* switching
     const target = /** @type {HTMLSelectElement} */(event.target)
     const selectedViewId = target.value
+
+    saveWidgetState(selectedBoardId, currentViewId)
+
     logger.log(`Switching to selected view ${selectedViewId} in board ${selectedBoardId}`)
     await switchView(selectedBoardId, selectedViewId)
   })
