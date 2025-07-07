@@ -50,8 +50,5 @@
       "HTMLElement",
       "requestAnimationFrame"
     ]
-  },
-  "dependencies": {
-    "spark-md5": "^3.0.2"
   }
 }
