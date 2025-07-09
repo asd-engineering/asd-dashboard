@@ -84,11 +84,6 @@ function initializeDashboardMenu () {
     currentConfig.globalSettings.showMenuWidget = !isHidden
     StorageManager.setConfig(currentConfig)
 
-    // Also update the in-memory global for any component that hasn't been refactored yet.
-    if (window.asd.config?.globalSettings) {
-      window.asd.config.globalSettings.showMenuWidget = !isHidden
-    }
-
     showNotification(message, 500)
   }, buttonDebounce)
 

@@ -28,8 +28,6 @@ Logger.enableLogs('all')
 window.asd = {
   services: [],
   config: {},
-  currentBoardId: null,
-  currentViewId: null,
   widgetStore
 }
 
@@ -55,11 +53,13 @@ async function main () {
   initializeDragAndDrop()
 
   // 3. Load services and configuration in parallel
+  let config
   try {
-    await Promise.all([
+    const [_, configResult] = await Promise.all([
       fetchServices(),
       getConfig()
     ])
+    config = configResult
   } catch (e) {
     logger.error('Failed to load critical configuration or services:', e)
     // If config fails, getConfig() will open the modal.
@@ -73,8 +73,8 @@ async function main () {
   // 5. Load boards from storage.
   let boards = StorageManager.getBoards()
   // If no boards exist and config specifies to load from itself, do so.
-  if (boards.length === 0 && window.asd.config.globalSettings?.localStorage?.loadDashboardFromConfig === 'true') {
-    const cfgBoards = (StorageManager.getConfig() || {}).boards || []
+  if (boards.length === 0 && config.globalSettings?.localStorage?.loadDashboardFromConfig === 'true') {
+    const cfgBoards = config.boards || []
     if (Array.isArray(cfgBoards) && cfgBoards.length > 0) {
       StorageManager.setBoards(cfgBoards)
       boards = cfgBoards

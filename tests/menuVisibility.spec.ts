@@ -11,13 +11,6 @@ const settings = {
 
 test.describe('Menu control visibility', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(value => {
-      // @ts-ignore
-      window.asd = window.asd || {}
-      // @ts-ignore
-      window.asd.config = { globalSettings: value }
-    }, settings)
-
     await routeServicesConfig(page)
     await page.route('**/config.json', route => {
       route.fulfill({
@@ -52,13 +45,6 @@ test.describe('Widget menu visibility', () => {
   const custom = { ...settings, showMenuWidget: false }
 
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(value => {
-      // @ts-ignore
-      window.asd = window.asd || {}
-      // @ts-ignore
-      window.asd.config = { globalSettings: value }
-    }, custom)
-
     await routeServicesConfig(page)
     await page.route('**/config.json', route => {
       route.fulfill({
@@ -115,14 +101,6 @@ test.describe('View button menu visibility', () => {
   ]
 
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(value => {
-      // @ts-ignore
-      window.asd = window.asd || {}
-      // @ts-ignore
-      window.asd.config = { globalSettings: value.settings, boards: value.boards }
-      localStorage.setItem('boards', JSON.stringify(value.boards))
-    }, { settings: btnSettings, boards: testBoards })
-
     await routeServicesConfig(page)
     await page.route('**/config.json', route => {
       route.fulfill({ json: { ...ciConfig, boards: testBoards, globalSettings: { ...ciConfig.globalSettings, ...btnSettings } } })

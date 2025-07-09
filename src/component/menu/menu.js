@@ -288,7 +288,7 @@ function initializeMainMenu () {
  * @returns {void}
  */
 function applyControlVisibility () {
-  const settings = window.asd.config?.globalSettings || {}
+  const settings = StorageManager.getConfig()?.globalSettings || {}
   const boardControl = document.getElementById('board-control')
   if (boardControl) {
     boardControl.style.display = settings.hideBoardControl === true || settings.hideBoardControl === 'true' ? 'none' : ''

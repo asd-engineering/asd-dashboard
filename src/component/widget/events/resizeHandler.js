@@ -7,6 +7,7 @@
 import { saveWidgetState } from '../../../storage/widgetStatePersister.js'
 import { debounce } from '../../../utils/utils.js'
 import { Logger } from '../../../utils/Logger.js'
+import StorageManager from '../../../storage/StorageManager.js'
 
 const logger = new Logger('resizeHandler.js')
 
@@ -75,8 +76,8 @@ async function handleResizeStart (event, widget) {
   const widgetUrl = widget.dataset.url
   const serviceConfig = window.asd.services.find(service => service.url === widgetUrl)?.config || {}
 
-  const gridColumns = serviceConfig.maxColumns || window.asd.config.styling.widget.maxColumns
-  const gridRows = serviceConfig.maxRows || window.asd.config.styling.widget.maxRows
+  const gridColumns = serviceConfig.maxColumns || StorageManager.getConfig().styling.widget.maxColumns
+  const gridRows = serviceConfig.maxRows || StorageManager.getConfig().styling.widget.maxRows
 
   const gridColumnSize = widget.parentElement.offsetWidth / gridColumns || 1
   const gridRowSize = widget.parentElement.offsetHeight / gridRows || 1

@@ -118,11 +118,6 @@ async function loadFromSources () {
  * @returns {Promise<Object>} Parsed configuration object.
  */
 export async function getConfig () {
-  if (window.asd && window.asd.config && Object.keys(window.asd.config).length > 0) {
-    logger.log('Using cached configuration')
-    return window.asd.config
-  }
-
   const config = await loadFromSources()
   if (!config) {
     openConfigModal().catch(error => {
@@ -131,7 +126,6 @@ export async function getConfig () {
     throw new Error('No configuration available')
   }
 
-  window.asd.config = config
   StorageManager.setConfig(config)
   logger.log('Config loaded successfully')
   return config

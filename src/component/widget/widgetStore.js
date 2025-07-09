@@ -5,6 +5,7 @@
  * @module widgetStore
  */
 import { Logger } from '../../utils/Logger.js'
+import StorageManager from '../../storage/StorageManager.js'
 
 /**
  * Lightweight LRU cache storing widget elements by id.
@@ -210,7 +211,7 @@ export class WidgetStore {
    * @returns {Promise<boolean>} Resolves true when space is available.
    */
   async confirmCapacity () {
-    const maxTotal = window.asd.config?.globalSettings?.maxTotalInstances
+    const maxTotal = StorageManager.getConfig()?.globalSettings?.maxTotalInstances
     const overTotal = typeof maxTotal === 'number' && this.widgets.size >= maxTotal
 
     if (this.widgets.size >= this.maxSize || overTotal) {
