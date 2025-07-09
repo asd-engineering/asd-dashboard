@@ -77,7 +77,6 @@ export const fetchServices = async () => {
 
   services = services || []
   StorageManager.setServices(services)
-  window.asd.services = services
 
   const serviceSelector = document.getElementById('service-selector')
   if (serviceSelector) {

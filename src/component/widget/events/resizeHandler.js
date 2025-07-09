@@ -74,7 +74,7 @@ async function handleResizeStart (event, widget) {
   const startHeight = widget.offsetHeight
 
   const widgetUrl = widget.dataset.url
-  const serviceConfig = window.asd.services.find(service => service.url === widgetUrl)?.config || {}
+  const serviceConfig = StorageManager.getServices().find(service => service.url === widgetUrl)?.config || {}
 
   const gridColumns = serviceConfig.maxColumns || StorageManager.getConfig().styling.widget.maxColumns
   const gridRows = serviceConfig.maxRows || StorageManager.getConfig().styling.widget.maxRows

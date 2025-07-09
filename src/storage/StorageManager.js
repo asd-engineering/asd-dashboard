@@ -121,9 +121,7 @@ const StorageManager = {
    * @returns {Array<Service>}
    */
   getServices () {
-    const services = jsonGet(KEYS.SERVICES, [])
-    window.asd.services = Array.isArray(services) ? services : []
-    return window.asd.services
+    return jsonGet(KEYS.SERVICES, [])
   },
 
   /**
@@ -134,7 +132,6 @@ const StorageManager = {
    */
   setServices (services) {
     jsonSet(KEYS.SERVICES, services)
-    window.asd.services = Array.isArray(services) ? services : []
   },
 
   /**
