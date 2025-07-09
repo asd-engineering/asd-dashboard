@@ -130,8 +130,12 @@ function clearWidgetContainer () {
  * @returns {Promise<void>} Resolves when widgets are loaded.
  */
 export async function switchView (boardId = getCurrentBoardId(), viewId) {
-  // Get the ID of the view we are currently on, before we change anything.
-  saveWidgetState(getCurrentBoardId(), getCurrentViewId())
+  const oldViewId = getCurrentViewId()
+
+  // Save the state of the view we are leaving, but only if it's different.
+  if (oldViewId && oldViewId !== viewId) {
+    saveWidgetState(boardId, oldViewId)
+  }
 
   const board = StorageManager.getBoards().find(b => b.id === boardId)
   const view = board?.views.find(v => v.id === viewId)

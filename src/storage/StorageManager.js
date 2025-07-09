@@ -80,6 +80,13 @@ const StorageManager = {
    */
   setConfig (cfg /* DashboardConfig */) {
     jsonSet(KEYS.CONFIG, cfg)
+    // Also manage the separate 'boards' key whenever config is set.
+    // if (cfg && Array.isArray(cfg.boards)) {
+    //   jsonSet(KEYS.BOARDS, cfg.boards);
+    // } else {
+    //   // If the new config has no boards array, remove the old key.
+    //   localStorage.removeItem(KEYS.BOARDS);
+    // }
   },
 
   /**
