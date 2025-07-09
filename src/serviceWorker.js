@@ -51,8 +51,10 @@ self.addEventListener('fetch', function (event) {
         // Cache the new asset if it's fetched from the network
         return caches.open(CACHE_NAME).then(function (cache) {
           console.log('[Service Worker] Caching new resource: ', fetchEvent.request.url)
-          cache.put(fetchEvent.request, networkResponse.clone())
-          return networkResponse
+          return cache.put(fetchEvent.request, networkResponse.clone())
+            .then(function () {
+              return networkResponse
+            })
         })
       })
     })

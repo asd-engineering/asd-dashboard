@@ -33,6 +33,9 @@ export function initializeResizeHandles () {
     resizeHandle.addEventListener('mousedown', (event) => {
       event.preventDefault()
       handleResizeStart(event, /** @type {HTMLElement} */(widget))
+        .catch(error => {
+          logger.error('Error during resize start:', error)
+        })
     })
   })
 }

@@ -52,6 +52,9 @@ function initializeDashboardMenu () {
 
     const finalize = () => {
       addWidget(url, 1, 1, 'iframe', boardElement.id, viewElement.id)
+        .catch(error => {
+          logger.error('Error adding widget:', error)
+        })
       widgetUrlInput.value = ''
     }
 
@@ -118,7 +121,9 @@ function initializeDashboardMenu () {
     const selectedBoardId = target.value
     const currentBoardId = getCurrentBoardId()
     saveWidgetState(currentBoardId, getCurrentViewId()) // Save current view state
-    switchBoard(selectedBoardId)
+    switchBoard(selectedBoardId).catch(error => {
+      logger.error('Error switching board:', error)
+    })
     updateViewSelector(selectedBoardId)
   })
 

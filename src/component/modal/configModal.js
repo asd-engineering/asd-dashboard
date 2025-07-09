@@ -158,7 +158,10 @@ async function populateStateTab (tab) {
   table.appendChild(tbody)
   tab.appendChild(table)
 
-  /** @returns {void} */
+  /**
+   * Render the saved states table rows.
+   * @returns {void}
+   */
   function render () {
     tbody.innerHTML = ''
     list.forEach(row => {
@@ -169,6 +172,9 @@ async function populateStateTab (tab) {
       restore.textContent = 'Restore'
       restore.addEventListener('click', () => {
         openFragmentDecisionModal({ cfgParam: row.cfg, svcParam: row.svc, nameParam: row.name })
+          .catch(error => {
+            logger.error('Error opening fragment decision modal:', error)
+          })
       })
 
       const del = document.createElement('button')
