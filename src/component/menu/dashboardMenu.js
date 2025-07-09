@@ -41,7 +41,7 @@ function initializeDashboardMenu () {
 
   const buttonDebounce = 200
 
-  document.getElementById('add-widget-button').addEventListener('click', () => {
+  document.getElementById('add-widget-button').addEventListener('click', async () => {
     const serviceSelector = /** @type {HTMLSelectElement} */(document.getElementById('service-selector'))
     const widgetUrlInput = /** @type {HTMLInputElement} */(document.getElementById('widget-url'))
     const boardElement = document.querySelector('.board')
@@ -50,16 +50,17 @@ function initializeDashboardMenu () {
     const manualUrl = widgetUrlInput.value
     const url = selectedServiceUrl || manualUrl
 
-    const finalize = () => {
-      addWidget(url, 1, 1, 'iframe', boardElement.id, viewElement.id)
-        .catch(error => {
-          logger.error('Error adding widget:', error)
-        })
+    const finalize = async () => {
+      try {
+        await addWidget(url, 1, 1, 'iframe', boardElement.id, viewElement.id)
+      } catch (error) {
+        logger.error('Error adding widget:', error)
+      }
       widgetUrlInput.value = ''
     }
 
     if (selectedServiceUrl) {
-      finalize()
+      await finalize()
     } else if (manualUrl) {
       openSaveServiceModal(manualUrl, finalize)
     } else {
@@ -116,14 +117,16 @@ function initializeDashboardMenu () {
   }, buttonDebounce)
   document.getElementById('reset-button').addEventListener('click', /** @type {EventListener} */(handleReset))
 
-  document.getElementById('board-selector').addEventListener('change', (event) => {
+  document.getElementById('board-selector').addEventListener('change', async (event) => {
     const target = /** @type {HTMLSelectElement} */(event.target)
     const selectedBoardId = target.value
     const currentBoardId = getCurrentBoardId()
     saveWidgetState(currentBoardId, getCurrentViewId()) // Save current view state
-    switchBoard(selectedBoardId).catch(error => {
+    try {
+      await switchBoard(selectedBoardId)
+    } catch (error) {
       logger.error('Error switching board:', error)
-    })
+    }
     updateViewSelector(selectedBoardId)
   })
 
