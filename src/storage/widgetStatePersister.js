@@ -7,6 +7,7 @@
  */
 import { Logger } from '../utils/Logger.js'
 import StorageManager from './StorageManager.js'
+import { getCurrentBoardId, getCurrentViewId } from '../utils/elements.js'
 
 const logger = new Logger('widgetStatePersister.js')
 
@@ -47,7 +48,7 @@ function serializeWidgetState (widget) {
  * @param {string} viewId - The ID of the current view.
  * @returns {void}
  */
-export function saveWidgetState (boardId, viewId) {
+export function saveWidgetState (boardId = getCurrentBoardId(), viewId = getCurrentViewId()) {
   if (!boardId || !viewId) {
     return logger.error('Board ID or View ID is missing. Cannot save widget state.')
   }

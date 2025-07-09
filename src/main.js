@@ -97,9 +97,6 @@ async function main () {
     viewIdToLoad = lastUsedViewId
   }
 
-  window.asd.currentBoardId = boardIdToLoad
-  window.asd.currentViewId = viewIdToLoad
-
   if (boardIdToLoad) {
     logger.log(`Switching to initial board: ${boardIdToLoad}, view: ${viewIdToLoad}`)
     await switchBoard(boardIdToLoad, viewIdToLoad)

@@ -67,7 +67,9 @@ const StorageManager = {
    * @returns {DashboardConfig|null}
    */
   getConfig () {
-    return jsonGet(KEYS.CONFIG, null)
+    const wrapped = jsonGet(KEYS.CONFIG, null)
+    // allow backward-compat raw config (no wrapper)
+    return wrapped && wrapped.data ? wrapped.data : wrapped
   },
 
   /**
@@ -76,7 +78,7 @@ const StorageManager = {
    * @param {DashboardConfig} cfg
    * @returns {void}
    */
-  setConfig (cfg) {
+  setConfig (cfg /* DashboardConfig */) {
     jsonSet(KEYS.CONFIG, cfg)
   },
 
@@ -142,9 +144,7 @@ const StorageManager = {
    */
   async loadStateStore () {
     const store = jsonGet(KEYS.STATES, { version: CURRENT_VERSION, states: [] })
-    if (typeof store === 'object' && store !== null && !('version' in store)) {
-      store.version = 1
-    }
+    if (!('version' in store)) store.version = CURRENT_VERSION
     return store
   },
 
@@ -154,9 +154,7 @@ const StorageManager = {
    * @param {{version:number,states:Array}} store
    * @returns {Promise<void>}
    */
-  async saveStateStore (store) {
-    jsonSet(KEYS.STATES, store)
-  },
+  async saveStateStore (store) { jsonSet(KEYS.STATES, store) },
 
   /**
   * Save the current state snapshot.
@@ -166,11 +164,10 @@ const StorageManager = {
    */
   async saveStateSnapshot ({ name, type, cfg, svc }) {
     const store = await StorageManager.loadStateStore()
-    const blob = cfg + svc
-    const hash = md5Hex(blob)
-    store.states.unshift({ name, ts: Date.now(), type, md5: hash, cfg, svc })
+    const md5 = md5Hex(cfg + svc)
+    store.states.unshift({ name, type, md5, cfg, svc, ts: Date.now() })
     jsonSet(KEYS.STATES, store)
-    return hash
+    return md5
   },
 
   /**

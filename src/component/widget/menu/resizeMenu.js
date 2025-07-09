@@ -63,7 +63,7 @@ async function resizeHorizontally (widget, increase = true) {
     widget.dataset.columns = String(newSpan)
     widget.style.gridColumn = `span ${newSpan}`
     logger.log(`Widget resized horizontally to span ${newSpan} columns`)
-    saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
+    saveWidgetState()
 
     // Log dimensions and overflow state of widget container
     const widgetContainer = document.getElementById('widget-container')
@@ -110,7 +110,7 @@ async function resizeVertically (widget, increase = true) {
     widget.dataset.rows = String(newSpan)
     widget.style.gridRow = `span ${newSpan}`
     logger.log(`Widget resized vertically to span ${newSpan} rows`)
-    saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
+    saveWidgetState()
 
     // Log dimensions and overflow state of widget container
     const widgetContainer = document.getElementById('widget-container')
@@ -288,7 +288,7 @@ async function showResizeMenuBlock (icon, widgetWrapper) {
       button.addEventListener('click', async () => {
         await adjustWidgetSize(widgetWrapper, option.cols, option.rows)
         menu.remove()
-        saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
+        saveWidgetState()
       })
       menu.appendChild(button)
     })

@@ -5,7 +5,6 @@
  * @module resizeHandler
  */
 import { saveWidgetState } from '../../../storage/widgetStatePersister.js'
-import { getCurrentBoardId, getCurrentViewId } from '../../../utils/elements.js'
 import { debounce } from '../../../utils/utils.js'
 import { Logger } from '../../../utils/Logger.js'
 
@@ -89,9 +88,7 @@ async function handleResizeStart (event, widget) {
   const overlay = createResizeOverlay()
 
   const debouncedSave = debounce(() => {
-    const boardId = getCurrentBoardId()
-    const viewId = getCurrentViewId()
-    saveWidgetState(boardId, viewId)
+    saveWidgetState()
     logger.info('Resize stopped and widget state saved.')
   }, 300)
 

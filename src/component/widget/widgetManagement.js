@@ -25,6 +25,7 @@ import { showServiceModal } from '../modal/serviceLaunchModal.js'
 import { switchBoard } from '../board/boardManagement.js'
 import { widgetGetUUID } from '../../utils/id.js'
 import StorageManager from '../../storage/StorageManager.js'
+import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 
 const logger = new Logger('widgetManagement.js')
 
@@ -198,8 +199,8 @@ async function addWidget (
   const widgetContainer = document.getElementById('widget-container')
   if (!widgetContainer) return logger.error('Widget container not found')
 
-  boardId = boardId || window.asd.currentBoardId
-  viewId = viewId || window.asd.currentViewId
+  boardId = boardId || getCurrentBoardId()
+  viewId = viewId || getCurrentViewId()
 
   const serviceName = await getServiceFromUrl(url)
   if (window.asd.widgetStore.isAdding(serviceName)) return
@@ -284,7 +285,7 @@ async function configureWidget (iframeElement) {
   const newUrl = prompt('Enter new URL for the widget:', iframeElement.src)
   if (newUrl) {
     iframeElement.src = newUrl
-    saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
+    saveWidgetState()
   }
 }
 
@@ -308,12 +309,7 @@ function updateWidgetOrders () {
     }
   })
 
-  const boardId = window.asd.currentBoardId
-  const viewId = window.asd.currentViewId
-  if (boardId && viewId) {
-    // This is now a synchronous call
-    saveWidgetState(boardId, viewId)
-  }
+  saveWidgetState()
 }
 
 /**

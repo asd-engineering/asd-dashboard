@@ -9,6 +9,7 @@ import { widgetStore } from '../widget/widgetStore.js'
 import { Logger } from '../../utils/Logger.js'
 import { boardGetUUID, viewGetUUID } from '../../utils/id.js'
 import StorageManager from '../../storage/StorageManager.js'
+import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 
 /** @typedef {import('../../types.js').Board} Board */
 /** @typedef {import('../../types.js').View} View */
@@ -127,7 +128,7 @@ function clearWidgetContainer () {
  * @function switchView
  * @returns {Promise<void>} Resolves when widgets are loaded.
  */
-export async function switchView (boardId, viewId) {
+export async function switchView (boardId = getCurrentBoardId(), viewId) {
   const board = StorageManager.getBoards().find(b => b.id === boardId)
   const view = board?.views.find(v => v.id === viewId)
   if (!view) return logger.warn(`Invalid view ${viewId} on board ${boardId}`)
@@ -158,7 +159,6 @@ export async function switchView (boardId, viewId) {
     }
   }
 
-  window.asd.currentViewId = viewId
   StorageManager.misc.setLastViewId(viewId)
   updateViewSelector(boardId)
 }
@@ -198,7 +198,7 @@ export function updateViewSelector (boardId) {
         const btn = document.createElement('button')
         btn.textContent = view.name
         btn.dataset.viewId = view.id
-        if (view.id === window.asd.currentViewId) btn.classList.add('active')
+        if (view.id === getCurrentViewId()) btn.classList.add('active')
         btn.addEventListener('click', async () => {
           try {
             await switchView(boardId, view.id)
@@ -247,11 +247,9 @@ export async function switchBoard (boardId, viewId = null) {
       // Handle board with no views
       clearWidgetContainer()
       document.querySelector('.board-view').id = ''
-      window.asd.currentViewId = null
       StorageManager.misc.setLastViewId(null)
     }
 
-    window.asd.currentBoardId = boardId
     StorageManager.misc.setLastBoardId(boardId)
     updateViewSelector(boardId)
   } else {
@@ -471,7 +469,6 @@ export async function deleteView (boardId, viewId) {
     const viewSelector = /** @type {HTMLSelectElement} */(document.getElementById('view-selector'))
     if (viewSelector) viewSelector.innerHTML = ''
     document.querySelector('.board-view').id = ''
-    window.asd.currentViewId = null
     StorageManager.misc.setLastViewId(null)
   }
 }
