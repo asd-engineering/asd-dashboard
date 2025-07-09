@@ -40,13 +40,18 @@ function serializeWidgetState (widget) {
 }
 
 /**
- * Serializes the state of all visible widgets for a given view,
- * updates the in-memory board object, and then persists the entire
- * board structure to localStorage via the StorageManager.
+ * Merge visible widget state into the in-memory board and persist it.
  *
- * @param {string} boardId - The ID of the current board.
- * @param {string} viewId - The ID of the current view.
+ * Retrieves the current state of all visible widgets for the specified view,
+ * updates the in-memory board object accordingly, and then writes the
+ * complete board structure to localStorage via the StorageManager.
+ *
+ * If either `boardId` or `viewId` is falsy, logs an error and aborts without saving.
+ *
+ * @param {string} [boardId=getCurrentBoardId()] - The board ID to update. Defaults to the current board.
+ * @param {string} [viewId=getCurrentViewId()]   - The view ID to update. Defaults to the current view.
  * @returns {void}
+ * @see StorageManager.save
  */
 export function saveWidgetState (boardId = getCurrentBoardId(), viewId = getCurrentViewId()) {
   if (!boardId || !viewId) {
