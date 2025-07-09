@@ -13,6 +13,7 @@ import { Logger } from '../../utils/Logger.js'
  */
 export class WidgetStore {
   /**
+   * Create a new widget store.
    * @constructor
    * @param {number} [maxSize=50] - Maximum number of widgets to retain.
    */
@@ -25,8 +26,11 @@ export class WidgetStore {
     this._serviceLocks = new Map() // service → ref-count
   }
 
-  /** Resolve after all pending RAF removals */
-  idle () { return new Promise(resolve => requestAnimationFrame(resolve)) }
+  /**
+   * Resolve after all pending RAF removals.
+   * @returns {Promise<void>}
+   */
+  idle () { return new Promise(resolve => requestAnimationFrame(() => resolve())) }
 
   /**
    * Store a widget element using its `dataid` attribute as the key.

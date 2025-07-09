@@ -100,7 +100,11 @@ async function loadFromSources () {
     showNotification('Default configuration has been loaded. Please review and save.')
     const cfg = DEFAULT_CONFIG_TEMPLATE
     StorageManager.setConfig(cfg)
-    openConfigModal()
+    try {
+      await openConfigModal() // keep the await from v4
+    } catch (err) {
+      logger.error('Failed to open config modal', err) // keep the observability from v3
+    }
     return cfg
   } else {
     return cfgJ
@@ -121,7 +125,9 @@ export async function getConfig () {
 
   const config = await loadFromSources()
   if (!config) {
-    openConfigModal()
+    openConfigModal().catch(error => {
+      logger.error('Error opening config modal:', error)
+    })
     throw new Error('No configuration available')
   }
 

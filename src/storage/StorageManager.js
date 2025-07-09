@@ -64,15 +64,10 @@ const StorageManager = {
   /**
    * Get the persisted dashboard configuration.
    * @function getConfig
-   * @returns {DashboardConfig}
+   * @returns {DashboardConfig|null}
    */
   getConfig () {
-    const raw = jsonGet(KEYS.CONFIG)
-    if (!raw) return null
-    if (typeof raw === 'object' && raw !== null && 'version' in raw) {
-      return raw.data
-    }
-    return raw
+    return jsonGet(KEYS.CONFIG, null)
   },
 
   /**
@@ -82,9 +77,7 @@ const StorageManager = {
    * @returns {void}
    */
   setConfig (cfg) {
-    // Flatten + wrap for backward compatibility
-    const wrapped = { version: CURRENT_VERSION, data: cfg, ...cfg }
-    jsonSet(KEYS.CONFIG, wrapped)
+    jsonSet(KEYS.CONFIG, cfg)
   },
 
   /**

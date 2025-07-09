@@ -1953,6 +1953,20 @@
     "returns": "void"
   },
   {
+    "name": "updateBoards",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Atomically update boards via callback.",
+    "params": [
+      {
+        "name": "updater",
+        "type": "(boards: Array<Board>) => Array<Board>|void",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "updateBoardSelector",
     "kind": "function",
     "file": "src/component/board/boardManagement.js",

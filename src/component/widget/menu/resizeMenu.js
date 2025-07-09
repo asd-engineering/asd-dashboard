@@ -300,7 +300,9 @@ async function showResizeMenuBlock (icon, widgetWrapper) {
 
     menu.addEventListener('mouseleave', (event) => {
       logger.log('Mouse left resize-menu-block')
-      hideResizeMenuBlock(widgetWrapper)
+      hideResizeMenuBlock(widgetWrapper).catch(error => {
+        logger.error('Error hiding resize menu:', error)
+      })
     })
 
     widgetWrapper.appendChild(menu)

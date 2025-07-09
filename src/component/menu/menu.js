@@ -79,15 +79,22 @@ function initSW () {
               })
           }
         })
-      caches.keys().then(function (cacheNames) {
-        return Promise.all(
-          cacheNames.map(function (cacheName) {
-            return caches.delete(cacheName)
-          })
-        ).then(function () {
-          console.log('All caches cleared')
+        .catch(function (error) {
+          console.error('Service Worker registration retrieval failed:', error)
         })
-      })
+      caches.keys()
+        .then(function (cacheNames) {
+          return Promise.all(
+            cacheNames.map(function (cacheName) {
+              return caches.delete(cacheName)
+            })
+          ).then(function () {
+            console.log('All caches cleared')
+          })
+        })
+        .catch(function (error) {
+          console.error('Cache clearing failed:', error)
+        })
     }
 
     if (swEnabled) {
