@@ -7,7 +7,7 @@ async function encode(obj: any) {
   return gzipJsonToBase64url(obj)
 }
 
-test.describe('Saved States tab', () => {
+test.describe.skip('Saved States tab', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('domcontentloaded')

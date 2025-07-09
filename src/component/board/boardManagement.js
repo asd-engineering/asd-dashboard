@@ -4,15 +4,11 @@
  *
  * @module boardManagement
  */
-import { saveWidgetState } from '../../storage/widgetStatePersister.js'
 import { addWidget } from '../widget/widgetManagement.js'
 import { widgetStore } from '../widget/widgetStore.js'
 import { Logger } from '../../utils/Logger.js'
 import { boardGetUUID, viewGetUUID } from '../../utils/id.js'
 import StorageManager from '../../storage/StorageManager.js'
-
-// eslint-disable-next-line no-unused-vars
-const _unused = saveWidgetState
 
 /** @typedef {import('../../types.js').Board} Board */
 /** @typedef {import('../../types.js').View} View */
