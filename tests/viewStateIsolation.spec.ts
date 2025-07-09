@@ -47,13 +47,9 @@ test.describe('Widget State Isolation Between Views', () => {
     });
 
     await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForSelector('body[data-ready="true"]', { timeout: 2000 });
   });
 
-  /**
-   * This test specifically targets the "widget copying" bug by verifying that
-   * widget state is correctly isolated when switching between views.
-   */
   test('widgets added to one view should not appear in another view after switching', async ({ page }) => {
     // Define locators for the widgets we'll be adding.
     const widgetToolbox = page.locator('.widget-wrapper[data-service="ASD-toolbox"]');
@@ -88,7 +84,6 @@ test.describe('Widget State Isolation Between Views', () => {
 
     // CRITICAL VERIFICATION:
     // Ensure View A shows ONLY the Toolbox widget. The Terminal widget must now be hidden.
-    // This is the step that would have failed with the previous faulty logic.
     await expect(widgetToolbox).toBeVisible();
     await expect(widgetTerminal).toBeHidden();
     await expect(page.locator('.widget-wrapper:visible')).toHaveCount(1);
@@ -101,4 +96,5 @@ test.describe('Widget State Isolation Between Views', () => {
     await expect(widgetTerminal).toBeVisible();
     await expect(page.locator('.widget-wrapper:visible')).toHaveCount(1);
   });
+  
 });

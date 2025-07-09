@@ -10,6 +10,7 @@ import { Logger } from '../../utils/Logger.js'
 import { boardGetUUID, viewGetUUID } from '../../utils/id.js'
 import StorageManager from '../../storage/StorageManager.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
+import { saveWidgetState } from '../../storage/widgetStatePersister.js'
 
 /** @typedef {import('../../types.js').Board} Board */
 /** @typedef {import('../../types.js').View} View */
@@ -129,6 +130,9 @@ function clearWidgetContainer () {
  * @returns {Promise<void>} Resolves when widgets are loaded.
  */
 export async function switchView (boardId = getCurrentBoardId(), viewId) {
+  // Get the ID of the view we are currently on, before we change anything.
+  saveWidgetState(getCurrentBoardId(), getCurrentViewId())
+
   const board = StorageManager.getBoards().find(b => b.id === boardId)
   const view = board?.views.find(v => v.id === viewId)
   if (!view) return logger.warn(`Invalid view ${viewId} on board ${boardId}`)
@@ -182,6 +186,7 @@ export function updateViewSelector (boardId) {
   const board = StorageManager.getBoards().find(b => b.id === boardId)
   const viewButtonMenu = document.getElementById('view-button-menu')
   const settings = StorageManager.getConfig()?.globalSettings || {}
+
   if (viewButtonMenu && settings.views?.showViewOptionsAsButtons) {
     viewButtonMenu.innerHTML = ''
   }
@@ -194,11 +199,13 @@ export function updateViewSelector (boardId) {
       option.value = view.id
       option.textContent = view.name
       viewSelector.appendChild(option)
+
       if (viewButtonMenu && settings.views?.showViewOptionsAsButtons) {
         const btn = document.createElement('button')
         btn.textContent = view.name
         btn.dataset.viewId = view.id
         if (view.id === getCurrentViewId()) btn.classList.add('active')
+
         btn.addEventListener('click', async () => {
           try {
             await switchView(boardId, view.id)
