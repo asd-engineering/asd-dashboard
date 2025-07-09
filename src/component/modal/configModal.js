@@ -94,10 +94,14 @@ export async function openConfigModal () {
         try {
           const cfg = JSON.parse(textarea.value)
 
-          // Be explicit about what you are saving
+          // Save the main config object
           StorageManager.setConfig(cfg)
-          if (cfg.boards) {
+
+          // Explicitly handle the separate boards storage to satisfy test contract
+          if (cfg.boards && Array.isArray(cfg.boards)) {
             StorageManager.setBoards(cfg.boards)
+          } else {
+            localStorage.removeItem('boards')
           }
 
           showNotification('Config saved to localStorage')
@@ -170,11 +174,12 @@ async function populateStateTab (tab) {
 
       const restore = document.createElement('button')
       restore.textContent = 'Restore'
-      restore.addEventListener('click', () => {
-        openFragmentDecisionModal({ cfgParam: row.cfg, svcParam: row.svc, nameParam: row.name })
-          .catch(error => {
-            logger.error('Error opening fragment decision modal:', error)
-          })
+      restore.addEventListener('click', async () => {
+        try {
+          await openFragmentDecisionModal({ cfgParam: row.cfg, svcParam: row.svc, nameParam: row.name })
+        } catch (error) {
+          logger.error('Error opening fragment decision modal:', error)
+        }
       })
 
       const del = document.createElement('button')
