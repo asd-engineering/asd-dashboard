@@ -10,19 +10,21 @@ async function encode(obj) {
 test('import modal pre-fills name and saves snapshot', async ({ page }) => {
   // SETUP: Create pre-existing local data to trigger the modal.
   await page.goto('/'); // Go to a blank page first
+  await page.waitForSelector('body[data-ready="true"]', { timeout: 2000 });
   await page.evaluate(() => {
     localStorage.setItem('config', JSON.stringify({ globalSettings: { theme: 'dark' } }));
   });
-
+  
   const cfg = await encode(ciConfig);
   const svc = await encode(ciServices);
   const name = 'MySnapshot';
 
   // Now navigate to the URL with the fragment. The modal will now appear.
   await page.goto(`/#cfg=${cfg}&svc=${svc}&name=${encodeURIComponent(name)}`);
+  await page.waitForSelector('body[data-ready="true"]', { timeout: 2000 });
 
   // The rest of your test assertions will now work.
-  await page.waitForSelector('#fragment-decision-modal', { timeout: 5000 });
+  await page.waitForSelector('#fragment-decision-modal', { timeout: 2000 });
   await expect(page.locator('#importName')).toHaveValue(name);
   await page.locator('#fragment-decision-modal button:has-text("Overwrite")').click();
   await page.waitForLoadState('domcontentloaded');
