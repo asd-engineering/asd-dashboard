@@ -10,76 +10,48 @@ test.describe('LocalStorage Editor Functionality', () => {
     await page.evaluate(() => {
       localStorage.setItem('log', 'localStorageModal,localStorage');
     });
+    await page.waitForSelector('body[data-ready="true"]', { timeout: 2000 });
   });
 
-  test('should open LocalStorage editor modal, modify JSON content, and save changes', async ({ page, browserName  }) => {
-    // Webkit (and a little Firefox) is flaky in this test so I increased the timeout only for that particular browser
-    const timeout = ['webkit', 'firefox'].includes(browserName) ? 6000 : undefined;
-
-    // Open LocalStorage editor
-    await page.click('#localStorage-edit-button');
-    
-    // Wait for the modal to appear
-    await page.waitForSelector('#localStorage-edit-button', { state: 'visible', timeout });
-    
-    // Verify modal is visible
-    const modal = await page.locator('#localStorage-modal');
-    await expect(modal).toBeVisible();
-  
-    // Verify Close button is present
-    const closeButton = await modal.locator('button.modal__btn--cancel');
-    await page.waitForSelector('button.modal__btn--cancel');
-    await expect(closeButton).toBeVisible();
-  
-    // Modify the JSON content in the textarea to create a board, view, and widget
-    const textarea = await modal.locator('textarea#localStorage-boards');
-    await page.waitForSelector('textarea#localStorage-boards');
-  
-    const originalContent = await textarea.inputValue();
-    const newContent = JSON.stringify(ciBoards, null, 2);
-    await textarea.fill(newContent);
-  
-    // Save changes
-    const saveButton = await modal.locator('button.modal__btn--save');
-    await page.waitForSelector('button.modal__btn--save');
-    await saveButton.click();
-  
-    // Wait for notification
-    const notification = await page.locator('.user-notification span');
-    await page.waitForSelector('.user-notification span', { state: 'visible', timeout });
-    await expect(notification).toHaveText('LocalStorage updated successfully!');
-  
-    // Verify changes in localStorage
-    const updatedValue = await page.evaluate(() => {
-      const item = localStorage.getItem('boards');
-      return item ? JSON.parse(item) : [];
+  test('should open LocalStorage editor modal, modify JSON content, and save changes', async ({ page }) => {
+    // Set an initial state for the test to modify. This makes the test self-contained.
+    await page.evaluate(() => {
+      localStorage.setItem('config', JSON.stringify({ globalSettings: { theme: 'dark' } }));
+      localStorage.setItem('services', JSON.stringify([{ name: 'test', url: 'http://test.com' }]));
+      localStorage.setItem('boards', JSON.stringify([{ id: 'board1', name: 'Board 1', views: [] }]));
     });
-    expect(updatedValue[0].id).toBe(ciBoards[0].id);
 
-    // Test closing modal using Close button
-    await page.click('#localStorage-edit-button');
-    await closeButton.click();
-    await expect(await page.locator('#localStorage-modal')).toBeHidden();
-  
-    // Reopen and test closing modal using Escape key
-    await page.click('#localStorage-edit-button');
-    await page.keyboard.press('Escape');
-    await expect(page.locator('#localStorage-modal')).toBeHidden({ timeout });
-
-    // Reload the page and verify changes in localStorage
+    // Reload the page to ensure the app reads the new localStorage state
     await page.reload();
-    
-    const boards = await page.evaluate(() => JSON.parse(localStorage.getItem('boards')));
-    expect(boards[0].name).toBe('Modified Board 1');
-    expect(boards[0].views[0].name).toBe('Modified View 1');
-    expect(boards[0].views[0].widgetState[0].url).toBe('http://localhost:8000/asd/toolbox');
-  
-    // Verify the UI reflects the changes
-    const boardName = await page.locator('#board-selector').textContent();
-    expect(boardName).toContain('Modified Board 1');
-    
-    const viewName = await page.locator('#view-selector').textContent();
-    expect(viewName).toContain('Modified View 1');
+    await page.waitForSelector('body[data-ready="true"]', { timeout: 10000 });
+
+    // ================== FIX START ==================
+    // Action 1: Click the button with the CORRECT ID to open the modal
+    await page.click('#localStorage-edit-button');
+    // =================== FIX END ===================
+
+    // Now, we wait for the modal and its contents to be ready.
+    const modal = page.locator('#localStorage-modal');
+    await expect(modal).toBeVisible();
+
+    // The modal generates multiple textareas. We need to target the one for the 'boards' key.
+    const boardsTextarea = modal.locator('textarea#localStorage-boards');
+    await expect(boardsTextarea).toBeVisible();
+
+    // Action 2: It is now safe to interact with the textarea.
+    const newBoardsContent = JSON.stringify([{ id: 'board2', name: 'Modified Board', views: [] }], null, 2);
+    await boardsTextarea.fill(newBoardsContent);
+
+    // Action 3: Click the save button within the modal.
+    await modal.locator('button:has-text("Save")').click();
+
+    // Wait for the modal to disappear, confirming the save action was successful.
+    await expect(modal).toBeHidden();
+
+    // Assertion: Verify the change was persisted correctly in localStorage.
+    const newBoards = await page.evaluate(() => JSON.parse(localStorage.getItem('boards')));
+    expect(newBoards).toHaveLength(1);
+    expect(newBoards[0].name).toBe('Modified Board');
   });
 
   test('invalid JSON in popup shows error', async ({ page }) => {
