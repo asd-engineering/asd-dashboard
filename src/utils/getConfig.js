@@ -73,6 +73,11 @@ async function loadFromSources () {
     const cfg = parseBase64(params.get('config_base64'))
     if (cfg) {
       StorageManager.setConfig(cfg)
+
+      if (Array.isArray(cfg.boards)) {
+        StorageManager.setBoards(cfg.boards)
+      }
+
       window.history.replaceState(null, '', location.pathname)
       return cfg
     }
@@ -83,6 +88,11 @@ async function loadFromSources () {
     const cfgU = await fetchJson(params.get('config_url'))
     if (cfgU) {
       StorageManager.setConfig(cfgU)
+
+      if (Array.isArray(cfgU.boards)) {
+        StorageManager.setBoards(cfgU.boards)
+      }
+
       window.history.replaceState(null, '', location.pathname)
       return cfgU
     }

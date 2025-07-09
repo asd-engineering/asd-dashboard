@@ -23,19 +23,26 @@ test.beforeEach(async ({ page }) => {
 // Base64 params
 
 test.describe('Dashboard Config - Base64 via URL Params', () => {
-  test('loads dashboard from valid config_base64 and services_base64', async ({ page }) => {
+   test('loads dashboard from valid config_base64 and services_base64', async ({ page }) => {
     const cfg = { ...ciConfig, boards: ciBoards };
     const config = b64(cfg);
     const services = b64(ciServices);
     await page.goto(`/?config_base64=${config}&services_base64=${services}`);
+    
+    // This assertion is a good first step, confirming services are loaded.
     await expect(page.locator('#service-selector option')).toHaveCount(ciServices.length + 1);
+
+    const names = await page.$$eval('#board-selector option', opts => opts.map(o => o.textContent));
+    expect(names).toContain(ciBoards[0].name);
+
+    // Now that the UI is ready, it is safe to check the underlying storage.
+    // This will now pass reliably.
     const boards = await page.evaluate(() => {
       const raw = localStorage.getItem('boards') || '[]';
       return JSON.parse(raw);
     });
     expect(boards.length).toBe(ciBoards.length);
-    const names = await page.$$eval('#board-selector option', opts => opts.map(o => o.textContent));
-    expect(names).toContain(ciBoards[0].name);
+    // =============================================
   });
 
   test('shows config modal on invalid base64', async ({ page }) => {
