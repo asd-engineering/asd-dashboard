@@ -53,34 +53,38 @@ export function saveWidgetState (boardId, viewId) {
   }
 
   try {
-    // ALWAYS operate on the in-memory "live" state.
-    const currentBoards = StorageManager.getBoards()
-    const board = currentBoards.find(b => b.id === boardId)
-    if (!board) return logger.error(`Board not found for saving state: ${boardId}`)
+    // Use the atomic update helper for all board modifications.
+    StorageManager.updateBoards(boards => {
+      const board = boards.find(b => b.id === boardId)
+      if (!board) {
+        logger.error(`Board not found for saving state: ${boardId}`)
+        return // Exit the updater callback
+      }
 
-    const view = board.views.find(v => v.id === viewId)
-    if (!view) return logger.error(`View not found for saving state: ${viewId}`)
+      const view = board.views.find(v => v.id === viewId)
+      if (!view) {
+        logger.error(`View not found for saving state: ${viewId}`)
+        return // Exit the updater callback
+      }
 
-    const widgetContainer = document.getElementById('widget-container')
-    const visibleWidgets = Array.from(widgetContainer.children)
-      .filter(el => (el instanceof HTMLElement) && el.style.display !== 'none')
+      const widgetContainer = document.getElementById('widget-container')
+      const visibleWidgets = Array.from(widgetContainer.children)
+        .filter(el => (el instanceof HTMLElement) && el.style.display !== 'none')
 
-    const sortedVisibleWidgets = visibleWidgets.sort((a, b) => {
-      const orderA = parseInt(/** @type {HTMLElement} */(a).getAttribute('data-order') || '0', 10)
-      const orderB = parseInt(/** @type {HTMLElement} */(b).getAttribute('data-order') || '0', 10)
-      return orderA - orderB
+      const sortedVisibleWidgets = visibleWidgets.sort((a, b) => {
+        const orderA = parseInt(/** @type {HTMLElement} */(a).getAttribute('data-order') || '0', 10)
+        const orderB = parseInt(/** @type {HTMLElement} */(b).getAttribute('data-order') || '0', 10)
+        return orderA - orderB
+      })
+
+      sortedVisibleWidgets.forEach((widget, index) => {
+        (/** @type {HTMLElement} */(widget)).setAttribute('data-order', String(index))
+        ;(/** @type {HTMLElement} */(widget)).style.order = String(index)
+      })
+
+      // Mutate the board state directly within the safe callback
+      view.widgetState = sortedVisibleWidgets.map(widget => serializeWidgetState(/** @type {HTMLElement} */(widget)))
     })
-
-    sortedVisibleWidgets.forEach((widget, index) => {
-      (/** @type {HTMLElement} */(widget)).setAttribute('data-order', String(index))
-      ;(/** @type {HTMLElement} */(widget)).style.order = String(index)
-    })
-
-    // Mutate the in-memory widgetState for the current view.
-    view.widgetState = sortedVisibleWidgets.map(widget => serializeWidgetState(/** @type {HTMLElement} */(widget)))
-
-    // Persist the entire updated boards structure.
-    StorageManager.setBoards(currentBoards)
 
     logger.info(`Saved widget state for view: ${viewId} in board: ${boardId}`)
   } catch (error) {
