@@ -199,10 +199,12 @@ export function updateViewSelector (boardId) {
         btn.textContent = view.name
         btn.dataset.viewId = view.id
         if (view.id === window.asd.currentViewId) btn.classList.add('active')
-        btn.addEventListener('click', () => {
-          switchView(boardId, view.id).catch(error => {
+        btn.addEventListener('click', async () => {
+          try {
+            await switchView(boardId, view.id)
+          } catch (error) {
             logger.error('Error switching view:', error)
-          })
+          }
         })
         viewButtonMenu.appendChild(btn)
       }

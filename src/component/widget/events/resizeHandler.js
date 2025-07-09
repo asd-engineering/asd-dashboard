@@ -30,12 +30,13 @@ export function initializeResizeHandles () {
 
     logger.info('Appended resize handle:', resizeHandle)
 
-    resizeHandle.addEventListener('mousedown', (event) => {
+    resizeHandle.addEventListener('mousedown', async (event) => {
       event.preventDefault()
-      handleResizeStart(event, /** @type {HTMLElement} */(widget))
-        .catch(error => {
-          logger.error('Error during resize start:', error)
-        })
+      try {
+        await handleResizeStart(event, /** @type {HTMLElement} */(widget))
+      } catch (error) {
+        logger.error('Error during resize start:', error)
+      }
     })
   })
 }
