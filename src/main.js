@@ -55,11 +55,12 @@ async function main () {
   // 3. Load services and configuration in parallel
   let config
   try {
-    const [_, configResult] = await Promise.all([
+    await Promise.all([
       fetchServices(),
       getConfig()
-    ])
-    config = configResult
+    ]).then(([, result]) => {
+      config = result
+    })
   } catch (e) {
     logger.error('Failed to load critical configuration or services:', e)
     // If config fails, getConfig() will open the modal.

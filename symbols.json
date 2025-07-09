@@ -649,7 +649,7 @@
     "file": "src/storage/StorageManager.js",
     "description": "Get the persisted dashboard configuration.",
     "params": [],
-    "returns": "DashboardConfig"
+    "returns": "DashboardConfig|null"
   },
   {
     "name": "getConfig",
