@@ -1,6 +1,6 @@
 // @ts-check
 /** @module utils/hash */
-import SparkMD5 from 'https://cdn.jsdelivr.net/npm/spark-md5@3.0.2/+esm'
+import SparkMD5 from '../lib/esm/spark-md5.js'
 
 /**
  * Returns a 32-digit MD5 hex string for UTF-8 text input.
