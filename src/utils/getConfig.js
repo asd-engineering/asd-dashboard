@@ -7,7 +7,8 @@
 import { Logger } from './Logger.js'
 import { openLocalStorageModal } from '../component/modal/localStorageModal.js'
 import { showNotification } from '../component/dialog/notification.js'
-import { openConfigModal, DEFAULT_CONFIG_TEMPLATE } from '../component/modal/configModal.js'
+import { openConfigModal } from '../component/modal/configModal.js'
+import { DEFAULT_CONFIG_TEMPLATE } from '../storage/defaultConfig.js'
 import StorageManager from '../storage/StorageManager.js'
 
 const logger = new Logger('getConfig.js')
@@ -74,10 +75,6 @@ async function loadFromSources () {
     if (cfg) {
       StorageManager.setConfig(cfg)
 
-      if (Array.isArray(cfg.boards)) {
-        StorageManager.setBoards(cfg.boards)
-      }
-
       window.history.replaceState(null, '', location.pathname)
       return cfg
     }
@@ -88,10 +85,6 @@ async function loadFromSources () {
     const cfgU = await fetchJson(params.get('config_url'))
     if (cfgU) {
       StorageManager.setConfig(cfgU)
-
-      if (Array.isArray(cfgU.boards)) {
-        StorageManager.setBoards(cfgU.boards)
-      }
 
       window.history.replaceState(null, '', location.pathname)
       return cfgU

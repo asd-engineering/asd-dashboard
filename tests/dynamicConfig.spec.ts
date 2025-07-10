@@ -38,10 +38,10 @@ test.describe('Dashboard Config - Base64 via URL Params', () => {
     // Now that the UI is ready, it is safe to check the underlying storage.
     // This will now pass reliably.
     const boards = await page.evaluate(() => {
-      const raw = localStorage.getItem('boards') || '[]';
-      return JSON.parse(raw);
+      const cfg = JSON.parse(localStorage.getItem('config') || '{}');
+      return Array.isArray(cfg.boards) ? cfg.boards.length : 0;
     });
-    expect(boards.length).toBe(ciBoards.length);
+    expect(boards).toBe(ciBoards.length);
     // =============================================
   });
 
@@ -198,8 +198,11 @@ test.describe('Dashboard Functionality - Building from Services', () => {
     await page.selectOption('#service-selector', { index: 1 });
     await page.click('#add-widget-button');
     await expect(page.locator('.widget-wrapper')).toHaveCount(1);
-    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('boards')||'[]'));
-    expect(stored.length).toBeGreaterThan(0);
+    const stored = await page.evaluate(() => {
+      const cfg = JSON.parse(localStorage.getItem('config') || '{}');
+      return Array.isArray(cfg.boards) ? cfg.boards.length : 0;
+    });
+    expect(stored).toBeGreaterThan(0);
   });
 });
 

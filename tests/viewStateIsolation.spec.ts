@@ -34,7 +34,7 @@ test.describe('Widget State Isolation Between Views', () => {
     // This ensures the application initializes with our test state.
     await page.addInitScript(({ boards, services }) => {
       localStorage.clear();
-      localStorage.setItem('boards', JSON.stringify(boards));
+      localStorage.setItem('config', JSON.stringify({ boards }));
       localStorage.setItem('services', JSON.stringify(services));
       localStorage.setItem('lastUsedBoardId', 'board-iso-test-1');
       localStorage.setItem('lastUsedViewId', 'view-A');

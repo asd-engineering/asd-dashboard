@@ -133,7 +133,8 @@ test.describe("Widget limits", () => {
     );
     const selectedBoard = await page.locator('#board-selector').inputValue();
     const boardWithWidget = await page.evaluate(() => {
-      const boards = JSON.parse(localStorage.getItem('boards') || '[]');
+      const cfg = JSON.parse(localStorage.getItem('config') || '{}');
+      const boards = Array.isArray(cfg.boards) ? cfg.boards : [];
       return boards.find(b => b.views.some(v => v.widgetState && v.widgetState.length > 0))?.id;
     });
     expect(selectedBoard).toBe(boardWithWidget);

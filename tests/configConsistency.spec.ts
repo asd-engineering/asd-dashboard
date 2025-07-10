@@ -21,25 +21,13 @@ test.describe('config consistency', () => {
     expect(cfg.boards.length).toBeGreaterThan(0)
   })
 
-  test('localStorage edit modal reflects same boards', async ({ page }) => {
-    await page.click('#localStorage-edit-button')
-    const boardText = await page.locator('textarea#localStorage-boards').inputValue()
-    const boards = JSON.parse(boardText)
-    expect(Array.isArray(boards)).toBeTruthy()
-    expect(boards.length).toBeGreaterThan(0)
-  })
-
-  test('config matches between modals', async ({ page }) => {
+  test('config matches localStorage after save', async ({ page }) => {
     await page.click('#open-config-modal')
     const cfgText = await page.locator('#config-json').inputValue()
     const cfg = JSON.parse(cfgText)
     await page.click('#config-modal .modal__btn--cancel')
-
-    await page.click('#localStorage-edit-button')
-    const boardText = await page.locator('textarea#localStorage-boards').inputValue()
-    const boards = JSON.parse(boardText)
-
-    expect(cfg.boards).toEqual(boards)
+    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('config') || '{}'))
+    expect(stored.boards).toEqual(cfg.boards)
   })
 
   test('saving config without boards removes boards storage', async ({ page }) => {

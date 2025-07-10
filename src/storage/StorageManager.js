@@ -6,6 +6,7 @@
  */
 
 import { md5Hex } from '../utils/hash.js'
+import { DEFAULT_CONFIG_TEMPLATE } from './defaultConfig.js'
 /**
  * CURRENT_VERSION for stored data schema.
  * @constant {number}
@@ -67,9 +68,11 @@ const StorageManager = {
    * @returns {DashboardConfig|null}
    */
   getConfig () {
-    const wrapped = jsonGet(KEYS.CONFIG, null)
-    // allow backward-compat raw config (no wrapper)
-    return wrapped && wrapped.data ? wrapped.data : wrapped
+    const config = jsonGet(KEYS.CONFIG, null)
+    const cfg = config && config.data ? config.data : config
+    if (!cfg || typeof cfg !== 'object') return { ...DEFAULT_CONFIG_TEMPLATE }
+    if (!Array.isArray(cfg.boards)) cfg.boards = []
+    return cfg
   },
 
   /**
@@ -80,13 +83,18 @@ const StorageManager = {
    */
   setConfig (cfg /* DashboardConfig */) {
     jsonSet(KEYS.CONFIG, cfg)
-    // Also manage the separate 'boards' key whenever config is set.
-    // if (cfg && Array.isArray(cfg.boards)) {
-    //   jsonSet(KEYS.BOARDS, cfg.boards);
-    // } else {
-    //   // If the new config has no boards array, remove the old key.
-    //   localStorage.removeItem(KEYS.BOARDS);
-    // }
+  },
+
+  /**
+   * Atomically update the dashboard configuration.
+   * @function updateConfig
+   * @param {(cfg: DashboardConfig) => void} updater
+   * @returns {void}
+   */
+  updateConfig (updater) {
+    const cfg = StorageManager.getConfig()
+    updater(cfg)
+    StorageManager.setConfig(cfg)
   },
 
   /**
@@ -95,8 +103,9 @@ const StorageManager = {
    * @returns {Array<Board>}
    */
   getBoards () {
-    const boards = jsonGet(KEYS.BOARDS, [])
-    return Array.isArray(boards) ? boards : []
+    return Array.isArray(StorageManager.getConfig().boards)
+      ? StorageManager.getConfig().boards
+      : []
   },
 
   /**
@@ -106,7 +115,7 @@ const StorageManager = {
    * @returns {void}
    */
   setBoards (boards) {
-    jsonSet(KEYS.BOARDS, boards)
+    StorageManager.updateConfig(cfg => { cfg.boards = Array.isArray(boards) ? boards : [] })
   },
 
   /**
@@ -116,10 +125,10 @@ const StorageManager = {
    * @returns {void}
    */
   updateBoards (updater) {
-    const boards = StorageManager.getBoards()
-    const result = updater(boards)
-    const finalBoards = Array.isArray(result) ? result : boards
-    StorageManager.setBoards(finalBoards)
+    StorageManager.updateConfig(cfg => {
+      const result = updater(Array.isArray(cfg.boards) ? cfg.boards : [])
+      if (Array.isArray(result)) cfg.boards = result
+    })
   },
 
   /**

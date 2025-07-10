@@ -9,34 +9,11 @@ import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
 import { clearConfigFragment } from '../../utils/fragmentGuard.js'
 import StorageManager from '../../storage/StorageManager.js'
+import { DEFAULT_CONFIG_TEMPLATE } from '../../storage/defaultConfig.js'
 import { exportConfig } from '../configModal/exportConfig.js'
 import { openFragmentDecisionModal } from './fragmentDecisionModal.js'
 
 /** @typedef {import('../../types.js').DashboardConfig} DashboardConfig */
-
-export const DEFAULT_CONFIG_TEMPLATE = {
-  globalSettings: {
-    theme: 'light',
-    widgetStoreUrl: [],
-    database: 'localStorage',
-    hideBoardControl: false,
-    hideViewControl: false,
-    hideServiceControl: false,
-    showMenuWidget: true,
-    views: {
-      showViewOptionsAsButtons: false,
-      viewToShow: ''
-    },
-    localStorage: {
-      enabled: 'true',
-      loadDashboardFromConfig: 'true'
-    }
-  },
-  boards: [],
-  styling: {
-    widget: { minColumns: 1, maxColumns: 8, minRows: 1, maxRows: 6 }
-  }
-}
 
 const logger = new Logger('configModal.js')
 
@@ -48,12 +25,7 @@ const logger = new Logger('configModal.js')
  */
 export async function openConfigModal () {
   const storedConfig = StorageManager.getConfig()
-  const storedBoards = StorageManager.getBoards()
   const configData = storedConfig || { ...DEFAULT_CONFIG_TEMPLATE }
-
-  if (Array.isArray(storedBoards) && storedBoards.length > 0) {
-    configData.boards = storedBoards
-  }
 
   const last = StorageManager.misc.getItem('configModalTab') || 'cfg'
   openModal({
@@ -96,13 +68,6 @@ export async function openConfigModal () {
 
           // Save the main config object
           StorageManager.setConfig(cfg)
-
-          // Explicitly handle the separate boards storage to satisfy test contract
-          if (cfg.boards && Array.isArray(cfg.boards)) {
-            StorageManager.setBoards(cfg.boards)
-          } else {
-            localStorage.removeItem('boards')
-          }
 
           showNotification('Config saved to localStorage')
           closeModal()

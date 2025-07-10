@@ -9,7 +9,7 @@ test.describe('StorageManager', () => {
     await page.waitForLoadState('domcontentloaded')
   })
 
-  test('setConfig wraps version and syncs boards', async ({ page }) => {
+  test('setConfig stores config only', async ({ page }) => {
     const result = await page.evaluate(async () => {
       const { default: sm } = await import('/storage/StorageManager.js')
       localStorage.clear()
@@ -25,7 +25,7 @@ test.describe('StorageManager', () => {
       version: 1,
       data: { boards: [{ id: 'b1', name: 'B1', views: [] }] }
     })
-    expect(JSON.parse(result.boards)).toEqual([{ id: 'b1', name: 'B1', views: [] }])
+    expect(result.boards).toBeNull()
     expect(result.cfg).toEqual({ boards: [{ id: 'b1', name: 'B1', views: [] }] })
   })
 

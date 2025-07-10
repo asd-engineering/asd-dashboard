@@ -28,8 +28,11 @@ test.describe.skip('Saved States tab', () => {
     await page.locator('#stateTab tbody tr:first-child button:has-text("Restore")').click()
     await page.click('#fragment-decision-modal button:has-text("Overwrite")')
     await page.waitForLoadState('domcontentloaded')
-    const boards = await page.evaluate(() => JSON.parse(localStorage.getItem('boards')||'[]'))
-    expect(boards.length).toBeGreaterThan(0)
+    const boards = await page.evaluate(() => {
+      const cfg = JSON.parse(localStorage.getItem('config') || '{}')
+      return Array.isArray(cfg.boards) ? cfg.boards.length : 0
+    })
+    expect(boards).toBeGreaterThan(0)
 
     await page.click('#open-config-modal')
     await page.click('.tabs button[data-tab="state"]')

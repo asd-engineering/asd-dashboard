@@ -29,10 +29,11 @@ export async function handleDialog(page, type, inputText = '') {
 export async function getBoardsFromLocalStorage(page) {
     return await page.evaluate(async () => {
       const result = window.asd.widgetStore.idle();
-      if (result && typeof result.then === "function") await result;
+      if (result && typeof result.then === 'function') await result;
 
-      const item = localStorage.getItem('boards');
-      return item ? JSON.parse(item) : [];
+      const cfgRaw = localStorage.getItem('config');
+      const cfg = cfgRaw ? JSON.parse(cfgRaw) : {};
+      return Array.isArray(cfg?.boards) ? cfg.boards : [];
     });
 }
 

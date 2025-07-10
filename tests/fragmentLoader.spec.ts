@@ -22,9 +22,8 @@ test('fragment data is not reapplied if localStorage already has data', async ({
   const cfg = await encode(ciConfig)
 
   await page.addInitScript(() => {
-    localStorage.setItem('config', JSON.stringify({ globalSettings: { theme: 'dark' } }))
+    localStorage.setItem('config', JSON.stringify({ globalSettings: { theme: 'dark' }, boards: [] }))
     localStorage.setItem('services', JSON.stringify([]))
-    localStorage.setItem('boards', JSON.stringify([]))
   })
 
   await page.goto(`/#cfg=${cfg}`)
@@ -46,11 +45,9 @@ test('shows merge decision modal when local data exists', async ({ page }) => {
   await page.addInitScript(value => {
     localStorage.setItem('config', JSON.stringify(value.config))
     localStorage.setItem('services', JSON.stringify(value.services))
-    localStorage.setItem('boards', JSON.stringify(value.boards))
   }, {
-    config: { globalSettings: { theme: 'dark' } },
-    services: [{ name: 'Old', url: 'http://localhost/old' }],
-    boards: [{ id: 'b1', name: 'Board 1', order: 0, views: [] }]
+    config: { globalSettings: { theme: 'dark' }, boards: [{ id: 'b1', name: 'Board 1', order: 0, views: [] }] },
+    services: [{ name: 'Old', url: 'http://localhost/old' }]
   })
 
   await page.goto(`/#cfg=${cfg}&svc=${svc}`)
