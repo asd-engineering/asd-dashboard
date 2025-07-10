@@ -42,7 +42,9 @@ export async function selectViewByLabel(page: Page, viewLabel: string) {
   await viewSelector.selectOption({ label: viewLabel });
   if (optionValue) {
     await page.waitForFunction(
-      (expected) => document.querySelector(".board-view")?.id === expected,
+      (expected) =>
+        document.querySelector(".board-view")?.id === expected &&
+        document.body.dataset.viewId === expected,
       optionValue,
     );
   }

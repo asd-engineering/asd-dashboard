@@ -62,7 +62,6 @@ test.describe("Widget State Isolation Between Views", () => {
     const widgetTerminal = page.locator(
       '.widget-wrapper[data-service="ASD-terminal"]',
     );
-    const viewSelector = page.locator("#view-selector");
 
     // --- STEP 1: Add a widget to View A ---
     await selectViewByLabel(page, "View A");
