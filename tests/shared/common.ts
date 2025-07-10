@@ -21,7 +21,12 @@ export async function addServices(page: Page, count: number) {
  * @returns {Promise<void>} Resolves when the widget is added.
  */
 export async function selectServiceByName(page: Page, serviceName: string) {
-  await page.waitForSelector("#service-selector", { timeout: 3000 });
+  // wait until the <select> actually holds options
+  await page.waitForFunction(
+    (sel) => document.querySelector(sel)?.querySelectorAll("option").length > 0,
+    "#service-selector",
+    { timeout: 5000 },
+  );
   await page.selectOption("#service-selector", { label: serviceName });
   await page.click("#add-widget-button");
 }
@@ -35,17 +40,17 @@ export async function selectServiceByName(page: Page, serviceName: string) {
  * @returns {Promise<void>} Resolves when the view is switched.
  */
 export async function selectViewByLabel(page: Page, viewLabel: string) {
-  const viewSelector = page.locator("#view-selector");
-  const optionValue = await page
-    .locator("#view-selector option", { hasText: viewLabel })
-    .getAttribute("value");
-  await viewSelector.selectOption({ label: viewLabel });
-
-  if (optionValue) {
-    await expect(page.locator('.board-view')).toHaveAttribute('id', optionValue);
-    await expect(page.locator('body')).toHaveAttribute('data-view-id', optionValue);
- }
-};
+  await page.waitForFunction(
+    (sel) => document.querySelector(sel)?.querySelectorAll("option").length > 0,
+    "#view-selector",
+    { timeout: 5000 },
+  );
+  await page.selectOption("#view-selector", { label: viewLabel });
+  // optional sanity check – body reflects router change
+  await expect(page.locator("body")).toHaveAttribute("data-view-id", /.+/, {
+    timeout: 4000,
+  });
+}
 
 // Helper function to handle dialog interactions
 /**

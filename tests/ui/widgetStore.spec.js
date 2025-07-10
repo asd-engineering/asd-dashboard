@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures'
-import { clearLocalState, getWidgetStoreSize, waitForWidgetStoreIdle } from '../shared/state.js'
+import { getWidgetStoreSize, waitForWidgetStoreIdle } from '../shared/state.js'
 import { ciConfig, ciBoards } from '../data/ciConfig'
 import { ciServices } from '../data/ciServices'
 
@@ -152,18 +152,24 @@ test.describe('WidgetStore UI Tests', () => {
       }
     ]
 
-    const beforeHydration = await page.$$eval('.widget-wrapper', (els) => els.length)
+    const beforeHydration = await page.$$eval(
+      '.widget-wrapper',
+      (els) => els.length
+    )
     console.log('Widget count before hydration:', beforeHydration)
 
     await routeWithLRUConfig(page, widgetState, 2)
-    await clearLocalState(page)
+    await page.evaluate(() => localStorage.clear())
     await page.reload()
 
-    const afterHydration = await page.$$eval('.widget-wrapper', (els) => els.length)
+    const afterHydration = await page.$$eval(
+      '.widget-wrapper',
+      (els) => els.length
+    )
     console.log('Widget count after hydration:', afterHydration)
 
-    await page.waitForFunction(() =>
-      document.querySelectorAll('.widget-wrapper').length === 2
+    await page.waitForFunction(
+      () => document.querySelectorAll('.widget-wrapper').length === 2
     )
 
     const modal = page.locator('#eviction-modal')
@@ -173,8 +179,8 @@ test.describe('WidgetStore UI Tests', () => {
     await expect(modal).toBeHidden()
 
     await page.reload()
-    await page.waitForFunction(() =>
-      document.querySelectorAll('.widget-wrapper').length === 2
+    await page.waitForFunction(
+      () => document.querySelectorAll('.widget-wrapper').length === 2
     )
 
     const ids = await page.$$eval('.widget-wrapper', (els) =>
