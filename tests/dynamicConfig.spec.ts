@@ -2,16 +2,8 @@ import { test, expect } from './fixtures';
 import { ciConfig, ciBoards } from './data/ciConfig';
 import { ciServices } from './data/ciServices';
 import { gunzipSync } from 'zlib';
-import { getUnwrappedConfig, getConfigBoards } from './shared/common';
+import { getUnwrappedConfig, getConfigBoards, b64, clearStorage } from './shared/common';
 
-function b64(obj: any) {
-  return Buffer.from(JSON.stringify(obj)).toString('base64');
-}
-
-async function clearStorage(page) {
-  await page.goto('/');
-  await page.evaluate(() => localStorage.clear());
-}
 
 test.beforeEach(async ({ page }) => {
   // Go to the page
@@ -197,7 +189,7 @@ test.describe('Dashboard Functionality - Building from Services', () => {
     await page.click('#add-widget-button');
     await expect(page.locator('.widget-wrapper')).toHaveCount(1);
     const stored = await getConfigBoards(page);
-    expect(stored).toBeGreaterThan(0);
+    expect(stored.length).toBeGreaterThan(0);
   });
 });
 

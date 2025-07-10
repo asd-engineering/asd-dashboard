@@ -31,6 +31,15 @@ export async function addServicesByName(page: Page, serviceName: string, count: 
     }
 }
 
+export function b64(obj: any) {
+  return Buffer.from(JSON.stringify(obj)).toString('base64');
+}
+
+export async function clearStorage(page) {
+  await page.goto('/');
+  await page.evaluate(() => localStorage.clear());
+}
+
 export async function getUnwrappedConfig(page) {
   return await page.evaluate(() => {
     const raw = localStorage.getItem('config');
