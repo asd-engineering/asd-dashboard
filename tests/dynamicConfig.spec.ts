@@ -39,7 +39,7 @@ test.describe('Dashboard Config - Base64 via URL Params', () => {
     // Now that the UI is ready, it is safe to check the underlying storage.
     // This will now pass reliably.
     const boards = await getConfigBoards(page);
-    expect(boards).toBe(ciBoards.length);
+    expect(boards.length).toBe(ciBoards.length);
     // =============================================
   });
 
