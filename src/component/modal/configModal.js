@@ -26,49 +26,84 @@ const logger = new Logger('configModal.js')
 export async function openConfigModal () {
   const storedConfig = StorageManager.getConfig()
   const configData = storedConfig || { ...DEFAULT_CONFIG_TEMPLATE }
+  const last = StorageManager.misc.getItem('configModalTab') || 'cfgTab'
 
-  const last = StorageManager.misc.getItem('configModalTab') || 'cfg'
   openModal({
     id: 'config-modal',
     onCloseCallback: () => logger.log('Config modal closed'),
     buildContent: async (modal, closeModal) => {
+      const tabsMeta = [
+        {
+          id: 'cfgTab',
+          label: 'Configuration',
+          contentFn: () => {
+            const textarea = document.createElement('textarea')
+            textarea.id = 'config-json'
+            textarea.classList.add('modal__textarea--grow')
+            textarea.value = JSON.stringify(configData, null, 2)
+            return textarea
+          }
+        },
+        {
+          id: 'stateTab',
+          label: 'Saved States',
+          populate: populateStateTab
+        }
+      ]
+
+      const tabButtons = {}
+      const tabContents = {}
       const tabs = document.createElement('div')
       tabs.className = 'tabs'
-      const cfgBtn = document.createElement('button')
-      cfgBtn.dataset.tab = 'cfg'
-      cfgBtn.textContent = 'Configuration'
-      const stateBtn = document.createElement('button')
-      stateBtn.dataset.tab = 'state'
-      stateBtn.textContent = 'Saved States'
-      tabs.append(cfgBtn, stateBtn)
       modal.appendChild(tabs)
 
-      const cfgTab = document.createElement('div')
-      cfgTab.id = 'cfgTab'
-      const textarea = document.createElement('textarea')
-      textarea.id = 'config-json'
-      textarea.classList.add('modal__textarea--grow')
-      textarea.value = JSON.stringify(configData, null, 2)
-      cfgTab.appendChild(textarea)
-      modal.appendChild(cfgTab)
+      // Render tab buttons and containers
+      for (const tab of tabsMeta) {
+        const btn = document.createElement('button')
+        btn.textContent = tab.label
+        btn.dataset.tab = tab.id
+        tabButtons[tab.id] = btn
+        tabs.appendChild(btn)
 
-      const stateTab = document.createElement('div')
-      stateTab.id = 'stateTab'
-      stateTab.hidden = true
-      modal.appendChild(stateTab)
-      await populateStateTab(stateTab)
+        const div = document.createElement('div')
+        div.id = tab.id
+        div.style.display = 'none'
+        tabContents[tab.id] = div
+
+        if (tab.contentFn) div.appendChild(tab.contentFn())
+        modal.appendChild(div)
+      }
+
+      const populatedTabs = new Set()
+
+      const switchTab = async (tabId) => {
+        for (const id in tabContents) {
+          const isActive = id === tabId
+          tabContents[id].style.display = isActive ? 'flex' : 'none'
+          tabButtons[id].classList.toggle('active', isActive)
+        }
+
+        if (!populatedTabs.has(tabId)) {
+          const tab = tabsMeta.find(t => t.id === tabId)
+          if (tab?.populate) await tab.populate(tabContents[tabId])
+          populatedTabs.add(tabId)
+        }
+
+        StorageManager.misc.setItem('configModalTab', tabId)
+      }
+
+      for (const id in tabButtons) {
+        tabButtons[id].addEventListener('click', () => switchTab(id))
+      }
 
       const saveButton = document.createElement('button')
       saveButton.textContent = 'Save'
       saveButton.classList.add('modal__btn', 'modal__btn--save')
-
       saveButton.addEventListener('click', () => {
         try {
+          const textarea = /** @type {HTMLTextAreaElement} */(modal.querySelector('#config-json'))
           const cfg = JSON.parse(textarea.value)
-
-          // Save the main config object
           StorageManager.setConfig(cfg)
-
           showNotification('Config saved to localStorage')
           closeModal()
           clearConfigFragment()
@@ -95,20 +130,16 @@ export async function openConfigModal () {
       buttonContainer.append(saveButton, exportButton, closeButton)
       modal.appendChild(buttonContainer)
 
-      const switchTab = tab => {
-        cfgBtn.classList.toggle('active', tab === 'cfg')
-        stateBtn.classList.toggle('active', tab === 'state')
-        cfgTab.hidden = tab !== 'cfg'
-        stateTab.hidden = tab !== 'state'
-        StorageManager.misc.setItem('configModalTab', tab)
-      }
-      cfgBtn.addEventListener('click', () => switchTab('cfg'))
-      stateBtn.addEventListener('click', () => switchTab('state'))
-      switchTab(last)
+      await switchTab(last)
     }
   })
 }
 
+/**
+ * Populate the saved states tab with stored snapshots.
+ * @param {HTMLElement} tab
+ * @returns {Promise<void>}
+ */
 /**
  * Populate the saved states tab with stored snapshots.
  * @param {HTMLElement} tab
@@ -120,16 +151,41 @@ async function populateStateTab (tab) {
 
   const filter = document.createElement('input')
   filter.id = 'stateFilter'
+  filter.placeholder = 'Filter snapshots...'
+  filter.style.marginBottom = '0.5rem'
+  filter.style.display = 'block'
+  filter.style.width = '100%'
   tab.appendChild(filter)
+  tab.classList.add('modal__tab--column')
 
   const table = document.createElement('table')
+  const thead = document.createElement('thead')
   const tbody = document.createElement('tbody')
-  table.appendChild(tbody)
+
+  const headers = ['Actions', '', 'Name', 'Type', 'Date', 'MD5']
+  const headerRow = document.createElement('tr')
+  headers.forEach(h => {
+    const th = document.createElement('th')
+    th.textContent = h
+    headerRow.appendChild(th)
+  })
+  thead.appendChild(headerRow)
+  table.append(thead, tbody)
   tab.appendChild(table)
 
   /**
-   * Render the saved states table rows.
-   * @returns {void}
+   * Render all saved state entries as table rows inside the tab's <tbody>.
+   *
+   * This function clears the existing table body and repopulates it using
+   * the `list` of saved state snapshots. Each row includes buttons to:
+   * - Restore a snapshot via `openFragmentDecisionModal()`
+   * - Delete the snapshot and persist the new list
+   *
+   * Table rows are tagged with `data-name` for filtering via the search input.
+   *
+   * Side effects:
+   * - Updates DOM inside <tbody>
+   * - Binds event handlers to buttons in each row
    */
   function render () {
     tbody.innerHTML = ''
@@ -158,7 +214,15 @@ async function populateStateTab (tab) {
         }
       })
 
-      const cells = [restore, del, row.name, row.type, new Date(row.ts).toLocaleString(), row.md5]
+      const cells = [
+        restore,
+        del,
+        row.name,
+        row.type,
+        new Date(row.ts).toLocaleString(),
+        row.md5
+      ]
+
       cells.forEach(c => {
         const td = document.createElement('td')
         if (c instanceof HTMLElement) td.appendChild(c)
@@ -170,7 +234,7 @@ async function populateStateTab (tab) {
     })
   }
 
-  filter.addEventListener('keyup', () => {
+  filter.addEventListener('input', () => {
     const q = filter.value.toLowerCase()
     Array.from(tbody.children).forEach(el => {
       const row = /** @type {HTMLElement} */(el)

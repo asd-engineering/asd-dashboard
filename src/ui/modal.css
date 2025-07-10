@@ -79,3 +79,8 @@
   flex: 1 1 auto;   /* let it expand/shrink */
   min-height: 0;    /* prevents flexbox “overflow: auto” bug */
 }
+.modal__tab--column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
