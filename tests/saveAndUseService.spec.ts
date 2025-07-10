@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking.js'
+import { selectServiceByName } from './shared/common.js'
 
 const saved = [{ name: 'Saved Service', url: 'http://localhost/saved' }]
 
@@ -17,8 +18,7 @@ test.describe('Use saved service', () => {
   })
 
   test('selects saved service and adds widget', async ({ page }) => {
-    await page.selectOption('#service-selector', { label: saved[0].name })
-    await page.click('#add-widget-button')
+    await selectServiceByName(page, saved[0].name);
     const iframe = page.locator('.widget-wrapper iframe').first()
     await expect(iframe).toHaveAttribute('src', saved[0].url)
   })

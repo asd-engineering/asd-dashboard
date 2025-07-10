@@ -40,15 +40,12 @@ export async function selectViewByLabel(page: Page, viewLabel: string) {
     .locator("#view-selector option", { hasText: viewLabel })
     .getAttribute("value");
   await viewSelector.selectOption({ label: viewLabel });
+
   if (optionValue) {
-    await page.waitForFunction(
-      (expected) =>
-        document.querySelector(".board-view")?.id === expected &&
-        document.body.dataset.viewId === expected,
-      optionValue,
-    );
-  }
-}
+    await expect(page.locator('.board-view')).toHaveAttribute('id', optionValue);
+    await expect(page.locator('body')).toHaveAttribute('data-view-id', optionValue);
+ }
+};
 
 // Helper function to handle dialog interactions
 /**
