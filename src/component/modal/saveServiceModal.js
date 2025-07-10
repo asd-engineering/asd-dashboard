@@ -39,7 +39,6 @@ export function openSaveServiceModal (url, onClose) {
         const services = StorageManager.getServices()
         services.push({ name, url })
         StorageManager.setServices(services)
-        document.dispatchEvent(new CustomEvent('services-updated'))
         closeModal()
       })
 
