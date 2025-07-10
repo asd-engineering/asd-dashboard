@@ -68,15 +68,30 @@ export async function waitForWidgetStoreIdle (page: Page): Promise<void> {
 
 /**
  * Persist an arbitrary localStorage key via StorageManager misc API.
+ * @function setLocalItem
  * @param {Page} page
  * @param {string} key
  * @param {string} value
+ * @returns {Promise<void>}
  */
 export async function setLocalItem (page: Page, key: string, value: string): Promise<void> {
   await page.evaluate(async ({ key, value }) => {
     const { default: sm } = await import('/storage/StorageManager.js')
     sm.misc.setItem(key, value)
   }, { key, value })
+}
+
+/**
+ * Persist the provided board and view identifiers as last-used values.
+ * @function setLastUsedIds
+ * @param {Page} page
+ * @param {string} boardId
+ * @param {string} viewId
+ * @returns {Promise<void>}
+ */
+export async function setLastUsedIds (page: Page, boardId: string, viewId: string): Promise<void> {
+  await setLocalItem(page, 'lastUsedBoardId', boardId)
+  await setLocalItem(page, 'lastUsedViewId', viewId)
 }
 
 /**
