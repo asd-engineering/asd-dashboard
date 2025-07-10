@@ -17,8 +17,8 @@ import { initializeViewDropdown } from './component/view/viewDropdown.js'
 import { loadFromFragment } from './utils/fragmentLoader.js'
 import { Logger } from './utils/Logger.js'
 import { widgetStore } from './component/widget/widgetStore.js'
-import { debounceLeading } from './utils/utils.js'
-import StorageManager from './storage/StorageManager.js'
+import { debounce, debounceLeading } from './utils/utils.js'
+import StorageManager, { APP_STATE_CHANGED } from './storage/StorageManager.js'
 
 const logger = new Logger('main.js')
 
@@ -112,6 +112,17 @@ async function main () {
   const handleConfigModal = debounceLeading(openConfigModal, buttonDebounce)
   document.getElementById('localStorage-edit-button').addEventListener('click', /** @type {EventListener} */(handleLocalStorageModal))
   document.getElementById('open-config-modal').addEventListener('click', /** @type {EventListener} */(handleConfigModal))
+
+  // --- PHASE 1: EVENT LISTENER FOR LOGGING ---
+  const logStateChange = (event) => {
+    const { reason } = event.detail || {}
+    logger.log(`[Event Listener] Detected state change. Reason: ${reason || 'unknown'}`)
+  }
+
+  const debouncedLogger = debounce(logStateChange, 200)
+  window.addEventListener(APP_STATE_CHANGED, /** @type {EventListener} */(debouncedLogger))
+  logger.log('Passive event listener for state changes has been initialized.')
+  // --- END ---
 
   logger.log('Application initialization finished')
   // Signal to Playwright that the initial load and render is complete.
