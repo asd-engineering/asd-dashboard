@@ -13,7 +13,7 @@
  * @param {any} b
  * @returns {boolean}
  */
-export function deepEqual(a, b) {
+export function deepEqual (a, b) {
   if (a === b) return true
 
   if (typeof a !== typeof b) return false

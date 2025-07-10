@@ -12,7 +12,6 @@ import { DEFAULT_CONFIG_TEMPLATE } from '../storage/defaultConfig.js'
 import StorageManager from '../storage/StorageManager.js'
 import { deepEqual } from '../utils/objectUtils.js'
 
-
 const logger = new Logger('getConfig.js')
 
 /**
