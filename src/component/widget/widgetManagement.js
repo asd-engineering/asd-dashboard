@@ -218,7 +218,7 @@ async function addWidget (
     const persistedDataIds = config.boards
       .flatMap(b => b.views)
       .flatMap(v => v.widgetState)
-      .filter(w => w.service === serviceName)
+      // .filter(w => w.service === serviceName)
       .map(w => w.dataid)
     const allIds = new Set([...liveDataIds, ...persistedDataIds])
     const effectiveCount = allIds.size

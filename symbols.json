@@ -402,6 +402,25 @@
     "returns": "Promise<object>"
   },
   {
+    "name": "deepEqual",
+    "kind": "function",
+    "file": "src/utils/objectUtils.js",
+    "description": "Recursively compares two values for deep equality. Supports plain objects, arrays, primitives, and null/undefined.",
+    "params": [
+      {
+        "name": "a",
+        "type": "any",
+        "desc": ""
+      },
+      {
+        "name": "b",
+        "type": "any",
+        "desc": ""
+      }
+    ],
+    "returns": "boolean"
+  },
+  {
     "name": "deleteBoard",
     "kind": "function",
     "file": "src/component/board/boardManagement.js",
