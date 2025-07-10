@@ -2,16 +2,17 @@ import { test, expect } from './fixtures'
 import { ciConfig } from './data/ciConfig'
 import { ciServices } from './data/ciServices'
 import { getBoardCount } from './shared/common.js'
-import { injectSnapshot } from './shared/state.js'
+import { saveImportedSnapshot } from './shared/state.js'
+import { gzipJsonToBase64url } from '../src/utils/compression.js'
 
 test.describe.skip('Saved States tab', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('domcontentloaded')
-    const cfg = ciConfig
-    const svc = ciServices
-    await injectSnapshot(page, cfg, svc, 'one')
-    await injectSnapshot(page, cfg, svc, 'two')
+    const cfg = await gzipJsonToBase64url(ciConfig)
+    const svc = await gzipJsonToBase64url(ciServices)
+    await saveImportedSnapshot(page, cfg, svc, 'one')
+    await saveImportedSnapshot(page, cfg, svc, 'two')
   })
 
   test('restore and delete snapshot', async ({ page }) => {

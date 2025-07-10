@@ -80,25 +80,24 @@ export async function setLocalItem (page: Page, key: string, value: string): Pro
 }
 
 /**
- * Inject a saved state snapshot using StorageManager.
- * @function injectSnapshot
+ * Save an imported state snapshot using StorageManager.
+ * Expects `cfg` and `svc` to be gzip‑compressed and base64url‑encoded strings.
+ *
+ * @function saveImportedSnapshot
  * @param {Page} page
- * @param {object} cfg
- * @param {object[]} svc
+ * @param {string} cfg - Encoded config string
+ * @param {string} svc - Encoded services string
  * @param {string} name
  * @returns {Promise<void>}
  */
-export async function injectSnapshot (
+export async function saveImportedSnapshot (
   page: Page,
-  cfg: object,
-  svc: object[],
+  cfg: string,
+  svc: string,
   name: string
 ): Promise<void> {
   await page.evaluate(async ({ cfg, svc, name }) => {
     const { default: sm } = await import('/storage/StorageManager.js')
-    const { gzipJsonToBase64url } = await import('/utils/compression.js')
-    const encodedCfg = await gzipJsonToBase64url(cfg)
-    const encodedSvc = await gzipJsonToBase64url(svc)
-    await sm.saveStateSnapshot({ name, type: 'imported', cfg: encodedCfg, svc: encodedSvc })
+    await sm.saveStateSnapshot({ name, type: 'imported', cfg, svc })
   }, { cfg, svc, name })
 }
