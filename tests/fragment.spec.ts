@@ -2,28 +2,23 @@ import { test, expect } from './fixtures';
 import { ciConfig } from './data/ciConfig';
 import { ciServices } from './data/ciServices';
 import { gzipJsonToBase64url } from '../src/utils/compression.js';
-import { clearStorage } from './shared/common.js';
+import { clearLocalState, setLocalConfig } from './shared/state.js';
 
 async function encode(obj) {
   return gzipJsonToBase64url(obj);
 }
 
 test.describe('Secure fragments loading configuration', () => {
-  test.beforeEach(async ({ page }) => { await clearStorage(page); });
+  test.beforeEach(async ({ page }) => { await clearLocalState(page); });
 
   test('import modal pre-fills name and saves snapshot', async ({ page }) => {
     // SETUP: Pre-seed local config to trigger modal
     await page.goto('/');
     await page.waitForSelector('body[data-ready="true"]');
 
-    await page.evaluate(() => {
-      localStorage.setItem('config', JSON.stringify({
-        version: 1,
-        data: {
-          globalSettings: { theme: 'dark' },
-          boards: []
-        }
-      }));
+    await setLocalConfig(page, {
+      globalSettings: { theme: 'dark' },
+      boards: []
     });
 
     const cfg = await encode(ciConfig);

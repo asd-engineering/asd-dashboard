@@ -29,23 +29,25 @@ test.describe("Widget State Isolation Between Views", () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page);
 
-    // Use addInitScript to set localStorage *before* the page loads.
-    // This ensures the application initializes with our test state.
+    // Seed local state before the app initializes
     await page.addInitScript(
       ({ boards, services }) => {
-        localStorage.clear();
-        localStorage.setItem("config", JSON.stringify({ boards }));
-        localStorage.setItem("services", JSON.stringify(services));
-        localStorage.setItem("lastUsedBoardId", "board-iso-test-1");
-        localStorage.setItem("lastUsedViewId", "view-A");
+        (async () => {
+          const { default: sm } = await import('/storage/StorageManager.js');
+          sm.clearAll();
+          sm.setConfig({ boards });
+          sm.setServices(services);
+          sm.misc.setLastBoardId('board-iso-test-1');
+          sm.misc.setLastViewId('view-A');
+        })();
       },
       {
         boards: initialBoards,
         services: [
-          { name: "ASD-toolbox", url: "http://localhost:8000/asd/toolbox" },
-          { name: "ASD-terminal", url: "http://localhost:8000/asd/terminal" },
-        ],
-      },
+          { name: 'ASD-toolbox', url: 'http://localhost:8000/asd/toolbox' },
+          { name: 'ASD-terminal', url: 'http://localhost:8000/asd/terminal' }
+        ]
+      }
     );
 
     await page.goto("/");

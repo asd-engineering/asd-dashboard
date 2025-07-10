@@ -6,7 +6,10 @@ const saved = [{ name: 'Saved Service', url: 'http://localhost/saved' }]
 test.describe('Use saved service', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(value => {
-      localStorage.setItem('services', value)
+      (async () => {
+        const { default: sm } = await import('/storage/StorageManager.js');
+        sm.setServices(JSON.parse(value));
+      })();
     }, JSON.stringify(saved))
     await routeServicesConfig(page)
     await page.goto('/')

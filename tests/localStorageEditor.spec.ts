@@ -1,27 +1,27 @@
 import { test, expect } from './fixtures';
 import { routeServicesConfig } from './shared/mocking';
 import { ciBoards } from './data/ciConfig.js';
+import { setLocalConfig, setLocalServices } from './shared/state.js';
 
 test.describe('LocalStorage Editor Functionality', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page);
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
-    await page.evaluate(() => {
-      localStorage.setItem('log', 'localStorageModal,localStorage');
+    await page.evaluate(async () => {
+      const { default: sm } = await import('/storage/StorageManager.js');
+      sm.misc.setItem('log', 'localStorageModal,localStorage');
     });
     await page.waitForSelector('body[data-ready="true"]', { timeout: 2000 });
   });
 
   test('should open LocalStorage editor modal, modify JSON content, and save changes', async ({ page }) => {
     // Set an initial state for the test to modify. This makes the test self-contained.
-    await page.evaluate(() => {
-      localStorage.setItem('config', JSON.stringify({
-        globalSettings: { theme: 'dark' },
-        boards: [{ id: 'board1', name: 'Board 1', views: [] }]
-      }));
-      localStorage.setItem('services', JSON.stringify([{ name: 'test', url: 'http://test.com' }]));
+    await setLocalConfig(page, {
+      globalSettings: { theme: 'dark' },
+      boards: [{ id: 'board1', name: 'Board 1', views: [] }]
     });
+    await setLocalServices(page, [{ name: 'test', url: 'http://test.com' }]);
 
     // Reload the page to ensure the app reads the new localStorage state
     await page.reload();
@@ -51,7 +51,10 @@ test.describe('LocalStorage Editor Functionality', () => {
     await expect(modal).toBeHidden();
 
     // Assertion: Verify the change was persisted correctly in localStorage.
-    const newServices = await page.evaluate(() => JSON.parse(localStorage.getItem('services') || '[]'));
+    const newServices = await page.evaluate(async () => {
+      const { default: sm } = await import('/storage/StorageManager.js');
+      return sm.getServices();
+    });
     expect(newServices).toHaveLength(1);
     expect(newServices[0].name).toBe('modified');
   });
