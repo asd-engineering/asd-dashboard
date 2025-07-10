@@ -130,7 +130,7 @@ function initializeDashboardMenu () {
  * @function populateServiceDropdown
  * @returns {void}
  */
-function populateServiceDropdown () {
+export function populateServiceDropdown () {
   const selector = document.getElementById('service-selector')
   if (!selector) return
   selector.innerHTML = ''
