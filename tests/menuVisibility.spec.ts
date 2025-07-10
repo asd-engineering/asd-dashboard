@@ -2,7 +2,7 @@ import { test, expect } from './fixtures'
 import emojiList from '../src/ui/unicodeEmoji.js'
 import { routeServicesConfig } from './shared/mocking.js'
 import { ciConfig } from './data/ciConfig'
-import { getShowMenuWidgetFlag } from './shared/common.js'
+import { getShowMenuWidgetFlag, getUnwrappedConfig } from './shared/common.js'
 
 const settings = {
   hideBoardControl: true,
@@ -16,9 +16,15 @@ test.describe('Menu control visibility', () => {
     await page.route('**/config.json', route => {
       route.fulfill({
         json: {
-          ...ciConfig,
-          globalSettings: { ...ciConfig.globalSettings, ...settings },
-        },
+          version: 1,
+          data: {
+            ...ciConfig,
+            globalSettings: {
+              ...ciConfig.globalSettings,
+              ...settings
+            }
+          }
+        }
       })
     })
 

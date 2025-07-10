@@ -10,6 +10,8 @@ import { showNotification } from '../component/dialog/notification.js'
 import { openConfigModal } from '../component/modal/configModal.js'
 import { DEFAULT_CONFIG_TEMPLATE } from '../storage/defaultConfig.js'
 import StorageManager from '../storage/StorageManager.js'
+import { deepEqual } from '../utils/objectUtils.js'
+
 
 const logger = new Logger('getConfig.js')
 
@@ -70,48 +72,51 @@ async function fetchJson (url) {
 async function loadFromSources () {
   const params = new URLSearchParams(window.location.search)
 
+  // 1. Explicit base64 parameter
   if (params.has('config_base64')) {
     const cfg = parseBase64(params.get('config_base64'))
     if (cfg) {
       StorageManager.setConfig(cfg)
-
       window.history.replaceState(null, '', location.pathname)
       return cfg
     }
     return null
   }
 
+  // 2. Explicit config URL parameter
   if (params.has('config_url')) {
-    const cfgU = await fetchJson(params.get('config_url'))
-    if (cfgU) {
-      StorageManager.setConfig(cfgU)
-
+    const cfg = await fetchJson(params.get('config_url'))
+    if (cfg) {
+      StorageManager.setConfig(cfg)
       window.history.replaceState(null, '', location.pathname)
-      return cfgU
+      return cfg
     }
     return null
   }
 
+  // 3. Get stored config
   const stored = StorageManager.getConfig()
-  if (stored) {
-    return stored
-  }
 
-  const cfgJ = await fetchJson('config.json')
+  // Check if config is missing or is effectively just the default template
+  const isEmpty = !stored || deepEqual(stored, DEFAULT_CONFIG_TEMPLATE)
 
-  if (!cfgJ) {
-    showNotification('Default configuration has been loaded. Please review and save.')
-    const cfg = DEFAULT_CONFIG_TEMPLATE
-    StorageManager.setConfig(cfg)
-    try {
-      await openConfigModal() // keep the await from v4
-    } catch (err) {
-      logger.error('Failed to open config modal', err) // keep the observability from v3
+  if (isEmpty) {
+    const cfgJ = await fetchJson('config.json')
+
+    if (cfgJ) {
+      const cfg = cfgJ.data || cfgJ
+      StorageManager.setConfig(cfg)
+      return cfg
     }
-    return cfg
-  } else {
-    return cfgJ
+
+    // 4. Nothing worked → load default and prompt user
+    showNotification('Default configuration has been loaded. Please review and save.')
+    StorageManager.setConfig(DEFAULT_CONFIG_TEMPLATE)
+    await openConfigModal()
+    return DEFAULT_CONFIG_TEMPLATE
   }
+
+  return stored
 }
 
 /**
