@@ -6,7 +6,7 @@ import {
   clearLocalState,
   setLocalConfig,
   setLocalServices,
-  setLocalItem
+  setLastUsedIds
 } from './shared/state.js';
 
 // Define a deterministic initial state with a clean board and two empty views.
@@ -41,8 +41,7 @@ test.describe("Widget State Isolation Between Views", () => {
       { name: 'ASD-toolbox', url: 'http://localhost:8000/asd/toolbox' },
       { name: 'ASD-terminal', url: 'http://localhost:8000/asd/terminal' }
     ]);
-    await setLocalItem(page, 'lastUsedBoardId', 'board-iso-test-1');
-    await setLocalItem(page, 'lastUsedViewId', 'view-A');
+    await setLastUsedIds(page, 'board-iso-test-1', 'view-A');
 
     await page.goto("/");
     await page.waitForSelector('body[data-ready="true"]', { timeout: 10000 });

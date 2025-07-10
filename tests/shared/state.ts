@@ -102,3 +102,23 @@ export async function injectSnapshot (
     await sm.saveStateSnapshot({ name, type: 'imported', cfg: encodedCfg, svc: encodedSvc })
   }, { cfg, svc, name })
 }
+
+/**
+ * Persist the last used board and view identifiers.
+ * @function setLastUsedIds
+ * @param {Page} page
+ * @param {string} boardId
+ * @param {string} viewId
+ * @returns {Promise<void>}
+ */
+export async function setLastUsedIds (
+  page: Page,
+  boardId: string,
+  viewId: string
+): Promise<void> {
+  await page.evaluate(async ({ boardId, viewId }) => {
+    const { default: sm } = await import('/storage/StorageManager.js')
+    sm.misc.setLastBoardId(boardId)
+    sm.misc.setLastViewId(viewId)
+  }, { boardId, viewId })
+}
