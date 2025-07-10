@@ -525,7 +525,7 @@ export async function resetView (boardId, viewId) {
  * @function updateBoardSelector
  * @returns {void}
  */
-function updateBoardSelector () {
+export function updateBoardSelector () {
   const boardSelector = /** @type {HTMLSelectElement} */(document.getElementById('board-selector'))
   boardSelector.innerHTML = ''
   StorageManager.getBoards().forEach(board => {
