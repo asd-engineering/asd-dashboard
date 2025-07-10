@@ -2,6 +2,7 @@ import { test, expect } from './fixtures';
 import { routeServicesConfig } from './shared/mocking';
 import { addServicesByName } from './shared/common';
 import { ciServices } from './data/ciServices';
+import { waitForWidgetStoreIdle } from './shared/state.js';
 
 
 test.describe('Resize Handler Functionality', () => {
@@ -36,7 +37,7 @@ test.describe('Resize Handler Functionality', () => {
     } else {
       await resizeWidgetWithMouse(page, resizeHandle, 1200, 900);
     }
-    await page.evaluate(() => window.asd.widgetStore.idle())
+    await waitForWidgetStoreIdle(page)
 
     // Bug: It can resize beyond maxium with corner based resize; needs fixing
     // await expect(widget).toHaveAttribute('data-columns', `${maxColumns}`);
@@ -53,7 +54,7 @@ test.describe('Resize Handler Functionality', () => {
     } else {
       await resizeWidgetWithMouse(page, resizeHandle, -1200, -900);
     }
-    await page.evaluate(() => window.asd.widgetStore.idle())
+    await waitForWidgetStoreIdle(page)
   
     // Reload and verify persistence of the minimum size
     await page.reload({ waitUntil: 'domcontentloaded' });

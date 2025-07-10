@@ -2,6 +2,12 @@
 import { test, expect } from "./fixtures";
 import { routeServicesConfig } from "./shared/mocking.js";
 import { selectServiceByName, selectViewByLabel } from "./shared/common.js";
+import {
+  clearLocalState,
+  setLocalConfig,
+  setLocalServices,
+  setLocalItem
+} from './shared/state.js';
 
 // Define a deterministic initial state with a clean board and two empty views.
 const initialBoards = [
@@ -29,24 +35,14 @@ test.describe("Widget State Isolation Between Views", () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page);
 
-    // Use addInitScript to set localStorage *before* the page loads.
-    // This ensures the application initializes with our test state.
-    await page.addInitScript(
-      ({ boards, services }) => {
-        localStorage.clear();
-        localStorage.setItem("config", JSON.stringify({ boards }));
-        localStorage.setItem("services", JSON.stringify(services));
-        localStorage.setItem("lastUsedBoardId", "board-iso-test-1");
-        localStorage.setItem("lastUsedViewId", "view-A");
-      },
-      {
-        boards: initialBoards,
-        services: [
-          { name: "ASD-toolbox", url: "http://localhost:8000/asd/toolbox" },
-          { name: "ASD-terminal", url: "http://localhost:8000/asd/terminal" },
-        ],
-      },
-    );
+    await clearLocalState(page);
+    await setLocalConfig(page, { boards: initialBoards });
+    await setLocalServices(page, [
+      { name: 'ASD-toolbox', url: 'http://localhost:8000/asd/toolbox' },
+      { name: 'ASD-terminal', url: 'http://localhost:8000/asd/terminal' }
+    ]);
+    await setLocalItem(page, 'lastUsedBoardId', 'board-iso-test-1');
+    await setLocalItem(page, 'lastUsedViewId', 'view-A');
 
     await page.goto("/");
     await page.waitForSelector('body[data-ready="true"]', { timeout: 10000 });

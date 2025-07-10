@@ -1,24 +1,17 @@
 import { test, expect } from './fixtures'
 import { ciConfig } from './data/ciConfig'
 import { ciServices } from './data/ciServices'
-import { gzipJsonToBase64url } from '../src/utils/compression.js'
 import { getBoardCount } from './shared/common.js'
-
-async function encode(obj: any) {
-  return gzipJsonToBase64url(obj)
-}
+import { injectSnapshot } from './shared/state.js'
 
 test.describe.skip('Saved States tab', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('domcontentloaded')
-    const cfg = await encode(ciConfig)
-    const svc = await encode(ciServices)
-    await page.evaluate(async ({ cfg, svc }) => {
-      const { default: sm } = await import('/storage/StorageManager.js')
-      await sm.saveStateSnapshot({ name: 'one', type: 'imported', cfg, svc })
-      await sm.saveStateSnapshot({ name: 'two', type: 'imported', cfg, svc })
-    }, { cfg, svc })
+    const cfg = ciConfig
+    const svc = ciServices
+    await injectSnapshot(page, cfg, svc, 'one')
+    await injectSnapshot(page, cfg, svc, 'two')
   })
 
   test('restore and delete snapshot', async ({ page }) => {
