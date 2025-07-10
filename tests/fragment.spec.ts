@@ -9,10 +9,6 @@ async function encode(obj) {
 }
 
 test.describe("Secure fragments loading configuration", () => {
-  test.beforeEach(async ({ page }) => {
-    await bootWithDashboardState(page, {}, [], { board: "", view: "" });
-  });
-
   test("import modal pre-fills name and saves snapshot", async ({ page }) => {
     // SETUP: Pre-seed local config to trigger modal
     await bootWithDashboardState(

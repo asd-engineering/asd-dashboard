@@ -93,19 +93,15 @@ test.describe("Dashboard Config - Remote via URL Params", () => {
 // Fallback modal
 
 test.describe("Dashboard Config - Fallback Config Popup", () => {
-  test.beforeEach(async ({ page }) => {
-    await bootWithDashboardState(page, {}, [], { board: "", view: "" });
-  });
-
   test("popup appears when no config available via url, storage, or local file", async ({
     page,
   }) => {
-    await page.goto("/");
+    await bootWithDashboardState(page, {}, [], { board: "", view: "" });
     await expect(page.locator("#config-modal")).toBeVisible();
   });
 
   test("config modal shows Export button", async ({ page }) => {
-    await page.goto("/");
+    await bootWithDashboardState(page, {}, [], { board: "", view: "" });
     await expect(
       page.locator("#config-modal .modal__btn--export"),
     ).toBeVisible();
@@ -147,7 +143,7 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
   });
 
   test("valid input in popup initializes dashboard", async ({ page }) => {
-    await page.goto("/");
+    await bootWithDashboardState(page, {}, [], { board: "", view: "" });
     await page.click("#config-modal .modal__btn--cancel");
     await page.evaluate(() => {
       return import("/component/modal/configModal.js").then((m) =>
@@ -163,7 +159,7 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
   });
 
   test("invalid JSON in popup shows error", async ({ page }) => {
-    await page.goto("/");
+    await bootWithDashboardState(page, {}, [], { board: "", view: "" });
     await page.evaluate(() =>
       import("/component/modal/configModal.js").then((m) =>
         m.openConfigModal(),
