@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
-import { handleDialog, getBoardsFromLocalStorage } from './shared/common'
+import { handleDialog, getConfigBoards } from './shared/common'
 
 const boardName = 'Persist Board'
 
@@ -18,7 +18,7 @@ test.describe('Board persistence', () => {
     await expect(page.locator('#board-selector')).toContainText(boardName)
 
     await page.reload()
-    const boards = await getBoardsFromLocalStorage(page)
+    const boards = await getConfigBoards(page)
     expect(boards.some(b => b.name === boardName)).toBeTruthy()
   })
 

@@ -88,7 +88,6 @@ const StorageManager = {
     jsonSet(KEYS.CONFIG, { version: CURRENT_VERSION, data: cfg })
   },
 
-
   /**
    * Atomically update the dashboard configuration.
    * @function updateConfig

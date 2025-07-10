@@ -7,7 +7,7 @@ export async function addServices(page: Page, count: number) {
       await page.click('#add-widget-button');
     }
   }
-  
+
 export async function selectServiceByName(page: Page, serviceName: string) {
     await page.selectOption('#service-selector', { label: serviceName });
     await page.click('#add-widget-button');
@@ -24,18 +24,6 @@ export async function handleDialog(page, type, inputText = '') {
       }
     });
   }
-  
-  // Helper function to get boards from localStorage
-export async function getBoardsFromLocalStorage(page) {
-    return await page.evaluate(async () => {
-      const result = window.asd.widgetStore.idle();
-      if (result && typeof result.then === 'function') await result;
-
-      const cfgRaw = localStorage.getItem('config');
-      const cfg = cfgRaw ? JSON.parse(cfgRaw) : {};
-      return Array.isArray(cfg?.boards) ? cfg.boards : [];
-    });
-}
 
 export async function addServicesByName(page: Page, serviceName: string, count: number) {
     for (let i = 0; i < count; i++) {
@@ -46,8 +34,14 @@ export async function addServicesByName(page: Page, serviceName: string, count: 
 export async function getUnwrappedConfig(page) {
   return await page.evaluate(() => {
     const raw = localStorage.getItem('config');
-    const parsed = raw ? JSON.parse(raw) : {};
-    return parsed?.data || parsed;
+    const parsed = raw ? JSON.parse(raw) : null;
+
+    const cfg = parsed?.data || parsed;
+
+    if (!cfg || typeof cfg !== 'object') return { boards: [] };
+    if (!Array.isArray(cfg.boards)) cfg.boards = [];
+
+    return cfg;
   });
 }
 
@@ -75,4 +69,12 @@ export async function getBoardCount(page) {
 export async function getShowMenuWidgetFlag(page) {
   const cfg = await getUnwrappedConfig(page);
   return !!cfg?.globalSettings?.showMenuWidget;
+}
+
+export async function getLastUsedViewId(page) {
+  return await page.evaluate(() => localStorage.getItem('lastUsedViewId'));
+}
+
+export async function getLastUsedBoardId(page) {
+  return await page.evaluate(() => localStorage.getItem('lastUsedBoardId'));
 }
