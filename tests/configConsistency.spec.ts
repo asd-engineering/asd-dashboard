@@ -37,8 +37,7 @@ test.describe('config consistency', () => {
     delete cfg.boards
     await textarea.fill(JSON.stringify(cfg, null, 2))
     await page.click('#config-modal .modal__btn--save')
-    await page.waitForLoadState('domcontentloaded')
-    const boards = await getUnwrappedConfig(page);
-    expect(boards).toBeNull()
+    const config = await getUnwrappedConfig(page);
+    expect(config.boards).toEqual([])
   })
 })
