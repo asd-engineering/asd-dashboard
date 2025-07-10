@@ -5,8 +5,8 @@
  * @module main
  */
 import { initializeMainMenu, applyControlVisibility } from './component/menu/menu.js'
-import { initializeBoards, switchBoard } from './component/board/boardManagement.js'
-import { initializeDashboardMenu, applyWidgetMenuVisibility } from './component/menu/dashboardMenu.js'
+import { initializeBoards, switchBoard, updateBoardSelector, updateViewSelector } from './component/board/boardManagement.js'
+import { initializeDashboardMenu, applyWidgetMenuVisibility, populateServiceDropdown } from './component/menu/dashboardMenu.js'
 import { initializeDragAndDrop } from './component/widget/events/dragDrop.js'
 import { fetchServices } from './utils/fetchServices.js'
 import { getConfig } from './utils/getConfig.js'
@@ -113,15 +113,31 @@ async function main () {
   document.getElementById('localStorage-edit-button').addEventListener('click', /** @type {EventListener} */(handleLocalStorageModal))
   document.getElementById('open-config-modal').addEventListener('click', /** @type {EventListener} */(handleConfigModal))
 
-  // --- PHASE 1: EVENT LISTENER FOR LOGGING ---
-  const logStateChange = (event) => {
+  // --- PHASE 2: ACTIVE EVENT LISTENER ---
+  const onStateChange = (event) => {
     const { reason } = event.detail || {}
-    logger.log(`[Event Listener] Detected state change. Reason: ${reason || 'unknown'}`)
+    logger.log(`[Event Listener] Reacting to state change. Reason: ${reason || 'unknown'}`)
+
+    const currentBoardId = window.asd.currentBoardId
+
+    switch (reason) {
+      case 'config':
+        updateBoardSelector()
+        if (currentBoardId) {
+          updateViewSelector(currentBoardId)
+        }
+        populateServiceDropdown()
+        break
+
+      case 'services':
+        populateServiceDropdown()
+        break
+    }
   }
 
-  const debouncedLogger = debounce(logStateChange, 200)
-  window.addEventListener(APP_STATE_CHANGED, /** @type {EventListener} */(debouncedLogger))
-  logger.log('Passive event listener for state changes has been initialized.')
+  const debouncedUiUpdater = debounce(onStateChange, 150)
+  window.addEventListener(APP_STATE_CHANGED, /** @type {EventListener} */(debouncedUiUpdater))
+  logger.log('Active event listener for state changes has been initialized.')
   // --- END ---
 
   logger.log('Application initialization finished')
