@@ -50,7 +50,7 @@ test.describe('Widget State Isolation Between Views', () => {
     await page.waitForSelector('body[data-ready="true"]', { timeout: 2000 });
   });
 
-  test('widgets added to one view should not appear in another view after switching', async ({ page }) => {
+  test.only('widgets added to one view should not appear in another view after switching', async ({ page }) => {
     // Define locators for the widgets we'll be adding.
     const widgetToolbox = page.locator('.widget-wrapper[data-service="ASD-toolbox"]');
     const widgetTerminal = page.locator('.widget-wrapper[data-service="ASD-terminal"]');

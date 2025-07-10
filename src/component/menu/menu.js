@@ -89,7 +89,7 @@ function initSW () {
               return caches.delete(cacheName)
             })
           ).then(function () {
-            console.log('All caches cleared')
+            // console.log('All caches cleared')
           })
         })
         .catch(function (error) {

@@ -16,9 +16,9 @@ export class WidgetStore {
   /**
    * Create a new widget store.
    * @constructor
-   * @param {number} [maxSize=50] - Maximum number of widgets to retain.
+   * @param {number} [maxSize=10] - Maximum number of widgets to retain.
    */
-  constructor (maxSize = 50) {
+  constructor (maxSize = 10) {
     this.maxSize = maxSize
     /** @type {Map<string, HTMLElement>} */
     this.widgets = new Map()
