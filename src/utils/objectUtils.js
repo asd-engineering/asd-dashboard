@@ -43,3 +43,37 @@ export function deepEqual (a, b) {
 
   return true
 }
+
+/**
+ * Deep-merge two values.
+ * – Objects are merged recursively.
+ * – Arrays & primitives are replaced (NOT concatenated).
+ *
+ * @template T,U
+ * @param {T} target
+ * @param {U} source
+ * @returns {T&U} merged result
+ */
+export function deepMerge (target, source) {
+  // Replace primitives / functions / null / undefined outright
+  if (
+    source === null ||
+    typeof source !== 'object' ||
+    source instanceof Date ||
+    source instanceof RegExp
+  ) {
+    return /** @type {any} */ (source)
+  }
+
+  // Replace arrays outright (keeps behaviour of the npm package’s default)
+  if (Array.isArray(source)) {
+    return /** @type {any} */ (source.slice())
+  }
+
+  // Merge plain objects
+  const out = { ...(target && typeof target === 'object' ? target : {}) }
+  for (const key of Object.keys(source)) {
+    out[key] = deepMerge(out[key], source[key])
+  }
+  return /** @type {any} */ (out)
+}

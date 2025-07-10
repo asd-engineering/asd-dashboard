@@ -9,6 +9,7 @@ export async function addServices(page: Page, count: number) {
   }
 
 export async function selectServiceByName(page: Page, serviceName: string) {
+    await page.waitForSelector('#service-selector', { timeout: 3000 });
     await page.selectOption('#service-selector', { label: serviceName });
     await page.click('#add-widget-button');
 }

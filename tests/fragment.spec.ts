@@ -12,36 +12,44 @@ test.describe('Secure fragments loading configuration', () => {
   test.beforeEach(async ({ page }) => { await clearStorage(page); });
 
   test('import modal pre-fills name and saves snapshot', async ({ page }) => {
-    // SETUP: Create pre-existing local data to trigger the modal.
-    await page.goto('/'); // Go to a blank page first
-    await page.waitForSelector('body[data-ready="true"]', { timeout: 2000 });
+    // SETUP: Pre-seed local config to trigger modal
+    await page.goto('/');
+    await page.waitForSelector('body[data-ready="true"]');
+
     await page.evaluate(() => {
-      localStorage.setItem('config', JSON.stringify({ globalSettings: { theme: 'dark' } }));
+      localStorage.setItem('config', JSON.stringify({
+        version: 1,
+        data: {
+          globalSettings: { theme: 'dark' },
+          boards: []
+        }
+      }));
     });
-    
+
     const cfg = await encode(ciConfig);
     const svc = await encode(ciServices);
     const name = 'MySnapshot';
 
-    // Now navigate to the URL with the fragment. The modal will now appear.
+    // Navigate with fragment (triggers modal)
     await page.goto(`/#cfg=${cfg}&svc=${svc}&name=${encodeURIComponent(name)}`);
-    await page.waitForSelector('body[data-ready="true"]', { timeout: 2000 });
-
-    // The rest of your test assertions will now work.
-    await page.waitForSelector('#fragment-decision-modal', { timeout: 2000 });
+    await page.waitForSelector('body[data-ready="true"]');
+    await page.waitForSelector('#fragment-decision-modal');
     await expect(page.locator('#importName')).toHaveValue(name);
+
+    // Trigger overwrite (this reloads the page)
     await page.locator('#fragment-decision-modal button:has-text("Overwrite")').click();
-    await page.waitForLoadState('domcontentloaded');
-    
-    const store = await page.evaluate(async () => {
-      // Note: Since this runs in the browser, use a dynamic import.
-      const smModule = await import('/storage/StorageManager.js');
-      return await smModule.default.loadStateStore();
+
+    // Wait for reload and presence of final ready state
+    await page.waitForSelector('body[data-ready="true"]');
+
+    // Now re-import StorageManager in a fresh JS context
+    const result = await page.evaluate(async () => {
+      const sm = (await import('/storage/StorageManager.js')).default;
+      const snapshot = (await sm.loadStateStore()).states.find(s => s.name === 'MySnapshot');
+      return snapshot;
     });
 
-    expect(store.states[0].name).toBe(name);
-    expect(store.states[0].type).toBe('imported');
+    expect(result?.name).toBe(name);
+    expect(result?.type).toBe('imported');
   });
-
 });
-

@@ -7,6 +7,8 @@
 
 import { md5Hex } from '../utils/hash.js'
 import { DEFAULT_CONFIG_TEMPLATE } from './defaultConfig.js'
+import { deepMerge } from '../utils/objectUtils.js'
+
 /**
  * CURRENT_VERSION for stored data schema.
  * @constant {number}
@@ -20,6 +22,17 @@ const KEYS = {
   STATES: 'asd-dashboard-state',
   LAST_BOARD: 'lastUsedBoardId',
   LAST_VIEW: 'lastUsedViewId'
+}
+
+/**
+ * Merge user-supplied config with defaults.
+ * Ensures globalSettings, boards, and other top-level keys always exist.
+ *
+ * @param {object} userConfig - The config object loaded from storage or URL
+ * @returns {object} - Fully shaped config matching DEFAULT_CONFIG_TEMPLATE
+ */
+function mergeWithDefaults (userConfig = {}) {
+  return deepMerge(DEFAULT_CONFIG_TEMPLATE, userConfig)
 }
 
 /**
@@ -69,13 +82,10 @@ const StorageManager = {
    */
   getConfig () {
     const stored = jsonGet(KEYS.CONFIG, null)
-
     // Fallback to legacy unwrapped format
     const cfg = stored?.data || stored
-
     if (!cfg || typeof cfg !== 'object') return { ...DEFAULT_CONFIG_TEMPLATE }
-    if (!Array.isArray(cfg.boards)) cfg.boards = []
-    return cfg
+    return mergeWithDefaults(cfg)
   },
 
   /**
@@ -85,7 +95,11 @@ const StorageManager = {
    * @returns {void}
    */
   setConfig (cfg /* DashboardConfig */) {
-    jsonSet(KEYS.CONFIG, { version: CURRENT_VERSION, data: cfg })
+    // jsonSet(KEYS.CONFIG, { version: CURRENT_VERSION, data: cfg })
+    jsonSet(KEYS.CONFIG, {
+      version: CURRENT_VERSION,
+      data: mergeWithDefaults(cfg)
+    })
   },
 
   /**

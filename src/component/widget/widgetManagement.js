@@ -344,21 +344,4 @@ function updateWidgetOrders () {
   saveWidgetState()
 }
 
-/**
- * Locate the board and view containing a widget id.
- * @param {string} id
- * @returns {{boardId:string, viewId:string}|null}
- */
-function findWidgetLocation (id) {
-  const boards = StorageManager.getBoards()
-  for (const board of boards) {
-    for (const view of board.views) {
-      if (view.widgetState.some((w) => w.dataid === id)) {
-        return { boardId: board.id, viewId: view.id }
-      }
-    }
-  }
-  return null
-}
-
 export { addWidget, removeWidget, updateWidgetOrders, createWidget }
