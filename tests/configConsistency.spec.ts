@@ -1,7 +1,7 @@
 // @ts-check
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
-import { handleDialog } from './shared/common'
+import { handleDialog, getUnwrappedConfig } from './shared/common'
 
 test.describe('config consistency', () => {
   test.beforeEach(async ({ page }) => {
@@ -26,7 +26,7 @@ test.describe('config consistency', () => {
     const cfgText = await page.locator('#config-json').inputValue()
     const cfg = JSON.parse(cfgText)
     await page.click('#config-modal .modal__btn--cancel')
-    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('config') || '{}'))
+    const stored = await getUnwrappedConfig(page)
     expect(stored.boards).toEqual(cfg.boards)
   })
 
@@ -38,7 +38,7 @@ test.describe('config consistency', () => {
     await textarea.fill(JSON.stringify(cfg, null, 2))
     await page.click('#config-modal .modal__btn--save')
     await page.waitForLoadState('domcontentloaded')
-    const boards = await page.evaluate(() => localStorage.getItem('boards'))
+    const boards = await getUnwrappedConfig(page);
     expect(boards).toBeNull()
   })
 })

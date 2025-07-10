@@ -68,8 +68,11 @@ const StorageManager = {
    * @returns {DashboardConfig|null}
    */
   getConfig () {
-    const config = jsonGet(KEYS.CONFIG, null)
-    const cfg = config && config.data ? config.data : config
+    const stored = jsonGet(KEYS.CONFIG, null)
+
+    // Fallback to legacy unwrapped format
+    const cfg = stored?.data || stored
+
     if (!cfg || typeof cfg !== 'object') return { ...DEFAULT_CONFIG_TEMPLATE }
     if (!Array.isArray(cfg.boards)) cfg.boards = []
     return cfg
@@ -82,8 +85,9 @@ const StorageManager = {
    * @returns {void}
    */
   setConfig (cfg /* DashboardConfig */) {
-    jsonSet(KEYS.CONFIG, cfg)
+    jsonSet(KEYS.CONFIG, { version: CURRENT_VERSION, data: cfg })
   },
+
 
   /**
    * Atomically update the dashboard configuration.

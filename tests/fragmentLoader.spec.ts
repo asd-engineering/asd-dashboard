@@ -2,6 +2,7 @@ import { test, expect } from './fixtures'
 import { ciConfig } from './data/ciConfig'
 import { ciServices } from './data/ciServices'
 import { gzipJsonToBase64url } from '../src/utils/compression.js'
+import { getUnwrappedConfig, getConfigTheme } from './shared/common'
 
 async function encode (obj: any) {
   return gzipJsonToBase64url(obj)
@@ -12,7 +13,7 @@ test('loads config and services from URL fragment', async ({ page }) => {
   const svc = await encode(ciServices)
   await page.goto(`/#cfg=${cfg}&svc=${svc}`)
   await page.waitForLoadState('domcontentloaded')
-  const config = await page.evaluate(() => JSON.parse(localStorage.getItem('config') || '{}'))
+  const config = await getUnwrappedConfig(page)
   const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services') || '[]'))
   expect(config.globalSettings.theme).toBe(ciConfig.globalSettings.theme)
   expect(services.length).toBe(ciServices.length)
@@ -34,7 +35,7 @@ test('fragment data is not reapplied if localStorage already has data', async ({
   await modal.locator('button:has-text("Cancel")').click()
   await expect(modal).toBeHidden()
 
-  const theme = await page.evaluate(() => JSON.parse(localStorage.getItem('config') || '{}').globalSettings.theme)
+  const theme = await getConfigTheme(page);
   expect(theme).toBe('dark')
 })
 
@@ -60,6 +61,6 @@ test('shows merge decision modal when local data exists', async ({ page }) => {
   await modal.locator('button:has-text("Cancel")').click()
   await expect(modal).toBeHidden()
 
-  const theme = await page.evaluate(() => JSON.parse(localStorage.getItem('config') || '{}').globalSettings.theme)
+  const theme = await getConfigTheme(page);
   expect(theme).toBe('dark')
 })

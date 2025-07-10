@@ -42,3 +42,37 @@ export async function addServicesByName(page: Page, serviceName: string, count: 
         await selectServiceByName(page, serviceName);
     }
 }
+
+export async function getUnwrappedConfig(page) {
+  return await page.evaluate(() => {
+    const raw = localStorage.getItem('config');
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed?.data || parsed;
+  });
+}
+
+export async function getConfigBoards(page) {
+  const cfg = await getUnwrappedConfig(page);
+  return Array.isArray(cfg.boards) ? cfg.boards : [];
+}
+
+export async function getConfigTheme(page) {
+  const cfg = await getUnwrappedConfig(page);
+  return cfg?.globalSettings?.theme;
+}
+
+export async function getBoardWithWidgets(page) {
+  const cfg = await getUnwrappedConfig(page);
+  const boards = Array.isArray(cfg.boards) ? cfg.boards : [];
+  return boards.find(b => b.views?.some(v => v.widgetState?.length > 0))?.id || null;
+}
+
+export async function getBoardCount(page) {
+  const cfg = await getUnwrappedConfig(page);
+  return Array.isArray(cfg.boards) ? cfg.boards.length : 0;
+}
+
+export async function getShowMenuWidgetFlag(page) {
+  const cfg = await getUnwrappedConfig(page);
+  return !!cfg?.globalSettings?.showMenuWidget;
+}
