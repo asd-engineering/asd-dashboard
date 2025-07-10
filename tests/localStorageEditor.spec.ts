@@ -5,17 +5,11 @@ import { setLocalItem } from "./shared/state.js";
 import { bootWithDashboardState } from "./shared/bootState.js";
 
 test.describe("LocalStorage Editor Functionality", () => {
-  test.beforeEach(async ({ page }) => {
-    await routeServicesConfig(page);
-    await bootWithDashboardState(page, {}, [], { board: "", view: "" });
-    await setLocalItem(page, "log", "localStorageModal,localStorage");
-    await page.waitForSelector('body[data-ready="true"]', { timeout: 2000 });
-  });
 
   test("should open LocalStorage editor modal, modify JSON content, and save changes", async ({
     page,
   }) => {
-    // Set an initial state for the test to modify. This makes the test self-contained.
+    await routeServicesConfig(page);
     await bootWithDashboardState(
       page,
       {
@@ -25,6 +19,8 @@ test.describe("LocalStorage Editor Functionality", () => {
       [{ name: "test", url: "http://test.com" }],
       { board: "board1", view: "" },
     );
+    await setLocalItem(page, "log", "localStorageModal,localStorage");
+    await page.waitForSelector('body[data-ready="true"]', { timeout: 2000 });
 
     // ================== FIX START ==================
     // Action 1: Click the button with the CORRECT ID to open the modal
@@ -63,6 +59,10 @@ test.describe("LocalStorage Editor Functionality", () => {
   });
 
   test("invalid JSON in popup shows error", async ({ page }) => {
+    await routeServicesConfig(page);
+    await bootWithDashboardState(page, {}, [], { board: "", view: "" });
+    await setLocalItem(page, "log", "localStorageModal,localStorage");
+    await page.waitForSelector('body[data-ready="true"]', { timeout: 2000 });
     await page.click("#localStorage-edit-button");
     await page.waitForSelector("#localStorage-modal");
     const textarea = await page.locator("textarea#localStorage-services");

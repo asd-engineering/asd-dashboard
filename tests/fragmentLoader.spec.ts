@@ -3,6 +3,7 @@ import { ciConfig } from "./data/ciConfig";
 import { ciServices } from "./data/ciServices";
 import { gzipJsonToBase64url } from "../src/utils/compression.js";
 import { getUnwrappedConfig, getConfigTheme } from "./shared/common";
+import { bootWithDashboardState } from "./shared/bootState.js";
 
 async function encode(obj: any) {
   return gzipJsonToBase64url(obj);
@@ -30,16 +31,14 @@ test("fragment data is not reapplied if localStorage already has data", async ({
   page,
 }) => {
   const cfg = await encode(ciConfig);
+  await bootWithDashboardState(
+    page,
+    { globalSettings: { theme: "dark" }, boards: [] },
+    [],
+    { board: "", view: "" },
+    `/#cfg=${cfg}`,
+  );
 
-  await page.addInitScript(() => {
-    (async () => {
-      const { default: sm } = await import("/storage/StorageManager.js");
-      sm.setConfig({ globalSettings: { theme: "dark" }, boards: [] });
-      sm.setServices([]);
-    })();
-  });
-
-  await page.goto(`/#cfg=${cfg}`);
   await page.waitForLoadState("domcontentloaded");
   await page.waitForSelector("#fragment-decision-modal", { timeout: 5000 });
   const modal = page.locator("#fragment-decision-modal");
@@ -54,25 +53,16 @@ test("fragment data is not reapplied if localStorage already has data", async ({
 test("shows merge decision modal when local data exists", async ({ page }) => {
   const cfg = await encode(ciConfig);
   const svc = await encode(ciServices);
-
-  await page.addInitScript(
-    (value) => {
-      (async () => {
-        const { default: sm } = await import("/storage/StorageManager.js");
-        sm.setConfig(value.config);
-        sm.setServices(value.services);
-      })();
-    },
+  await bootWithDashboardState(
+    page,
     {
-      config: {
-        globalSettings: { theme: "dark" },
-        boards: [{ id: "b1", name: "Board 1", order: 0, views: [] }],
-      },
-      services: [{ name: "Old", url: "http://localhost/old" }],
+      globalSettings: { theme: "dark" },
+      boards: [{ id: "b1", name: "Board 1", order: 0, views: [] }],
     },
+    [{ name: "Old", url: "http://localhost/old" }],
+    { board: "", view: "" },
+    `/#cfg=${cfg}&svc=${svc}`,
   );
-
-  await page.goto(`/#cfg=${cfg}&svc=${svc}`);
   await page.waitForLoadState("domcontentloaded");
   await page.waitForSelector("#fragment-decision-modal", { timeout: 5000 });
   const modal = page.locator("#fragment-decision-modal");

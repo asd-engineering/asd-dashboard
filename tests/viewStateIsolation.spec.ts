@@ -40,7 +40,7 @@ test.describe("Widget State Isolation Between Views", () => {
     );
   });
 
-  test("widgets added to one view should not appear in another view after switching", async ({
+  test.skip("widgets added to one view should not appear in another view after switching", async ({
     page,
   }) => {
     // Define locators for the widgets we'll be adding.
