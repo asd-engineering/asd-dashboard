@@ -2,6 +2,7 @@ import { test, expect } from './fixtures'
 import { ciConfig } from './data/ciConfig'
 import { ciServices } from './data/ciServices'
 import { gzipJsonToBase64url } from '../src/utils/compression.js'
+import { getBoardCount } from './shared/common.js'
 
 async function encode(obj: any) {
   return gzipJsonToBase64url(obj)
@@ -28,8 +29,8 @@ test.describe.skip('Saved States tab', () => {
     await page.locator('#stateTab tbody tr:first-child button:has-text("Restore")').click()
     await page.click('#fragment-decision-modal button:has-text("Overwrite")')
     await page.waitForLoadState('domcontentloaded')
-    const boards = await page.evaluate(() => JSON.parse(localStorage.getItem('boards')||'[]'))
-    expect(boards.length).toBeGreaterThan(0)
+    const boards = await getBoardCount(page);
+    expect(boards).toBeGreaterThan(0)
 
     await page.click('#open-config-modal')
     await page.click('.tabs button[data-tab="state"]')

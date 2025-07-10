@@ -77,7 +77,7 @@ async function handleDeleteBoard () {
     try {
       await deleteBoard(boardId)
       logger.log('Board deleted:', boardId)
-      const boards = StorageManager.getBoards()
+      const boards = StorageManager.getConfig().boards || []
       if (boards.length > 0) {
         updateViewSelector(boards[0].id)
       }

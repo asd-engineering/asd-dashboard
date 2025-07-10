@@ -28,6 +28,8 @@ Logger.enableLogs('all')
 window.asd = {
   services: [],
   config: {},
+  currentBoardId: null,
+  currentViewId: null,
   widgetStore
 }
 
@@ -53,6 +55,7 @@ async function main () {
   initializeDragAndDrop()
 
   // 3. Load services and configuration in parallel
+  /** @type {import('./types.js').DashboardConfig} */
   let config
   try {
     await Promise.all([
@@ -71,15 +74,13 @@ async function main () {
   applyControlVisibility()
   applyWidgetMenuVisibility()
 
-  // 5. Load boards from storage.
-  let boards = StorageManager.getBoards()
-  // If no boards exist and config specifies to load from itself, do so.
-  if (boards.length === 0 && config.globalSettings?.localStorage?.loadDashboardFromConfig === 'true') {
-    const cfgBoards = config.boards || []
-    if (Array.isArray(cfgBoards) && cfgBoards.length > 0) {
-      StorageManager.setBoards(cfgBoards)
-      boards = cfgBoards
-    }
+  // 5. Migrate legacy boards key and load from config (remove before merging to main)
+  const oldBoards = JSON.parse(localStorage.getItem('boards') || '[]')
+  if (oldBoards.length > 0 && (!config.boards || config.boards.length === 0)) {
+    logger.log('Migrating old boards key into config')
+    StorageManager.updateConfig(cfg => { cfg.boards = oldBoards })
+    localStorage.removeItem('boards')
+    config.boards = oldBoards
   }
 
   // 6. Initialize boards and switch to the last used or default board/view
@@ -88,7 +89,7 @@ async function main () {
   const lastUsedBoardId = StorageManager.misc.getLastBoardId()
   const lastUsedViewId = StorageManager.misc.getLastViewId()
 
-  const boardExists = StorageManager.getBoards().some(board => board.id === lastUsedBoardId)
+  const boardExists = (config.boards || []).some(board => board.id === lastUsedBoardId)
 
   let boardIdToLoad = initialBoardView?.boardId
   let viewIdToLoad = initialBoardView?.viewId

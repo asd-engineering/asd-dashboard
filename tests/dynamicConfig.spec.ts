@@ -2,15 +2,8 @@ import { test, expect } from './fixtures';
 import { ciConfig, ciBoards } from './data/ciConfig';
 import { ciServices } from './data/ciServices';
 import { gunzipSync } from 'zlib';
+import { getUnwrappedConfig, getConfigBoards, b64, clearStorage } from './shared/common';
 
-function b64(obj: any) {
-  return Buffer.from(JSON.stringify(obj)).toString('base64');
-}
-
-async function clearStorage(page) {
-  await page.goto('/');
-  await page.evaluate(() => localStorage.clear());
-}
 
 test.beforeEach(async ({ page }) => {
   // Go to the page
@@ -37,10 +30,7 @@ test.describe('Dashboard Config - Base64 via URL Params', () => {
 
     // Now that the UI is ready, it is safe to check the underlying storage.
     // This will now pass reliably.
-    const boards = await page.evaluate(() => {
-      const raw = localStorage.getItem('boards') || '[]';
-      return JSON.parse(raw);
-    });
+    const boards = await getConfigBoards(page);
     expect(boards.length).toBe(ciBoards.length);
     // =============================================
   });
@@ -145,7 +135,7 @@ test.describe('Dashboard Config - Fallback Config Popup', () => {
     await page.fill('#config-json', JSON.stringify(ciConfig));
     await page.click('#config-modal .modal__btn--save');
     await page.waitForSelector('#service-selector');
-    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('config') || '{}'));
+    const stored = await getUnwrappedConfig(page);
     expect(stored.globalSettings.theme).toBe(ciConfig.globalSettings.theme);
   });
 
@@ -177,7 +167,7 @@ test.describe('Dashboard Config - LocalStorage Behavior', () => {
     await page.fill('#config-json', JSON.stringify({ ...ciConfig, boards: [] }));
     await page.click('#config-modal .modal__btn--save');
     await page.reload();
-    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('config')||'{}'));
+    const stored = await getUnwrappedConfig(page);
     expect(Array.isArray(stored.boards)).toBeTruthy();
   });
 
@@ -198,7 +188,7 @@ test.describe('Dashboard Functionality - Building from Services', () => {
     await page.selectOption('#service-selector', { index: 1 });
     await page.click('#add-widget-button');
     await expect(page.locator('.widget-wrapper')).toHaveCount(1);
-    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('boards')||'[]'));
+    const stored = await getConfigBoards(page);
     expect(stored.length).toBeGreaterThan(0);
   });
 });
@@ -210,14 +200,14 @@ test.describe('Dashboard Config - Priority and Overwriting', () => {
     await page.goto(`/?config_base64=${b64({ ...ciConfig, globalSettings: { theme: 'dark' } })}`);
     await page.reload();
     await page.goto(`/?config_base64=${b64({ ...ciConfig, globalSettings: { theme: 'light' } })}`);
-    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('config')||'{}'));
+    const stored = await getUnwrappedConfig(page);
     expect(stored.globalSettings.theme).toBe('light');
   });
 
   test('without new param, existing config remains active', async ({ page }) => {
     await page.goto(`/?config_base64=${b64({ ...ciConfig, globalSettings: { theme: 'dark' } })}`);
     await page.reload();
-    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('config')||'{}'));
+    const stored = await getUnwrappedConfig(page);
     expect(stored.globalSettings.theme).toBe('dark');
   });
 });

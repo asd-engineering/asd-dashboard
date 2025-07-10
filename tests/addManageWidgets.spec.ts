@@ -36,7 +36,7 @@ test.describe('Widgets', () => {
 
     // Store data-order and url attributes in a dictionary
     const orderBeforeDragDrop = {};
-    console.log('Before Drag-and-Drop:');
+    // console.log('Before Drag-and-Drop:');
     for (let i = 0; i < widgetCount; i++) {
       const widget = widgets.nth(i);
       const order = await widget.getAttribute('data-order');
@@ -48,7 +48,7 @@ test.describe('Widgets', () => {
         console.error(`Widget ${i} has a null url attribute`);
       }
 
-      console.log(`Widget ${i} data-order: ${order}, url: ${url}`);
+      // console.log(`Widget ${i} data-order: ${order}, url: ${url}`);
     }
 
     // Test drag and drop using dragAndDrop method with string selectors
@@ -57,7 +57,7 @@ test.describe('Widgets', () => {
 
     // Log data-order attributes after drag and drop
     const orderAfterDragDrop = {};
-    console.log('After Drag-and-Drop:');
+    // console.log('After Drag-and-Drop:');
     for (let i = 0; i < widgetCount; i++) {
       const widget = widgets.nth(i);
       const order = await widget.getAttribute('data-order');
@@ -69,13 +69,13 @@ test.describe('Widgets', () => {
         console.error(`Widget ${i} has a null url attribute`);
       }
 
-      console.log(`Widget ${i} data-order: ${order}, url: ${url}`);
+      // console.log(`Widget ${i} data-order: ${order}, url: ${url}`);
     }
 
     // Compare initial and final order by url
-    console.log('Order comparison:');
+    // console.log('Order comparison:');
     for (const url in orderBeforeDragDrop) {
-      console.log(`Widget url: ${url}, initial: ${orderBeforeDragDrop[url]}, final: ${orderAfterDragDrop[url]}`);
+      // console.log(`Widget url: ${url}, initial: ${orderBeforeDragDrop[url]}, final: ${orderAfterDragDrop[url]}`);
       expect(orderBeforeDragDrop[url]).not.toBe(orderAfterDragDrop[url]);
     }
 
@@ -84,7 +84,7 @@ test.describe('Widgets', () => {
 
     // Verify the order of widgets after reload
     const orderAfterReload = {};
-    console.log('After Reload:');
+    // console.log('After Reload:');
     for (let i = 0; i < widgetCount; i++) {
       const widget = widgets.nth(i);
       const order = await widget.getAttribute('data-order');
@@ -93,17 +93,17 @@ test.describe('Widgets', () => {
       if (url !== null) {
         orderAfterReload[url] = order; // Use url as the key
       } else {
-        console.error(`Widget ${i} has a null url attribute`);
+        // console.error(`Widget ${i} has a null url attribute`);
       }
 
-      console.log(`Widget ${i} data-order: ${order}, url: ${url}`);
+      // console.log(`Widget ${i} data-order: ${order}, url: ${url}`);
     }
 
     // Compare initial and restored order by url
-    console.log('Order comparison after reload:');
-    for (const url in orderBeforeDragDrop) {
-      console.log(`Widget url: ${url}, initial: ${orderBeforeDragDrop[url]}, restored: ${orderAfterReload[url]}`);
-    }
+    // console.log('Order comparison after reload:');
+    // for (const url in orderBeforeDragDrop) {
+    //   console.log(`Widget url: ${url}, initial: ${orderBeforeDragDrop[url]}, restored: ${orderAfterReload[url]}`);
+    // }
 
     // const uuidLog = logs.find(log => log.includes('[widgetManagement][createWidget] Widget created with grid spans'));
     // expect(uuidLog).toBeDefined();
@@ -138,7 +138,7 @@ test.describe('Widgets', () => {
 
     // Listen for the dialog event
     page.on('dialog', async dialog => {
-      console.log(dialog.message());
+      // console.log(dialog.message());
       await dialog.accept('https://new.url'); // Provide the URL directly in the dialog
     });
 

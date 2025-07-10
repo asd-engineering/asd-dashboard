@@ -7,8 +7,9 @@ export async function addServices(page: Page, count: number) {
       await page.click('#add-widget-button');
     }
   }
-  
+
 export async function selectServiceByName(page: Page, serviceName: string) {
+    await page.waitForSelector('#service-selector', { timeout: 3000 });
     await page.selectOption('#service-selector', { label: serviceName });
     await page.click('#add-widget-button');
 }
@@ -24,20 +25,66 @@ export async function handleDialog(page, type, inputText = '') {
       }
     });
   }
-  
-  // Helper function to get boards from localStorage
-export async function getBoardsFromLocalStorage(page) {
-    return await page.evaluate(async () => {
-      const result = window.asd.widgetStore.idle();
-      if (result && typeof result.then === "function") await result;
-
-      const item = localStorage.getItem('boards');
-      return item ? JSON.parse(item) : [];
-    });
-}
 
 export async function addServicesByName(page: Page, serviceName: string, count: number) {
     for (let i = 0; i < count; i++) {
         await selectServiceByName(page, serviceName);
     }
+}
+
+export function b64(obj: any) {
+  return Buffer.from(JSON.stringify(obj)).toString('base64');
+}
+
+export async function clearStorage(page) {
+  await page.goto('/');
+  await page.evaluate(() => localStorage.clear());
+}
+
+export async function getUnwrappedConfig(page) {
+  return await page.evaluate(() => {
+    const raw = localStorage.getItem('config');
+    const parsed = raw ? JSON.parse(raw) : null;
+
+    const cfg = parsed?.data || parsed;
+
+    if (!cfg || typeof cfg !== 'object') return { boards: [] };
+    if (!Array.isArray(cfg.boards)) cfg.boards = [];
+
+    return cfg;
+  });
+}
+
+export async function getConfigBoards(page) {
+  const cfg = await getUnwrappedConfig(page);
+  return Array.isArray(cfg.boards) ? cfg.boards : [];
+}
+
+export async function getConfigTheme(page) {
+  const cfg = await getUnwrappedConfig(page);
+  return cfg?.globalSettings?.theme;
+}
+
+export async function getBoardWithWidgets(page) {
+  const cfg = await getUnwrappedConfig(page);
+  const boards = Array.isArray(cfg.boards) ? cfg.boards : [];
+  return boards.find(b => b.views?.some(v => v.widgetState?.length > 0))?.id || null;
+}
+
+export async function getBoardCount(page) {
+  const cfg = await getUnwrappedConfig(page);
+  return Array.isArray(cfg.boards) ? cfg.boards.length : 0;
+}
+
+export async function getShowMenuWidgetFlag(page) {
+  const cfg = await getUnwrappedConfig(page);
+  return !!cfg?.globalSettings?.showMenuWidget;
+}
+
+export async function getLastUsedViewId(page) {
+  return await page.evaluate(() => localStorage.getItem('lastUsedViewId'));
+}
+
+export async function getLastUsedBoardId(page) {
+  return await page.evaluate(() => localStorage.getItem('lastUsedBoardId'));
 }

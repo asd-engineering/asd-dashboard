@@ -2,6 +2,7 @@ import { test, expect } from './fixtures'
 import emojiList from '../src/ui/unicodeEmoji.js'
 import { routeServicesConfig } from './shared/mocking.js'
 import { ciConfig } from './data/ciConfig'
+import { getShowMenuWidgetFlag, getUnwrappedConfig } from './shared/common.js'
 
 const settings = {
   hideBoardControl: true,
@@ -15,9 +16,15 @@ test.describe('Menu control visibility', () => {
     await page.route('**/config.json', route => {
       route.fulfill({
         json: {
-          ...ciConfig,
-          globalSettings: { ...ciConfig.globalSettings, ...settings },
-        },
+          version: 1,
+          data: {
+            ...ciConfig,
+            globalSettings: {
+              ...ciConfig.globalSettings,
+              ...settings
+            }
+          }
+        }
       })
     })
 
@@ -70,9 +77,7 @@ test.describe('Widget menu visibility', () => {
     await page.click('#toggle-widget-menu')
     await expect(container).not.toHaveClass(/hide-widget-menu/)
 
-    const stored = await page.evaluate(() => {
-      return JSON.parse(localStorage.getItem('config') || '{}').globalSettings.showMenuWidget
-    })
+    const stored = await getShowMenuWidgetFlag(page);
     expect(stored).toBe(true)
   })
 })

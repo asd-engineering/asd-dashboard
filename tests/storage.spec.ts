@@ -6,10 +6,10 @@ test.describe('StorageManager', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await page.goto('/')
-    await page.waitForLoadState('domcontentloaded')
+    await page.waitForSelector('body[data-ready="true"]', { timeout: 2000 });
   })
 
-  test('setConfig wraps version and syncs boards', async ({ page }) => {
+  test('setConfig stores config only', async ({ page }) => {
     const result = await page.evaluate(async () => {
       const { default: sm } = await import('/storage/StorageManager.js')
       localStorage.clear()
@@ -23,10 +23,15 @@ test.describe('StorageManager', () => {
     })
     expect(JSON.parse(result.raw)).toMatchObject({
       version: 1,
-      data: { boards: [{ id: 'b1', name: 'B1', views: [] }] }
+      data: {
+        boards: [{ id: 'b1', name: 'B1', views: [] }]
+      }
     })
-    expect(JSON.parse(result.boards)).toEqual([{ id: 'b1', name: 'B1', views: [] }])
-    expect(result.cfg).toEqual({ boards: [{ id: 'b1', name: 'B1', views: [] }] })
+    expect(result.boards).toBeNull()
+
+    expect(result.cfg.boards).toEqual([{ id: 'b1', name: 'B1', views: [] }])
+    expect(result.cfg.globalSettings).toBeDefined()
+    expect(result.cfg.styling).toBeDefined()
   })
 
   test('saveStateSnapshot persists and hashes', async ({ page }) => {

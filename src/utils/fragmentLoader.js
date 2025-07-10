@@ -46,7 +46,7 @@ export async function loadFromFragment (wasExplicitLoad = false) {
   const hasLocalData =
     StorageManager.getConfig() ||
     StorageManager.getServices().length > 0 ||
-    StorageManager.getBoards().length > 0
+    (Array.isArray(StorageManager.getConfig().boards) && StorageManager.getConfig().boards.length > 0)
 
   if ((cfgParam || svcParam) && hasLocalData && !wasExplicitLoad) {
     await openFragmentDecisionModal({ cfgParam, svcParam, nameParam })

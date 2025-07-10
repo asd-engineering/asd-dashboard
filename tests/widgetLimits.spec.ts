@@ -1,6 +1,7 @@
 import { test, expect } from "./fixtures";
 import { ciConfig } from "./data/ciConfig";
 import { ciServices } from "./data/ciServices";
+import { getUnwrappedConfig } from "./shared/common";
 
 async function routeLimits(page, boards, services, maxSize = 2) {
   await page.route("**/services.json", (route) =>
@@ -132,10 +133,10 @@ test.describe("Widget limits", () => {
       document.querySelectorAll('.widget-wrapper').length === 1
     );
     const selectedBoard = await page.locator('#board-selector').inputValue();
-    const boardWithWidget = await page.evaluate(() => {
-      const boards = JSON.parse(localStorage.getItem('boards') || '[]');
-      return boards.find(b => b.views.some(v => v.widgetState && v.widgetState.length > 0))?.id;
-    });
+    const cfg = await getUnwrappedConfig(page)
+    const boardWithWidget = cfg.boards.find(b =>
+      b.views.some(v => v.widgetState?.length > 0)
+    )?.id;
     expect(selectedBoard).toBe(boardWithWidget);
   });
 });
