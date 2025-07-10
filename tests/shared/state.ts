@@ -30,16 +30,39 @@ export async function setLocalServices (page: Page, services: object[]): Promise
 }
 
 /**
- * Clear all stored dashboard state via StorageManager.
- * @function clearLocalState
- * @param {Page} page
- * @returns {Promise<void>}
+ * Clears all StorageManager-managed state in the app under test.
+ * Falls back to `localStorage.clear()` if StorageManager hasn't booted yet.
+ *
+ * This function is safe to call even before navigation, during `page.addInitScript`,
+ * or when running tests that rely on fragment-based URLs (e.g. `/#local:import=...`).
+ *
+ * We observed test flakiness caused by calling this function on a blank page
+ * (`about:blank`), which triggers a `SecurityError` when accessing `localStorage`
+ * in browser contexts that haven't loaded an origin. This broke:
+ *
+ *   - viewStateIsolation.spec.ts (hydration race condition)
+ *   - fragment.spec.ts (bootloader never advances, stays on about:blank)
+ *
+ * We also observed `TypeError: Failed to resolve module specifier` when the app's
+ * bootloader hadn't yet loaded `StorageManager.js`, so we wrap that in a try/catch
+ * and fallback to raw `localStorage.clear()` when needed.
+ *
+ * @param {import('@playwright/test').Page} page - The Playwright page to reset.
  */
-export async function clearLocalState (page: Page): Promise<void> {
+export async function clearLocalState(page) {
+  // Ensure we're not stuck on about:blank (localStorage is inaccessible)
+  if ((await page.evaluate(() => document.URL)) === 'about:blank') {
+    await page.goto('/'); // only fallback if nothing has loaded yet
+  }
+
   await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js')
-    sm.clearAll()
-  })
+    try {
+      const { default: sm } = await import('/storage/StorageManager.js');
+      await sm.clearAll();
+    } catch {
+      localStorage.clear();
+    }
+  });
 }
 
 /**
