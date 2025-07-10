@@ -61,9 +61,6 @@ export async function createBoard (boardName, boardId = null, viewId = null) {
   StorageManager.misc.setLastViewId(defaultViewId)
   logger.log(`Saved last used boardId: ${newBoardId} and viewId: ${defaultViewId}`)
 
-  // Update the board selector
-  updateBoardSelector()
-
   return StorageManager.getBoards().find(b => b.id === newBoardId)
 }
 
@@ -354,7 +351,6 @@ export async function renameBoard (boardId, newBoardName) {
 
   if (found) {
     logger.log(`Renamed board ${boardId} to ${newBoardName}`)
-    updateBoardSelector()
   } else {
     logger.error(`Board with ID ${boardId} not found`)
   }
@@ -380,7 +376,6 @@ export async function deleteBoard (boardId) {
 
   if (removed) {
     logger.log(`Deleted board ${boardId}`)
-    updateBoardSelector()
     const boards = StorageManager.getBoards()
     if (boards.length > 0) {
       const firstBoardId = boards[0].id
@@ -426,7 +421,6 @@ export async function renameView (boardId, viewId, newViewName) {
   }
 
   logger.log(`Renamed view ${viewId} to ${newViewName}`)
-  updateViewSelector(boardId)
 }
 
 /**
@@ -467,7 +461,6 @@ export async function deleteView (boardId, viewId) {
   }
 
   logger.log(`Deleted view ${viewId} and evicted its widgets.`)
-  updateViewSelector(boardId)
 
   const board = StorageManager.getBoards().find(b => b.id === boardId)
   if (board && board.views.length > 0) {
