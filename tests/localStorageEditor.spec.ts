@@ -1,17 +1,14 @@
 import { test, expect } from './fixtures';
 import { routeServicesConfig } from './shared/mocking';
 import { ciBoards } from './data/ciConfig.js';
-import { setLocalConfig, setLocalServices } from './shared/state.js';
+import { setLocalConfig, setLocalServices, setLocalItem } from './shared/state.js';
 
 test.describe('LocalStorage Editor Functionality', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page);
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
-    await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js');
-      sm.misc.setItem('log', 'localStorageModal,localStorage');
-    });
+    await setLocalItem(page, 'log', 'localStorageModal,localStorage');
     await page.waitForSelector('body[data-ready="true"]', { timeout: 2000 });
   });
 

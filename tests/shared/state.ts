@@ -67,6 +67,19 @@ export async function waitForWidgetStoreIdle (page: Page): Promise<void> {
 }
 
 /**
+ * Persist an arbitrary localStorage key via StorageManager misc API.
+ * @param {Page} page
+ * @param {string} key
+ * @param {string} value
+ */
+export async function setLocalItem (page: Page, key: string, value: string): Promise<void> {
+  await page.evaluate(async ({ key, value }) => {
+    const { default: sm } = await import('/storage/StorageManager.js')
+    sm.misc.setItem(key, value)
+  }, { key, value })
+}
+
+/**
  * Inject a saved state snapshot using StorageManager.
  * @function injectSnapshot
  * @param {Page} page
