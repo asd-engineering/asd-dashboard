@@ -3,6 +3,7 @@ import { ciConfig } from './data/ciConfig'
 import { ciServices } from './data/ciServices'
 import { gzipJsonToBase64url } from '../src/utils/compression.js'
 import { getUnwrappedConfig, getConfigTheme } from './shared/common'
+import { setLocalConfig, setLocalServices } from './shared/state.js'
 
 async function encode (obj: any) {
   return gzipJsonToBase64url(obj)
@@ -14,7 +15,10 @@ test('verify config and services from URL fragment does not load before user dec
   await page.goto(`/#cfg=${cfg}&svc=${svc}`)
   await page.waitForLoadState('domcontentloaded')
   const config = await getUnwrappedConfig(page)
-  const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services') || '[]'))
+  const services = await page.evaluate(async () => {
+    const { default: sm } = await import('/storage/StorageManager.js')
+    return sm.getServices()
+  })
 
   // Storage should not have been updated yet
   expect(config.globalSettings).toBe(undefined)
@@ -25,8 +29,11 @@ test('fragment data is not reapplied if localStorage already has data', async ({
   const cfg = await encode(ciConfig)
 
   await page.addInitScript(() => {
-    localStorage.setItem('config', JSON.stringify({ globalSettings: { theme: 'dark' }, boards: [] }))
-    localStorage.setItem('services', JSON.stringify([]))
+    (async () => {
+      const { default: sm } = await import('/storage/StorageManager.js')
+      sm.setConfig({ globalSettings: { theme: 'dark' }, boards: [] })
+      sm.setServices([])
+    })()
   })
 
   await page.goto(`/#cfg=${cfg}`)
@@ -46,8 +53,11 @@ test('shows merge decision modal when local data exists', async ({ page }) => {
   const svc = await encode(ciServices)
 
   await page.addInitScript(value => {
-    localStorage.setItem('config', JSON.stringify(value.config))
-    localStorage.setItem('services', JSON.stringify(value.services))
+    (async () => {
+      const { default: sm } = await import('/storage/StorageManager.js')
+      sm.setConfig(value.config)
+      sm.setServices(value.services)
+    })()
   }, {
     config: { globalSettings: { theme: 'dark' }, boards: [{ id: 'b1', name: 'Board 1', order: 0, views: [] }] },
     services: [{ name: 'Old', url: 'http://localhost/old' }]

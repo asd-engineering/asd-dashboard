@@ -2,7 +2,8 @@ import { test, expect } from './fixtures';
 import { ciConfig, ciBoards } from './data/ciConfig';
 import { ciServices } from './data/ciServices';
 import { gunzipSync } from 'zlib';
-import { getUnwrappedConfig, getConfigBoards, b64, clearStorage } from './shared/common';
+import { getUnwrappedConfig, getConfigBoards, b64 } from './shared/common';
+import { setLocalConfig, setLocalServices, clearLocalState } from './shared/state.js';
 
 
 test.beforeEach(async ({ page }) => {
@@ -87,7 +88,7 @@ test.describe('Dashboard Config - Remote via URL Params', () => {
 // Fallback modal
 
 test.describe('Dashboard Config - Fallback Config Popup', () => {
-  test.beforeEach(async ({ page }) => { await clearStorage(page); });
+  test.beforeEach(async ({ page }) => { await clearLocalState(page); });
 
   test('popup appears when no config available via url, storage, or local file', async ({ page }) => {
     await page.goto('/');
@@ -100,10 +101,8 @@ test.describe('Dashboard Config - Fallback Config Popup', () => {
   });
 
   test('export button copies encoded URL', async ({ page }) => {
-    await page.evaluate(({ cfg, svc }) => {
-      localStorage.setItem('config', JSON.stringify(cfg));
-      localStorage.setItem('services', JSON.stringify(svc));
-    }, { cfg: ciConfig, svc: ciServices });
+    await setLocalConfig(page, ciConfig)
+    await setLocalServices(page, ciServices)
     await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()));
     await page.waitForSelector('#config-modal .modal__btn--export');
     await page.evaluate(() => { (window as any).__copied = ''; navigator.clipboard.writeText = async text => { (window as any).__copied = text }; });
@@ -173,7 +172,7 @@ test.describe('Dashboard Config - LocalStorage Behavior', () => {
 
   test('removing config from localStorage shows popup again', async ({ page }) => {
     await page.goto(`/?config_base64=${b64(ciConfig)}`);
-    await page.evaluate(() => localStorage.removeItem('config'));
+    await clearLocalState(page)
     await page.reload();
     await expect(page.locator('#config-modal')).toBeVisible();
   });

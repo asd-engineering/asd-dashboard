@@ -2,6 +2,7 @@ import { test, expect } from "./fixtures";
 import { ciConfig } from "./data/ciConfig";
 import { ciServices } from "./data/ciServices";
 import { getUnwrappedConfig } from "./shared/common";
+import { waitForWidgetStoreIdle } from "./shared/state.js";
 
 async function routeLimits(page, boards, services, maxSize = 2) {
   await page.route("**/services.json", (route) =>
@@ -97,7 +98,7 @@ test.describe("Widget limits", () => {
     const modal = page.locator("#eviction-modal");
     await expect(modal).toBeVisible();
     await modal.locator('button:has-text("Remove")').click();
-    await page.evaluate(() => window.asd.widgetStore.idle());
+    await waitForWidgetStoreIdle(page);
     await expect(modal).toBeHidden();
     await page.waitForFunction(() =>
       document.querySelectorAll('.widget-wrapper').length === 1

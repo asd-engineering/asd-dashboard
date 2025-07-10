@@ -3,6 +3,7 @@ import emojiList from '../src/ui/unicodeEmoji.js'
 import { routeServicesConfig } from './shared/mocking.js'
 import { ciConfig } from './data/ciConfig'
 import { getShowMenuWidgetFlag, getUnwrappedConfig } from './shared/common.js'
+import { clearLocalState } from './shared/state.js'
 
 const settings = {
   hideBoardControl: true,
@@ -33,7 +34,7 @@ test.describe('Menu control visibility', () => {
   })
 
   test.afterEach(async ({ page }) => {
-    await page.evaluate(() => localStorage.clear())
+    await clearLocalState(page)
   })
 
   test('applies visibility flags and reset button placement', async ({ page }) => {
@@ -67,7 +68,7 @@ test.describe('Widget menu visibility', () => {
   })
 
   test.afterEach(async ({ page }) => {
-    await page.evaluate(() => localStorage.clear())
+    await clearLocalState(page)
   })
 
   test('toggling widget menu updates stored config', async ({ page }) => {
@@ -116,7 +117,7 @@ test.describe('View button menu visibility', () => {
   })
 
   test.afterEach(async ({ page }) => {
-    await page.evaluate(() => localStorage.clear())
+    await clearLocalState(page)
   })
 
   test('shows view buttons and hides selectors', async ({ page }) => {

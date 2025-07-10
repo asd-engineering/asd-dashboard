@@ -2,6 +2,7 @@ import { test, expect } from './fixtures';
 import { handleDialog, getConfigBoards } from './shared/common';
 import { routeServicesConfig } from './shared/mocking';
 import { addServices, getLastUsedViewId } from './shared/common';
+import { waitForWidgetStoreIdle } from './shared/state.js';
 
 const defaultViewName = "Default View"
 const newViewName = "New View"
@@ -111,7 +112,7 @@ test.describe('View Dropdown Functionality', () => {
       const container = document.getElementById('widget-container');
       return container && container.querySelectorAll('.widget-wrapper').length === 0;
     });
-    await page.evaluate(() => window.asd.widgetStore.idle())
+    await waitForWidgetStoreIdle(page)
 
     // Verify the view was reset
     const boards = await getConfigBoards(page);

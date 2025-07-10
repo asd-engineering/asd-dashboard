@@ -1,4 +1,5 @@
 import { test, expect } from '../fixtures'
+import { clearLocalState, getWidgetStoreSize, waitForWidgetStoreIdle } from '../shared/state.js'
 import { ciConfig, ciBoards } from '../data/ciConfig'
 import { ciServices } from '../data/ciServices'
 
@@ -99,9 +100,7 @@ test.describe('WidgetStore UI Tests', () => {
     const viewSelector = page.locator('#view-selector')
     const view1Widget = page.locator('.widget-wrapper').first()
 
-    const initialSize = await page.evaluate(
-      () => window.asd.widgetStore.widgets.size
-    )
+    const initialSize = await getWidgetStoreSize(page)
     expect(initialSize).toBe(1)
     await expect(view1Widget).toBeVisible()
 
@@ -110,9 +109,7 @@ test.describe('WidgetStore UI Tests', () => {
       .catch(() => viewSelector.selectOption('view-12345678'))
     await expect(view1Widget).toBeHidden()
 
-    const afterSwitchSize = await page.evaluate(
-      () => window.asd.widgetStore.widgets.size
-    )
+    const afterSwitchSize = await getWidgetStoreSize(page)
     expect(afterSwitchSize).toBe(2)
 
     await viewSelector
@@ -120,9 +117,7 @@ test.describe('WidgetStore UI Tests', () => {
       .catch(() => viewSelector.selectOption('view-1234567'))
     await expect(view1Widget).not.toBeVisible
 
-    const finalSize = await page.evaluate(
-      () => window.asd.widgetStore.widgets.size
-    )
+    const finalSize = await getWidgetStoreSize(page)
     expect(finalSize).toBe(2)
   })
 
@@ -161,7 +156,7 @@ test.describe('WidgetStore UI Tests', () => {
     console.log('Widget count before hydration:', beforeHydration)
 
     await routeWithLRUConfig(page, widgetState, 2)
-    await page.evaluate(() => localStorage.clear())
+    await clearLocalState(page)
     await page.reload()
 
     const afterHydration = await page.$$eval('.widget-wrapper', (els) => els.length)
@@ -174,7 +169,7 @@ test.describe('WidgetStore UI Tests', () => {
     const modal = page.locator('#eviction-modal')
     await modal.waitFor({ state: 'visible' })
     await modal.locator('button:has-text("Remove")').click()
-    await page.evaluate(() => window.asd.widgetStore.idle())
+    await waitForWidgetStoreIdle(page)
     await expect(modal).toBeHidden()
 
     await page.reload()
@@ -201,7 +196,7 @@ test.describe('WidgetStore UI Tests', () => {
     expect(exists).toBe(true)
 
     await widget.locator('.widget-icon-remove').click()
-    await page.evaluate(() => window.asd.widgetStore.idle())
+    await waitForWidgetStoreIdle(page)
     await expect(page.locator(`[data-dataid="${widgetId}"]`)).toHaveCount(0)
 
     const removed = await page.evaluate(
