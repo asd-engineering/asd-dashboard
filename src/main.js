@@ -6,6 +6,7 @@
  */
 import { initializeMainMenu, applyControlVisibility } from './component/menu/menu.js'
 import { initializeBoards, switchBoard, updateBoardSelector, updateViewSelector } from './component/board/boardManagement.js'
+import { getCurrentBoardId } from './utils/elements.js'
 import { initializeDashboardMenu, applyWidgetMenuVisibility, populateServiceDropdown } from './component/menu/dashboardMenu.js'
 import { initializeDragAndDrop } from './component/widget/events/dragDrop.js'
 import { fetchServices } from './utils/fetchServices.js'
@@ -102,6 +103,7 @@ async function main () {
   if (boardIdToLoad) {
     logger.log(`Switching to initial board: ${boardIdToLoad}, view: ${viewIdToLoad}`)
     await switchBoard(boardIdToLoad, viewIdToLoad)
+    updateViewSelector(boardIdToLoad)
   } else {
     logger.warn('No boards available to display.')
   }
@@ -118,7 +120,7 @@ async function main () {
     const { reason } = event.detail || {}
     logger.log(`[Event Listener] Reacting to state change. Reason: ${reason || 'unknown'}`)
 
-    const currentBoardId = window.asd.currentBoardId
+    const currentBoardId = getCurrentBoardId()
 
     switch (reason) {
       case 'config':
