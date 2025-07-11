@@ -1,13 +1,13 @@
 import { test, expect } from './fixtures'
 import { ciConfig } from './data/ciConfig'
 import { ciServices } from './data/ciServices'
-import { getBoardCount, waitForDashboardReady } from './shared/common.js'
+import { getBoardCount, navigate } from './shared/common.js'
 import { injectSnapshot } from './shared/state.js'
 
 test.describe.skip('Saved States tab', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-    await waitForDashboardReady(page)
+    await navigate(page,'/')
+    
     const cfg = ciConfig
     const svc = ciServices
     await injectSnapshot(page, cfg, svc, 'one')
@@ -21,7 +21,7 @@ test.describe.skip('Saved States tab', () => {
 
     await page.locator('#stateTab tbody tr:first-child button:has-text("Restore")').click()
     await page.click('#fragment-decision-modal button:has-text("Overwrite")')
-    await waitForDashboardReady(page)
+    
     const boards = await getBoardCount(page);
     expect(boards).toBeGreaterThan(0)
 
@@ -32,7 +32,7 @@ test.describe.skip('Saved States tab', () => {
     await expect(page.locator('#stateTab tbody tr')).toHaveCount(1)
 
     await page.reload()
-    await waitForDashboardReady(page)
+    
     await page.click('#open-config-modal')
     await page.click('.tabs button[data-tab="state"]')
     await expect(page.locator('#stateTab tbody tr')).toHaveCount(1)

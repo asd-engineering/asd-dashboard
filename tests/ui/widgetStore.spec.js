@@ -1,6 +1,6 @@
 import { test, expect } from '../fixtures'
 import { getWidgetStoreSize, waitForWidgetStoreIdle } from '../shared/state.js'
-import { waitForDashboardReady, selectViewByLabel } from '../shared/common.js'
+import { navigate, selectViewByLabel } from '../shared/common.js'
 import { ciConfig, ciBoards } from '../data/ciConfig'
 import { ciServices } from '../data/ciServices'
 
@@ -93,8 +93,8 @@ const defaultBoards = () => [
 test.describe('WidgetStore UI Tests', () => {
   test.beforeEach(async ({ page }) => {
     await routeBase(page, defaultBoards())
-    await page.goto('/')
-    await waitForDashboardReady(page)
+    await navigate(page, '/')
+
     await page.locator('.widget-wrapper').first().waitFor()
   })
 
@@ -158,7 +158,6 @@ test.describe('WidgetStore UI Tests', () => {
     await routeWithLRUConfig(page, widgetState, 2)
     await page.evaluate(() => localStorage.clear())
     await page.reload()
-    await waitForDashboardReady(page)
 
     const afterHydration = await page.$$eval(
       '.widget-wrapper',
@@ -177,7 +176,7 @@ test.describe('WidgetStore UI Tests', () => {
     await expect(modal).toBeHidden()
 
     await page.reload()
-    await waitForDashboardReady(page)
+
     await page.waitForFunction(
       () => document.querySelectorAll('.widget-wrapper').length === 2
     )

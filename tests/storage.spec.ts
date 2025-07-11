@@ -1,13 +1,13 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
-import { waitForDashboardReady } from './shared/common'
+import { navigate } from './shared/common'
 import crypto from 'crypto'
 
 test.describe('StorageManager', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
-    await page.goto('/')
-    await waitForDashboardReady(page)
+    await navigate(page,'/')
+    
   })
 
   test('setConfig stores config only', async ({ page }) => {

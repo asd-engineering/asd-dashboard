@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { handleDialog, getConfigBoards, addServices, getLastUsedViewId, waitForDashboardReady } from './shared/common';
+import { handleDialog, getConfigBoards, addServices, getLastUsedViewId, navigate } from './shared/common';
 import { routeServicesConfig } from './shared/mocking';
 import { waitForWidgetStoreIdle } from './shared/state.js';
 
@@ -16,8 +16,8 @@ test.describe('View Dropdown Functionality', () => {
 
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
-    await page.goto('/');
-    // await waitForDashboardReady(page)
+    await navigate(page,'/');
+    
     await addServices(page, 2);
   });
 

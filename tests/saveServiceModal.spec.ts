@@ -1,13 +1,13 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking.js'
-import { waitForDashboardReady } from './shared/common'
+import { navigate } from './shared/common'
 
 
 test.describe('Save Service Modal', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
-    await page.goto('/')
-    await waitForDashboardReady(page)
+    await navigate(page,'/')
+    
   })
 
   test('opens when adding widget with manual URL', async ({ page }) => {

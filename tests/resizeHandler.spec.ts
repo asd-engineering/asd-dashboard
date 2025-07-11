@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures';
 import { routeServicesConfig } from './shared/mocking';
-import { addServicesByName, waitForDashboardReady } from './shared/common';
+import { addServicesByName, navigate } from './shared/common';
 import { ciServices } from './data/ciServices';
 import { waitForWidgetStoreIdle } from './shared/state.js';
 
@@ -8,8 +8,8 @@ import { waitForWidgetStoreIdle } from './shared/state.js';
 test.describe('Resize Handler Functionality', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page);
-    await page.goto('/');
-    // await waitForDashboardReady(page)
+    await navigate(page,'/');
+    
   });
 
   test('should resize widget in Firefox, trigger resize event, and persist changes', async ({ page, browserName }) => {
@@ -45,7 +45,7 @@ test.describe('Resize Handler Functionality', () => {
     // await expect(widget).toHaveAttribute('data-rows', `${maxRows}`);
     // Reload and verify persistence of the resized dimensions
     await page.reload();
-    // await waitForDashboardReady(page)
+    
     await expect(widget).toHaveAttribute('data-columns', `${maxColumns}`);
     await expect(widget).toHaveAttribute('data-rows', `${maxRows}`);
   
@@ -60,7 +60,7 @@ test.describe('Resize Handler Functionality', () => {
   
     // Reload and verify persistence of the minimum size
     await page.reload();
-    // await waitForDashboardReady(page)
+    
     await expect(widget).toHaveAttribute('data-columns', '1');
     await expect(widget).toHaveAttribute('data-rows', '1');
   });

@@ -4,7 +4,7 @@ import {
   getLastUsedBoardId,
   handleDialog,
   getConfigBoards,
-  waitForDashboardReady,
+  navigate,
 } from './shared/common';
 import { routeServicesConfig } from './shared/mocking';
 
@@ -15,8 +15,8 @@ const newBoardName = "New Test Board"
 test.describe('Board Dropdown Functionality', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
-    await page.goto('/');
-    // await waitForDashboardReady(page)
+    await navigate(page,'/');
+    
     await addServices(page, 2);
   });
 

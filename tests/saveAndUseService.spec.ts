@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking.js'
-import { selectServiceByName, waitForDashboardReady } from './shared/common.js'
+import { selectServiceByName, navigate } from './shared/common.js'
 import { bootWithDashboardState } from './shared/bootState.js'
 
 const saved = [{ name: 'Saved Service', url: 'http://localhost/saved' }]
@@ -9,7 +9,7 @@ test.describe('Use saved service', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await bootWithDashboardState(page, {}, saved, { board: '', view: '' })
-    await waitForDashboardReady(page)
+    
   })
 
   test('selects saved service and adds widget', async ({ page }) => {

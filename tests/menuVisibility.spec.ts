@@ -5,7 +5,7 @@ import { ciConfig } from "./data/ciConfig";
 import {
   getShowMenuWidgetFlag,
   getUnwrappedConfig,
-  waitForDashboardReady,
+  navigate,
 } from "./shared/common.js";
 
 const settings = {
@@ -32,8 +32,8 @@ test.describe("Menu control visibility", () => {
       });
     });
 
-    await page.goto("/");
-    // await waitForDashboardReady(page)
+    await navigate(page,"/");
+    
   });
 
   test("applies visibility flags and reset button placement", async ({
@@ -64,8 +64,8 @@ test.describe("Widget menu visibility", () => {
       });
     });
 
-    await page.goto("/");
-    // await waitForDashboardReady(page)
+    await navigate(page,"/");
+    
   });
 
   test("toggling widget menu updates stored config", async ({ page }) => {
@@ -115,8 +115,8 @@ test.describe("View button menu visibility", () => {
       });
     });
 
-    await page.goto("/");
-    // await waitForDashboardReady(page)
+    await navigate(page,"/");
+    
   });
 
   test("shows view buttons and hides selectors", async ({ page }) => {

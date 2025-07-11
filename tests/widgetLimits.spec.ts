@@ -1,7 +1,7 @@
 import { test, expect } from "./fixtures";
 import { ciConfig } from "./data/ciConfig";
 import { ciServices } from "./data/ciServices";
-import { getUnwrappedConfig, selectServiceByName, waitForDashboardReady } from "./shared/common";
+import { getUnwrappedConfig, selectServiceByName, navigate } from "./shared/common";
 import { waitForWidgetStoreIdle } from "./shared/state.js";
 
 async function routeLimits(page, boards, services, maxSize = 2) {
@@ -58,8 +58,8 @@ test.describe("Widget limits", () => {
       s.name === "ASD-toolbox" ? { ...s, maxInstances: 1 } : s,
     );
     await routeLimits(page, boards, services, 5);
-    await page.goto("/");
-    // await waitForDashboardReady(page)
+    await navigate(page,"/");
+    
     await page.locator(".widget-wrapper").first().waitFor();
 
     await page.locator("#board-selector").selectOption("b2");
@@ -89,8 +89,8 @@ test.describe("Widget limits", () => {
       },
     ];
     await routeLimits(page, boards, ciServices, 1);
-    await page.goto("/");
-    // await waitForDashboardReady(page)
+    await navigate(page,"/");
+    
     await page.locator(".widget-wrapper").first().waitFor();
 
     await selectServiceByName(page, "ASD-terminal");
@@ -118,8 +118,8 @@ test.describe("Widget limits", () => {
       s.name === 'ASD-toolbox' ? { ...s, maxInstances: 1 } : s
     );
     await routeLimits(page, boards, services, 5);
-    await page.goto('/');
-    // await waitForDashboardReady(page)
+    await navigate(page,'/');
+    
 
     await page.evaluate(async () => {
       const { addWidget } = await import('/component/widget/widgetManagement.js');

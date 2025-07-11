@@ -7,7 +7,7 @@ import {
   getConfigBoards,
   b64,
   selectServiceByName,
-  waitForDashboardReady,
+  navigate,
 } from "./shared/common";
 import { bootWithDashboardState } from "./shared/bootState.js";
 
@@ -20,8 +20,8 @@ test.describe("Dashboard Config - Base64 via URL Params", () => {
     const cfg = { ...ciConfig, boards: ciBoards };
     const config = b64(cfg);
     const services = b64(ciServices);
-    await page.goto(`/?config_base64=${config}&services_base64=${services}`);
-    // await waitForDashboardReady(page)
+    await navigate(page,`/?config_base64=${config}&services_base64=${services}`);
+    
 
     // This assertion is a good first step, confirming services are loaded.
     await expect(page.locator("#service-selector option")).toHaveCount(
@@ -41,15 +41,15 @@ test.describe("Dashboard Config - Base64 via URL Params", () => {
   });
 
   test("shows config modal on invalid base64", async ({ page }) => {
-    await page.goto("/?config_base64=%%%");
-    // await waitForDashboardReady(page)
+    await navigate(page,"/?config_base64=%%%");
+    
     await expect(page.locator("#localStorage-modal")).toBeVisible();
   });
 
   test("shows modal if base64 decodes to invalid JSON", async ({ page }) => {
     const bad = Buffer.from("{broken}").toString("base64");
-    await page.goto(`/?config_base64=${bad}`);
-    // await waitForDashboardReady(page)
+    await navigate(page,`/?config_base64=${bad}`);
+    
     await expect(page.locator("#localStorage-modal")).toBeVisible();
   });
 });
@@ -66,10 +66,10 @@ test.describe("Dashboard Config - Remote via URL Params", () => {
     await page.route("**/remote-services.json", (route) =>
       route.fulfill({ json: ciServices }),
     );
-    await page.goto(
+    await navigate(page,
       "/?config_url=/remote-config.json&services_url=/remote-services.json",
     );
-    // await waitForDashboardReady(page)
+    
     await expect(page.locator("#config-modal")).toHaveCount(0);
   });
 
@@ -82,8 +82,8 @@ test.describe("Dashboard Config - Remote via URL Params", () => {
         route.continue();
       }
     });
-    await page.goto("/?config_url=/missing.json");
-    // await waitForDashboardReady(page)
+    await navigate(page,"/?config_url=/missing.json");
+    
     await expect(page.locator("#config-modal")).toBeVisible();
   });
 
@@ -96,8 +96,8 @@ test.describe("Dashboard Config - Remote via URL Params", () => {
         route.continue();
       }
     });
-    await page.goto("/?config_url=/bad.json");
-    // await waitForDashboardReady(page)
+    await navigate(page,"/?config_url=/bad.json");
+    
     await expect(page.locator("#config-modal")).toBeVisible();
   });
 });
@@ -109,13 +109,13 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
     page,
   }) => {
     await bootWithDashboardState(page, {}, [], { board: "", view: "" });
-    // await waitForDashboardReady(page)
+    
     await expect(page.locator("#config-modal")).toBeVisible();
   });
 
   test("config modal shows Export button", async ({ page }) => {
     await bootWithDashboardState(page, {}, [], { board: "", view: "" });
-    // await waitForDashboardReady(page)
+    
     await expect(
       page.locator("#config-modal .modal__btn--export"),
     ).toBeVisible();
@@ -126,7 +126,7 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
       board: "",
       view: "",
     });
-    // await waitForDashboardReady(page)
+    
     await page.evaluate(() =>
       import("/component/modal/configModal.js").then((m) =>
         m.openConfigModal(),
@@ -159,7 +159,7 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
 
   test("valid input in popup initializes dashboard", async ({ page }) => {
     await bootWithDashboardState(page, {}, [], { board: "", view: "" });
-    // await waitForDashboardReady(page)
+    
     await page.click("#config-modal .modal__btn--cancel");
     await page.evaluate(() => {
       return import("/component/modal/configModal.js").then((m) =>
@@ -197,16 +197,16 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
     page,
   }) => {
     const config = b64(ciConfig);
-    await page.goto(`/?config_base64=${config}`);
-    // await waitForDashboardReady(page)
+    await navigate(page,`/?config_base64=${config}`);
+    
     await page.reload();
-    // await waitForDashboardReady(page)
+    
     await expect(page.locator("#service-selector")).toBeVisible();
   });
 
   test("changes via modal are saved and persist", async ({ page }) => {
-    await page.goto(`/?config_base64=${b64(ciConfig)}`);
-    // await waitForDashboardReady(page)
+    await navigate(page,`/?config_base64=${b64(ciConfig)}`);
+    
     await page.click("#open-config-modal");
     await page.fill(
       "#config-json",
@@ -214,7 +214,7 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
     );
     await page.click("#config-modal .modal__btn--save");
     await page.reload();
-    // await waitForDashboardReady(page)
+    
     const stored = await getUnwrappedConfig(page);
     expect(Array.isArray(stored.boards)).toBeTruthy();
   });
@@ -222,11 +222,11 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
   test("removing config from localStorage shows popup again", async ({
     page,
   }) => {
-    await page.goto(`/?config_base64=${b64(ciConfig)}`);
-    // await waitForDashboardReady(page)
+    await navigate(page,`/?config_base64=${b64(ciConfig)}`);
+    
     await page.evaluate(() => localStorage.clear());
     await page.reload();
-    // await waitForDashboardReady(page)
+    
     await expect(page.locator("#config-modal")).toBeVisible();
   });
 });
@@ -248,10 +248,10 @@ test.describe("Dashboard Functionality - Building from Services", () => {
         },
       ],
     };
-    await page.goto(
+    await navigate(page,
       `/?config_base64=${b64(cfg)}&services_base64=${b64(ciServices)}`,
     );
-    // await waitForDashboardReady(page)
+    
     await selectServiceByName(page, ciServices[0].name);
     // add-widget-button click is part of helper
     await expect(page.locator(".widget-wrapper")).toHaveCount(1);
@@ -266,16 +266,16 @@ test.describe("Dashboard Config - Priority and Overwriting", () => {
   test("base64 param overrides existing localStorage config", async ({
     page,
   }) => {
-    await page.goto(
+    await navigate(page,
       `/?config_base64=${b64({ ...ciConfig, globalSettings: { theme: "dark" } })}`,
     );
-    // await waitForDashboardReady(page)
+    
     await page.reload();
-    // await waitForDashboardReady(page)
-    await page.goto(
+    
+    await navigate(page,
       `/?config_base64=${b64({ ...ciConfig, globalSettings: { theme: "light" } })}`,
     );
-    // await waitForDashboardReady(page)
+    
     const stored = await getUnwrappedConfig(page);
     expect(stored.globalSettings.theme).toBe("light");
   });
@@ -283,12 +283,12 @@ test.describe("Dashboard Config - Priority and Overwriting", () => {
   test("without new param, existing config remains active", async ({
     page,
   }) => {
-    await page.goto(
+    await navigate(page,
       `/?config_base64=${b64({ ...ciConfig, globalSettings: { theme: "dark" } })}`,
     );
-    // await waitForDashboardReady(page)
+    
     await page.reload();
-    // await waitForDashboardReady(page)
+    
     const stored = await getUnwrappedConfig(page);
     expect(stored.globalSettings.theme).toBe("dark");
   });
