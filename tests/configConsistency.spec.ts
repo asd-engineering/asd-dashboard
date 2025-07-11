@@ -1,16 +1,16 @@
 // @ts-check
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
-import { handleDialog, getUnwrappedConfig } from './shared/common'
+import { handleDialog, getUnwrappedConfig, waitForDashboardReady } from './shared/common'
 
 test.describe('config consistency', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await page.goto('/')
-    await page.waitForLoadState('domcontentloaded')
+    await waitForDashboardReady(page)
     await handleDialog(page, 'confirm')
     await page.click('#reset-button')
-    await page.waitForLoadState('domcontentloaded')
+    await waitForDashboardReady(page)
   })
 
   test('open-config-modal shows boards after reset', async ({ page }) => {

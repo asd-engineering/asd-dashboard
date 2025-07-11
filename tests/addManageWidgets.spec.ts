@@ -1,7 +1,12 @@
 import { test, expect, type Page } from './fixtures';
 import emojiList from '../src/ui/unicodeEmoji.js';
 import { routeServicesConfig } from './shared/mocking.js';
-import { addServices, selectServiceByName, addServicesByName } from './shared/common.js';
+import {
+  addServices,
+  selectServiceByName,
+  addServicesByName,
+  waitForDashboardReady,
+} from './shared/common.js';
 // import { widgetUrlOne, widgetUrlTwo, widgetUrlThree, widgetUrlFour } from './shared/constant.js';
 
 
@@ -10,7 +15,7 @@ test.describe('Widgets', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
+    await waitForDashboardReady(page);
     await page.evaluate(() => {
       localStorage.setItem('log', 'widgetManagement');
     });
@@ -81,6 +86,7 @@ test.describe('Widgets', () => {
 
     // Reload the page to restore widgets from local storage
     await page.reload();
+    await waitForDashboardReady(page);
 
     // Verify the order of widgets after reload
     const orderAfterReload = {};
@@ -190,6 +196,7 @@ test.describe('Widgets', () => {
 
     // Reload the page
     await page.reload();
+    await waitForDashboardReady(page);
 
     // Verify the widget retains its size
     await expect(firstWidget).toHaveAttribute('data-columns', '1');
@@ -211,6 +218,7 @@ test.describe('Widgets', () => {
 
     // Reload the page
     await page.reload();
+    await waitForDashboardReady(page);
 
     // Verify the widget retains its size
     await expect(firstWidget).toHaveAttribute('data-columns', '3');

@@ -52,6 +52,20 @@ export async function selectViewByLabel(page: Page, viewLabel: string) {
   });
 }
 
+/**
+ * Wait until the dashboard is fully ready after navigation.
+ * Ensures the body has data-ready="true" and a view id.
+ *
+ * @param {Page} page - Playwright page instance.
+ * @returns {Promise<void>} Resolves when the dashboard is ready.
+ */
+export async function waitForDashboardReady(page: Page) {
+  await page.waitForSelector('body[data-ready="true"]');
+  await expect(page.locator('body')).toHaveAttribute('data-view-id', /.+/, {
+    timeout: 10000,
+  });
+}
+
 // Helper function to handle dialog interactions
 /**
  *

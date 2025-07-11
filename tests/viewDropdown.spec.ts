@@ -1,7 +1,6 @@
 import { test, expect } from './fixtures';
-import { handleDialog, getConfigBoards } from './shared/common';
+import { handleDialog, getConfigBoards, addServices, getLastUsedViewId, waitForDashboardReady } from './shared/common';
 import { routeServicesConfig } from './shared/mocking';
-import { addServices, getLastUsedViewId } from './shared/common';
 import { waitForWidgetStoreIdle } from './shared/state.js';
 
 const defaultViewName = "Default View"
@@ -18,6 +17,7 @@ test.describe('View Dropdown Functionality', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await page.goto('/');
+    await waitForDashboardReady(page);
     await addServices(page, 2);
   });
 

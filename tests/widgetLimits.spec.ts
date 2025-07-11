@@ -1,7 +1,7 @@
 import { test, expect } from "./fixtures";
 import { ciConfig } from "./data/ciConfig";
 import { ciServices } from "./data/ciServices";
-import { getUnwrappedConfig } from "./shared/common";
+import { getUnwrappedConfig, selectServiceByName, waitForDashboardReady } from "./shared/common";
 import { waitForWidgetStoreIdle } from "./shared/state.js";
 
 async function routeLimits(page, boards, services, maxSize = 2) {
@@ -59,11 +59,11 @@ test.describe("Widget limits", () => {
     );
     await routeLimits(page, boards, services, 5);
     await page.goto("/");
+    await waitForDashboardReady(page);
     await page.locator(".widget-wrapper").first().waitFor();
 
     await page.locator("#board-selector").selectOption("b2");
-    await page.selectOption("#service-selector", { label: "ASD-toolbox" });
-    await page.click("#add-widget-button");
+    await selectServiceByName(page, "ASD-toolbox");
 
     await page.waitForFunction(() =>
       document.querySelectorAll('.widget-wrapper').length === 1
@@ -90,10 +90,10 @@ test.describe("Widget limits", () => {
     ];
     await routeLimits(page, boards, ciServices, 1);
     await page.goto("/");
+    await waitForDashboardReady(page);
     await page.locator(".widget-wrapper").first().waitFor();
 
-    await page.selectOption("#service-selector", { label: "ASD-terminal" });
-    await page.click("#add-widget-button");
+    await selectServiceByName(page, "ASD-terminal");
 
     const modal = page.locator("#eviction-modal");
     await expect(modal).toBeVisible();
@@ -119,7 +119,7 @@ test.describe("Widget limits", () => {
     );
     await routeLimits(page, boards, services, 5);
     await page.goto('/');
-    await page.waitForSelector('#service-selector');
+    await waitForDashboardReady(page);
 
     await page.evaluate(async () => {
       const { addWidget } = await import('/component/widget/widgetManagement.js');

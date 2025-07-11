@@ -2,7 +2,11 @@ import { test, expect } from "./fixtures";
 import emojiList from "../src/ui/unicodeEmoji.js";
 import { routeServicesConfig } from "./shared/mocking.js";
 import { ciConfig } from "./data/ciConfig";
-import { getShowMenuWidgetFlag, getUnwrappedConfig } from "./shared/common.js";
+import {
+  getShowMenuWidgetFlag,
+  getUnwrappedConfig,
+  waitForDashboardReady,
+} from "./shared/common.js";
 
 const settings = {
   hideBoardControl: true,
@@ -29,7 +33,7 @@ test.describe("Menu control visibility", () => {
     });
 
     await page.goto("/");
-    await page.waitForSelector('body[data-ready="true"]');
+    await waitForDashboardReady(page);
   });
 
   test("applies visibility flags and reset button placement", async ({
@@ -61,7 +65,7 @@ test.describe("Widget menu visibility", () => {
     });
 
     await page.goto("/");
-    await page.waitForLoadState("domcontentloaded");
+    await waitForDashboardReady(page);
   });
 
   test("toggling widget menu updates stored config", async ({ page }) => {
@@ -112,7 +116,7 @@ test.describe("View button menu visibility", () => {
     });
 
     await page.goto("/");
-    await page.waitForSelector('body[data-ready="true"]');
+    await waitForDashboardReady(page);
   });
 
   test("shows view buttons and hides selectors", async ({ page }) => {
