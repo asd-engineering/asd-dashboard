@@ -34,6 +34,10 @@ export async function createBoard (boardName, boardId = null, viewId = null) {
   const newBoardId = boardId || boardGetUUID()
   const defaultViewId = viewId || viewGetUUID()
 
+  // Persist last used ids before dispatching the config update
+  StorageManager.misc.setLastBoardId(newBoardId)
+  StorageManager.misc.setLastViewId(defaultViewId)
+
   StorageManager.updateBoards(boards => {
     const newBoard = {
       id: newBoardId,
@@ -56,11 +60,6 @@ export async function createBoard (boardName, boardId = null, viewId = null) {
   await switchBoard(newBoardId, defaultViewId)
   logger.log(`Switched to new board ${newBoardId}`)
 
-  // Save the current board and view
-  StorageManager.misc.setLastBoardId(newBoardId)
-  StorageManager.misc.setLastViewId(defaultViewId)
-  logger.log(`Saved last used boardId: ${newBoardId} and viewId: ${defaultViewId}`)
-
   return StorageManager.getBoards().find(b => b.id === newBoardId)
 }
 
@@ -77,10 +76,13 @@ export async function createBoard (boardName, boardId = null, viewId = null) {
 export async function createView (boardId, viewName, viewId = null) {
   /** @type {View|undefined} */
   let created
+  const newViewId = viewId || viewGetUUID()
+
+  StorageManager.misc.setLastViewId(newViewId)
+
   StorageManager.updateBoards(boards => {
     const board = boards.find(b => b.id === boardId)
     if (!board) return
-    const newViewId = viewId || viewGetUUID()
     const newView = { id: newViewId, name: viewName, widgetState: [] }
     board.views.push(newView)
     created = newView
@@ -93,13 +95,8 @@ export async function createView (boardId, viewName, viewId = null) {
 
   logger.log('Created new view:', created)
 
-  updateViewSelector(boardId)
-
   await switchView(boardId, created.id)
   logger.log(`Switched to new view ${created.id} in board ${boardId}`)
-
-  StorageManager.misc.setLastViewId(created.id)
-  logger.log(`Saved last used viewId: ${created.id}`)
 
   return created
 }
@@ -165,7 +162,6 @@ export async function switchView (boardId = getCurrentBoardId(), viewId) {
   }
 
   StorageManager.misc.setLastViewId(viewId)
-  updateViewSelector(boardId)
 }
 
 /**
@@ -259,7 +255,6 @@ export async function switchBoard (boardId, viewId = null) {
     }
 
     StorageManager.misc.setLastBoardId(boardId)
-    updateViewSelector(boardId)
     document.dispatchEvent(new Event('view:ready'))
   } else {
     logger.error(`Board with ID ${boardId} not found`)
