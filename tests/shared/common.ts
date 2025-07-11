@@ -56,7 +56,7 @@ export async function selectViewByLabel(page: Page, viewLabel: string) {
  *   - `view:ready` is fired after the active board/view is fully rendered (widgets hydrated)
  *
  * It resolves in one of two ways:
- *   1. Immediately if `<body>` already has the `data-view-id` attribute (fast path)
+ *   1. Immediately if `<body>` already has the `data-ready` attribute (fast path)
  *   2. After either `main:ready` or `view:ready` is emitted (whichever comes first)
  *
  * Only one listener wins — both events are attached once, and the first one to fire resolves.
@@ -75,20 +75,20 @@ export async function navigate(
   gotoOptions?: Parameters<Page['goto']>[1]
 ): Promise<void> {
   const allowedPrefixes = ['[navigate]', '[hydrate]', '[modal]']
-  page.on('console', msg => {
-    const text = msg.text()
-    if (msg.type() === 'log' && allowedPrefixes.some(p => text.startsWith(p))) {
-      console.log(`[browser] ${text}`)
-    }
-  })
+  // page.on('console', msg => {
+  //   const text = msg.text()
+  //   if (msg.type() === 'log' && allowedPrefixes.some(p => text.startsWith(p))) {
+  //     console.log(`[browser] ${text}`)
+  //   }
+  // })
 
   await page.goto(destination, gotoOptions)
 
   try {
     await page.waitForFunction(() => {
       // Fast path: view hydration already complete
-      if (document.body.hasAttribute('data-view-id')) {
-        console.log('[navigate] fast path: data-view-id present')
+      if (document.body.getAttribute('data-ready') === 'true') {
+        // console.log('[navigate] fast path: data-view-id present')
         return true
       }
 
@@ -106,7 +106,7 @@ export async function navigate(
       }
 
       return !!(document as any).__NAVIGATE_READY__
-    }, { timeout: 300 })
+    }, { timeout: 100 })
   } catch {
     // Soft timeout: test continues, but hydration may be delayed
     // console.warn(`[navigate] Soft timeout waiting for hydration at ${destination}`)

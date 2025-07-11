@@ -84,7 +84,7 @@ async function main () {
   }
 
   // 6. Initialize boards and switch to the last used or default board/view
-  const initialBoardView = await initializeBoards() // initializeBoards is now fully async
+  const initialBoardView = await initializeBoards()
 
   const lastUsedBoardId = StorageManager.misc.getLastBoardId()
   const lastUsedViewId = StorageManager.misc.getLastViewId()
