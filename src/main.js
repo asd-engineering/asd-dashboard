@@ -5,8 +5,9 @@
  * @module main
  */
 import { initializeMainMenu, applyControlVisibility } from './component/menu/menu.js'
-import { initializeBoards, switchBoard } from './component/board/boardManagement.js'
-import { initializeDashboardMenu, applyWidgetMenuVisibility } from './component/menu/dashboardMenu.js'
+import { initializeBoards, switchBoard, updateBoardSelector, updateViewSelector } from './component/board/boardManagement.js'
+import { getCurrentBoardId } from './utils/elements.js'
+import { initializeDashboardMenu, applyWidgetMenuVisibility, populateServiceDropdown } from './component/menu/dashboardMenu.js'
 import { initializeDragAndDrop } from './component/widget/events/dragDrop.js'
 import { fetchServices } from './utils/fetchServices.js'
 import { getConfig } from './utils/getConfig.js'
@@ -17,8 +18,8 @@ import { initializeViewDropdown } from './component/view/viewDropdown.js'
 import { loadFromFragment } from './utils/fragmentLoader.js'
 import { Logger } from './utils/Logger.js'
 import { widgetStore } from './component/widget/widgetStore.js'
-import { debounceLeading } from './utils/utils.js'
-import StorageManager from './storage/StorageManager.js'
+import { debounce, debounceLeading } from './utils/utils.js'
+import StorageManager, { APP_STATE_CHANGED } from './storage/StorageManager.js'
 
 const logger = new Logger('main.js')
 
@@ -102,6 +103,7 @@ async function main () {
   if (boardIdToLoad) {
     logger.log(`Switching to initial board: ${boardIdToLoad}, view: ${viewIdToLoad}`)
     await switchBoard(boardIdToLoad, viewIdToLoad)
+    updateViewSelector(boardIdToLoad)
   } else {
     logger.warn('No boards available to display.')
   }
@@ -112,6 +114,33 @@ async function main () {
   const handleConfigModal = debounceLeading(openConfigModal, buttonDebounce)
   document.getElementById('localStorage-edit-button').addEventListener('click', /** @type {EventListener} */(handleLocalStorageModal))
   document.getElementById('open-config-modal').addEventListener('click', /** @type {EventListener} */(handleConfigModal))
+
+  // --- PHASE 2: ACTIVE EVENT LISTENER ---
+  const onStateChange = (event) => {
+    const { reason } = event.detail || {}
+    logger.log(`[Event Listener] Reacting to state change. Reason: ${reason || 'unknown'}`)
+
+    const currentBoardId = getCurrentBoardId()
+
+    switch (reason) {
+      case 'config':
+        updateBoardSelector()
+        if (currentBoardId) {
+          updateViewSelector(currentBoardId)
+        }
+        populateServiceDropdown()
+        break
+
+      case 'services':
+        populateServiceDropdown()
+        break
+    }
+  }
+
+  const debouncedUiUpdater = debounce(onStateChange, 150)
+  window.addEventListener(APP_STATE_CHANGED, /** @type {EventListener} */(debouncedUiUpdater))
+  logger.log('Active event listener for state changes has been initialized.')
+  // --- END ---
 
   logger.log('Application initialization finished')
   // Signal to Playwright that the initial load and render is complete.

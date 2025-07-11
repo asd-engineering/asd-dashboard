@@ -15,6 +15,12 @@ import { deepMerge } from '../utils/objectUtils.js'
  */
 export const CURRENT_VERSION = 1
 
+/**
+ * Custom event dispatched whenever the application state changes.
+ * @constant {string}
+ */
+export const APP_STATE_CHANGED = 'appStateChanged'
+
 const KEYS = {
   CONFIG: 'config',
   BOARDS: 'boards',
@@ -100,6 +106,7 @@ const StorageManager = {
       version: CURRENT_VERSION,
       data: mergeWithDefaults(cfg)
     })
+    window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason: 'config' } }))
   },
 
   /**
@@ -165,6 +172,7 @@ const StorageManager = {
    */
   setServices (services) {
     jsonSet(KEYS.SERVICES, services)
+    window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason: 'services' } }))
   },
 
   /**

@@ -36,7 +36,6 @@ function initializeDashboardMenu () {
 
   logger.log('Dashboard menu initialized')
   populateServiceDropdown()
-  document.addEventListener('services-updated', populateServiceDropdown)
   applyWidgetMenuVisibility()
 
   const buttonDebounce = 200
@@ -130,7 +129,7 @@ function initializeDashboardMenu () {
  * @function populateServiceDropdown
  * @returns {void}
  */
-function populateServiceDropdown () {
+export function populateServiceDropdown () {
   const selector = document.getElementById('service-selector')
   if (!selector) return
   selector.innerHTML = ''
