@@ -167,7 +167,7 @@ You write tests like this:
 import { test, expect } from '@playwright/test';
 
 test('does something', async ({ page }) => {
-  await page.goto('/');
+  await navigate(page,'/');
   // ...
 });
 ```
@@ -179,7 +179,7 @@ Console logs, network requests, and in-app logs (window._appLogs) are automatica
 import { test, expect } from '@playwright/test';
 
 test('does something', async ({ page, console, network, app }) => {
-  await page.goto('/');
+  await navigate(page,'/');
   // ...
 });
 ```

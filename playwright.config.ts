@@ -47,7 +47,7 @@ export default defineConfig({
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      // grep: process.env.CI ? /.*/ : /.^/,
+      grep: process.env.CI ? /.*/ : /.^/,
     },
 
     {

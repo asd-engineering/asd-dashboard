@@ -22,6 +22,9 @@ test:
 test-grep GREP:
     npm run test:grep "{{GREP}}"
 
+test-failed:
+    npm run test:failed
+
 # Autoformat & fix lint errors
 format:
     npm run lint-fix

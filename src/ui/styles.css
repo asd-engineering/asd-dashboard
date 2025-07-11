@@ -3,6 +3,7 @@
 @import url('/ui/modal.css');
 @import url('/ui/notification.css');
 @import url('/ui/service-action.css');
+@import url('/ui/configTabs.css');
 
 /* Universal box-sizing */
 *, *::before, *::after {

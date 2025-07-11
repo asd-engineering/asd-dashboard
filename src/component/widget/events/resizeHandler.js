@@ -4,10 +4,10 @@
  *
  * @module resizeHandler
  */
-import { saveWidgetState } from '../../../storage/localStorage.js'
-import { getCurrentBoardId, getCurrentViewId } from '../../../utils/elements.js'
+import { saveWidgetState } from '../../../storage/widgetStatePersister.js'
 import { debounce } from '../../../utils/utils.js'
 import { Logger } from '../../../utils/Logger.js'
+import StorageManager from '../../../storage/StorageManager.js'
 
 const logger = new Logger('resizeHandler.js')
 
@@ -30,9 +30,13 @@ export function initializeResizeHandles () {
 
     logger.info('Appended resize handle:', resizeHandle)
 
-    resizeHandle.addEventListener('mousedown', (event) => {
+    resizeHandle.addEventListener('mousedown', async (event) => {
       event.preventDefault()
-      handleResizeStart(event, /** @type {HTMLElement} */(widget))
+      try {
+        await handleResizeStart(event, /** @type {HTMLElement} */(widget))
+      } catch (error) {
+        logger.error('Error during resize start:', error)
+      }
     })
   })
 }
@@ -70,10 +74,10 @@ async function handleResizeStart (event, widget) {
   const startHeight = widget.offsetHeight
 
   const widgetUrl = widget.dataset.url
-  const serviceConfig = window.asd.services.find(service => service.url === widgetUrl)?.config || {}
+  const serviceConfig = StorageManager.getServices().find(service => service.url === widgetUrl)?.config || {}
 
-  const gridColumns = serviceConfig.maxColumns || window.asd.config.styling.widget.maxColumns
-  const gridRows = serviceConfig.maxRows || window.asd.config.styling.widget.maxRows
+  const gridColumns = serviceConfig.maxColumns || StorageManager.getConfig().styling.widget.maxColumns
+  const gridRows = serviceConfig.maxRows || StorageManager.getConfig().styling.widget.maxRows
 
   const gridColumnSize = widget.parentElement.offsetWidth / gridColumns || 1
   const gridRowSize = widget.parentElement.offsetHeight / gridRows || 1
@@ -85,9 +89,7 @@ async function handleResizeStart (event, widget) {
   const overlay = createResizeOverlay()
 
   const debouncedSave = debounce(() => {
-    const boardId = getCurrentBoardId()
-    const viewId = getCurrentViewId()
-    saveWidgetState(boardId, viewId)
+    saveWidgetState()
     logger.info('Resize stopped and widget state saved.')
   }, 300)
 

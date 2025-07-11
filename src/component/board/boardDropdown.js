@@ -4,9 +4,10 @@
  *
  * @module boardDropdown
  */
-import { createBoard, renameBoard, deleteBoard, updateViewSelector, boards } from './boardManagement.js'
+import { createBoard, renameBoard, deleteBoard, updateViewSelector } from './boardManagement.js'
 import { initializeDropdown } from '../utils/dropDownUtils.js'
 import { Logger } from '../../utils/Logger.js'
+import StorageManager from '../../storage/StorageManager.js'
 
 const logger = new Logger('boardDropdown.js')
 
@@ -76,6 +77,7 @@ async function handleDeleteBoard () {
     try {
       await deleteBoard(boardId)
       logger.log('Board deleted:', boardId)
+      const boards = StorageManager.getConfig().boards || []
       if (boards.length > 0) {
         updateViewSelector(boards[0].id)
       }

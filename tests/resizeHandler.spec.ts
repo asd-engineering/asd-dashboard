@@ -1,13 +1,15 @@
 import { test, expect } from './fixtures';
 import { routeServicesConfig } from './shared/mocking';
-import { addServicesByName } from './shared/common';
+import { addServicesByName, navigate } from './shared/common';
 import { ciServices } from './data/ciServices';
+import { waitForWidgetStoreIdle } from './shared/state.js';
 
 
 test.describe('Resize Handler Functionality', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page);
-    await page.goto('/');
+    await navigate(page,'/');
+    
   });
 
   test('should resize widget in Firefox, trigger resize event, and persist changes', async ({ page, browserName }) => {
@@ -36,13 +38,14 @@ test.describe('Resize Handler Functionality', () => {
     } else {
       await resizeWidgetWithMouse(page, resizeHandle, 1200, 900);
     }
-    await page.evaluate(() => window.asd.widgetStore.idle())
+    await waitForWidgetStoreIdle(page)
 
     // Bug: It can resize beyond maxium with corner based resize; needs fixing
     // await expect(widget).toHaveAttribute('data-columns', `${maxColumns}`);
     // await expect(widget).toHaveAttribute('data-rows', `${maxRows}`);
     // Reload and verify persistence of the resized dimensions
-    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.reload();
+    
     await expect(widget).toHaveAttribute('data-columns', `${maxColumns}`);
     await expect(widget).toHaveAttribute('data-rows', `${maxRows}`);
   
@@ -53,10 +56,11 @@ test.describe('Resize Handler Functionality', () => {
     } else {
       await resizeWidgetWithMouse(page, resizeHandle, -1200, -900);
     }
-    await page.evaluate(() => window.asd.widgetStore.idle())
+    await waitForWidgetStoreIdle(page)
   
     // Reload and verify persistence of the minimum size
-    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.reload();
+    
     await expect(widget).toHaveAttribute('data-columns', '1');
     await expect(widget).toHaveAttribute('data-rows', '1');
   });

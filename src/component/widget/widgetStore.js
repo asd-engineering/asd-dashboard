@@ -5,6 +5,7 @@
  * @module widgetStore
  */
 import { Logger } from '../../utils/Logger.js'
+import StorageManager from '../../storage/StorageManager.js'
 
 /**
  * Lightweight LRU cache storing widget elements by id.
@@ -13,10 +14,11 @@ import { Logger } from '../../utils/Logger.js'
  */
 export class WidgetStore {
   /**
+   * Create a new widget store.
    * @constructor
-   * @param {number} [maxSize=50] - Maximum number of widgets to retain.
+   * @param {number} [maxSize=10] - Maximum number of widgets to retain.
    */
-  constructor (maxSize = 50) {
+  constructor (maxSize = 10) {
     this.maxSize = maxSize
     /** @type {Map<string, HTMLElement>} */
     this.widgets = new Map()
@@ -25,8 +27,11 @@ export class WidgetStore {
     this._serviceLocks = new Map() // service → ref-count
   }
 
-  /** Resolve after all pending RAF removals */
-  idle () { return new Promise(resolve => requestAnimationFrame(resolve)) }
+  /**
+   * Resolve after all pending RAF removals.
+   * @returns {Promise<void>}
+   */
+  idle () { return new Promise(resolve => requestAnimationFrame(() => resolve())) }
 
   /**
    * Store a widget element using its `dataid` attribute as the key.
@@ -206,7 +211,7 @@ export class WidgetStore {
    * @returns {Promise<boolean>} Resolves true when space is available.
    */
   async confirmCapacity () {
-    const maxTotal = window.asd.config?.globalSettings?.maxTotalInstances
+    const maxTotal = StorageManager.getConfig()?.globalSettings?.maxTotalInstances
     const overTotal = typeof maxTotal === 'number' && this.widgets.size >= maxTotal
 
     if (this.widgets.size >= this.maxSize || overTotal) {

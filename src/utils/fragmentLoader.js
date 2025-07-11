@@ -11,6 +11,7 @@ import { Logger } from './Logger.js'
 import { showNotification } from '../component/dialog/notification.js'
 import { gunzipBase64urlToJson } from './compression.js'
 import { openFragmentDecisionModal } from '../component/modal/fragmentDecisionModal.js'
+import StorageManager from '../storage/StorageManager.js'
 
 const logger = new Logger('fragmentLoader.js')
 
@@ -40,30 +41,28 @@ export async function loadFromFragment (wasExplicitLoad = false) {
   const params = new URLSearchParams(hash)
   const cfgParam = params.get('cfg')
   const svcParam = params.get('svc')
+  const nameParam = params.get('name') || 'Imported'
 
   const hasLocalData =
-    localStorage.getItem('config') ||
-    localStorage.getItem('services') ||
-    localStorage.getItem('boards')
+    StorageManager.getConfig() ||
+    StorageManager.getServices().length > 0 ||
+    (Array.isArray(StorageManager.getConfig().boards) && StorageManager.getConfig().boards.length > 0)
 
   if ((cfgParam || svcParam) && hasLocalData && !wasExplicitLoad) {
-    await openFragmentDecisionModal(cfgParam, svcParam)
+    await openFragmentDecisionModal({ cfgParam, svcParam, nameParam })
     return
   }
 
   try {
     if (cfgParam) {
       const cfg = await gunzipBase64urlToJson(cfgParam)
-      localStorage.setItem('config', JSON.stringify(cfg))
-      if (Array.isArray(cfg.boards)) {
-        localStorage.setItem('boards', JSON.stringify(cfg.boards))
-      }
+      StorageManager.setConfig(cfg)
       logger.info('✅ Config geladen uit fragment')
     }
 
     if (svcParam) {
       const svc = await gunzipBase64urlToJson(svcParam)
-      localStorage.setItem('services', JSON.stringify(svc))
+      StorageManager.setServices(svc)
       logger.info('✅ Services geladen uit fragment')
     }
   } catch (e) {

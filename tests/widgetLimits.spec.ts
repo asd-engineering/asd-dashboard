@@ -1,6 +1,8 @@
 import { test, expect } from "./fixtures";
 import { ciConfig } from "./data/ciConfig";
 import { ciServices } from "./data/ciServices";
+import { getUnwrappedConfig, selectServiceByName, navigate } from "./shared/common";
+import { waitForWidgetStoreIdle } from "./shared/state.js";
 
 async function routeLimits(page, boards, services, maxSize = 2) {
   await page.route("**/services.json", (route) =>
@@ -56,12 +58,12 @@ test.describe("Widget limits", () => {
       s.name === "ASD-toolbox" ? { ...s, maxInstances: 1 } : s,
     );
     await routeLimits(page, boards, services, 5);
-    await page.goto("/");
+    await navigate(page,"/");
+    
     await page.locator(".widget-wrapper").first().waitFor();
 
     await page.locator("#board-selector").selectOption("b2");
-    await page.selectOption("#service-selector", { label: "ASD-toolbox" });
-    await page.click("#add-widget-button");
+    await selectServiceByName(page, "ASD-toolbox");
 
     await page.waitForFunction(() =>
       document.querySelectorAll('.widget-wrapper').length === 1
@@ -87,16 +89,16 @@ test.describe("Widget limits", () => {
       },
     ];
     await routeLimits(page, boards, ciServices, 1);
-    await page.goto("/");
+    await navigate(page,"/");
+    
     await page.locator(".widget-wrapper").first().waitFor();
 
-    await page.selectOption("#service-selector", { label: "ASD-terminal" });
-    await page.click("#add-widget-button");
+    await selectServiceByName(page, "ASD-terminal");
 
     const modal = page.locator("#eviction-modal");
     await expect(modal).toBeVisible();
     await modal.locator('button:has-text("Remove")').click();
-    await page.evaluate(() => window.asd.widgetStore.idle());
+    await waitForWidgetStoreIdle(page);
     await expect(modal).toBeHidden();
     await page.waitForFunction(() =>
       document.querySelectorAll('.widget-wrapper').length === 1
@@ -116,8 +118,8 @@ test.describe("Widget limits", () => {
       s.name === 'ASD-toolbox' ? { ...s, maxInstances: 1 } : s
     );
     await routeLimits(page, boards, services, 5);
-    await page.goto('/');
-    await page.waitForSelector('#service-selector');
+    await navigate(page,'/');
+    
 
     await page.evaluate(async () => {
       const { addWidget } = await import('/component/widget/widgetManagement.js');
@@ -132,10 +134,10 @@ test.describe("Widget limits", () => {
       document.querySelectorAll('.widget-wrapper').length === 1
     );
     const selectedBoard = await page.locator('#board-selector').inputValue();
-    const boardWithWidget = await page.evaluate(() => {
-      const boards = JSON.parse(localStorage.getItem('boards') || '[]');
-      return boards.find(b => b.views.some(v => v.widgetState && v.widgetState.length > 0))?.id;
-    });
+    const cfg = await getUnwrappedConfig(page)
+    const boardWithWidget = cfg.boards.find(b =>
+      b.views.some(v => v.widgetState?.length > 0)
+    )?.id;
     expect(selectedBoard).toBe(boardWithWidget);
   });
 });

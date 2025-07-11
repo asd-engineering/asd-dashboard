@@ -4,7 +4,7 @@
  *
  * @module widgetManagement
  */
-import { saveWidgetState } from '../../storage/localStorage.js'
+import { saveWidgetState } from '../../storage/widgetStatePersister.js'
 import { fetchData } from './utils/fetchData.js'
 import {
   showResizeMenu,
@@ -22,8 +22,11 @@ import { toggleFullScreen } from './events/fullscreenToggle.js'
 import { initializeResizeHandles } from './events/resizeHandler.js'
 import { Logger } from '../../utils/Logger.js'
 import { showServiceModal } from '../modal/serviceLaunchModal.js'
-import { switchBoard } from '../board/boardManagement.js'
+// import { switchBoard } from '../board/boardManagement.js'
 import { widgetGetUUID } from '../../utils/id.js'
+import StorageManager from '../../storage/StorageManager.js'
+import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
+import { showNotification } from '../dialog/notification.js'
 
 const logger = new Logger('widgetManagement.js')
 
@@ -197,8 +200,8 @@ async function addWidget (
   const widgetContainer = document.getElementById('widget-container')
   if (!widgetContainer) return logger.error('Widget container not found')
 
-  boardId = boardId || window.asd.currentBoardId
-  viewId = viewId || window.asd.currentViewId
+  boardId = boardId || getCurrentBoardId()
+  viewId = viewId || getCurrentViewId()
 
   const serviceName = await getServiceFromUrl(url)
   if (window.asd.widgetStore.isAdding(serviceName)) return
@@ -207,16 +210,39 @@ async function addWidget (
     const services = await fetchServices()
     const serviceObj = services.find((s) => s.name === serviceName) || {}
 
-    if (typeof serviceObj.maxInstances === 'number') {
-      if (serviceObj.maxInstances === 0) return
-      const activeCount = Array.from(
-        window.asd.widgetStore.widgets.values()
-      ).filter((el) => el.dataset.service === serviceName).length
-      if (activeCount >= serviceObj.maxInstances) {
-        const existing = window.asd.widgetStore.findFirstWidgetByService(serviceName)
-        if (existing) {
-          const loc = findWidgetLocation(existing.dataset.dataid)
-          if (loc) await switchBoard(loc.boardId, loc.viewId)
+    // Enforce global maxInstances (across live DOM and persisted config)
+    const liveDataIds = Array.from(window.asd.widgetStore.widgets.values())
+      .filter(el => el.dataset.service === serviceName)
+      .map(el => el.dataset.dataid)
+    const config = StorageManager.getConfig()
+    const persistedDataIds = config.boards
+      .flatMap(b => b.views)
+      .flatMap(v => v.widgetState)
+      // .filter(w => w.service === serviceName)
+      .map(w => w.dataid)
+    const allIds = new Set([...liveDataIds, ...persistedDataIds])
+    const effectiveCount = allIds.size
+
+    const alreadyExists =
+      dataid &&
+      (liveDataIds.includes(dataid) || persistedDataIds.includes(dataid))
+
+    if (
+      typeof serviceObj.maxInstances === 'number' &&
+      serviceObj.maxInstances > 0
+    ) {
+      if (!alreadyExists && effectiveCount >= serviceObj.maxInstances) {
+        // Instead of switching, show notification
+        if (typeof showNotification === 'function') {
+          showNotification(
+            `Cannot add more: limit (${serviceObj.maxInstances}) reached for "${serviceName}".`,
+            3000,
+            'error'
+          )
+        } else {
+          alert(
+            `Cannot add more: limit (${serviceObj.maxInstances}) reached for "${serviceName}".`
+          )
         }
         return
       }
@@ -225,11 +251,19 @@ async function addWidget (
     const proceed = await window.asd.widgetStore.confirmCapacity()
     if (!proceed) return
 
+    // Restore from cache if available
     if (dataid && window.asd.widgetStore.has(dataid)) {
-      window.asd.widgetStore.show(dataid)
+      const widget = window.asd.widgetStore.get(dataid)
+      widget.style.display = ''
+      // Only append if not already in the DOM
+      if (widget.parentElement !== widgetContainer) {
+        widgetContainer.appendChild(widget)
+      }
+      saveWidgetState(boardId, viewId) // ensure persistence
       return
     }
 
+    // Otherwise, create and mount new widget
     const widgetWrapper = await createWidget(
       serviceName,
       url,
@@ -283,7 +317,7 @@ async function configureWidget (iframeElement) {
   const newUrl = prompt('Enter new URL for the widget:', iframeElement.src)
   if (newUrl) {
     iframeElement.src = newUrl
-    saveWidgetState(window.asd.currentBoardId, window.asd.currentViewId)
+    saveWidgetState()
   }
 }
 
@@ -307,29 +341,7 @@ function updateWidgetOrders () {
     }
   })
 
-  const boardId = window.asd.currentBoardId
-  const viewId = window.asd.currentViewId
-  if (boardId && viewId) {
-    // This is now a synchronous call
-    saveWidgetState(boardId, viewId)
-  }
-}
-
-/**
- * Locate the board and view containing a widget id.
- * @param {string} id
- * @returns {{boardId:string, viewId:string}|null}
- */
-function findWidgetLocation (id) {
-  const boards = window.asd.boards || []
-  for (const board of boards) {
-    for (const view of board.views) {
-      if (view.widgetState.some((w) => w.dataid === id)) {
-        return { boardId: board.id, viewId: view.id }
-      }
-    }
-  }
-  return null
+  saveWidgetState()
 }
 
 export { addWidget, removeWidget, updateWidgetOrders, createWidget }

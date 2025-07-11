@@ -1,12 +1,13 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking.js'
+import { navigate } from './shared/common'
 
 
 test.describe('Save Service Modal', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
-    await page.goto('/')
-    await page.waitForLoadState('domcontentloaded')
+    await navigate(page,'/')
+    
   })
 
   test('opens when adding widget with manual URL', async ({ page }) => {
@@ -27,7 +28,10 @@ test.describe('Save Service Modal', () => {
     await page.click('#save-service-modal button:has-text("Save & Close")')
     await expect(modal).toBeHidden()
 
-    const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services') || '[]'))
+    const services = await page.evaluate(async () => {
+      const { default: sm } = await import('/storage/StorageManager.js');
+      return sm.getServices();
+    })
     expect(services.some(s => s.url === url && s.name === 'Manual Service')).toBeTruthy()
 
     const options = await page.$$eval('#service-selector option', opts => opts.map(o => o.textContent))
@@ -46,7 +50,10 @@ test.describe('Save Service Modal', () => {
     await page.click('#save-service-modal button:has-text("Skip")')
     await expect(modal).toBeHidden()
 
-    const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services') || '[]'))
+    const services = await page.evaluate(async () => {
+      const { default: sm } = await import('/storage/StorageManager.js');
+      return sm.getServices();
+    })
     expect(services.some(s => s.url === url)).toBeFalsy()
 
     const options = await page.$$eval('#service-selector option', opts => opts.map(o => o.textContent))

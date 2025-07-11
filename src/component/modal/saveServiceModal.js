@@ -5,7 +5,7 @@
  * @module saveServiceModal
  */
 import { openModal } from './modalFactory.js'
-import { load, save } from '../../storage/servicesStore.js'
+import StorageManager from '../../storage/StorageManager.js'
 
 /**
  * Open a modal allowing the user to name and store a service URL.
@@ -36,10 +36,9 @@ export function openSaveServiceModal (url, onClose) {
       saveButton.addEventListener('click', () => {
         const name = input.value.trim()
         if (!name) return
-        const services = load()
+        const services = StorageManager.getServices()
         services.push({ name, url })
-        save(services)
-        document.dispatchEvent(new CustomEvent('services-updated'))
+        StorageManager.setServices(services)
         closeModal()
       })
 

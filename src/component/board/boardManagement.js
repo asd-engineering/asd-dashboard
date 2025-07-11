@@ -4,11 +4,13 @@
  *
  * @module boardManagement
  */
-import { saveBoardState, loadBoardState } from '../../storage/localStorage.js'
 import { addWidget } from '../widget/widgetManagement.js'
 import { widgetStore } from '../widget/widgetStore.js'
 import { Logger } from '../../utils/Logger.js'
 import { boardGetUUID, viewGetUUID } from '../../utils/id.js'
+import StorageManager from '../../storage/StorageManager.js'
+import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
+import { saveWidgetState } from '../../storage/widgetStatePersister.js'
 
 /** @typedef {import('../../types.js').Board} Board */
 /** @typedef {import('../../types.js').View} View */
@@ -17,7 +19,6 @@ import { boardGetUUID, viewGetUUID } from '../../utils/id.js'
 const logger = new Logger('boardManagement.js')
 
 /** @type {Array<Board>} */
-export let boards = []
 
 /**
  * Create a board with a default view.
@@ -31,34 +32,35 @@ export let boards = []
  */
 export async function createBoard (boardName, boardId = null, viewId = null) {
   const newBoardId = boardId || boardGetUUID()
-  const newBoard = {
-    id: newBoardId,
-    name: boardName,
-    order: boards.length,
-    views: []
-  }
-  boards.push(newBoard)
-
   const defaultViewId = viewId || viewGetUUID()
-  await createView(newBoardId, 'Default View', defaultViewId)
-  logger.log(`Created default view ${defaultViewId} for new board ${newBoardId}`)
 
-  // Save the board state after creating the default view
-  await saveBoardState(boards)
+  // Persist last used ids before dispatching the config update
+  StorageManager.misc.setLastBoardId(newBoardId)
+  StorageManager.misc.setLastViewId(defaultViewId)
+
+  StorageManager.updateBoards(boards => {
+    const newBoard = {
+      id: newBoardId,
+      name: boardName,
+      order: boards.length,
+      views: [
+        {
+          id: defaultViewId,
+          name: 'Default View',
+          widgetState: []
+        }
+      ]
+    }
+    boards.push(newBoard)
+  })
+
+  logger.log(`Created default view ${defaultViewId} for new board ${newBoardId}`)
 
   // Switch to the new board
   await switchBoard(newBoardId, defaultViewId)
   logger.log(`Switched to new board ${newBoardId}`)
 
-  // Save the current board and view in localStorage
-  localStorage.setItem('lastUsedBoardId', newBoardId)
-  localStorage.setItem('lastUsedViewId', defaultViewId)
-  logger.log(`Saved last used boardId: ${newBoardId} and viewId: ${defaultViewId} to localStorage`)
-
-  // Update the board selector
-  updateBoardSelector()
-
-  return newBoard
+  return StorageManager.getBoards().find(b => b.id === newBoardId)
 }
 
 /**
@@ -72,33 +74,31 @@ export async function createBoard (boardName, boardId = null, viewId = null) {
  * @returns {Promise<View|undefined>} The created view or undefined if the board is not found.
  */
 export async function createView (boardId, viewName, viewId = null) {
-  const board = boards.find(b => b.id === boardId)
-  if (board) {
-    const newViewId = viewId || viewGetUUID()
-    const newView = {
-      id: newViewId,
-      name: viewName,
-      widgetState: []
-    }
+  /** @type {View|undefined} */
+  let created
+  const newViewId = viewId || viewGetUUID()
+
+  StorageManager.misc.setLastViewId(newViewId)
+
+  StorageManager.updateBoards(boards => {
+    const board = boards.find(b => b.id === boardId)
+    if (!board) return
+    const newView = { id: newViewId, name: viewName, widgetState: [] }
     board.views.push(newView)
-    await saveBoardState(boards)
-    logger.log('Created new view:', newView)
+    created = newView
+  })
 
-    // Update the view selector
-    updateViewSelector(boardId)
-
-    // Switch to the new view
-    await switchView(boardId, newViewId)
-    logger.log(`Switched to new view ${newViewId} in board ${boardId}`)
-
-    // Save the current view in localStorage
-    localStorage.setItem('lastUsedViewId', newViewId)
-    logger.log(`Saved last used viewId: ${newViewId} to localStorage`)
-
-    return newView
-  } else {
+  if (!created) {
     logger.error(`Board with ID ${boardId} not found`)
+    return undefined
   }
+
+  logger.log('Created new view:', created)
+
+  await switchView(boardId, created.id)
+  logger.log(`Switched to new view ${created.id} in board ${boardId}`)
+
+  return created
 }
 
 /**
@@ -123,8 +123,15 @@ function clearWidgetContainer () {
  * @function switchView
  * @returns {Promise<void>} Resolves when widgets are loaded.
  */
-export async function switchView (boardId, viewId) {
-  const board = boards.find(b => b.id === boardId)
+export async function switchView (boardId = getCurrentBoardId(), viewId) {
+  const oldViewId = getCurrentViewId()
+
+  // Save the state of the view we are leaving, but only if it's different.
+  if (oldViewId && oldViewId !== viewId) {
+    saveWidgetState(boardId, oldViewId)
+  }
+
+  const board = StorageManager.getBoards().find(b => b.id === boardId)
   const view = board?.views.find(v => v.id === viewId)
   if (!view) return logger.warn(`Invalid view ${viewId} on board ${boardId}`)
 
@@ -154,9 +161,7 @@ export async function switchView (boardId, viewId) {
     }
   }
 
-  window.asd.currentViewId = viewId
-  localStorage.setItem('lastUsedViewId', viewId)
-  updateViewSelector(boardId)
+  StorageManager.misc.setLastViewId(viewId)
 }
 
 /**
@@ -175,9 +180,10 @@ export function updateViewSelector (boardId) {
   }
 
   viewSelector.innerHTML = '' // Clear existing options
-  const board = boards.find(b => b.id === boardId)
+  const board = StorageManager.getBoards().find(b => b.id === boardId)
   const viewButtonMenu = document.getElementById('view-button-menu')
-  const settings = window.asd.config?.globalSettings || {}
+  const settings = StorageManager.getConfig()?.globalSettings || {}
+
   if (viewButtonMenu && settings.views?.showViewOptionsAsButtons) {
     viewButtonMenu.innerHTML = ''
   }
@@ -190,25 +196,31 @@ export function updateViewSelector (boardId) {
       option.value = view.id
       option.textContent = view.name
       viewSelector.appendChild(option)
+
       if (viewButtonMenu && settings.views?.showViewOptionsAsButtons) {
         const btn = document.createElement('button')
         btn.textContent = view.name
         btn.dataset.viewId = view.id
-        if (view.id === window.asd.currentViewId) btn.classList.add('active')
-        btn.addEventListener('click', () => {
-          switchView(boardId, view.id)
+        if (view.id === getCurrentViewId()) btn.classList.add('active')
+
+        btn.addEventListener('click', async () => {
+          try {
+            await switchView(boardId, view.id)
+          } catch (error) {
+            logger.error('Error switching view:', error)
+          }
         })
         viewButtonMenu.appendChild(btn)
       }
     })
 
     // Select the newly created or switched view
-    const lastUsedViewId = localStorage.getItem('lastUsedViewId')
+    const lastUsedViewId = StorageManager.misc.getLastViewId()
     if (lastUsedViewId) {
       viewSelector.value = lastUsedViewId
       logger.log(`Set view selector value to last used viewId: ${lastUsedViewId}`)
     } else {
-      logger.log('No last used viewId found in localStorage')
+      logger.log('No last used viewId found in storage')
     }
   } else {
     logger.error(`Board with ID ${boardId} not found`)
@@ -226,10 +238,10 @@ export function updateViewSelector (boardId) {
  */
 export async function switchBoard (boardId, viewId = null) {
   logger.log(`Attempting to switch to board: ${boardId}`)
-  const board = boards.find(b => b.id === boardId)
+  const board = StorageManager.getBoards().find(b => b.id === boardId)
   if (board) {
     document.querySelector('.board').id = boardId
-    const settings = window.asd.config?.globalSettings || {}
+    const settings = StorageManager.getConfig()?.globalSettings || {}
     const preferred = settings.views?.viewToShow
     const targetViewId = viewId || (preferred && board.views.some(v => v.id === preferred) ? preferred : (board.views.length > 0 ? board.views[0].id : null))
 
@@ -239,13 +251,11 @@ export async function switchBoard (boardId, viewId = null) {
       // Handle board with no views
       clearWidgetContainer()
       document.querySelector('.board-view').id = ''
-      window.asd.currentViewId = null
-      localStorage.removeItem('lastUsedViewId')
+      StorageManager.misc.setLastViewId(null)
     }
 
-    window.asd.currentBoardId = boardId
-    localStorage.setItem('lastUsedBoardId', boardId)
-    updateViewSelector(boardId)
+    StorageManager.misc.setLastBoardId(boardId)
+    document.dispatchEvent(new Event('view:ready'))
   } else {
     logger.error(`Board with ID ${boardId} not found`)
   }
@@ -259,16 +269,16 @@ export async function switchBoard (boardId, viewId = null) {
  * @returns {Promise<{boardId: string, viewId: string}|undefined>} Resolves with the first board and view identifiers.
  */
 export function initializeBoards () {
-  return loadBoardState().then(async loadedBoards => {
-    boards = loadedBoards || []
+  return (async () => {
+    let boards = StorageManager.getBoards()
 
     if (!Array.isArray(boards)) {
       boards = []
     }
 
     if (boards.length === 0) {
-      // createBoard is async now
       await createBoard('Default Board')
+      boards = StorageManager.getBoards()
     }
 
     boards.forEach(board => {
@@ -279,16 +289,17 @@ export function initializeBoards () {
     if (boards.length > 0) {
       const firstBoard = boards[0]
       let firstView = firstBoard.views.length > 0 ? firstBoard.views[0] : { id: '' }
-      const settings = window.asd.config?.globalSettings || {}
+      const settings = StorageManager.getConfig()?.globalSettings || {}
       const preferred = settings.views?.viewToShow
       if (preferred) {
         const candidate = firstBoard.views.find(v => v.id === preferred)
         if (candidate) firstView = candidate
       }
       return { boardId: firstBoard.id, viewId: firstView.id }
+    } else {
+      return { boardId: '', viewId: '' }
     }
-    return { boardId: '', viewId: '' }
-  }).catch(error => {
+  })().catch(error => {
     logger.error('Error initializing boards:', error)
     return { boardId: '', viewId: '' }
   })
@@ -310,7 +321,7 @@ export function addBoardToUI (board) {
   boardSelector.appendChild(option)
 
   // Select the newly created or switched board
-  const lastUsedBoardId = localStorage.getItem('lastUsedBoardId')
+  const lastUsedBoardId = StorageManager.misc.getLastBoardId()
   if (lastUsedBoardId) {
     boardSelector.value = lastUsedBoardId
   }
@@ -325,12 +336,17 @@ export function addBoardToUI (board) {
  * @returns {Promise<void>}
  */
 export async function renameBoard (boardId, newBoardName) {
-  const board = boards.find(b => b.id === boardId)
-  if (board) {
-    board.name = newBoardName
-    await saveBoardState(boards)
+  let found = false
+  StorageManager.updateBoards(boards => {
+    const board = boards.find(b => b.id === boardId)
+    if (board) {
+      board.name = newBoardName
+      found = true
+    }
+  })
+
+  if (found) {
     logger.log(`Renamed board ${boardId} to ${newBoardName}`)
-    updateBoardSelector()
   } else {
     logger.error(`Board with ID ${boardId} not found`)
   }
@@ -345,12 +361,18 @@ export async function renameBoard (boardId, newBoardName) {
  * @returns {Promise<void>}
  */
 export async function deleteBoard (boardId) {
-  const boardIndex = boards.findIndex(b => b.id === boardId)
-  if (boardIndex !== -1) {
-    boards.splice(boardIndex, 1)
-    await saveBoardState(boards)
+  let removed = false
+  StorageManager.updateBoards(boards => {
+    const idx = boards.findIndex(b => b.id === boardId)
+    if (idx !== -1) {
+      boards.splice(idx, 1)
+      removed = true
+    }
+  })
+
+  if (removed) {
     logger.log(`Deleted board ${boardId}`)
-    updateBoardSelector()
+    const boards = StorageManager.getBoards()
     if (boards.length > 0) {
       const firstBoardId = boards[0].id
       await switchBoard(firstBoardId)
@@ -374,20 +396,27 @@ export async function deleteBoard (boardId) {
  * @returns {Promise<void>}
  */
 export async function renameView (boardId, viewId, newViewName) {
-  const board = boards.find(b => b.id === boardId)
-  if (board) {
+  let boardFound = false
+  let viewFound = false
+  StorageManager.updateBoards(boards => {
+    const board = boards.find(b => b.id === boardId)
+    if (!board) return
+    boardFound = true
     const view = board.views.find(v => v.id === viewId)
     if (view) {
       view.name = newViewName
-      await saveBoardState(boards)
-      logger.log(`Renamed view ${viewId} to ${newViewName}`)
-      updateViewSelector(boardId)
-    } else {
-      logger.error(`View with ID ${viewId} not found`)
+      viewFound = true
     }
-  } else {
-    logger.error(`Board with ID ${boardId} not found`)
+  })
+
+  if (!boardFound) {
+    return logger.error(`Board with ID ${boardId} not found`)
   }
+  if (!viewFound) {
+    return logger.error(`View with ID ${viewId} not found`)
+  }
+
+  logger.log(`Renamed view ${viewId} to ${newViewName}`)
 }
 
 /**
@@ -399,44 +428,48 @@ export async function renameView (boardId, viewId, newViewName) {
  * @returns {Promise<void>}
  */
 export async function deleteView (boardId, viewId) {
-  const board = boards.find(b => b.id === boardId)
-  if (board) {
-    const viewIndex = board.views.findIndex(v => v.id === viewId)
-    if (viewIndex !== -1) {
-      const viewToDelete = board.views[viewIndex]
-
-      if (viewToDelete.widgetState) {
-        for (const widget of viewToDelete.widgetState) {
-          if (widget.dataid) {
-            await widgetStore.requestRemoval(widget.dataid)
-          }
-        }
-      }
-
-      board.views.splice(viewIndex, 1)
-      await saveBoardState(boards)
-      logger.log(`Deleted view ${viewId} and evicted its widgets.`)
-
-      updateViewSelector(boardId)
-
-      if (board.views.length > 0) {
-        const nextViewId = board.views[0].id
-        await switchView(boardId, nextViewId)
-        const viewSelector = /** @type {HTMLSelectElement} */(document.getElementById('view-selector'))
-        if (viewSelector) viewSelector.value = nextViewId
-      } else {
-        clearWidgetContainer()
-        const viewSelector = /** @type {HTMLSelectElement} */(document.getElementById('view-selector'))
-        if (viewSelector) viewSelector.innerHTML = ''
-        document.querySelector('.board-view').id = ''
-        window.asd.currentViewId = null
-        localStorage.removeItem('lastUsedViewId')
-      }
-    } else {
-      logger.error(`View with ID ${viewId} not found`)
+  let boardFound = false
+  let viewRemoved = false
+  const removeIds = []
+  StorageManager.updateBoards(boards => {
+    const board = boards.find(b => b.id === boardId)
+    if (!board) return
+    boardFound = true
+    const idx = board.views.findIndex(v => v.id === viewId)
+    if (idx === -1) return
+    const viewToDelete = board.views[idx]
+    if (Array.isArray(viewToDelete.widgetState)) {
+      viewToDelete.widgetState.forEach(w => { if (w.dataid) removeIds.push(w.dataid) })
     }
+    board.views.splice(idx, 1)
+    viewRemoved = true
+  })
+
+  if (!boardFound) {
+    return logger.error(`Board with ID ${boardId} not found`)
+  }
+  if (!viewRemoved) {
+    return logger.error(`View with ID ${viewId} not found`)
+  }
+
+  for (const id of removeIds) {
+    await widgetStore.requestRemoval(id)
+  }
+
+  logger.log(`Deleted view ${viewId} and evicted its widgets.`)
+
+  const board = StorageManager.getBoards().find(b => b.id === boardId)
+  if (board && board.views.length > 0) {
+    const nextViewId = board.views[0].id
+    await switchView(boardId, nextViewId)
+    const viewSelector = /** @type {HTMLSelectElement} */(document.getElementById('view-selector'))
+    if (viewSelector) viewSelector.value = nextViewId
   } else {
-    logger.error(`Board with ID ${boardId} not found`)
+    clearWidgetContainer()
+    const viewSelector = /** @type {HTMLSelectElement} */(document.getElementById('view-selector'))
+    if (viewSelector) viewSelector.innerHTML = ''
+    document.querySelector('.board-view').id = ''
+    StorageManager.misc.setLastViewId(null)
   }
 }
 
@@ -449,25 +482,31 @@ export async function deleteView (boardId, viewId) {
  * @returns {Promise<void>}
  */
 export async function resetView (boardId, viewId) {
-  const board = boards.find(b => b.id === boardId)
-  if (board) {
-    const view = board.views.find(v => v.id === viewId)
-    if (view) {
-      for (const widget of view.widgetState) {
-        if (widget.dataid) {
-          await widgetStore.requestRemoval(widget.dataid)
-        }
-      }
+  const idsToRemove = []
+  let boardFound = false
+  let viewFound = false
 
-      view.widgetState = []
-      await saveBoardState(boards)
-      logger.log(`Reset view ${viewId} and evicted its widgets.`)
-    } else {
-      logger.error(`View with ID ${viewId} not found`)
+  StorageManager.updateBoards(boards => {
+    const board = boards.find(b => b.id === boardId)
+    if (!board) return
+    boardFound = true
+    const view = board.views.find(v => v.id === viewId)
+    if (!view) return
+    viewFound = true
+    if (Array.isArray(view.widgetState)) {
+      view.widgetState.forEach(w => { if (w.dataid) idsToRemove.push(w.dataid) })
     }
-  } else {
-    logger.error(`Board with ID ${boardId} not found`)
+    view.widgetState = []
+  })
+
+  if (!boardFound) return logger.error(`Board with ID ${boardId} not found`)
+  if (!viewFound) return logger.error(`View with ID ${viewId} not found`)
+
+  for (const id of idsToRemove) {
+    await widgetStore.requestRemoval(id)
   }
+
+  logger.log(`Reset view ${viewId} and evicted its widgets.`)
 }
 
 /**
@@ -475,10 +514,10 @@ export async function resetView (boardId, viewId) {
  * @function updateBoardSelector
  * @returns {void}
  */
-function updateBoardSelector () {
+export function updateBoardSelector () {
   const boardSelector = /** @type {HTMLSelectElement} */(document.getElementById('board-selector'))
   boardSelector.innerHTML = ''
-  boards.forEach(board => {
+  StorageManager.getBoards().forEach(board => {
     const option = document.createElement('option')
     option.value = board.id
     option.textContent = board.name
@@ -486,7 +525,7 @@ function updateBoardSelector () {
   })
 
   // Select the newly created or switched board
-  const lastUsedBoardId = localStorage.getItem('lastUsedBoardId')
+  const lastUsedBoardId = StorageManager.misc.getLastBoardId()
   if (lastUsedBoardId) {
     boardSelector.value = lastUsedBoardId
   }

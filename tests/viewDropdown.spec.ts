@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures';
-import { handleDialog, getBoardsFromLocalStorage } from './shared/common';
+import { handleDialog, getConfigBoards, addServices, getLastUsedViewId, navigate } from './shared/common';
 import { routeServicesConfig } from './shared/mocking';
-import { addServices } from './shared/common';
+import { waitForWidgetStoreIdle } from './shared/state.js';
 
 const defaultViewName = "Default View"
 const newViewName = "New View"
@@ -16,7 +16,8 @@ test.describe('View Dropdown Functionality', () => {
 
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
-    await page.goto('/');
+    await navigate(page,'/');
+    
     await addServices(page, 2);
   });
 
@@ -25,7 +26,7 @@ test.describe('View Dropdown Functionality', () => {
     await page.click('#view-dropdown .dropbtn');
     await page.click('#view-control a[data-action="create"]');
 
-    const boards = await getBoardsFromLocalStorage(page);
+    const boards = await getConfigBoards(page);
     const currentBoardId = await page.locator('.board').getAttribute('id');
     const currentBoard = boards.find(board => board.id === currentBoardId);
     const newView = currentBoard.views.find(view => view.name === newViewName);
@@ -44,14 +45,14 @@ test.describe('View Dropdown Functionality', () => {
     await verifyCurrentViewName(page, newViewName);
 
     // Verifieer dat de view correct is opgeslagen in localStorage
-    const boards = await getBoardsFromLocalStorage(page);
+    const boards = await getConfigBoards(page);
     const currentBoardId = await page.locator('.board').getAttribute('id');
     const currentBoard = boards.find(board => board.id === currentBoardId);
     const newView = currentBoard.views.find(view => view.name === newViewName);
     expect(newView).toBeDefined();
 
     // Verify that 'lastUsedViewId' matches the new view
-    const lastUsedViewId = await page.evaluate(() => localStorage.getItem('lastUsedViewId'));
+    const lastUsedViewId = await getLastUsedViewId(page);
     expect(lastUsedViewId).toBe(newView.id);
   });
 
@@ -65,7 +66,7 @@ test.describe('View Dropdown Functionality', () => {
     await page.click('#view-control a[data-action="rename"]');
 
     // Verify the view was renamed
-    const boards = await getBoardsFromLocalStorage(page);
+    const boards = await getConfigBoards(page);
     const currentBoardId = await page.locator('.board').getAttribute('id');
     const currentBoard = boards.find(board => board.id === currentBoardId);
     const renamedView = currentBoard.views.find(view => view.name === renamedViewName);
@@ -89,7 +90,7 @@ test.describe('View Dropdown Functionality', () => {
     });
 
     // Verify the view was deleted
-    const boards = await getBoardsFromLocalStorage(page);
+    const boards = await getConfigBoards(page);
     const currentBoardId = await page.locator('.board').getAttribute('id');
     const currentBoard = boards.find(board => board.id === currentBoardId);
     const deletedView = currentBoard.views.find(view => view.name === defaultViewName);
@@ -111,10 +112,10 @@ test.describe('View Dropdown Functionality', () => {
       const container = document.getElementById('widget-container');
       return container && container.querySelectorAll('.widget-wrapper').length === 0;
     });
-    await page.evaluate(() => window.asd.widgetStore.idle())
+    await waitForWidgetStoreIdle(page)
 
     // Verify the view was reset
-    const boards = await getBoardsFromLocalStorage(page);
+    const boards = await getConfigBoards(page);
     const currentBoardId = await page.locator('.board').getAttribute('id');
     const currentBoard = boards.find(board => board.id === currentBoardId);
     const resetView = currentBoard.views.find(view => view.name === defaultViewName);

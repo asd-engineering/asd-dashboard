@@ -206,6 +206,14 @@
     "returns": "boolean"
   },
   {
+    "name": "clearAll",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Remove all persisted data.",
+    "params": [],
+    "returns": "void"
+  },
+  {
     "name": "clearConfigFragment",
     "kind": "function",
     "file": "src/utils/fragmentGuard.js",
@@ -394,6 +402,25 @@
     "returns": "Promise<object>"
   },
   {
+    "name": "deepEqual",
+    "kind": "function",
+    "file": "src/utils/objectUtils.js",
+    "description": "Recursively compares two values for deep equality. Supports plain objects, arrays, primitives, and null/undefined.",
+    "params": [
+      {
+        "name": "a",
+        "type": "any",
+        "desc": ""
+      },
+      {
+        "name": "b",
+        "type": "any",
+        "desc": ""
+      }
+    ],
+    "returns": "boolean"
+  },
+  {
     "name": "deleteBoard",
     "kind": "function",
     "file": "src/component/board/boardManagement.js",
@@ -489,6 +516,14 @@
       }
     ],
     "returns": ""
+  },
+  {
+    "name": "exportConfig",
+    "kind": "function",
+    "file": "src/component/configModal/exportConfig.js",
+    "description": "Generate shareable URL from stored config and services, copy it to the clipboard and persist a snapshot.",
+    "params": [],
+    "returns": "Promise<void>"
   },
   {
     "name": "fetchData",
@@ -596,6 +631,14 @@
     "returns": "HTMLElement|undefined"
   },
   {
+    "name": "getAllJson",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Get all JSON-parsable items from localStorage.",
+    "params": [],
+    "returns": "Record<string, any>"
+  },
+  {
     "name": "getAuthToken",
     "kind": "function",
     "file": "src/component/widget/utils/fetchData.js",
@@ -604,12 +647,28 @@
     "returns": "string"
   },
   {
+    "name": "getBoards",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Retrieve stored boards array.",
+    "params": [],
+    "returns": "Array<Board>"
+  },
+  {
     "name": "getCallingFunctionName",
     "kind": "function",
     "file": "src/utils/Logger.js",
     "description": "Extracts the function name of the caller (if available) from the stack trace.",
     "params": [],
     "returns": "string"
+  },
+  {
+    "name": "getConfig",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Get the persisted dashboard configuration.",
+    "params": [],
+    "returns": "DashboardConfig|null"
   },
   {
     "name": "getConfig",
@@ -644,6 +703,36 @@
     "returns": "string"
   },
   {
+    "name": "getItem",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Retrieve a raw string value from localStorage.",
+    "params": [
+      {
+        "name": "key",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "string|null"
+  },
+  {
+    "name": "getLastBoardId",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Retrieve the last used board id.",
+    "params": [],
+    "returns": "string|null"
+  },
+  {
+    "name": "getLastViewId",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Retrieve the last used view id.",
+    "params": [],
+    "returns": "string|null"
+  },
+  {
     "name": "getLocalStorageData",
     "kind": "function",
     "file": "src/component/modal/localStorageModal.js",
@@ -672,6 +761,14 @@
       }
     ],
     "returns": "Promise<string>"
+  },
+  {
+    "name": "getServices",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Retrieve stored services array.",
+    "params": [],
+    "returns": "Array<Service>"
   },
   {
     "name": "getUUID",
@@ -1084,18 +1181,42 @@
     "returns": "boolean"
   },
   {
-    "name": "isJSON",
+    "name": "jsonGet",
     "kind": "function",
-    "file": "src/component/modal/localStorageModal.js",
-    "description": "Checks if a given string is valid JSON.",
+    "file": "src/storage/StorageManager.js",
+    "description": "Read and parse JSON value from localStorage.",
     "params": [
       {
-        "name": "value",
+        "name": "key",
         "type": "string",
-        "desc": "- The string to check."
+        "desc": ""
+      },
+      {
+        "name": "fallback",
+        "type": "any|null",
+        "desc": ""
       }
     ],
-    "returns": "boolean"
+    "returns": "any"
+  },
+  {
+    "name": "jsonSet",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Stringify and store value in localStorage.",
+    "params": [
+      {
+        "name": "key",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "obj",
+        "type": "any",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
   },
   {
     "name": "listLoggedFiles",
@@ -1104,22 +1225,6 @@
     "description": "Print the list of files currently logging to the console.",
     "params": [],
     "returns": "void"
-  },
-  {
-    "name": "load",
-    "kind": "function",
-    "file": "src/storage/servicesStore.js",
-    "description": "Loads the array of services from localStorage.",
-    "params": [],
-    "returns": "Array<import('../types.js').Service>"
-  },
-  {
-    "name": "loadBoardState",
-    "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Retrieves the array of boards from localStorage.",
-    "params": [],
-    "returns": "Promise<Array<import('../types.js').Board>>"
   },
   {
     "name": "loadFromFragment",
@@ -1138,12 +1243,12 @@
     "returns": "Promise<object|null>"
   },
   {
-    "name": "loadInitialConfig",
+    "name": "loadStateStore",
     "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Loads the initial board configuration from the global config object into localStorage. This is typically called on first run to seed the dashboard.",
+    "file": "src/storage/StorageManager.js",
+    "description": "Load and return the entire state store.",
     "params": [],
-    "returns": "Promise<void>"
+    "returns": "Promise<{version:number,states:Array}>"
   },
   {
     "name": "lock",
@@ -1244,7 +1349,7 @@
     "file": "src/component/modal/configModal.js",
     "description": "Open a modal dialog allowing the user to edit and save configuration JSON.",
     "params": [],
-    "returns": "void"
+    "returns": "Promise<void>"
   },
   {
     "name": "openEvictionModal",
@@ -1267,14 +1372,9 @@
     "description": "Display modal asking user to overwrite or merge fragment data.",
     "params": [
       {
-        "name": "cfgParam",
-        "type": "string|null",
-        "desc": "- Encoded config fragment."
-      },
-      {
-        "name": "svcParam",
-        "type": "string|null",
-        "desc": "- Encoded service fragment."
+        "name": "params",
+        "type": "{cfgParam:string|null,svcParam:string|null,nameParam:string}",
+        "desc": "cfgParam - Encoded config fragment. svcParam - Encoded service fragment. nameParam - Default snapshot name."
       }
     ],
     "returns": "Promise<void>"
@@ -1541,34 +1641,6 @@
     "returns": "Promise<void>"
   },
   {
-    "name": "save",
-    "kind": "function",
-    "file": "src/storage/servicesStore.js",
-    "description": "Saves the array of services to localStorage.",
-    "params": [
-      {
-        "name": "services",
-        "type": "Array<import('../types.js').Service>",
-        "desc": "- The array of services to save."
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "saveBoardState",
-    "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Persists the entire array of board objects to localStorage.",
-    "params": [
-      {
-        "name": "boards",
-        "type": "Array<import('../types.js').Board>",
-        "desc": "- The array of boards to save."
-      }
-    ],
-    "returns": "void"
-  },
-  {
     "name": "saveLocalStorageData",
     "kind": "function",
     "file": "src/component/modal/localStorageModal.js",
@@ -1583,37 +1655,135 @@
     "returns": "void"
   },
   {
-    "name": "saveWidgetState",
+    "name": "saveStateSnapshot",
     "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Serializes the state of all visible widgets and saves it to localStorage.",
+    "file": "src/storage/StorageManager.js",
+    "description": "Save the current state snapshot.",
     "params": [
       {
-        "name": "boardId",
-        "type": "string",
-        "desc": "- The ID of the current board."
-      },
+        "name": "snapshot",
+        "type": "{name:string,type:string,cfg:string,svc:string}",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<string>"
+  },
+  {
+    "name": "saveStateStore",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist the entire state store object.",
+    "params": [
       {
-        "name": "viewId",
-        "type": "string",
-        "desc": "- The ID of the current view."
+        "name": "store",
+        "type": "{version:number,states:Array}",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "setBoards",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist the provided boards array.",
+    "params": [
+      {
+        "name": "boards",
+        "type": "Array<Board>",
+        "desc": ""
       }
     ],
     "returns": "void"
   },
   {
-    "name": "serializeWidgetState",
+    "name": "setConfig",
     "kind": "function",
-    "file": "src/storage/localStorage.js",
-    "description": "Converts a widget DOM element into a serializable state object.",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist the dashboard configuration.",
     "params": [
       {
-        "name": "widget",
-        "type": "HTMLElement",
-        "desc": "- The widget element."
+        "name": "cfg",
+        "type": "DashboardConfig",
+        "desc": ""
       }
     ],
-    "returns": "import('../types.js').Widget"
+    "returns": "void"
+  },
+  {
+    "name": "setItem",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist a raw string value under a custom key.",
+    "params": [
+      {
+        "name": "key",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "value",
+        "type": "string|null",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "setJsonRecord",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist an object of key/value pairs as JSON strings.",
+    "params": [
+      {
+        "name": "record",
+        "type": "Record<string, any>",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "setLastBoardId",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist the last used board id.",
+    "params": [
+      {
+        "name": "id",
+        "type": "string|null",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "setLastViewId",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist the last used view id.",
+    "params": [
+      {
+        "name": "id",
+        "type": "string|null",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "setServices",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist the provided services array.",
+    "params": [
+      {
+        "name": "services",
+        "type": "Array<Service>",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
   },
   {
     "name": "show",
@@ -1802,11 +1972,39 @@
     "returns": "void"
   },
   {
+    "name": "updateBoards",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Atomically update boards via callback.",
+    "params": [
+      {
+        "name": "updater",
+        "type": "(boards: Array<Board>) => Array<Board>|void",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "updateBoardSelector",
     "kind": "function",
     "file": "src/component/board/boardManagement.js",
     "description": "Rebuilds the board selector dropdown from the in-memory `boards` array.",
     "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "updateConfig",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Atomically update the dashboard configuration.",
+    "params": [
+      {
+        "name": "updater",
+        "type": "(cfg: DashboardConfig) => void",
+        "desc": ""
+      }
+    ],
     "returns": "void"
   },
   {

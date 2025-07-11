@@ -33,6 +33,12 @@ Then:
    just test
    ```
 
+or previously failing test if you ran `just test` before
+
+   ```bash
+   just test-failed
+   ```
+
 5. **Commit** — if blocked by an unrelated pre-commit lint failure, you may bypass (last resort):
 
    ```bash

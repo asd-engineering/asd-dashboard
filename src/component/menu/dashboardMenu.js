@@ -6,18 +6,18 @@
  */
 import { addWidget } from '../widget/widgetManagement.js'
 import { openSaveServiceModal } from '../modal/saveServiceModal.js'
-import * as servicesStore from '../../storage/servicesStore.js'
 import {
   switchBoard,
   switchView,
   updateViewSelector
 } from '../../component/board/boardManagement.js'
-import { saveWidgetState } from '../../storage/localStorage.js'
+import { saveWidgetState } from '../../storage/widgetStatePersister.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { showNotification } from '../dialog/notification.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 import { Logger } from '../../utils/Logger.js'
 import { clearConfigFragment } from '../../utils/fragmentGuard.js'
+import StorageManager from '../../storage/StorageManager.js'
 import { debounceLeading } from '../../utils/utils.js'
 
 const logger = new Logger('dashboardMenu.js')
@@ -36,12 +36,11 @@ function initializeDashboardMenu () {
 
   logger.log('Dashboard menu initialized')
   populateServiceDropdown()
-  document.addEventListener('services-updated', populateServiceDropdown)
   applyWidgetMenuVisibility()
 
   const buttonDebounce = 200
 
-  document.getElementById('add-widget-button').addEventListener('click', () => {
+  document.getElementById('add-widget-button').addEventListener('click', async () => {
     const serviceSelector = /** @type {HTMLSelectElement} */(document.getElementById('service-selector'))
     const widgetUrlInput = /** @type {HTMLInputElement} */(document.getElementById('widget-url'))
     const boardElement = document.querySelector('.board')
@@ -50,13 +49,17 @@ function initializeDashboardMenu () {
     const manualUrl = widgetUrlInput.value
     const url = selectedServiceUrl || manualUrl
 
-    const finalize = () => {
-      addWidget(url, 1, 1, 'iframe', boardElement.id, viewElement.id)
+    const finalize = async () => {
+      try {
+        await addWidget(url, 1, 1, 'iframe', boardElement.id, viewElement.id)
+      } catch (error) {
+        logger.error('Error adding widget:', error)
+      }
       widgetUrlInput.value = ''
     }
 
     if (selectedServiceUrl) {
-      finalize()
+      await finalize()
     } else if (manualUrl) {
       openSaveServiceModal(manualUrl, finalize)
     } else {
@@ -66,19 +69,23 @@ function initializeDashboardMenu () {
 
   const handleToggleWidgetMenu = debounceLeading(() => {
     const widgetContainer = document.getElementById('widget-container')
-    const toggled = widgetContainer.classList.toggle('hide-widget-menu') // true if now hidden
+    const isHidden = widgetContainer.classList.toggle('hide-widget-menu')
 
-    const message = toggled
+    const message = isHidden
       ? `${emojiList.cross.unicode} Widget menu hidden`
       : `${emojiList.edit.unicode} Widget menu shown`
 
-    if (window.asd && window.asd.config && window.asd.config.globalSettings) {
-      window.asd.config.globalSettings.showMenuWidget = !toggled
-      localStorage.setItem('config', JSON.stringify(window.asd.config))
+    // Safe read-modify-write: get latest from storage, modify, then save.
+    const currentConfig = StorageManager.getConfig() || { globalSettings: {} }
+    if (!currentConfig.globalSettings) {
+      currentConfig.globalSettings = {}
     }
+    currentConfig.globalSettings.showMenuWidget = !isHidden
+    StorageManager.setConfig(currentConfig)
 
     showNotification(message, 500)
   }, buttonDebounce)
+
   document.getElementById('toggle-widget-menu').addEventListener('click', /** @type {EventListener} */(handleToggleWidgetMenu))
 
   const handleReset = debounceLeading(() => {
@@ -86,19 +93,23 @@ function initializeDashboardMenu () {
     const confirmed = confirm('Confirm environment reset: all configurations and services will be permanently deleted.')
 
     if (confirmed) {
-      localStorage.clear()
+      StorageManager.clearAll()
       clearConfigFragment()
       location.reload()
     }
   }, buttonDebounce)
   document.getElementById('reset-button').addEventListener('click', /** @type {EventListener} */(handleReset))
 
-  document.getElementById('board-selector').addEventListener('change', (event) => {
+  document.getElementById('board-selector').addEventListener('change', async (event) => {
     const target = /** @type {HTMLSelectElement} */(event.target)
     const selectedBoardId = target.value
     const currentBoardId = getCurrentBoardId()
     saveWidgetState(currentBoardId, getCurrentViewId()) // Save current view state
-    switchBoard(selectedBoardId)
+    try {
+      await switchBoard(selectedBoardId)
+    } catch (error) {
+      logger.error('Error switching board:', error)
+    }
     updateViewSelector(selectedBoardId)
   })
 
@@ -106,6 +117,7 @@ function initializeDashboardMenu () {
     const selectedBoardId = getCurrentBoardId()
     const target = /** @type {HTMLSelectElement} */(event.target)
     const selectedViewId = target.value
+
     logger.log(`Switching to selected view ${selectedViewId} in board ${selectedBoardId}`)
     await switchView(selectedBoardId, selectedViewId)
   })
@@ -117,7 +129,7 @@ function initializeDashboardMenu () {
  * @function populateServiceDropdown
  * @returns {void}
  */
-function populateServiceDropdown () {
+export function populateServiceDropdown () {
   const selector = document.getElementById('service-selector')
   if (!selector) return
   selector.innerHTML = ''
@@ -125,7 +137,7 @@ function populateServiceDropdown () {
   defaultOption.value = ''
   defaultOption.textContent = 'Select a Service'
   selector.appendChild(defaultOption)
-  servicesStore.load().forEach(service => {
+  StorageManager.getServices().forEach(service => {
     const opt = document.createElement('option')
     opt.value = service.url
     opt.textContent = service.name
@@ -142,7 +154,7 @@ function populateServiceDropdown () {
 function applyWidgetMenuVisibility () {
   const widgetContainer = document.getElementById('widget-container')
   if (!widgetContainer) return
-  const show = window.asd?.config?.globalSettings?.showMenuWidget
+  const show = StorageManager.getConfig()?.globalSettings?.showMenuWidget
   if (show === false || show === 'false') {
     widgetContainer.classList.add('hide-widget-menu')
   } else {

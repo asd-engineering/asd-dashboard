@@ -7,10 +7,12 @@
 import { Logger } from './Logger.js'
 import { openLocalStorageModal } from '../component/modal/localStorageModal.js'
 import { showNotification } from '../component/dialog/notification.js'
-import { openConfigModal, DEFAULT_CONFIG_TEMPLATE } from '../component/modal/configModal.js'
+import { openConfigModal } from '../component/modal/configModal.js'
+import { DEFAULT_CONFIG_TEMPLATE } from '../storage/defaultConfig.js'
+import StorageManager from '../storage/StorageManager.js'
+import { deepEqual } from '../utils/objectUtils.js'
 
 const logger = new Logger('getConfig.js')
-const STORAGE_KEY = 'config'
 
 /**
  * Parses a base64 encoded JSON string.
@@ -69,52 +71,51 @@ async function fetchJson (url) {
 async function loadFromSources () {
   const params = new URLSearchParams(window.location.search)
 
+  // 1. Explicit base64 parameter
   if (params.has('config_base64')) {
     const cfg = parseBase64(params.get('config_base64'))
     if (cfg) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg))
-      if (Array.isArray(cfg.boards)) {
-        localStorage.setItem('boards', JSON.stringify(cfg.boards))
-      }
+      StorageManager.setConfig(cfg)
       window.history.replaceState(null, '', location.pathname)
       return cfg
     }
     return null
   }
 
+  // 2. Explicit config URL parameter
   if (params.has('config_url')) {
-    const cfgU = await fetchJson(params.get('config_url'))
-    if (cfgU) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cfgU))
-      if (Array.isArray(cfgU.boards)) {
-        localStorage.setItem('boards', JSON.stringify(cfgU.boards))
-      }
+    const cfg = await fetchJson(params.get('config_url'))
+    if (cfg) {
+      StorageManager.setConfig(cfg)
       window.history.replaceState(null, '', location.pathname)
-      return cfgU
+      return cfg
     }
     return null
   }
 
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    try {
-      return JSON.parse(stored)
-    } catch (e) {
-      logger.error('Failed to parse config from localStorage:', e)
+  // 3. Get stored config
+  const stored = StorageManager.getConfig()
+
+  // Check if config is missing or is effectively just the default template
+  const isEmpty = !stored || deepEqual(stored, DEFAULT_CONFIG_TEMPLATE)
+
+  if (isEmpty) {
+    const cfgJ = await fetchJson('config.json')
+
+    if (cfgJ) {
+      const cfg = cfgJ.data || cfgJ
+      StorageManager.setConfig(cfg)
+      return cfg
     }
-  }
 
-  const cfgJ = await fetchJson('config.json')
-
-  if (!cfgJ) {
+    // 4. Nothing worked → load default and prompt user
     showNotification('Default configuration has been loaded. Please review and save.')
-    const cfg = DEFAULT_CONFIG_TEMPLATE
-    localStorage.setItem('config', JSON.stringify(cfg))
-    openConfigModal()
-    return cfg
-  } else {
-    return cfgJ
+    StorageManager.setConfig(DEFAULT_CONFIG_TEMPLATE)
+    await openConfigModal()
+    return DEFAULT_CONFIG_TEMPLATE
   }
+
+  return stored
 }
 
 /**
@@ -124,19 +125,15 @@ async function loadFromSources () {
  * @returns {Promise<Object>} Parsed configuration object.
  */
 export async function getConfig () {
-  if (window.asd && window.asd.config && Object.keys(window.asd.config).length > 0) {
-    logger.log('Using cached configuration')
-    return window.asd.config
-  }
-
   const config = await loadFromSources()
   if (!config) {
-    openConfigModal()
+    openConfigModal().catch(error => {
+      logger.error('Error opening config modal:', error)
+    })
     throw new Error('No configuration available')
   }
 
-  window.asd.config = config
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+  StorageManager.setConfig(config)
   logger.log('Config loaded successfully')
   return config
 }
