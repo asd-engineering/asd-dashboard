@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures'
 import { getWidgetStoreSize, waitForWidgetStoreIdle } from '../shared/state.js'
+import { navigate, selectViewByLabel } from '../shared/common.js'
 import { ciConfig, ciBoards } from '../data/ciConfig'
 import { ciServices } from '../data/ciServices'
 
@@ -92,29 +93,25 @@ const defaultBoards = () => [
 test.describe('WidgetStore UI Tests', () => {
   test.beforeEach(async ({ page }) => {
     await routeBase(page, defaultBoards())
-    await page.goto('/')
+    await navigate(page, '/')
+
     await page.locator('.widget-wrapper').first().waitFor()
   })
 
   test('Caching Widgets on View Switching', async ({ page }) => {
-    const viewSelector = page.locator('#view-selector')
     const view1Widget = page.locator('.widget-wrapper').first()
 
     const initialSize = await getWidgetStoreSize(page)
     expect(initialSize).toBe(1)
     await expect(view1Widget).toBeVisible()
 
-    await viewSelector
-      .selectOption({ label: 'Modified View 2' })
-      .catch(() => viewSelector.selectOption('view-12345678'))
+    await selectViewByLabel(page, 'Modified View 2')
     await expect(view1Widget).toBeHidden()
 
     const afterSwitchSize = await getWidgetStoreSize(page)
     expect(afterSwitchSize).toBe(2)
 
-    await viewSelector
-      .selectOption({ label: 'Modified View 1' })
-      .catch(() => viewSelector.selectOption('view-1234567'))
+    await selectViewByLabel(page, 'Modified View 1')
     await expect(view1Widget).not.toBeVisible
 
     const finalSize = await getWidgetStoreSize(page)
@@ -179,6 +176,7 @@ test.describe('WidgetStore UI Tests', () => {
     await expect(modal).toBeHidden()
 
     await page.reload()
+
     await page.waitForFunction(
       () => document.querySelectorAll('.widget-wrapper').length === 2
     )

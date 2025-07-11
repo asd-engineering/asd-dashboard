@@ -1,7 +1,7 @@
 // @ts-check
 import { test, expect } from "./fixtures";
 import { routeServicesConfig } from "./shared/mocking.js";
-import { selectServiceByName, selectViewByLabel } from "./shared/common.js";
+import { selectServiceByName, selectViewByLabel, navigate } from "./shared/common.js";
 import { bootWithDashboardState } from "./shared/bootState.js";
 
 // Define a deterministic initial state with a clean board and two empty views.
@@ -38,6 +38,7 @@ test.describe("Widget State Isolation Between Views", () => {
       ],
       { board: "board-iso-test-1", view: "view-A" },
     );
+    
   });
 
   test.skip("widgets added to one view should not appear in another view after switching", async ({

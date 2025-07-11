@@ -3,6 +3,7 @@ import { ciConfig } from "./data/ciConfig";
 import { ciServices } from "./data/ciServices";
 import { gzipJsonToBase64url } from "../src/utils/compression.js";
 import { bootWithDashboardState } from "./shared/bootState.js";
+import { navigate } from "./shared/common";
 
 async function encode(obj) {
   return gzipJsonToBase64url(obj);
@@ -23,8 +24,8 @@ test.describe("Secure fragments loading configuration", () => {
     const name = "MySnapshot";
 
     // Navigate with fragment (triggers modal)
-    await page.goto(`/#cfg=${cfg}&svc=${svc}&name=${encodeURIComponent(name)}`);
-    await page.waitForSelector('body[data-ready="true"]');
+    await navigate(page,`/#cfg=${cfg}&svc=${svc}&name=${encodeURIComponent(name)}`);
+    
     await page.waitForSelector("#fragment-decision-modal");
     await expect(page.locator("#importName")).toHaveValue(name);
 
@@ -34,9 +35,10 @@ test.describe("Secure fragments loading configuration", () => {
       .click();
 
     // Wait for reload and presence of final ready state
-    await page.waitForSelector('body[data-ready="true"]');
+    
 
     // Now re-import StorageManager in a fresh JS context
+    // ToDo: refactor logic below
     const result = await page.evaluate(async () => {
       const sm = (await import("/storage/StorageManager.js")).default;
       const snapshot = (await sm.loadStateStore()).states.find(

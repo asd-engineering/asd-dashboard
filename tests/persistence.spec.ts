@@ -1,14 +1,14 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
-import { handleDialog, getConfigBoards } from './shared/common'
+import { handleDialog, getConfigBoards, navigate } from './shared/common'
 
 const boardName = 'Persist Board'
 
 test.describe('Board persistence', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
-    await page.goto('/')
-    await page.waitForLoadState('domcontentloaded')
+    await navigate(page,'/')
+    
   })
 
   test('new board persists after reload', async ({ page }) => {
@@ -18,6 +18,7 @@ test.describe('Board persistence', () => {
     await expect(page.locator('#board-selector')).toContainText(boardName)
 
     await page.reload()
+    
     const boards = await getConfigBoards(page)
     expect(boards.some(b => b.name === boardName)).toBeTruthy()
   })
@@ -29,6 +30,7 @@ test.describe('Board persistence', () => {
     await expect(page.locator('#view-selector option:checked')).toHaveText('Second View')
 
     await page.reload()
+    
     await expect(page.locator('#view-selector option:checked')).toHaveText('Second View')
   })
 })

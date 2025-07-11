@@ -263,6 +263,7 @@ export async function switchBoard (boardId, viewId = null) {
 
     StorageManager.misc.setLastBoardId(boardId)
     updateViewSelector(boardId)
+    document.dispatchEvent(new Event('view:ready'))
   } else {
     logger.error(`Board with ID ${boardId} not found`)
   }

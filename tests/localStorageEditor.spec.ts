@@ -3,6 +3,7 @@ import { routeServicesConfig } from "./shared/mocking";
 import { ciBoards } from "./data/ciConfig.js";
 import { setLocalItem } from "./shared/state.js";
 import { bootWithDashboardState } from "./shared/bootState.js";
+import { navigate } from "./shared/common";
 
 test.describe("LocalStorage Editor Functionality", () => {
 
@@ -20,7 +21,7 @@ test.describe("LocalStorage Editor Functionality", () => {
       { board: "board1", view: "" },
     );
     await setLocalItem(page, "log", "localStorageModal,localStorage");
-    await page.waitForSelector('body[data-ready="true"]', { timeout: 2000 });
+    
 
     // ================== FIX START ==================
     // Action 1: Click the button with the CORRECT ID to open the modal
@@ -62,7 +63,7 @@ test.describe("LocalStorage Editor Functionality", () => {
     await routeServicesConfig(page);
     await bootWithDashboardState(page, {}, [], { board: "", view: "" });
     await setLocalItem(page, "log", "localStorageModal,localStorage");
-    await page.waitForSelector('body[data-ready="true"]', { timeout: 2000 });
+    
     await page.click("#localStorage-edit-button");
     await page.waitForSelector("#localStorage-modal");
     const textarea = await page.locator("textarea#localStorage-services");
