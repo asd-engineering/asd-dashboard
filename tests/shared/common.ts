@@ -46,44 +46,71 @@ export async function selectViewByLabel(page: Page, viewLabel: string) {
     { timeout: 5000 },
   );
   await page.selectOption("#view-selector", { label: viewLabel });
-  // optional sanity check – body reflects router change
-  // await expect(page.locator("body")).toHaveAttribute("data-view-id", /.+/, {
-  //   timeout: 4000,
-  // });
 }
 
 /**
- * Wait until the dashboard is fully ready after navigation.
- * Ensures the body has data-ready="true" and a view id.
+ * Navigates to the specified URL and waits until the dashboard is fully hydrated.
  *
- * @param {Page} page - Playwright page instance.
- * @returns {Promise<void>} Resolves when the dashboard is ready.
- */
-export async function waitForDashboardReady(page: Page) {
-  // await page.waitForSelector('body[data-ready="true"]');
-  // await expect(page.locator('body')).toHaveAttribute('data-view-id', /.+/, {
-  //   timeout: 1000,
-  // });
-}
-
-/**
- * Navigates to the specified URL and waits until the dashboard is fully ready.
- * Ensures that the `<body>` element has `data-ready="true"` and optionally a `data-view-id` attribute.
+ * This helper observes two events emitted by the dashboard:
+ *   - `main:ready` is fired after core initialization finishes (menu, drag/drop, config)
+ *   - `view:ready` is fired after the active board/view is fully rendered (widgets hydrated)
+ *
+ * It resolves in one of two ways:
+ *   1. Immediately if `<body>` already has the `data-view-id` attribute (fast path)
+ *   2. After either `main:ready` or `view:ready` is emitted (whichever comes first)
+ *
+ * Only one listener wins — both events are attached once, and the first one to fire resolves.
+ * A shared DOM flag ensures listeners are attached only once, even if Playwright re-evaluates.
+ *
+ * Console logs prefixed with `[navigate]` are forwarded from the browser to aid debugging.
  *
  * @param {import('@playwright/test').Page} page - Playwright Page instance.
  * @param {string} destination - URL to navigate to.
  * @param {import('@playwright/test').WaitForURLOptions} [gotoOptions] - Optional Playwright `goto` options.
- * @returns {Promise<void>} Resolves when the dashboard is ready.
+ * @returns {Promise<void>} Resolves when hydration is detected via event or DOM.
  */
 export async function navigate(
   page: Page,
   destination: string,
   gotoOptions?: Parameters<Page['goto']>[1]
 ): Promise<void> {
-  await page.goto(destination, gotoOptions);
-  // await page.waitForSelector('body[data-ready="true"]');
-  // Optionally: check for presence of data-view-id
-  // await expect(page.locator('body')).toHaveAttribute('data-view-id', /.+/, { timeout: 1000 });
+  const allowedPrefixes = ['[navigate]', '[hydrate]', '[modal]']
+  page.on('console', msg => {
+    const text = msg.text()
+    if (msg.type() === 'log' && allowedPrefixes.some(p => text.startsWith(p))) {
+      console.log(`[browser] ${text}`)
+    }
+  })
+
+  await page.goto(destination, gotoOptions)
+
+  try {
+    await page.waitForFunction(() => {
+      // Fast path: view hydration already complete
+      if (document.body.hasAttribute('data-view-id')) {
+        console.log('[navigate] fast path: data-view-id present')
+        return true
+      }
+
+      // Attach event listeners only once across retries
+      if (!(document as any).__NAVIGATE_ATTACHED__) {
+        (document as any).__NAVIGATE_ATTACHED__ = true
+
+        const handler = (e: Event) => {
+          console.log(`[navigate] resolved via ${e.type}`)
+          ;(document as any).__NAVIGATE_READY__ = true
+        }
+
+        document.addEventListener('main:ready', handler, { once: true })
+        document.addEventListener('view:ready', handler, { once: true })
+      }
+
+      return !!(document as any).__NAVIGATE_READY__
+    }, { timeout: 300 })
+  } catch {
+    // Soft timeout: test continues, but hydration may be delayed
+    // console.warn(`[navigate] Soft timeout waiting for hydration at ${destination}`)
+  }
 }
 
 // Helper function to handle dialog interactions

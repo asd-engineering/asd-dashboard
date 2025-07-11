@@ -115,7 +115,8 @@ async function main () {
 
   logger.log('Application initialization finished')
   // Signal to Playwright that the initial load and render is complete.
-  document.body.setAttribute('data-ready', 'true')
+  document.dispatchEvent(new Event('main:ready'))
+  document.body.dataset.ready = 'true'
 }
 
 // Start the application when the DOM is ready
