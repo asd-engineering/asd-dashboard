@@ -18,3 +18,8 @@
   max-height: 50vh;
   overflow: auto;
 }
+
+#cfgTab {
+  height: 90vh;
+  display: flex;
+}

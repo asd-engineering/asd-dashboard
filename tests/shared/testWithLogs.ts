@@ -27,13 +27,19 @@ export const test = base.extend<{
   console: [
     async ({ page }, use, testInfo) => {
       const logs: ConsoleLog[] = [];
-      page.on('console', m => logs.push({ type: m.type(), text: m.text() }));
+      page.on('console', msg => {
+        const entry = { type: msg.type(), text: msg.text() };
+        logs.push(entry);
+        // 👇 Real-time terminal print
+        // console.log(`[console:${entry.type}] ${entry.text}`);
+      });
       await use(logs);
-      if (logs.length)
+      if (logs.length) {
         testInfo.attach('console-logs', {
           body: JSON.stringify(logs, null, 2),
           contentType: 'application/json',
         });
+      }
     },
     { auto: true },
   ],

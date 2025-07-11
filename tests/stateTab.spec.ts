@@ -1,23 +1,17 @@
 import { test, expect } from './fixtures'
 import { ciConfig } from './data/ciConfig'
 import { ciServices } from './data/ciServices'
-import { gzipJsonToBase64url } from '../src/utils/compression.js'
-
-async function encode(obj: any) {
-  return gzipJsonToBase64url(obj)
-}
+import { getBoardCount, navigate } from './shared/common.js'
+import { injectSnapshot } from './shared/state.js'
 
 test.describe.skip('Saved States tab', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-    await page.waitForLoadState('domcontentloaded')
-    const cfg = await encode(ciConfig)
-    const svc = await encode(ciServices)
-    await page.evaluate(async ({ cfg, svc }) => {
-      const { default: sm } = await import('/storage/StorageManager.js')
-      await sm.saveStateSnapshot({ name: 'one', type: 'imported', cfg, svc })
-      await sm.saveStateSnapshot({ name: 'two', type: 'imported', cfg, svc })
-    }, { cfg, svc })
+    await navigate(page,'/')
+    
+    const cfg = ciConfig
+    const svc = ciServices
+    await injectSnapshot(page, cfg, svc, 'one')
+    await injectSnapshot(page, cfg, svc, 'two')
   })
 
   test('restore and delete snapshot', async ({ page }) => {
@@ -27,9 +21,9 @@ test.describe.skip('Saved States tab', () => {
 
     await page.locator('#stateTab tbody tr:first-child button:has-text("Restore")').click()
     await page.click('#fragment-decision-modal button:has-text("Overwrite")')
-    await page.waitForLoadState('domcontentloaded')
-    const boards = await page.evaluate(() => JSON.parse(localStorage.getItem('boards')||'[]'))
-    expect(boards.length).toBeGreaterThan(0)
+    
+    const boards = await getBoardCount(page);
+    expect(boards).toBeGreaterThan(0)
 
     await page.click('#open-config-modal')
     await page.click('.tabs button[data-tab="state"]')
@@ -38,6 +32,7 @@ test.describe.skip('Saved States tab', () => {
     await expect(page.locator('#stateTab tbody tr')).toHaveCount(1)
 
     await page.reload()
+    
     await page.click('#open-config-modal')
     await page.click('.tabs button[data-tab="state"]')
     await expect(page.locator('#stateTab tbody tr')).toHaveCount(1)

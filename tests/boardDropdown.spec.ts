@@ -1,7 +1,12 @@
 import { test, expect } from './fixtures';
-import { handleDialog, getBoardsFromLocalStorage} from './shared/common';
+import {
+  addServices,
+  getLastUsedBoardId,
+  handleDialog,
+  getConfigBoards,
+  navigate,
+} from './shared/common';
 import { routeServicesConfig } from './shared/mocking';
-import { addServices } from './shared/common';
 
 
 const defaultBoardName = "Default Board"
@@ -10,7 +15,8 @@ const newBoardName = "New Test Board"
 test.describe('Board Dropdown Functionality', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
-    await page.goto('/');
+    await navigate(page,'/');
+    
     await addServices(page, 2);
   });
 
@@ -29,11 +35,12 @@ test.describe('Board Dropdown Functionality', () => {
     const selectedBoardName = await page.locator('#board-selector option:checked').textContent();
     await expect(selectedBoardName).toBe(newBoardName);
 
-    const boards = await getBoardsFromLocalStorage(page);
+    const boards = await getConfigBoards(page);
+
     const newBoard = boards.find(board => board.name === newBoardName);
     expect(newBoard).toBeDefined();
 
-    const lastUsedBoardId = await page.evaluate(() => localStorage.getItem('lastUsedBoardId'));
+    const lastUsedBoardId = await getLastUsedBoardId(page);
     expect(lastUsedBoardId).toBe(newBoard.id);
   });
 
@@ -50,7 +57,7 @@ test.describe('Board Dropdown Functionality', () => {
     await expect(boardSelector).toContainText('Renamed Board');
 
     // Verify localStorage is updated
-    const boards = await getBoardsFromLocalStorage(page);
+    const boards = await getConfigBoards(page);
     expect(boards.some(board => board.name === 'Renamed Board')).toBeTruthy();
   });
 
@@ -67,7 +74,7 @@ test.describe('Board Dropdown Functionality', () => {
     await expect(boardSelector).not.toContainText(defaultBoardName);
 
     // Verify localStorage is updated
-    const boards = await getBoardsFromLocalStorage(page);
+    const boards = await getConfigBoards(page);
     expect(boards.some(board => board.name === defaultBoardName)).toBeFalsy();
   });
 });

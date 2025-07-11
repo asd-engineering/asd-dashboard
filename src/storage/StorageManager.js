@@ -6,6 +6,9 @@
  */
 
 import { md5Hex } from '../utils/hash.js'
+import { DEFAULT_CONFIG_TEMPLATE } from './defaultConfig.js'
+import { deepMerge } from '../utils/objectUtils.js'
+
 /**
  * CURRENT_VERSION for stored data schema.
  * @constant {number}
@@ -19,6 +22,17 @@ const KEYS = {
   STATES: 'asd-dashboard-state',
   LAST_BOARD: 'lastUsedBoardId',
   LAST_VIEW: 'lastUsedViewId'
+}
+
+/**
+ * Merge user-supplied config with defaults.
+ * Ensures globalSettings, boards, and other top-level keys always exist.
+ *
+ * @param {object} userConfig - The config object loaded from storage or URL
+ * @returns {object} - Fully shaped config matching DEFAULT_CONFIG_TEMPLATE
+ */
+function mergeWithDefaults (userConfig = {}) {
+  return deepMerge(DEFAULT_CONFIG_TEMPLATE, userConfig)
 }
 
 /**
@@ -67,9 +81,11 @@ const StorageManager = {
    * @returns {DashboardConfig|null}
    */
   getConfig () {
-    const wrapped = jsonGet(KEYS.CONFIG, null)
-    // allow backward-compat raw config (no wrapper)
-    return wrapped && wrapped.data ? wrapped.data : wrapped
+    const stored = jsonGet(KEYS.CONFIG, null)
+    // Fallback to legacy unwrapped format
+    const cfg = stored?.data || stored
+    if (!cfg || typeof cfg !== 'object') return { ...DEFAULT_CONFIG_TEMPLATE }
+    return mergeWithDefaults(cfg)
   },
 
   /**
@@ -79,14 +95,23 @@ const StorageManager = {
    * @returns {void}
    */
   setConfig (cfg /* DashboardConfig */) {
-    jsonSet(KEYS.CONFIG, cfg)
-    // Also manage the separate 'boards' key whenever config is set.
-    // if (cfg && Array.isArray(cfg.boards)) {
-    //   jsonSet(KEYS.BOARDS, cfg.boards);
-    // } else {
-    //   // If the new config has no boards array, remove the old key.
-    //   localStorage.removeItem(KEYS.BOARDS);
-    // }
+    // jsonSet(KEYS.CONFIG, { version: CURRENT_VERSION, data: cfg })
+    jsonSet(KEYS.CONFIG, {
+      version: CURRENT_VERSION,
+      data: mergeWithDefaults(cfg)
+    })
+  },
+
+  /**
+   * Atomically update the dashboard configuration.
+   * @function updateConfig
+   * @param {(cfg: DashboardConfig) => void} updater
+   * @returns {void}
+   */
+  updateConfig (updater) {
+    const cfg = StorageManager.getConfig()
+    updater(cfg)
+    StorageManager.setConfig(cfg)
   },
 
   /**
@@ -95,8 +120,9 @@ const StorageManager = {
    * @returns {Array<Board>}
    */
   getBoards () {
-    const boards = jsonGet(KEYS.BOARDS, [])
-    return Array.isArray(boards) ? boards : []
+    return Array.isArray(StorageManager.getConfig().boards)
+      ? StorageManager.getConfig().boards
+      : []
   },
 
   /**
@@ -106,7 +132,7 @@ const StorageManager = {
    * @returns {void}
    */
   setBoards (boards) {
-    jsonSet(KEYS.BOARDS, boards)
+    StorageManager.updateConfig(cfg => { cfg.boards = Array.isArray(boards) ? boards : [] })
   },
 
   /**
@@ -116,10 +142,10 @@ const StorageManager = {
    * @returns {void}
    */
   updateBoards (updater) {
-    const boards = StorageManager.getBoards()
-    const result = updater(boards)
-    const finalBoards = Array.isArray(result) ? result : boards
-    StorageManager.setBoards(finalBoards)
+    StorageManager.updateConfig(cfg => {
+      const result = updater(Array.isArray(cfg.boards) ? cfg.boards : [])
+      if (Array.isArray(result)) cfg.boards = result
+    })
   },
 
   /**
