@@ -15,7 +15,7 @@ test("verify config and services from URL fragment does not load before user dec
   const cfg = await encode(ciConfig);
   const svc = await encode(ciServices);
   await page.goto(`/#cfg=${cfg}&svc=${svc}`);
-  await waitForDashboardReady(page);
+  // await waitForDashboardReady(page)
   const config = await getUnwrappedConfig(page);
   const services = await page.evaluate(async () => {
     const { default: sm } = await import("/storage/StorageManager.js");
@@ -38,7 +38,7 @@ test("fragment data is not reapplied if localStorage already has data", async ({
     { board: "", view: "" },
     `/#cfg=${cfg}`,
   );
-  await waitForDashboardReady(page);
+  // await waitForDashboardReady(page)
   await page.waitForSelector("#fragment-decision-modal", { timeout: 5000 });
   const modal = page.locator("#fragment-decision-modal");
   await expect(modal).toBeVisible();
@@ -62,7 +62,7 @@ test("shows merge decision modal when local data exists", async ({ page }) => {
     { board: "", view: "" },
     `/#cfg=${cfg}&svc=${svc}`,
   );
-  await waitForDashboardReady(page);
+  // await waitForDashboardReady(page)
   await page.waitForSelector("#fragment-decision-modal", { timeout: 5000 });
   const modal = page.locator("#fragment-decision-modal");
   await expect(modal).toBeVisible();

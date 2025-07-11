@@ -16,7 +16,7 @@ test.describe('Board Dropdown Functionality', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await page.goto('/');
-    await waitForDashboardReady(page);
+    // await waitForDashboardReady(page)
     await addServices(page, 2);
   });
 

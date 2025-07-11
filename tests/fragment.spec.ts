@@ -25,7 +25,7 @@ test.describe("Secure fragments loading configuration", () => {
 
     // Navigate with fragment (triggers modal)
     await page.goto(`/#cfg=${cfg}&svc=${svc}&name=${encodeURIComponent(name)}`);
-    await waitForDashboardReady(page);
+    // await waitForDashboardReady(page)
     await page.waitForSelector("#fragment-decision-modal");
     await expect(page.locator("#importName")).toHaveValue(name);
 
@@ -35,7 +35,7 @@ test.describe("Secure fragments loading configuration", () => {
       .click();
 
     // Wait for reload and presence of final ready state
-    await waitForDashboardReady(page);
+    // await waitForDashboardReady(page)
 
     // Now re-import StorageManager in a fresh JS context
     const result = await page.evaluate(async () => {

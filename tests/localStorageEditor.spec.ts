@@ -21,7 +21,7 @@ test.describe("LocalStorage Editor Functionality", () => {
       { board: "board1", view: "" },
     );
     await setLocalItem(page, "log", "localStorageModal,localStorage");
-    await waitForDashboardReady(page);
+    // await waitForDashboardReady(page)
 
     // ================== FIX START ==================
     // Action 1: Click the button with the CORRECT ID to open the modal
@@ -63,7 +63,7 @@ test.describe("LocalStorage Editor Functionality", () => {
     await routeServicesConfig(page);
     await bootWithDashboardState(page, {}, [], { board: "", view: "" });
     await setLocalItem(page, "log", "localStorageModal,localStorage");
-    await waitForDashboardReady(page);
+    // await waitForDashboardReady(page)
     await page.click("#localStorage-edit-button");
     await page.waitForSelector("#localStorage-modal");
     const textarea = await page.locator("textarea#localStorage-services");

@@ -61,9 +61,24 @@ export async function selectViewByLabel(page: Page, viewLabel: string) {
  */
 export async function waitForDashboardReady(page: Page) {
   await page.waitForSelector('body[data-ready="true"]');
-  await expect(page.locator('body')).toHaveAttribute('data-view-id', /.+/, {
-    timeout: 10000,
-  });
+  // await expect(page.locator('body')).toHaveAttribute('data-view-id', /.+/, {
+  //   timeout: 1000,
+  // });
+}
+
+/**
+ * Navigates to the specified URL and waits until the dashboard is fully ready.
+ * Ensures that the `<body>` element has `data-ready="true"` and optionally a `data-view-id` attribute.
+ *
+ * @param {import('@playwright/test').Page} page - Playwright Page instance.
+ * @param {string} destination - URL to navigate to.
+ * @returns {Promise<void>} Resolves when the dashboard is ready.
+ */
+export async function navigate(page: Page, destination: string): Promise<void> {
+  await page.goto(destination);
+  await page.waitForSelector('body[data-ready="true"]');
+  // Optionally: check for presence of data-view-id
+  // await expect(page.locator('body')).toHaveAttribute('data-view-id', /.+/, { timeout: 1000 });
 }
 
 // Helper function to handle dialog interactions

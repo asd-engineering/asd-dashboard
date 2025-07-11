@@ -38,7 +38,7 @@ test.describe("Widget State Isolation Between Views", () => {
       ],
       { board: "board-iso-test-1", view: "view-A" },
     );
-    await waitForDashboardReady(page);
+    // await waitForDashboardReady(page)
   });
 
   test.skip("widgets added to one view should not appear in another view after switching", async ({

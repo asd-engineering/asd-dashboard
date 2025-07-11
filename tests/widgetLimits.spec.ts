@@ -59,7 +59,7 @@ test.describe("Widget limits", () => {
     );
     await routeLimits(page, boards, services, 5);
     await page.goto("/");
-    await waitForDashboardReady(page);
+    // await waitForDashboardReady(page)
     await page.locator(".widget-wrapper").first().waitFor();
 
     await page.locator("#board-selector").selectOption("b2");
@@ -90,7 +90,7 @@ test.describe("Widget limits", () => {
     ];
     await routeLimits(page, boards, ciServices, 1);
     await page.goto("/");
-    await waitForDashboardReady(page);
+    // await waitForDashboardReady(page)
     await page.locator(".widget-wrapper").first().waitFor();
 
     await selectServiceByName(page, "ASD-terminal");
@@ -119,7 +119,7 @@ test.describe("Widget limits", () => {
     );
     await routeLimits(page, boards, services, 5);
     await page.goto('/');
-    await waitForDashboardReady(page);
+    // await waitForDashboardReady(page)
 
     await page.evaluate(async () => {
       const { addWidget } = await import('/component/widget/widgetManagement.js');

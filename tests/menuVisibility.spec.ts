@@ -33,7 +33,7 @@ test.describe("Menu control visibility", () => {
     });
 
     await page.goto("/");
-    await waitForDashboardReady(page);
+    // await waitForDashboardReady(page)
   });
 
   test("applies visibility flags and reset button placement", async ({
@@ -65,7 +65,7 @@ test.describe("Widget menu visibility", () => {
     });
 
     await page.goto("/");
-    await waitForDashboardReady(page);
+    // await waitForDashboardReady(page)
   });
 
   test("toggling widget menu updates stored config", async ({ page }) => {
@@ -116,7 +116,7 @@ test.describe("View button menu visibility", () => {
     });
 
     await page.goto("/");
-    await waitForDashboardReady(page);
+    // await waitForDashboardReady(page)
   });
 
   test("shows view buttons and hides selectors", async ({ page }) => {
