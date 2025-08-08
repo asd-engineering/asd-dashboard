@@ -1232,7 +1232,7 @@
     "file": "src/utils/fragmentLoader.js",
     "description": "Parse the URL fragment and store config/services in localStorage. Logs info on success and alerts on failure.",
     "params": [],
-    "returns": "Promise<void>"
+    "returns": "Promise<{cfg:string|null,svc:string|null,name:string}>"
   },
   {
     "name": "loadFromSources",
