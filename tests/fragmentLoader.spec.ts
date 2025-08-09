@@ -74,3 +74,31 @@ test("shows merge decision modal when local data exists", async ({ page }) => {
   const theme = await getConfigTheme(page);
   expect(theme).toBe("dark");
 });
+
+test("imports fragment silently when query import flag is set", async ({ page }) => {
+  const cfg = await encode(ciConfig);
+  const svc = await encode(ciServices);
+  await bootWithDashboardState(
+    page,
+    { globalSettings: { theme: "dark" }, boards: [] },
+    [{ name: "Old", url: "http://localhost/old" }],
+    { board: "", view: "" },
+    `/?import=true&import_name=CIImport#cfg=${cfg}&svc=${svc}`,
+  );
+
+  await page.waitForFunction(() => document.body.dataset.ready === "true");
+  await expect(page.locator("#fragment-decision-modal")).toHaveCount(0);
+
+  const theme = await getConfigTheme(page);
+  expect(theme).toBe("light");
+
+  const snapshots = await page.evaluate(async () => {
+    const { default: sm } = await import("/storage/StorageManager.js");
+    const store = await sm.loadStateStore();
+    return store.states.map(s => ({ name: s.name, type: s.type }));
+  });
+
+  expect(snapshots[0].name).toBe("CIImport");
+  expect(snapshots[0].type).toBe("imported");
+  expect(snapshots[1].type).toBe("autosave");
+});

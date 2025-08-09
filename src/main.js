@@ -20,6 +20,7 @@ import { Logger } from './utils/Logger.js'
 import { widgetStore } from './component/widget/widgetStore.js'
 import { debounce, debounceLeading } from './utils/utils.js'
 import StorageManager, { APP_STATE_CHANGED } from './storage/StorageManager.js'
+import { runImportFlowIfRequested } from './feature/silentImport.js'
 
 const logger = new Logger('main.js')
 
@@ -46,7 +47,11 @@ async function main () {
   // 1. Handle configuration from URL fragment first
   const params = new URLSearchParams(location.search)
   const force = params.get('force') === 'true'
-  await loadFromFragment(force)
+
+  const didImport = await runImportFlowIfRequested()
+  if (!didImport) {
+    await loadFromFragment(force)
+  }
 
   // 2. Initialize core UI elements
   initializeMainMenu()

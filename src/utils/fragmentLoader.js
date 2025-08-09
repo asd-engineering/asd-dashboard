@@ -20,13 +20,13 @@ const logger = new Logger('fragmentLoader.js')
  * Logs info on success and alerts on failure.
  *
  * @function loadFromFragment
- * @returns {Promise<void>}
+ * @returns {Promise<{cfg:string|null,svc:string|null,name:string}>}
  */
 /**
  * Load config/services from URL fragment into localStorage.
  *
  * @param {boolean} [wasExplicitLoad=false] - Skip guard when true.
- * @returns {Promise<void>}
+ * @returns {Promise<{cfg:string|null,svc:string|null,name:string}>}
  */
 export async function loadFromFragment (wasExplicitLoad = false) {
   if (!('DecompressionStream' in window)) {
@@ -41,7 +41,13 @@ export async function loadFromFragment (wasExplicitLoad = false) {
   const params = new URLSearchParams(hash)
   const cfgParam = params.get('cfg')
   const svcParam = params.get('svc')
-  const nameParam = params.get('name') || 'Imported'
+  let nameParam = params.get('name') || 'Imported'
+
+  if (wasExplicitLoad) {
+    const searchParams = new URLSearchParams(location.search)
+    const explicitName = searchParams.get('import_name')
+    if (explicitName) nameParam = explicitName
+  }
 
   const hasLocalData =
     StorageManager.getConfig() ||
@@ -50,7 +56,7 @@ export async function loadFromFragment (wasExplicitLoad = false) {
 
   if ((cfgParam || svcParam) && hasLocalData && !wasExplicitLoad) {
     await openFragmentDecisionModal({ cfgParam, svcParam, nameParam })
-    return
+    return { cfg: cfgParam, svc: svcParam, name: nameParam }
   }
 
   try {
@@ -69,4 +75,6 @@ export async function loadFromFragment (wasExplicitLoad = false) {
     logger.error('❌ Fout bij laden uit fragment:', e)
     showNotification('Fout bij laden van dashboardconfiguratie uit URL fragment.', 4000, 'error')
   }
+
+  return { cfg: cfgParam, svc: svcParam, name: nameParam }
 }
