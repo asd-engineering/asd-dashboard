@@ -162,6 +162,14 @@
     "returns": "void"
   },
   {
+    "name": "autosaveIfPresent",
+    "kind": "function",
+    "file": "src/feature/snapshots.js",
+    "description": "Save the existing dashboard state as an autosave snapshot if any state exists.",
+    "params": [],
+    "returns": "Promise<string|null>"
+  },
+  {
     "name": "base64UrlDecode",
     "kind": "function",
     "file": "src/utils/compression.js",
@@ -701,6 +709,14 @@
     "description": "Get the id of the currently active view element.",
     "params": [],
     "returns": "string"
+  },
+  {
+    "name": "getImportFlags",
+    "kind": "function",
+    "file": "src/utils/urlParams.js",
+    "description": "Retrieve import-related flags from the current URL.",
+    "params": [],
+    "returns": "{isImport:boolean, importName:string}"
   },
   {
     "name": "getItem",
@@ -1513,6 +1529,14 @@
     "returns": "void"
   },
   {
+    "name": "removeImportFlagsFromUrl",
+    "kind": "function",
+    "file": "src/utils/urlParams.js",
+    "description": "Remove import-related flags from the URL without reloading the page. Other query parameters remain untouched.",
+    "params": [],
+    "returns": "void"
+  },
+  {
     "name": "removeWidget",
     "kind": "function",
     "file": "src/component/widget/widgetManagement.js",
@@ -1639,6 +1663,38 @@
       }
     ],
     "returns": "Promise<void>"
+  },
+  {
+    "name": "runImportFlowIfRequested",
+    "kind": "function",
+    "file": "src/feature/silentImport.js",
+    "description": "Execute the silent import flow if requested by the current URL.",
+    "params": [],
+    "returns": "Promise<boolean>"
+  },
+  {
+    "name": "saveImportedSnapshot",
+    "kind": "function",
+    "file": "src/feature/snapshots.js",
+    "description": "Persist an imported snapshot using already encoded cfg & svc strings.",
+    "params": [
+      {
+        "name": "name",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "cfg",
+        "type": "string|null",
+        "desc": ""
+      },
+      {
+        "name": "svc",
+        "type": "string|null",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<string>"
   },
   {
     "name": "saveLocalStorageData",
