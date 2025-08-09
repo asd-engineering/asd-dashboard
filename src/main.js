@@ -16,12 +16,11 @@ import { openConfigModal } from './component/modal/configModal.js'
 import { initializeBoardDropdown } from './component/board/boardDropdown.js'
 import { initializeViewDropdown } from './component/view/viewDropdown.js'
 import { loadFromFragment } from './utils/fragmentLoader.js'
-import { gzipJsonToBase64url } from './utils/compression.js'
 import { Logger } from './utils/Logger.js'
 import { widgetStore } from './component/widget/widgetStore.js'
 import { debounce, debounceLeading } from './utils/utils.js'
 import StorageManager, { APP_STATE_CHANGED } from './storage/StorageManager.js'
-import { clearConfigFragment } from './utils/fragmentGuard.js'
+import { runImportFlowIfRequested } from './feature/silentImport.js'
 
 const logger = new Logger('main.js')
 
@@ -48,54 +47,9 @@ async function main () {
   // 1. Handle configuration from URL fragment first
   const params = new URLSearchParams(location.search)
   const force = params.get('force') === 'true'
-  const isImport = params.get('import') === 'true'
-  const importName = params.get('import_name') || ''
 
-  if (isImport) {
-    logger.log('import.start', importName)
-    const existingCfg = StorageManager.getConfig()
-    const existingSvc = StorageManager.getServices()
-    const hasState =
-      (Array.isArray(existingCfg?.boards) && existingCfg.boards.length > 0) ||
-      existingSvc.length > 0
-    if (hasState) {
-      const autosaveName = `autosave/${new Date().toISOString()}`
-      const [cfg, svc] = await Promise.all([
-        gzipJsonToBase64url(existingCfg),
-        gzipJsonToBase64url(existingSvc)
-      ])
-      await StorageManager.saveStateSnapshot({
-        name: autosaveName,
-        type: 'autosave',
-        cfg,
-        svc
-      })
-      logger.log('snapshot.saved', autosaveName)
-    } else {
-      logger.log('import.skip', 'no-existing-state')
-    }
-    StorageManager.misc.setLastBoardId(null)
-    StorageManager.misc.setLastViewId(null)
-    const imported = await loadFromFragment(true)
-    clearConfigFragment()
-    const snapshotName = importName || `import/${new Date().toISOString()}`
-    if (imported.cfg || imported.svc) {
-      await StorageManager.saveStateSnapshot({
-        name: snapshotName,
-        type: 'imported',
-        cfg: imported.cfg || '',
-        svc: imported.svc || ''
-      })
-      logger.log('import.success', snapshotName)
-      const newCfg = StorageManager.getConfig()
-      const firstBoardId = newCfg?.boards?.[0]?.id || null
-      const firstViewId = newCfg?.boards?.[0]?.views?.[0]?.id || null
-      StorageManager.misc.setLastBoardId(firstBoardId)
-      StorageManager.misc.setLastViewId(firstViewId)
-    } else {
-      logger.log('import.skip', 'no-fragment-data')
-    }
-  } else {
+  const didImport = await runImportFlowIfRequested()
+  if (!didImport) {
     await loadFromFragment(force)
   }
 
