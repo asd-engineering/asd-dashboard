@@ -2,17 +2,17 @@
 /**
  * Orchestrates the silent import flow triggered via URL flags.
  *
- * @module silentImport
+ * @module silentImportFlow
  */
 
 import { loadFromFragment } from '../utils/fragmentLoader.js'
 import { clearConfigFragment } from '../utils/fragmentGuard.js'
 import StorageManager from '../storage/StorageManager.js'
-import { autosaveIfPresent, saveImportedSnapshot } from './snapshots.js'
-import { getImportFlags, removeImportFlagsFromUrl } from '../utils/urlParams.js'
+import { autosaveIfPresent, saveImportedSnapshot } from '../storage/snapshots.js'
+import { getImportFlags, removeImportFlagsFromUrl } from '../utils/url.js'
 import { Logger } from '../utils/Logger.js'
 
-const logger = new Logger('feature/silentImport.js')
+const logger = new Logger('flows/silentImportFlow.js')
 
 // Guard against multiple simultaneous runs
 let inflight = null
@@ -20,10 +20,10 @@ let inflight = null
 /**
  * Execute the silent import flow if requested by the current URL.
  *
- * @function runImportFlowIfRequested
+ * @function runSilentImportFlowIfRequested
  * @returns {Promise<boolean>} True if the import flow executed
  */
-export async function runImportFlowIfRequested () {
+export async function runSilentImportFlowIfRequested () {
   const { isImport, importName } = getImportFlags()
   if (!isImport) return false
 
