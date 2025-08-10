@@ -20,7 +20,7 @@ import { Logger } from './utils/Logger.js'
 import { widgetStore } from './component/widget/widgetStore.js'
 import { debounce, debounceLeading } from './utils/utils.js'
 import StorageManager, { APP_STATE_CHANGED } from './storage/StorageManager.js'
-import { runImportFlowIfRequested } from './feature/silentImport.js'
+import { runSilentImportFlowIfRequested } from './flows/silentImportFlow.js'
 
 const logger = new Logger('main.js')
 
@@ -48,7 +48,7 @@ async function main () {
   const params = new URLSearchParams(location.search)
   const force = params.get('force') === 'true'
 
-  const didImport = await runImportFlowIfRequested()
+  const didImport = await runSilentImportFlowIfRequested()
   if (!didImport) {
     await loadFromFragment(force)
   }

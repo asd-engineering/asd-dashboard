@@ -2,7 +2,7 @@
 /**
  * Helper utilities for reading and manipulating URL search parameters.
  *
- * @module urlParams
+ * @module url
  */
 
 /**
