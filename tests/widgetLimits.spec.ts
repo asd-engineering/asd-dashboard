@@ -6,12 +6,12 @@ import { getUnwrappedConfig, navigate } from "./shared/common";
 import { waitForWidgetStoreIdle } from "./shared/state.js";
 import { ensurePanelOpen } from "./shared/common";
 
-async function routeLimits(page, boards, services, maxSize = 2) {
+async function routeLimits(page, boards, services, maxSize = 2, configOverrides = {}) {
   await page.route("**/services.json", (route) =>
     route.fulfill({ json: services }),
   );
   await page.route("**/config.json", (route) =>
-    route.fulfill({ json: { ...ciConfig, boards } }),
+    route.fulfill({ json: { ...ciConfig, ...configOverrides, boards } }),
   );
   await page.addInitScript((size) => {
     const apply = () => {
@@ -146,4 +146,5 @@ test.describe("Widget limits", () => {
     )?.id;
     expect(selectedBoard).toBe(boardWithWidget);
   });
+
 });

@@ -40,6 +40,14 @@
  */
 
 /**
+ * Base template for services.
+ * @typedef {Object} ServiceTemplate
+ * @property {string} [type]
+ * @property {ServiceConfig} [config]
+ * @property {number} [maxInstances]
+ */
+
+/**
  * External service definition.
  * @typedef {Object} Service
  * @property {string} id - A unique identifier for the service definition.
@@ -51,6 +59,8 @@
  * @property {Array<string>} [tags]
  * @property {ServiceConfig} [config]
  * @property {number} [maxInstances] Maximum allowed widget instances
+ * @property {string} [template] - The key of the template to inherit from
+ * @property {{name:string,url:string,method?:string,headers?:Object}} [fallback]
  */
 
 /**
@@ -68,6 +78,7 @@
  * @property {{enabled:string, loadDashboardFromConfig:string, defaultBoard?:string, defaultView?:string}} [globalSettings.localStorage]
  * @property {number} [globalSettings.maxTotalInstances]
  * @property {Array<Board>} [boards]
+ * @property {Object.<string, ServiceTemplate>} [serviceTemplates]
  * @property {{widget: {minColumns:number, maxColumns:number, minRows:number, maxRows:number}}} [styling]
  */
 

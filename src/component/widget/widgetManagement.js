@@ -26,6 +26,7 @@ import { widgetGetUUID } from '../../utils/id.js'
 import StorageManager from '../../storage/StorageManager.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { showNotification } from '../dialog/notification.js'
+import { resolveServiceConfig } from '../../utils/serviceUtils.js'
 
 const logger = new Logger('widgetManagement.js')
 
@@ -48,8 +49,9 @@ async function createWidget (
 ) {
   logger.log('Creating widget with URL:', url)
   const config = await getConfig()
-  const services = await fetchServices()
-  const serviceObj = services.find((s) => s.name === service) || {}
+  await fetchServices()
+  const rawService = StorageManager.getServices().find((s) => s.name === service) || {}
+  const serviceObj = resolveServiceConfig(rawService)
 
   const minColumns =
     serviceObj.config?.minColumns || config.styling.widget.minColumns
@@ -203,8 +205,9 @@ async function addWidget (
   if (window.asd.widgetStore.isAdding(serviceName)) return
   window.asd.widgetStore.lock(serviceName)
   try {
-    const services = await fetchServices()
-    const serviceObj = services.find((s) => s.name === serviceName) || {}
+    await fetchServices()
+    const rawServiceObj = StorageManager.getServices().find((s) => s.name === serviceName) || {}
+    const serviceObj = resolveServiceConfig(rawServiceObj)
 
     // Enforce global maxInstances (across live DOM and persisted config)
     const liveDataIds = Array.from(window.asd.widgetStore.widgets.values())

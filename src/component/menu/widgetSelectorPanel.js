@@ -11,6 +11,7 @@ import { switchBoard } from '../board/boardManagement.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import StorageManager from '../../storage/StorageManager.js'
 import emojiList from '../../ui/unicodeEmoji.js'
+import { resolveServiceConfig } from '../../utils/serviceUtils.js'
 
 /**
  * Emit a standardized state change event.
@@ -96,22 +97,23 @@ export function refreshRowCounts () {
   const overGlobal = typeof widgetStore.maxSize === 'number' && widgetStore.widgets.size >= widgetStore.maxSize
 
   services.forEach(service => {
-    const item = container.querySelector(`.widget-option[data-name="${service.name}"]`)
+    const resolved = resolveServiceConfig(service)
+    const item = container.querySelector(`.widget-option[data-name="${resolved.name}"]`)
     if (!(item instanceof HTMLElement)) return
 
     const label = item.querySelector('.widget-option-label')
     const cnt = item.querySelector('.widget-option-count')
     if (!(label instanceof HTMLElement) || !(cnt instanceof HTMLElement)) return
 
-    const activeCount = countServiceInstances(service.url)
-    const max = service.maxInstances ?? '∞'
+    const activeCount = countServiceInstances(resolved.url)
+    const max = resolved.maxInstances ?? '∞'
 
     // Update text
-    label.firstChild && (label.firstChild.nodeValue = service.name)
+    label.firstChild && (label.firstChild.nodeValue = resolved.name)
     cnt.textContent = ` (${activeCount}/${max})`
 
     // Apply limit state
-    const overService = typeof service.maxInstances === 'number' && activeCount >= service.maxInstances
+    const overService = typeof resolved.maxInstances === 'number' && activeCount >= resolved.maxInstances
 
     // ToDo: Add visual queue to the interface
     if (overGlobal || overService) {
@@ -119,7 +121,7 @@ export function refreshRowCounts () {
     } else {
       item.classList.remove('limit-reached')
     }
-    item.dataset.url = service.url
+    item.dataset.url = resolved.url
   })
 }
 
@@ -143,28 +145,29 @@ export function populateWidgetSelectorPanel () {
   const overGlobal = typeof widgetStore.maxSize === 'number' && widgetStore.widgets.size >= widgetStore.maxSize
 
   services.forEach(service => {
+    const resolved = resolveServiceConfig(service)
     const item = document.createElement('div')
     item.className = 'widget-option'
-    item.dataset.name = service.name
-    if (service.category) item.dataset.category = service.category
-    if (service.subcategory) item.dataset.subcategory = service.subcategory
-    if (Array.isArray(service.tags)) item.dataset.tags = service.tags.join(',')
+    item.dataset.name = resolved.name
+    if (resolved.category) item.dataset.category = resolved.category
+    if (resolved.subcategory) item.dataset.subcategory = resolved.subcategory
+    if (Array.isArray(resolved.tags)) item.dataset.tags = resolved.tags.join(',')
 
-    const activeCount = countServiceInstances(service.url)
-    const max = service.maxInstances ?? '∞'
-    const overService = typeof service.maxInstances === 'number' && activeCount >= service.maxInstances
-    if (!overService && !overGlobal) item.dataset.url = service.url
+    const activeCount = countServiceInstances(resolved.url)
+    const max = resolved.maxInstances ?? '∞'
+    const overService = typeof resolved.maxInstances === 'number' && activeCount >= resolved.maxInstances
+    if (!overService && !overGlobal) item.dataset.url = resolved.url
 
     const label = document.createElement('span')
     label.className = 'widget-option-label'
-    label.textContent = service.name
+    label.textContent = resolved.name
 
     const cnt = document.createElement('span')
     cnt.className = 'widget-option-count'
     cnt.textContent = ` (${activeCount}/${max})`
     label.append(cnt)
 
-    item.dataset.label = service.name
+    item.dataset.label = resolved.name
 
     const actions = document.createElement('span')
     actions.className = 'widget-option-actions'
