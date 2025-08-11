@@ -50,58 +50,58 @@
       "localStorage",
       "location",
       "getComputedStyle",
-        "caches",
-        "HTMLElement",
-        "requestAnimationFrame",
-        "HTMLInputElement"
-      ]
+      "caches",
+      "HTMLElement",
+      "requestAnimationFrame",
+      "HTMLInputElement"
+    ]
   },
-  "eslintConfig": {
-      "root": true,
-      "parser": "@typescript-eslint/parser",
-      "parserOptions": {
-        "ecmaVersion": "latest",
-        "sourceType": "module",
-        "project": "./tsconfig.json"
-      },
-      "plugins": ["jsdoc", "@typescript-eslint"],
-      "overrides": [
+ "eslintConfig": {
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "ecmaVersion": "latest",
+      "sourceType": "module",
+      "project": "./tsconfig.json"
+    },
+    "plugins": ["jsdoc", "@typescript-eslint"],
+    "overrides": [
+      {
+        "files": ["*.js", "**/*.js"],
+        "rules": {
+          "@typescript-eslint/no-floating-promises": "error"
+        }
+      }
+    ],
+    "rules": {
+      "jsdoc/require-jsdoc": [
+        "error",
         {
-          "files": ["*.js", "**/*.js"],
-          "rules": {
-            "@typescript-eslint/no-floating-promises": "error"
+          "require": {
+            "FunctionDeclaration": true,
+            "MethodDefinition": true,
+            "ClassDeclaration": true,
+            "ArrowFunctionExpression": false,
+            "FunctionExpression": false
           }
         }
       ],
-      "rules": {
-        "jsdoc/require-jsdoc": [
-          "error",
-          {
-            "require": {
-              "FunctionDeclaration": true,
-              "MethodDefinition": true,
-              "ClassDeclaration": true,
-              "ArrowFunctionExpression": false,
-              "FunctionExpression": false
-            }
-          }
-        ],
-        "jsdoc/require-param": "warn",
-        "jsdoc/require-returns": "warn",
-        "jsdoc/require-description": [
-          "warn",
-          {
-            "contexts": [
-              "FunctionDeclaration",
-              "MethodDefinition",
-              "ClassDeclaration"
-            ]
-          }
-        ]
-      },
-      "ignorePatterns": [
-        ".eslintrc.js",
-        "scripts/"
+      "jsdoc/require-param": "warn",
+      "jsdoc/require-returns": "warn",
+      "jsdoc/require-description": [
+        "warn",
+        {
+          "contexts": [
+            "FunctionDeclaration",
+            "MethodDefinition",
+            "ClassDeclaration"
+          ]
+        }
       ]
-    }
+    },
+    "ignorePatterns": [
+      ".eslintrc.js",
+      "scripts/"
+    ]
+  }
 }
