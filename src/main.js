@@ -48,10 +48,9 @@ async function main () {
   const params = new URLSearchParams(location.search)
   const force = params.get('force') === 'true'
 
+  // Run silent-import first so fragment loading only happens once
   const didImport = await runSilentImportFlowIfRequested()
-  if (!didImport) {
-    await loadFromFragment(force)
-  }
+  if (!didImport) await loadFromFragment(force)
 
   // 2. Initialize core UI elements
   initializeMainMenu()

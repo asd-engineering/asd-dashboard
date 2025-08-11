@@ -102,3 +102,20 @@ test("imports fragment silently when query import flag is set", async ({ page })
   expect(snapshots[0].type).toBe("imported");
   expect(snapshots[1].type).toBe("autosave");
 });
+
+test("loadFromFragment runs only once when import flag is set", async ({ page }) => {
+  const cfg = await encode(ciConfig);
+  const svc = await encode(ciServices);
+  await bootWithDashboardState(
+    page,
+    { globalSettings: { theme: "dark" }, boards: [] },
+    [{ name: "Old", url: "http://localhost/old" }],
+    { board: "", view: "" },
+    `/?import=true#cfg=${cfg}&svc=${svc}`,
+  );
+
+  await page.waitForFunction(() => document.body.dataset.ready === "true");
+
+  const count = await page.evaluate(() => (window as any).__fragmentLoadCount || 0);
+  expect(count).toBe(1);
+});
