@@ -16,17 +16,17 @@ test.describe.skip('Saved States tab', () => {
 
   test('restore and delete snapshot', async ({ page }) => {
     await page.click('#open-config-modal')
-    await page.click('.tabs button[data-tab="state"]')
+    await page.click('.tabs button[data-tab="stateTab"]')
     await expect(page.locator('#stateTab tbody tr')).toHaveCount(2)
 
-    await page.locator('#stateTab tbody tr:first-child button:has-text("Restore")').click()
-    await page.click('#fragment-decision-modal button:has-text("Overwrite")')
+    await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
+    await page.click('#switch-environment')
     
     const boards = await getBoardCount(page);
     expect(boards).toBeGreaterThan(0)
 
     await page.click('#open-config-modal')
-    await page.click('.tabs button[data-tab="state"]')
+    await page.click('.tabs button[data-tab="stateTab"]')
     page.on('dialog', d => d.accept())
     await page.locator('#stateTab tbody tr:nth-child(2) button:has-text("Delete")').click()
     await expect(page.locator('#stateTab tbody tr')).toHaveCount(1)
@@ -34,7 +34,7 @@ test.describe.skip('Saved States tab', () => {
     await page.reload()
     
     await page.click('#open-config-modal')
-    await page.click('.tabs button[data-tab="state"]')
+    await page.click('.tabs button[data-tab="stateTab"]')
     await expect(page.locator('#stateTab tbody tr')).toHaveCount(1)
   })
 })

@@ -143,7 +143,7 @@
     "name": "applyFragment",
     "kind": "function",
     "file": "src/component/modal/fragmentDecisionModal.js",
-    "description": "Applies the configuration from the URL fragment, either by overwriting or merging.",
+    "description": "Applies the configuration from the URL fragment, either by switching or merging.",
     "params": [
       {
         "name": "overwrite",
@@ -1401,7 +1401,7 @@
     "name": "openFragmentDecisionModal",
     "kind": "function",
     "file": "src/component/modal/fragmentDecisionModal.js",
-    "description": "Display modal asking user to overwrite or merge fragment data.",
+    "description": "Display modal asking user to switch or merge fragment data.",
     "params": [
       {
         "name": "params",
@@ -2106,6 +2106,25 @@
       }
     ],
     "returns": "void"
+  },
+  {
+    "name": "upsertSnapshotByMd5",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Insert or update a snapshot in the state store based on MD5 hash. If a snapshot with the same MD5 exists its timestamp is refreshed and it is moved to the front of the list. Optionally updates the name when provided.",
+    "params": [
+      {
+        "name": "store",
+        "type": "{version:number,states:Array}",
+        "desc": ""
+      },
+      {
+        "name": "snap",
+        "type": "{name:string,type:string,cfg:string,svc:string}",
+        "desc": ""
+      }
+    ],
+    "returns": "{store:{version:number,states:Array},md5:string,updated:boolean}"
   },
   {
     "name": "viewGetUUID",

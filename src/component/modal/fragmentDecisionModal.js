@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Modal prompting user to merge or overwrite when config fragment is detected.
+ * Modal prompting user to merge or switch when a config fragment is detected.
  *
  * @module fragmentDecisionModal
  */
@@ -18,7 +18,7 @@ import StorageManager from '../../storage/StorageManager.js'
 const logger = new Logger('fragmentDecisionModal.js')
 
 /**
- * Display modal asking user to overwrite or merge fragment data.
+ * Display modal asking user to switch or merge fragment data.
  *
  * @param {{cfgParam:string|null,svcParam:string|null,nameParam:string}} params
  *        cfgParam - Encoded config fragment.
@@ -47,14 +47,16 @@ export function openFragmentDecisionModal ({ cfgParam, svcParam, nameParam }) {
         nameInput.id = 'importName'
         nameInput.value = nameParam
 
-        const overwriteBtn = document.createElement('button')
-        overwriteBtn.textContent = '⬇ Overwrite existing data'
-        overwriteBtn.classList.add('modal__btn', 'modal__btn--danger')
-        overwriteBtn.addEventListener('click', async () => {
+        const switchBtn = document.createElement('button')
+        switchBtn.id = 'switch-environment'
+        switchBtn.textContent = '⬇ Switch environment'
+        switchBtn.classList.add('modal__btn', 'modal__btn--danger')
+        switchBtn.addEventListener('click', async () => {
           await applyFragment(true)
         })
 
         const mergeBtn = document.createElement('button')
+        mergeBtn.id = 'merge-environment'
         mergeBtn.textContent = '➕ Merge into current setup'
         mergeBtn.classList.add('modal__btn', 'modal__btn--save')
         mergeBtn.addEventListener('click', async () => {
@@ -62,18 +64,19 @@ export function openFragmentDecisionModal ({ cfgParam, svcParam, nameParam }) {
         })
 
         const cancelBtn = document.createElement('button')
+        cancelBtn.id = 'cancel-environment'
         cancelBtn.textContent = '✖ Cancel'
         cancelBtn.classList.add('modal__btn', 'modal__btn--cancel')
         cancelBtn.addEventListener('click', closeModal)
 
         const btnGroup = document.createElement('div')
         btnGroup.classList.add('modal__btn-group')
-        btnGroup.append(overwriteBtn, mergeBtn, cancelBtn)
+        btnGroup.append(switchBtn, mergeBtn, cancelBtn)
 
         modal.append(msg1, msg2, nameInput, btnGroup)
 
         /**
-         * Applies the configuration from the URL fragment, either by overwriting or merging.
+         * Applies the configuration from the URL fragment, either by switching or merging.
          * @function applyFragment
          * @param {boolean} overwrite - If true, existing data will be replaced.
          * @returns {Promise<void>}

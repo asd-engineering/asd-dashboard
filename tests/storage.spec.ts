@@ -48,6 +48,68 @@ test.describe('StorageManager', () => {
     expect(store.states[0].md5).toBe(expected)
   })
 
+  test('upsertSnapshotByMd5 adds a new snapshot when md5 not present', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const { upsertSnapshotByMd5 } = await import('/storage/StorageManager.js')
+      const store = { version: 1, states: [] }
+      const { store: s, md5, updated } = upsertSnapshotByMd5(store, { name: 'n1', type: 'manual', cfg: 'a', svc: 'b' })
+      return { len: s.states.length, md5, updated }
+    })
+    const expected = crypto.createHash('md5').update('ab').digest('hex')
+    expect(result.updated).toBe(false)
+    expect(result.len).toBe(1)
+    expect(result.md5).toBe(expected)
+  })
+
+  test('upsertSnapshotByMd5 dedupes by md5 and moves to front', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const { upsertSnapshotByMd5 } = await import('/storage/StorageManager.js')
+      const store = { version: 1, states: [] }
+      const orig = Date.now
+      let t = 1
+      Date.now = () => t++
+      upsertSnapshotByMd5(store, { name: 'first', type: 't', cfg: 'a', svc: 'b' })
+      upsertSnapshotByMd5(store, { name: 'second', type: 't', cfg: 'c', svc: 'd' })
+      const beforeTs = store.states[1].ts
+      const { store: s, updated } = upsertSnapshotByMd5(store, { name: 'first', type: 't', cfg: 'a', svc: 'b' })
+      Date.now = orig
+      return {
+        len: s.states.length,
+        firstIndex: s.states.findIndex(r => r.name === 'first'),
+        ts: s.states[0].ts,
+        beforeTs,
+        updated
+      }
+    })
+    expect(result.len).toBe(2)
+    expect(result.updated).toBe(true)
+    expect(result.firstIndex).toBe(0)
+    expect(result.ts).toBeGreaterThan(result.beforeTs)
+  })
+
+  test('saveStateSnapshot updates name on duplicate md5 and keeps md5 stable', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const { default: sm } = await import('/storage/StorageManager.js')
+      const orig = Date.now
+      let t = 1
+      Date.now = () => t++
+      const firstMd5 = await sm.saveStateSnapshot({ name: 'one', type: 'manual', cfg: 'a', svc: 'b' })
+      const firstStore = await sm.loadStateStore()
+      const firstTs = firstStore.states[0].ts
+      const secondMd5 = await sm.saveStateSnapshot({ name: 'two', type: 'manual', cfg: 'a', svc: 'b' })
+      const secondStore = await sm.loadStateStore()
+      const entry = secondStore.states[0]
+      Date.now = orig
+      return { firstMd5, secondMd5, name: entry.name, ts: entry.ts, firstTs, len: secondStore.states.length }
+    })
+    const expected = crypto.createHash('md5').update('ab').digest('hex')
+    expect(result.firstMd5).toBe(expected)
+    expect(result.secondMd5).toBe(expected)
+    expect(result.len).toBe(1)
+    expect(result.name).toBe('two')
+    expect(result.ts).toBeGreaterThan(result.firstTs)
+  })
+
   test('clearAll removes stored keys', async ({ page }) => {
     const result = await page.evaluate(async () => {
       const { default: sm } = await import('/storage/StorageManager.js')
