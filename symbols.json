@@ -162,6 +162,14 @@
     "returns": "void"
   },
   {
+    "name": "autosaveIfPresent",
+    "kind": "function",
+    "file": "src/storage/snapshots.js",
+    "description": "Save the existing dashboard state as an autosave snapshot if any state exists.",
+    "params": [],
+    "returns": "Promise<string|null>"
+  },
+  {
     "name": "base64UrlDecode",
     "kind": "function",
     "file": "src/utils/compression.js",
@@ -703,6 +711,14 @@
     "returns": "string"
   },
   {
+    "name": "getImportFlags",
+    "kind": "function",
+    "file": "src/utils/url.js",
+    "description": "Retrieve import-related flags from the current URL.",
+    "params": [],
+    "returns": "{isImport:boolean, importName:string}"
+  },
+  {
     "name": "getItem",
     "kind": "function",
     "file": "src/storage/StorageManager.js",
@@ -1232,7 +1248,7 @@
     "file": "src/utils/fragmentLoader.js",
     "description": "Parse the URL fragment and store config/services in localStorage. Logs info on success and alerts on failure.",
     "params": [],
-    "returns": "Promise<void>"
+    "returns": "Promise<{cfg:string|null,svc:string|null,name:string}>"
   },
   {
     "name": "loadFromSources",
@@ -1513,6 +1529,14 @@
     "returns": "void"
   },
   {
+    "name": "removeImportFlagsFromUrl",
+    "kind": "function",
+    "file": "src/utils/url.js",
+    "description": "Remove import-related flags from the URL without reloading the page. Other query parameters remain untouched.",
+    "params": [],
+    "returns": "void"
+  },
+  {
     "name": "removeWidget",
     "kind": "function",
     "file": "src/component/widget/widgetManagement.js",
@@ -1639,6 +1663,38 @@
       }
     ],
     "returns": "Promise<void>"
+  },
+  {
+    "name": "runSilentImportFlowIfRequested",
+    "kind": "function",
+    "file": "src/flows/silentImportFlow.js",
+    "description": "Execute the silent import flow if requested by the current URL.",
+    "params": [],
+    "returns": "Promise<boolean>"
+  },
+  {
+    "name": "saveImportedSnapshot",
+    "kind": "function",
+    "file": "src/storage/snapshots.js",
+    "description": "Persist an imported snapshot using already encoded cfg & svc strings.",
+    "params": [
+      {
+        "name": "name",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "cfg",
+        "type": "string|null",
+        "desc": ""
+      },
+      {
+        "name": "svc",
+        "type": "string|null",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<string>"
   },
   {
     "name": "saveLocalStorageData",
