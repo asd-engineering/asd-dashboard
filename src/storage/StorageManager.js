@@ -181,7 +181,9 @@ const StorageManager = {
       subcategory: s.subcategory || '',
       tags: Array.isArray(s.tags) ? s.tags : [],
       config: s.config || {},
-      maxInstances: s.maxInstances !== undefined ? s.maxInstances : null
+      maxInstances: s.maxInstances !== undefined ? s.maxInstances : null,
+      template: s.template,
+      fallback: s.fallback
     }))
 
     jsonSet(KEYS.SERVICES, normalizedServices)
