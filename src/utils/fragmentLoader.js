@@ -29,6 +29,9 @@ const logger = new Logger('fragmentLoader.js')
  * @returns {Promise<{cfg:string|null,svc:string|null,name:string}>}
  */
 export async function loadFromFragment (wasExplicitLoad = false) {
+  // Test instrumentation: count fragment loads to detect duplicate invocations.
+  // @ts-ignore
+  window.__fragmentLoadCount = (window.__fragmentLoadCount || 0) + 1
   if (!('DecompressionStream' in window)) {
     if (location.hash.includes('cfg=') || location.hash.includes('svc=')) {
       showNotification('⚠️ DecompressionStream niet ondersteund door deze browser.', 4000, 'error')
@@ -56,6 +59,7 @@ export async function loadFromFragment (wasExplicitLoad = false) {
 
   if ((cfgParam || svcParam) && hasLocalData && !wasExplicitLoad) {
     await openFragmentDecisionModal({ cfgParam, svcParam, nameParam })
+    // Return shape mirrors explicit loads; callers typically ignore this branch.
     return { cfg: cfgParam, svc: svcParam, name: nameParam }
   }
 

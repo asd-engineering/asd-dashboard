@@ -164,7 +164,7 @@
   {
     "name": "autosaveIfPresent",
     "kind": "function",
-    "file": "src/feature/snapshots.js",
+    "file": "src/storage/snapshots.js",
     "description": "Save the existing dashboard state as an autosave snapshot if any state exists.",
     "params": [],
     "returns": "Promise<string|null>"
@@ -713,7 +713,7 @@
   {
     "name": "getImportFlags",
     "kind": "function",
-    "file": "src/utils/urlParams.js",
+    "file": "src/utils/url.js",
     "description": "Retrieve import-related flags from the current URL.",
     "params": [],
     "returns": "{isImport:boolean, importName:string}"
@@ -1531,7 +1531,7 @@
   {
     "name": "removeImportFlagsFromUrl",
     "kind": "function",
-    "file": "src/utils/urlParams.js",
+    "file": "src/utils/url.js",
     "description": "Remove import-related flags from the URL without reloading the page. Other query parameters remain untouched.",
     "params": [],
     "returns": "void"
@@ -1665,9 +1665,9 @@
     "returns": "Promise<void>"
   },
   {
-    "name": "runImportFlowIfRequested",
+    "name": "runSilentImportFlowIfRequested",
     "kind": "function",
-    "file": "src/feature/silentImport.js",
+    "file": "src/flows/silentImportFlow.js",
     "description": "Execute the silent import flow if requested by the current URL.",
     "params": [],
     "returns": "Promise<boolean>"
@@ -1675,7 +1675,7 @@
   {
     "name": "saveImportedSnapshot",
     "kind": "function",
-    "file": "src/feature/snapshots.js",
+    "file": "src/storage/snapshots.js",
     "description": "Persist an imported snapshot using already encoded cfg & svc strings.",
     "params": [
       {
