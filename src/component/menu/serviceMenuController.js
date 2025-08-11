@@ -22,6 +22,17 @@ export function initServiceMenu (root) {
     root.classList.remove('open'); dropdown?.classList.remove('open')
     root.querySelectorAll('.submenu.open').forEach(el => el.classList.remove('open'))
   }
+  const openSub = (sub, focus = false) => {
+    root.querySelectorAll('.submenu.open').forEach(el => { if (el !== sub) el.classList.remove('open') })
+    sub.classList.add('open')
+    if (focus) {
+      const first = /** @type {HTMLElement|null} */(sub.querySelector('[data-action]'))
+      first?.focus()
+    }
+  }
+  const closeSub = (sub) => {
+    sub.classList.remove('open')
+  }
   const handleEnter = () => {
     clearTimeout(state.timer)
     state.timer = setTimeout(open, 0)
@@ -35,11 +46,11 @@ export function initServiceMenu (root) {
 
   root.addEventListener('mouseenter', e => {
     const sub = /** @type {HTMLElement} */(e.target).closest('[data-submenu]')
-    if (sub && root.contains(sub)) sub.classList.add('open')
+    if (sub && root.contains(sub)) openSub(sub)
   }, true)
   root.addEventListener('mouseleave', e => {
     const sub = /** @type {HTMLElement} */(e.target).closest('[data-submenu]')
-    if (sub && root.contains(sub)) setTimeout(() => sub.classList.remove('open'), 200)
+    if (sub && root.contains(sub)) setTimeout(() => closeSub(sub), 200)
   }, true)
 
   root.addEventListener('click', e => {
@@ -56,9 +67,11 @@ export function initServiceMenu (root) {
 
   root.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      const sub = root.querySelector('.submenu.open')
+      const sub = /** @type {HTMLElement|null} */(root.querySelector('.submenu.open'))
       if (sub) {
-        sub.classList.remove('open')
+        closeSub(sub)
+        const trigger = /** @type {HTMLElement|null} */(sub.querySelector('.submenu-trigger'))
+        trigger?.focus()
       } else {
         close()
       }
@@ -66,10 +79,14 @@ export function initServiceMenu (root) {
       if (!root.classList.contains('open')) open()
     } else if (e.key === 'ArrowRight') {
       const focused = /** @type {HTMLElement|null} */(document.activeElement)?.closest('[data-submenu]')
-      if (focused) focused.classList.add('open')
+      if (focused) openSub(focused, true)
     } else if (e.key === 'ArrowLeft') {
-      const openSub = root.querySelector('.submenu.open')
-      if (openSub) openSub.classList.remove('open')
+      const openEl = /** @type {HTMLElement|null} */(root.querySelector('.submenu.open'))
+      if (openEl) {
+        closeSub(openEl)
+        const trigger = /** @type {HTMLElement|null} */(openEl.querySelector('.submenu-trigger'))
+        trigger?.focus()
+      }
     }
   })
 

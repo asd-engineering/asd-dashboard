@@ -23,6 +23,7 @@ import { widgetStore } from './component/widget/widgetStore.js'
 import { debounce, debounceLeading } from './utils/utils.js'
 import StorageManager, { APP_STATE_CHANGED } from './storage/StorageManager.js'
 import { runSilentImportFlowIfRequested } from './flows/silentImportFlow.js'
+import { updateServiceMenuLabels } from './component/menu/serviceMenuLabels.js'
 
 // NEW: widget selector panel (replaces populateServiceDropdown())
 import {
@@ -74,14 +75,14 @@ async function main () {
       const detail = /** @type {any} */ (e).detail || {}
       const { scope, action } = detail
       if (scope === 'board') {
-        if (action === 'create') void handleCreateBoard()
-        else if (action === 'rename') void handleRenameBoard()
-        else if (action === 'delete') void handleDeleteBoard()
+        if (action === 'create') void handleCreateBoard().then(updateServiceMenuLabels)
+        else if (action === 'rename') void handleRenameBoard().then(updateServiceMenuLabels)
+        else if (action === 'delete') void handleDeleteBoard().then(updateServiceMenuLabels)
       } else if (scope === 'view') {
-        if (action === 'create') void handleCreateView()
-        else if (action === 'rename') void handleRenameView()
-        else if (action === 'delete') void handleDeleteView()
-        else if (action === 'reset') void handleResetView()
+        if (action === 'create') void handleCreateView().then(updateServiceMenuLabels)
+        else if (action === 'rename') void handleRenameView().then(updateServiceMenuLabels)
+        else if (action === 'delete') void handleDeleteView().then(updateServiceMenuLabels)
+        else if (action === 'reset') void handleResetView().then(updateServiceMenuLabels)
       }
     })
     /* eslint-enable no-void */
@@ -135,6 +136,7 @@ async function main () {
     logger.log(`Switching to initial board: ${boardIdToLoad}, view: ${viewIdToLoad}`)
     await switchBoard(boardIdToLoad, viewIdToLoad)
     updateViewSelector(boardIdToLoad)
+    updateServiceMenuLabels()
   } else {
     logger.warn('No boards available to display.')
   }
@@ -159,6 +161,10 @@ async function main () {
     logger.log(`[Event Listener] Reacting to state change. Reason: ${reason || 'unknown'}`)
 
     const currentBoardId = getCurrentBoardId()
+
+    if (['config', 'switch-board', 'switch-view', 'rename-board', 'rename-view'].includes(reason)) {
+      updateServiceMenuLabels()
+    }
 
     switch (reason) {
       case 'config':

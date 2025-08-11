@@ -193,51 +193,55 @@ function initializeMainMenu () {
   const serviceContent = document.createElement('div')
   serviceContent.className = 'dropdown-content'
 
-  serviceContent.appendChild(widgetPanel)
-
   const boardsItem = document.createElement('div')
   boardsItem.className = 'submenu'
   boardsItem.dataset.submenu = 'board'
-  boardsItem.dataset.testid = 'submenu-boards'
-  boardsItem.textContent = 'Boards \u25B8'
-  boardsItem.setAttribute('aria-haspopup', 'true')
-  boardsItem.setAttribute('role', 'menuitem')
+  boardsItem.dataset.testid = 'menu-board'
+
+  const boardTrigger = document.createElement('button')
+  boardTrigger.className = 'submenu-trigger'
+  boardTrigger.innerHTML = '\u25BC Board: <span data-role="label-board"></span>'
+  boardsItem.appendChild(boardTrigger)
 
   const boardsMenu = document.createElement('div')
   boardsMenu.className = 'dropdown-content'
-  boardsMenu.setAttribute('role', 'menu')
+  boardsMenu.dataset.testid = 'submenu-boards'
   ;['create', 'rename', 'delete'].forEach(action => {
-    const link = document.createElement('a')
-    link.href = '#'
-    link.dataset.action = action
-    link.textContent = action.charAt(0).toUpperCase() + action.slice(1) + ' Board'
-    link.setAttribute('role', 'menuitem')
-    boardsMenu.appendChild(link)
+    const btn = document.createElement('button')
+    btn.type = 'button'
+    btn.dataset.action = action
+    btn.textContent = action.charAt(0).toUpperCase() + action.slice(1) +
+      ' Board'
+    boardsMenu.appendChild(btn)
   })
   boardsItem.appendChild(boardsMenu)
-  serviceContent.appendChild(boardsItem)
 
   const viewsItem = document.createElement('div')
   viewsItem.className = 'submenu'
   viewsItem.dataset.submenu = 'view'
-  viewsItem.dataset.testid = 'submenu-views'
-  viewsItem.textContent = 'Views \u25B8'
-  viewsItem.setAttribute('aria-haspopup', 'true')
-  viewsItem.setAttribute('role', 'menuitem')
+  viewsItem.dataset.testid = 'menu-view'
+
+  const viewTrigger = document.createElement('button')
+  viewTrigger.className = 'submenu-trigger'
+  viewTrigger.innerHTML = '\u25BC View: <span data-role="label-view"></span>'
+  viewsItem.appendChild(viewTrigger)
 
   const viewsMenu = document.createElement('div')
   viewsMenu.className = 'dropdown-content'
-  viewsMenu.setAttribute('role', 'menu')
+  viewsMenu.dataset.testid = 'submenu-views'
   ;['create', 'rename', 'delete', 'reset'].forEach(action => {
-    const link = document.createElement('a')
-    link.href = '#'
-    link.dataset.action = action
-    link.textContent = action.charAt(0).toUpperCase() + action.slice(1) + ' View'
-    link.setAttribute('role', 'menuitem')
-    viewsMenu.appendChild(link)
+    const btn = document.createElement('button')
+    btn.type = 'button'
+    btn.dataset.action = action
+    btn.textContent = action.charAt(0).toUpperCase() + action.slice(1) +
+      ' View'
+    viewsMenu.appendChild(btn)
   })
   viewsItem.appendChild(viewsMenu)
+
+  serviceContent.appendChild(boardsItem)
   serviceContent.appendChild(viewsItem)
+  serviceContent.appendChild(widgetPanel)
 
   serviceMenu.appendChild(serviceContent)
   serviceControl.appendChild(serviceMenu)

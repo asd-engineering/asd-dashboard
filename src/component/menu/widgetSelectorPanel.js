@@ -78,6 +78,7 @@ export function __openForTests () {
   const panel = document.getElementById('widget-selector-panel')
   panel?.classList.add('open')
   const root = panel?.closest('#service-control')
+  root?.dispatchEvent(new Event('mouseenter'))
   root?.classList.add('open')
   root?.querySelector('[data-testid="service-menu"]')?.classList.add('open')
 }
