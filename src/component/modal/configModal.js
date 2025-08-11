@@ -173,6 +173,19 @@ async function populateStateTab (tab) {
   table.append(thead, tbody)
   tab.appendChild(table)
 
+  const wipeBtn = document.createElement('button')
+  wipeBtn.textContent = 'Delete all snapshots'
+  wipeBtn.ariaLabel = 'Delete all saved states'
+  wipeBtn.title = 'Delete all saved states'
+  wipeBtn.addEventListener('click', async () => {
+    if (confirm('Delete all saved states? This cannot be undone.')) {
+      await StorageManager.clearStateStore()
+      list.splice(0, list.length)
+      render()
+    }
+  })
+  tab.appendChild(wipeBtn)
+
   /**
    * Render all saved state entries as table rows inside the tab's <tbody>.
    *
