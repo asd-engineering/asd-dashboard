@@ -112,13 +112,14 @@ export function refreshRowCounts () {
 
     // Apply limit state
     const overService = typeof service.maxInstances === 'number' && activeCount >= service.maxInstances
+
+    // ToDo: Add visual queue to the interface
     if (overGlobal || overService) {
-      item.removeAttribute('data-url')
       item.classList.add('limit-reached')
     } else {
-      item.dataset.url = service.url
       item.classList.remove('limit-reached')
     }
+    item.dataset.url = service.url
   })
 }
 

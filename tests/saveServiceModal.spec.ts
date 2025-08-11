@@ -1,4 +1,3 @@
-// tests/saveServiceModal.spec.ts
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking.js'
 import { ensurePanelOpen } from './shared/common'

@@ -1,4 +1,3 @@
-// tests/shared/common.ts
 import { type Page, expect } from "@playwright/test";
 
 export async function ensurePanelOpen(page: Page) {

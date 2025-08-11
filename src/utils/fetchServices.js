@@ -1,4 +1,3 @@
-// src/utils/fetchServices.js
 // @ts-check
 /**
  * Fetch a list of services from various sources and store them globally.
