@@ -12,8 +12,14 @@ test.describe('Service Edit/Delete', () => {
   })
 
   test('edit service updates list', async ({ page }) => {
-    await page.click('#widget-selector-panel .widget-option:has-text("ASD-toolbox") button[data-action="edit"]')
-    const modal = page.locator('#save-service-modal')
+    const serviceRow = page.locator('#widget-selector-panel .widget-option:has-text("ASD-toolbox")');
+    
+    // *** FIX: Hover over the row first to make action buttons appear ***
+    await serviceRow.hover();
+    
+    await serviceRow.locator('button[data-action="edit"]').click();
+
+    const modal = page.locator('#save-service-modal') // The modal ID is now save-service-modal
     await expect(modal).toBeVisible()
     await page.fill('#service-name', 'Toolbox X')
     await page.fill('#service-url', 'http://localhost/x')
