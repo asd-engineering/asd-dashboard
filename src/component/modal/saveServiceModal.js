@@ -10,6 +10,7 @@ import StorageManager from '../../storage/StorageManager.js'
 import { addWidget } from '../widget/widgetManagement.js'
 import { refreshRowCounts, updateWidgetCounter } from '../menu/widgetSelectorPanel.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
+import { serviceGetUUID } from '../../utils/id.js'
 
 /**
  * Open a modal to create or edit a service definition.
@@ -152,6 +153,7 @@ export function openSaveServiceModal (options, onCloseDeprecated) {
         } else {
           // Create new service entry
           const newService = {
+            id: serviceGetUUID(),
             name: nameVal,
             url: urlVal,
             category: categoryInput.value.trim() || undefined,

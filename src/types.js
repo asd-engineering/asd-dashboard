@@ -42,6 +42,7 @@
 /**
  * External service definition.
  * @typedef {Object} Service
+ * @property {string} id - A unique identifier for the service definition.
  * @property {string} name
  * @property {string} url
  * @property {string} [type]

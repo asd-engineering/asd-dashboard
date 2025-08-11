@@ -68,4 +68,40 @@ test.describe('StorageManager', () => {
     expect(result.s).toBeNull()
     expect(result.st).toBeNull()
   })
+
+  test('setServices normalizes service data', async ({ page }) => {
+    const services = await page.evaluate(async () => {
+      const { default: sm } = await import('/storage/StorageManager.js')
+      localStorage.clear()
+      const raw = [
+        { name: 'A', url: 'https://a.example' },
+        { id: 'srv-fixed', name: 'B', url: '', type: 'custom', category: 'c', subcategory: 'sc', tags: ['t'], config: { x: 1 }, maxInstances: 5 }
+      ]
+      sm.setServices(raw as any)
+      return sm.getServices()
+    })
+    expect(services).toHaveLength(2)
+    expect(services[0].id).toMatch(/^srv-/)
+    expect(services[0]).toMatchObject({
+      name: 'A',
+      url: 'https://a.example',
+      type: 'iframe',
+      category: '',
+      subcategory: '',
+      tags: [],
+      config: {},
+      maxInstances: null
+    })
+    expect(services[1]).toEqual({
+      id: 'srv-fixed',
+      name: 'B',
+      url: '',
+      type: 'custom',
+      category: 'c',
+      subcategory: 'sc',
+      tags: ['t'],
+      config: { x: 1 },
+      maxInstances: 5
+    })
+  })
 })

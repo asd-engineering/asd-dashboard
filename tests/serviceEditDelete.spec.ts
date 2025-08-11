@@ -28,7 +28,7 @@ test.describe('Service Edit/Delete', () => {
 
     const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services')))
     expect(services.some(s => s.name === 'Toolbox X' && s.url === 'http://localhost/x')).toBeTruthy()
-    await expect(page.locator('#widget-selector-panel .widget-option')).toContainText('Toolbox X')
+    await expect(page.locator('#widget-selector-panel .widget-option').filter({ hasText: 'Toolbox X' })).toHaveCount(1)
   })
 
   test('delete service removes widgets', async ({ page }) => {
