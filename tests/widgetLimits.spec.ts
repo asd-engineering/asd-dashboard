@@ -147,4 +147,81 @@ test.describe("Widget limits", () => {
     expect(selectedBoard).toBe(boardWithWidget);
   });
 
+  test("services with identical URLs maintain separate maxInstances", async ({ page }) => {
+    const services = [
+      { id: "svc1", name: "SvcA", url: "http://localhost:8000/asd/toolbox", maxInstances: 1 },
+      { id: "svc2", name: "SvcB", url: "http://localhost:8000/asd/toolbox", maxInstances: 1 },
+    ];
+    const boards = [
+      {
+        id: "b",
+        name: "B",
+        order: 0,
+        views: [
+          {
+            id: "v",
+            name: "V",
+            widgetState: [
+              {
+                order: "0",
+                url: "http://localhost:8000/asd/toolbox",
+                type: "web",
+                dataid: "W1",
+                serviceId: "svc1",
+                columns: "1",
+                rows: "1",
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    await routeLimits(page, boards, services, 5);
+    await navigate(page, "/");
+    await ensurePanelOpen(page);
+
+    await page.evaluate(async () => {
+      const mod = await import("/component/menu/widgetSelectorPanel.js");
+      mod.populateWidgetSelectorPanel();
+    });
+
+    const countA = await page
+      .locator('#widget-selector-panel .widget-option[data-name="SvcA"] .widget-option-count')
+      .innerText();
+    const countB = await page
+      .locator('#widget-selector-panel .widget-option[data-name="SvcB"] .widget-option-count')
+      .innerText();
+    expect(countA).toBe(" (1/1)");
+    expect(countB).toBe(" (0/1)");
+
+    await page.evaluate(async () => {
+      const StorageManager = (await import("/storage/StorageManager.js")).default;
+      StorageManager.updateBoards((boards) => {
+        const board = boards.find((b) => b.id === "b");
+        const view = board?.views.find((v) => v.id === "v");
+        view?.widgetState.push({
+          order: "1",
+          url: "http://localhost:8000/asd/toolbox",
+          type: "web",
+          dataid: "W2",
+          serviceId: "svc2",
+          columns: "1",
+          rows: "1",
+        });
+      });
+      const mod = await import("/component/menu/widgetSelectorPanel.js");
+      mod.refreshRowCounts();
+    });
+
+    const updatedA = await page
+      .locator('#widget-selector-panel .widget-option[data-name="SvcA"] .widget-option-count')
+      .innerText();
+    const updatedB = await page
+      .locator('#widget-selector-panel .widget-option[data-name="SvcB"] .widget-option-count')
+      .innerText();
+    expect(updatedA).toBe(" (1/1)");
+    expect(updatedB).toBe(" (1/1)");
+  });
+
 });
