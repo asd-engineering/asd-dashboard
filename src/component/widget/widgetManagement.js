@@ -360,6 +360,7 @@ function findWidgetLocation (id) {
 /**
  * Finds the board and view IDs for the first widget matching a service name.
  * This searches the persistent config, not the active widget store.
+ * @function findFirstLocationByServiceName
  * @param {string} serviceName The name of the service to find.
  * @returns {{boardId: string, viewId: string} | null} Location object or null if not found.
  */

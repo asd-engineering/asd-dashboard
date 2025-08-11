@@ -283,7 +283,7 @@ export function initializeWidgetSelectorPanel () {
       const location = findFirstLocationByServiceName(name)
       if (location) {
         await switchBoard(location.boardId, location.viewId)
-        showNotification(`Navigated to view containing '${name}' widget.`)
+        showNotification(`Mapped to view containing '${name}' widget.`)
       } else {
         showNotification(`Could not find a '${name}' widget in any view.`, 3000, 'error')
       }

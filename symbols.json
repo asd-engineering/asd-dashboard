@@ -635,6 +635,20 @@
     "returns": "Promise<Array<Service>>"
   },
   {
+    "name": "findFirstLocationByServiceName",
+    "kind": "function",
+    "file": "src/component/widget/widgetManagement.js",
+    "description": "Finds the board and view IDs for the first widget matching a service name. This searches the persistent config, not the active widget store.",
+    "params": [
+      {
+        "name": "serviceName",
+        "type": "string",
+        "desc": "The name of the service to find."
+      }
+    ],
+    "returns": "{boardId: string, viewId: string} | null"
+  },
+  {
     "name": "findFirstWidgetByService",
     "kind": "function",
     "file": "src/component/widget/widgetStore.js",
