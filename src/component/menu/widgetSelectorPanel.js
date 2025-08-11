@@ -250,9 +250,9 @@ export function initializeWidgetSelectorPanel () {
       // eslint-disable-next-line no-alert
       if (confirm('Remove this service and all its widgets?')) {
         // Remove widgets in DOM
-        document.querySelectorAll('.widget-wrapper').forEach(el => {
+        document.querySelectorAll('.widget-wrapper').forEach(async el => {
           if (el instanceof HTMLElement && el.dataset.service === name) {
-            removeWidget(el)
+            await removeWidget(el)
           }
         })
         // Remove from persisted boards
