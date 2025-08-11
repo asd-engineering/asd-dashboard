@@ -357,6 +357,7 @@ function findWidgetLocation (id) {
   return null
 }
 
+// NOTE: Do not mutate state here; this function must be pure and side-effect free.
 /**
  * Finds the board and view IDs for the first widget matching a service name.
  * This searches the persistent config, not the active widget store.
@@ -365,13 +366,16 @@ function findWidgetLocation (id) {
  * @returns {{boardId: string, viewId: string} | null} Location object or null if not found.
  */
 function findFirstLocationByServiceName (serviceName) {
+  if (!serviceName) return null
   const boards = StorageManager.getBoards()
+  if (!Array.isArray(boards)) return null
+
   for (const board of boards) {
-    for (const view of board.views || []) {
-      const widgetFound = (view.widgetState || []).some(w => w.type === serviceName)
-      if (widgetFound) {
-        return { boardId: board.id, viewId: view.id }
-      }
+    if (!board || !Array.isArray(board.views)) continue
+    for (const view of board.views) {
+      const widgets = Array.isArray(view?.widgetState) ? view.widgetState : []
+      const hasMatch = widgets.some(w => w && w.type === serviceName)
+      if (hasMatch) return { boardId: board.id, viewId: view.id }
     }
   }
   return null
