@@ -32,3 +32,17 @@ format:
 # Run static type checking
 check:
     npm run check
+
+[private]
+export-all:
+    mkdir -p local
+    find scripts src tests . \
+        -maxdepth 3 \
+        -type f \( -name '*.js' -o -name '*.mjs' \) \
+        -not -path './.git/*' \
+        -not -path './local/*' \
+        -not -path './node_modules/*' \
+    -print0 \
+    | sort -z \
+    | xargs -0 -I{} sh -c 'printf "\n// --- %s ---\n" "{}"; cat "{}"' \
+    > local/src.txt
