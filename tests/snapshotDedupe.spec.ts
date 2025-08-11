@@ -53,9 +53,11 @@ import { injectSnapshot } from './shared/state.js'
   await page.click('.tabs button[data-tab="stateTab"]')
   await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
   await expect(page.locator('#switch-environment')).toHaveText(/Switch environment/)
-  await page.click('#switch-environment')
-  await page.waitForLoadState('networkidle')
-  await page.waitForLoadState('load')
+  await Promise.all([
+    page.waitForNavigation(),
+    page.click('#switch-environment')
+  ])
+  await page.waitForFunction(() => document.body.dataset.ready === 'true')
   const count = await page.evaluate(async () => {
     const { default: sm } = await import('/storage/StorageManager.js')
     return (await sm.loadStateStore()).states.length
