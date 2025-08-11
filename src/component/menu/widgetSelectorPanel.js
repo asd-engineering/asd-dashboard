@@ -34,15 +34,15 @@ function getGlobalWidgetTotal () {
 }
 
 /**
- * Count active instances for a given service URL across persisted state.
- * @param {string} url
+ * Count active instances for a given service across persisted state.
+ * @param {string} serviceId
  * @returns {number}
  */
-function countServiceInstances (url) {
+function countServiceInstances (serviceId) {
   const boards = StorageManager.getBoards() || []
   return boards.reduce(
     (c, b) => c + (b.views || []).reduce(
-      (s, v) => s + (v.widgetState || []).filter(w => w.url === url).length, 0
+      (s, v) => s + (v.widgetState || []).filter(w => w.serviceId === serviceId).length, 0
     ),
     0
   )
@@ -111,7 +111,7 @@ export function refreshRowCounts () {
     const cnt = item.querySelector('.widget-option-count')
     if (!(label instanceof HTMLElement) || !(cnt instanceof HTMLElement)) return
 
-    const activeCount = countServiceInstances(resolved.url)
+    const activeCount = countServiceInstances(resolved.id)
     const max = resolved.maxInstances ?? '∞'
 
     // Update text
@@ -159,7 +159,7 @@ export function populateWidgetSelectorPanel () {
     if (resolved.subcategory) item.dataset.subcategory = resolved.subcategory
     if (Array.isArray(resolved.tags)) item.dataset.tags = resolved.tags.join(',')
 
-    const activeCount = countServiceInstances(resolved.url)
+    const activeCount = countServiceInstances(resolved.id)
     const max = resolved.maxInstances ?? '∞'
     const overService = typeof resolved.maxInstances === 'number' && activeCount >= resolved.maxInstances
     if (!overService && !overGlobal) item.dataset.url = resolved.url

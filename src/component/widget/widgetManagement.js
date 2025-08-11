@@ -64,6 +64,7 @@ async function createWidget (
   widgetWrapper.className = 'widget-wrapper widget'
   widgetWrapper.style.position = 'relative'
   widgetWrapper.dataset.service = service
+  widgetWrapper.dataset.serviceId = serviceObj.id
   widgetWrapper.dataset.url = url
   widgetWrapper.dataset.dataid = dataid || widgetGetUUID()
   logger.log(`Creating widget for service: ${service}`)

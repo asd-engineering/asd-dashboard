@@ -29,6 +29,7 @@ function serializeWidgetState (widget) {
 
   return {
     dataid: widget.dataset.dataid,
+    serviceId: widget.dataset.serviceId,
     order: widget.getAttribute('data-order'),
     url: widget.querySelector('iframe').src,
     columns: widget.dataset.columns || '1',

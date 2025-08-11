@@ -4,6 +4,7 @@
  * Widget persisted in a board view.
  * @typedef {Object} Widget
  * @property {string} [dataid]
+ * @property {string} [serviceId]
  * @property {string} url
  * @property {number|string} columns
  * @property {number|string} rows
