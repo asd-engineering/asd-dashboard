@@ -243,7 +243,8 @@ export async function switchBoard (boardId, viewId = null) {
     const settings = StorageManager.getConfig()?.globalSettings || {}
     const preferred = settings.views?.viewToShow
     const targetViewId = viewId ||
-      (preferred && board.views.some(v => v.id === preferred) ? preferred
+      (preferred && board.views.some(v => v.id === preferred)
+        ? preferred
         : (board.views.length > 0 ? board.views[0].id : null))
 
     if (targetViewId) {
