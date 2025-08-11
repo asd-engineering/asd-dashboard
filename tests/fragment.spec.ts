@@ -30,12 +30,9 @@ test.describe("Secure fragments loading configuration", () => {
     await expect(page.locator("#importName")).toHaveValue(name);
 
     // Trigger overwrite (this reloads the page)
-    await page
-      .locator('#fragment-decision-modal button:has-text("Overwrite")')
-      .click();
-
-    // Wait for reload and presence of final ready state
-    
+    await page.locator('#switch-environment').click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     // Now re-import StorageManager in a fresh JS context
     // ToDo: refactor logic below

@@ -79,6 +79,38 @@ function jsonSet (key, obj) {
 /** @typedef {import('../types.js').Service} Service */
 
 /**
+ * Insert or update a snapshot in the state store based on MD5 hash.
+ *
+ * If a snapshot with the same MD5 exists its timestamp is refreshed and it is
+ * moved to the front of the list. Optionally updates the name when provided.
+ *
+ * @function upsertSnapshotByMd5
+ * @param {{version:number,states:Array}} store
+ * @param {{name:string,type:string,cfg:string,svc:string}} snap
+ * @returns {{store:{version:number,states:Array},md5:string,updated:boolean}}
+ */
+export function upsertSnapshotByMd5 (store, { name, type, cfg, svc }) {
+  const md5 = md5Hex(cfg + svc)
+  const list = Array.isArray(store.states) ? store.states : []
+  const idx = list.findIndex(s => s.md5 === md5)
+  const ts = Date.now()
+
+  if (idx !== -1) {
+    const existing = list[idx]
+    existing.ts = ts
+    if (name) existing.name = name
+    if (idx !== 0) {
+      list.splice(idx, 1)
+      list.unshift(existing)
+    }
+    return { store, md5, updated: true }
+  }
+
+  list.unshift({ name, type, md5, cfg, svc, ts })
+  return { store, md5, updated: false }
+}
+
+/**
  * Singleton API for storing and retrieving dashboard data.
  */
 const StorageManager = {
@@ -213,13 +245,12 @@ const StorageManager = {
   * Save the current state snapshot.
   * @function saveStateSnapshot
    * @param {{name:string,type:string,cfg:string,svc:string}} snapshot
-   * @returns {Promise<string>} Hash of the snapshot
-   */
+  * @returns {Promise<string>} Hash of the snapshot
+  */
   async saveStateSnapshot ({ name, type, cfg, svc }) {
     const store = await StorageManager.loadStateStore()
-    const md5 = md5Hex(cfg + svc)
-    store.states.unshift({ name, type, md5, cfg, svc, ts: Date.now() })
-    jsonSet(KEYS.STATES, store)
+    const { store: updated, md5 } = upsertSnapshotByMd5(store, { name, type, cfg, svc })
+    await StorageManager.saveStateStore(updated)
     return md5
   },
 

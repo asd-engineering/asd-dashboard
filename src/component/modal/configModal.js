@@ -162,7 +162,7 @@ async function populateStateTab (tab) {
   const thead = document.createElement('thead')
   const tbody = document.createElement('tbody')
 
-  const headers = ['Actions', '', 'Name', 'Type', 'Date', 'MD5']
+  const headers = ['Environment', '', 'Name', 'Type', 'Date', 'MD5']
   const headerRow = document.createElement('tr')
   headers.forEach(h => {
     const th = document.createElement('th')
@@ -191,7 +191,7 @@ async function populateStateTab (tab) {
    *
    * This function clears the existing table body and repopulates it using
    * the `list` of saved state snapshots. Each row includes buttons to:
-   * - Restore a snapshot via `openFragmentDecisionModal()`
+   * - Switch to a snapshot via `openFragmentDecisionModal()`
    * - Delete the snapshot and persist the new list
    *
    * Table rows are tagged with `data-name` for filtering via the search input.
@@ -206,9 +206,11 @@ async function populateStateTab (tab) {
       const tr = document.createElement('tr')
       tr.dataset.name = row.name
 
-      const restore = document.createElement('button')
-      restore.textContent = 'Restore'
-      restore.addEventListener('click', async () => {
+      const switchBtn = document.createElement('button')
+      switchBtn.textContent = 'Switch'
+      switchBtn.dataset.action = 'switch'
+      switchBtn.classList.add('state-switch')
+      switchBtn.addEventListener('click', async () => {
         try {
           await openFragmentDecisionModal({ cfgParam: row.cfg, svcParam: row.svc, nameParam: row.name })
         } catch (error) {
@@ -228,7 +230,7 @@ async function populateStateTab (tab) {
       })
 
       const cells = [
-        restore,
+        switchBtn,
         del,
         row.name,
         row.type,

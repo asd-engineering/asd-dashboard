@@ -1,5 +1,6 @@
 export const ciServices = [
   {
+    id: "toolbox",
     name: "ASD-toolbox",
     url: "http://localhost:8000/asd/toolbox",
     type: "api",
@@ -12,6 +13,7 @@ export const ciServices = [
     },
   },
   {
+    id: "terminal",
     name: "ASD-terminal",
     url: "http://localhost:8000/asd/terminal",
     type: "web",
@@ -24,6 +26,7 @@ export const ciServices = [
     },
   },
   {
+    id: "tunnel",
     name: "ASD-tunnel",
     url: "http://localhost:8000/asd/tunnel",
     type: "web",
@@ -36,6 +39,7 @@ export const ciServices = [
     },
   },
   {
+    id: "containers",
     name: "ASD-containers",
     url: "http://localhost:8000/asd/containers",
     type: "web",
