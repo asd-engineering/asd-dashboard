@@ -222,12 +222,30 @@ const StorageManager = {
   },
 
   /**
-   * Remove all persisted data.
-   * @function clearAll
-   * @returns {void}
-   */
+  * Remove all persisted data.
+  * @function clearAll
+  * @returns {void}
+  */
   clearAll () {
     Object.values(KEYS).forEach(key => localStorage.removeItem(key))
+  },
+
+  /**
+   * Remove persisted config, boards, services and last used ids while keeping saved states.
+   * @function clearAllExceptState
+   * @returns {void}
+   */
+  clearAllExceptState () {
+    [KEYS.CONFIG, KEYS.BOARDS, KEYS.SERVICES, KEYS.LAST_BOARD, KEYS.LAST_VIEW].forEach(key => localStorage.removeItem(key))
+  },
+
+  /**
+   * Reset the state store to an empty list.
+   * @function clearStateStore
+   * @returns {Promise<void>}
+   */
+  async clearStateStore () {
+    await StorageManager.saveStateStore({ version: CURRENT_VERSION, states: [] })
   },
 
   /**

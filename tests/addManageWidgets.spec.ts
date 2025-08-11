@@ -11,6 +11,7 @@ import {
 
 
 test.describe('Widgets', () => {
+  test.setTimeout(30000)
 
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
