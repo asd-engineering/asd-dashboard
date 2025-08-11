@@ -2162,7 +2162,7 @@
     "name": "updateWidgetCounter",
     "kind": "function",
     "file": "src/component/menu/widgetSelectorPanel.js",
-    "description": "Update the Global/Max counter in the panel.",
+    "description": "Update the Active/Used/Max counter in the panel.",
     "params": [],
     "returns": "void"
   },
