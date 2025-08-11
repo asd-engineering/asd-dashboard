@@ -49,7 +49,7 @@ function countServiceInstances (url) {
 }
 
 /**
- * Update the Global/Max counter in the panel.
+ * Update the Active/Used/Max counter in the panel.
  * @function updateWidgetCounter
  * @returns {void}
  */
@@ -57,16 +57,22 @@ export function updateWidgetCounter () {
   const counter = document.getElementById('widget-count')
   if (!counter) return
 
-  const total = getGlobalWidgetTotal()
+  // 1. Get "Active" count: widgets currently loaded in the store.
+  const active = widgetStore.widgets.size
 
-  // Max comes from widgetStore first (runtime cap), then config fallback.
+  // 2. Get "Used" count: total widgets configured across all boards/views.
+  const used = getGlobalWidgetTotal()
+
+  // 3. Get "Max" count: the store's eviction limit.
   const cfg = StorageManager.getConfig()
   const maxFromConfig = cfg?.globalSettings?.maxTotalInstances
   const max =
     (typeof widgetStore?.maxSize === 'number' ? widgetStore.maxSize : null) ??
     (typeof maxFromConfig === 'number' ? maxFromConfig : null)
+  const maxDisplay = max !== null ? max : '∞'
 
-  counter.textContent = `Global: ${total} / Max: ${max !== null ? max : '∞'}`
+  // 4. Update the UI text content with the new format.
+  counter.textContent = `Active: ${active} / Used: ${used} / Max: ${maxDisplay}`
 }
 
 /**
