@@ -164,3 +164,23 @@ export async function getLastUsedViewId(page: Page) {
 export async function getLastUsedBoardId(page: Page) {
   return await page.evaluate(() => localStorage.getItem("lastUsedBoardId"));
 }
+
+// Select a view by its visible label and wait until the DOM reflects it.
+export async function selectViewByLabel(page: Page, viewLabel: string) {
+  // Wait until the view dropdown is populated
+  await page.waitForFunction(
+    (sel) => !!document.querySelector(sel) && (document.querySelector(sel) as HTMLSelectElement).options.length > 0,
+    "#view-selector",
+    { timeout: 5000 }
+  );
+
+  // Change the view
+  await page.selectOption("#view-selector", { label: viewLabel });
+
+  // Wait until the <div.board-view> id matches the selected value
+  await page.waitForFunction(() => {
+    const sel = document.querySelector("#view-selector") as HTMLSelectElement | null;
+    const viewEl = document.querySelector(".board-view") as HTMLElement | null;
+    return !!sel && !!viewEl && viewEl.id === sel.value;
+  });
+}
