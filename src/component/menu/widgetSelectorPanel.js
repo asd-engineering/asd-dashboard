@@ -187,12 +187,17 @@ export function populateWidgetSelectorPanel () {
   updateWidgetCounter()
 }
 
+let __panelInitialized = false
+
 /**
  * Set up click/search/keyboard handlers for the selector.
  * @function initializeWidgetSelectorPanel
  * @returns {void}
  */
 export function initializeWidgetSelectorPanel () {
+  if (__panelInitialized) return
+  __panelInitialized = true
+
   const panel = document.getElementById('widget-selector-panel')
   if (!panel) return
 

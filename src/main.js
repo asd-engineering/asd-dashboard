@@ -1,3 +1,4 @@
+// src/main.js
 // @ts-check
 /**
  * Entry point for the dashboard application.
@@ -7,7 +8,7 @@
 import { initializeMainMenu, applyControlVisibility } from './component/menu/menu.js'
 import { initializeBoards, switchBoard, updateBoardSelector, updateViewSelector } from './component/board/boardManagement.js'
 import { getCurrentBoardId } from './utils/elements.js'
-import { initializeDashboardMenu, applyWidgetMenuVisibility, populateServiceDropdown } from './component/menu/dashboardMenu.js'
+import { initializeDashboardMenu, applyWidgetMenuVisibility } from './component/menu/dashboardMenu.js'
 import { initializeDragAndDrop } from './component/widget/events/dragDrop.js'
 import { fetchServices } from './utils/fetchServices.js'
 import { getConfig } from './utils/getConfig.js'
@@ -22,8 +23,15 @@ import { debounce, debounceLeading } from './utils/utils.js'
 import StorageManager, { APP_STATE_CHANGED } from './storage/StorageManager.js'
 import { runSilentImportFlowIfRequested } from './flows/silentImportFlow.js'
 
-const logger = new Logger('main.js')
+// NEW: widget selector panel (replaces populateServiceDropdown())
+import {
+  populateWidgetSelectorPanel,
+  initializeWidgetSelectorPanel,
+  updateWidgetCounter,
+  refreshRowCounts
+} from './component/menu/widgetSelectorPanel.js'
 
+const logger = new Logger('main.js')
 Logger.enableLogs('all')
 
 // Global state container
@@ -58,15 +66,13 @@ async function main () {
   initializeBoardDropdown()
   initializeViewDropdown()
   initializeDragAndDrop()
+  initializeWidgetSelectorPanel() // NEW: wire up panel behavior
 
   // 3. Load services and configuration in parallel
   /** @type {import('./types.js').DashboardConfig} */
   let config
   try {
-    await Promise.all([
-      fetchServices(),
-      getConfig()
-    ]).then(([, result]) => {
+    await Promise.all([fetchServices(), getConfig()]).then(([, result]) => {
       config = result
     })
   } catch (e) {
@@ -93,7 +99,6 @@ async function main () {
 
   const lastUsedBoardId = StorageManager.misc.getLastBoardId()
   const lastUsedViewId = StorageManager.misc.getLastViewId()
-
   const boardExists = (config.boards || []).some(board => board.id === lastUsedBoardId)
 
   let boardIdToLoad = initialBoardView?.boardId
@@ -112,12 +117,19 @@ async function main () {
     logger.warn('No boards available to display.')
   }
 
+  // Initial widget selector population/counter (after services & boards)
+  populateWidgetSelectorPanel()
+  refreshRowCounts()
+  updateWidgetCounter()
+
   // 7. Initialize modal triggers
   const buttonDebounce = 200
   const handleLocalStorageModal = debounceLeading(openLocalStorageModal, buttonDebounce)
   const handleConfigModal = debounceLeading(openConfigModal, buttonDebounce)
-  document.getElementById('localStorage-edit-button').addEventListener('click', /** @type {EventListener} */(handleLocalStorageModal))
-  document.getElementById('open-config-modal').addEventListener('click', /** @type {EventListener} */(handleConfigModal))
+  document.getElementById('localStorage-edit-button')
+    .addEventListener('click', /** @type {EventListener} */(handleLocalStorageModal))
+  document.getElementById('open-config-modal')
+    .addEventListener('click', /** @type {EventListener} */(handleConfigModal))
 
   // --- PHASE 2: ACTIVE EVENT LISTENER ---
   const onStateChange = (event) => {
@@ -129,14 +141,18 @@ async function main () {
     switch (reason) {
       case 'config':
         updateBoardSelector()
-        if (currentBoardId) {
-          updateViewSelector(currentBoardId)
-        }
-        populateServiceDropdown()
+        if (currentBoardId) updateViewSelector(currentBoardId)
+        // NEW: repopulate panel when config (e.g., boards/views) changes
+        populateWidgetSelectorPanel()
+        refreshRowCounts()
+        updateWidgetCounter()
         break
 
       case 'services':
-        populateServiceDropdown()
+        // NEW: repopulate panel when services update
+        populateWidgetSelectorPanel()
+        refreshRowCounts()
+        updateWidgetCounter()
         break
     }
   }
