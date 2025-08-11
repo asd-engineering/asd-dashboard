@@ -13,7 +13,7 @@ import { navigate, getConfigBoards } from './shared/common'
     await page.evaluate(async () => {
       const { default: sm } = await import('/storage/StorageManager.js')
       sm.setConfig({ boards: [{ id: 'b1', name: 'B1', views: [] }, { id: 'b2', name: 'B2', views: [] }] })
-      sm.setServices([{ name: 'svc1', url: '' }])
+      sm.setServices([{ name: 'svc1', url: '' }] as any)
       await sm.saveStateSnapshot({ name: 'snap', type: 'manual', cfg: 'a', svc: 'b' })
     })
 

@@ -8,6 +8,7 @@
 import { md5Hex } from '../utils/hash.js'
 import { DEFAULT_CONFIG_TEMPLATE } from './defaultConfig.js'
 import { deepMerge } from '../utils/objectUtils.js'
+import { serviceGetUUID } from '../utils/id.js'
 
 /**
  * CURRENT_VERSION for stored data schema.
@@ -197,13 +198,27 @@ const StorageManager = {
   },
 
   /**
-   * Persist the provided services array.
+   * Persist the provided services array after normalizing each object.
    * @function setServices
    * @param {Array<Service>} services
    * @returns {void}
    */
   setServices (services) {
-    jsonSet(KEYS.SERVICES, services)
+    const normalizedServices = services.map(s => ({
+      id: s.id || serviceGetUUID(),
+      name: s.name || 'Unnamed Service',
+      url: s.url || '',
+      type: s.type || 'iframe',
+      category: s.category || '',
+      subcategory: s.subcategory || '',
+      tags: Array.isArray(s.tags) ? s.tags : [],
+      config: s.config || {},
+      maxInstances: s.maxInstances !== undefined ? s.maxInstances : null,
+      template: s.template,
+      fallback: s.fallback
+    }))
+
+    jsonSet(KEYS.SERVICES, normalizedServices)
     window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason: 'services' } }))
   },
 

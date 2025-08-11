@@ -47,7 +47,8 @@ async function fetchJson (url) {
 }
 
 /**
- * Fetch the service list and update the service selector on the page.
+ * Fetch the service list and publish it to StorageManager.
+ * Emits a 'services-updated' event for the widget selector panel.
  *
  * @function fetchServices
  * @returns {Promise<Array<Service>>} Array of service objects.
@@ -76,22 +77,12 @@ export const fetchServices = async () => {
   }
 
   services = services || []
+
+  // Persist via main's storage model
   StorageManager.setServices(services)
 
-  const serviceSelector = document.getElementById('service-selector')
-  if (serviceSelector) {
-    serviceSelector.innerHTML = ''
-    const defaultOption = document.createElement('option')
-    defaultOption.value = ''
-    defaultOption.textContent = 'Select a Service'
-    serviceSelector.appendChild(defaultOption)
-    services.forEach(service => {
-      const option = document.createElement('option')
-      option.value = service.url
-      option.textContent = service.name
-      serviceSelector.appendChild(option)
-    })
-  }
+  // Notify UI (widget selector listens to this)
+  document.dispatchEvent(new CustomEvent('services-updated'))
 
   return services
 }

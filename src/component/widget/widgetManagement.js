@@ -22,11 +22,11 @@ import { toggleFullScreen } from './events/fullscreenToggle.js'
 import { initializeResizeHandles } from './events/resizeHandler.js'
 import { Logger } from '../../utils/Logger.js'
 import { showServiceModal } from '../modal/serviceLaunchModal.js'
-// import { switchBoard } from '../board/boardManagement.js'
 import { widgetGetUUID } from '../../utils/id.js'
 import StorageManager from '../../storage/StorageManager.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { showNotification } from '../dialog/notification.js'
+import { resolveServiceConfig } from '../../utils/serviceUtils.js'
 
 const logger = new Logger('widgetManagement.js')
 
@@ -49,8 +49,9 @@ async function createWidget (
 ) {
   logger.log('Creating widget with URL:', url)
   const config = await getConfig()
-  const services = await fetchServices()
-  const serviceObj = services.find((s) => s.name === service) || {}
+  await fetchServices()
+  const rawService = StorageManager.getServices().find((s) => s.name === service) || {}
+  const serviceObj = resolveServiceConfig(rawService)
 
   const minColumns =
     serviceObj.config?.minColumns || config.styling.widget.minColumns
@@ -110,7 +111,7 @@ async function createWidget (
     buttonDebounce
   )
   const debouncedHideResizeMenuBlock = debounce(
-    (widgetWrapper) => hideResizeMenuBlock(widgetWrapper),
+    (wrapper) => hideResizeMenuBlock(wrapper),
     buttonDebounce
   )
 
@@ -129,10 +130,7 @@ async function createWidget (
 
   const resizeMenuBlockIcon = document.createElement('button')
   resizeMenuBlockIcon.innerHTML = emojiList.puzzle.unicode
-  resizeMenuBlockIcon.classList.add(
-    'widget-button',
-    'widget-icon-resize-block'
-  )
+  resizeMenuBlockIcon.classList.add('widget-button', 'widget-icon-resize-block')
   resizeMenuBlockIcon.addEventListener('mouseenter', () =>
     showResizeMenuBlock(resizeMenuBlockIcon, widgetWrapper)
   )
@@ -207,32 +205,31 @@ async function addWidget (
   if (window.asd.widgetStore.isAdding(serviceName)) return
   window.asd.widgetStore.lock(serviceName)
   try {
-    const services = await fetchServices()
-    const serviceObj = services.find((s) => s.name === serviceName) || {}
+    await fetchServices()
+    const rawServiceObj = StorageManager.getServices().find((s) => s.name === serviceName) || {}
+    const serviceObj = resolveServiceConfig(rawServiceObj)
 
     // Enforce global maxInstances (across live DOM and persisted config)
     const liveDataIds = Array.from(window.asd.widgetStore.widgets.values())
       .filter(el => el.dataset.service === serviceName)
       .map(el => el.dataset.dataid)
-    const config = StorageManager.getConfig()
-    const persistedDataIds = config.boards
-      .flatMap(b => b.views)
-      .flatMap(v => v.widgetState)
-      // .filter(w => w.service === serviceName)
-      .map(w => w.dataid)
+
+    const config = StorageManager.getConfig() || {}
+    const boards = Array.isArray(config.boards) ? config.boards : []
+    const persistedDataIds = boards
+      .flatMap(b => Array.isArray(b.views) ? b.views : [])
+      .flatMap(v => Array.isArray(v.widgetState) ? v.widgetState : [])
+      .map(w => w?.dataid)
+      .filter(Boolean)
+
     const allIds = new Set([...liveDataIds, ...persistedDataIds])
     const effectiveCount = allIds.size
 
     const alreadyExists =
-      dataid &&
-      (liveDataIds.includes(dataid) || persistedDataIds.includes(dataid))
+      !!dataid && (liveDataIds.includes(dataid) || persistedDataIds.includes(dataid))
 
-    if (
-      typeof serviceObj.maxInstances === 'number' &&
-      serviceObj.maxInstances > 0
-    ) {
+    if (typeof serviceObj.maxInstances === 'number' && serviceObj.maxInstances > 0) {
       if (!alreadyExists && effectiveCount >= serviceObj.maxInstances) {
-        // Instead of switching, show notification
         if (typeof showNotification === 'function') {
           showNotification(
             `Cannot add more: limit (${serviceObj.maxInstances}) reached for "${serviceName}".`,
@@ -240,9 +237,8 @@ async function addWidget (
             'error'
           )
         } else {
-          alert(
-            `Cannot add more: limit (${serviceObj.maxInstances}) reached for "${serviceName}".`
-          )
+          // eslint-disable-next-line no-alert
+          alert(`Cannot add more: limit (${serviceObj.maxInstances}) reached for "${serviceName}".`)
         }
         return
       }
@@ -255,11 +251,10 @@ async function addWidget (
     if (dataid && window.asd.widgetStore.has(dataid)) {
       const widget = window.asd.widgetStore.get(dataid)
       widget.style.display = ''
-      // Only append if not already in the DOM
       if (widget.parentElement !== widgetContainer) {
         widgetContainer.appendChild(widget)
       }
-      saveWidgetState(boardId, viewId) // ensure persistence
+      saveWidgetState(boardId, viewId)
       return
     }
 
@@ -284,7 +279,7 @@ async function addWidget (
     if (serviceObj && serviceObj.type === 'api') {
       fetchData(url, (data) => {
         const iframe = widgetWrapper.querySelector('iframe')
-        iframe.contentWindow.postMessage(data, '*')
+        iframe?.contentWindow?.postMessage(data, '*')
       })
     }
 
@@ -336,12 +331,30 @@ function updateWidgetOrders () {
     if (el.style.display !== 'none') {
       const newOrder = String(visibleIndex)
       el.setAttribute('data-order', newOrder)
-      el.style.order = newOrder // Keep style.order for visual consistency
+      el.style.order = newOrder
       visibleIndex++
     }
   })
 
+  // Main branch semantics: save using current board/view inferred by persister
   saveWidgetState()
 }
 
-export { addWidget, removeWidget, updateWidgetOrders, createWidget }
+/**
+ * Locate the board and view containing a widget id in persisted config.
+ * @param {string} id
+ * @returns {{boardId:string, viewId:string}|null}
+ */
+function findWidgetLocation (id) {
+  const boards = StorageManager.getBoards()
+  for (const board of boards) {
+    for (const view of board.views || []) {
+      if ((view.widgetState || []).some(w => w.dataid === id)) {
+        return { boardId: board.id, viewId: view.id }
+      }
+    }
+  }
+  return null
+}
+
+export { addWidget, removeWidget, updateWidgetOrders, createWidget, findWidgetLocation }

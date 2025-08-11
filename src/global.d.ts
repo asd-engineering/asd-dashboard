@@ -10,6 +10,9 @@ declare global {
       widgetStore: import('./component/widget/widgetStore.js').WidgetStore;
     };
     _appLogs?: import('./types.js').LoggerEntry[];
+
+    /** Test-only hook to open the widget selector panel */
+    __openWidgetPanel?: () => void;
   }
 }
 
