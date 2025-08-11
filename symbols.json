@@ -222,12 +222,28 @@
     "returns": "void"
   },
   {
+    "name": "clearAllExceptState",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Remove persisted config, boards, services and last used ids while keeping saved states.",
+    "params": [],
+    "returns": "void"
+  },
+  {
     "name": "clearConfigFragment",
     "kind": "function",
     "file": "src/utils/fragmentGuard.js",
     "description": "Remove any `#cfg` or `#svc` fragment from the current URL without triggering a reload.",
     "params": [],
     "returns": "void"
+  },
+  {
+    "name": "clearStateStore",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Reset the state store to an empty list.",
+    "params": [],
+    "returns": "Promise<void>"
   },
   {
     "name": "clearWidgetContainer",

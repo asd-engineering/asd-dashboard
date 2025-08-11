@@ -26,6 +26,10 @@ ASD Dashboard is architected with a focus on simplicity and adaptability:
 - **Playwright Integration & Testing**: Comprehensive testing using Playwright, with automated tests running via GitHub Actions.
 - **Custom Logger Integration**: All log statements use a custom logger for better development and debugging.
 
+## Reset & State Management
+
+The admin reset control clears boards, views, services and configuration while keeping any saved state snapshots. Bulk removal of saved states is available from the **Saved States** tab in the configuration modal via the "Delete all snapshots" button. A full wipe, including saved states, remains possible through the legacy `StorageManager.clearAll()` API.
+
 Here's the optimized version of the second part—**URL Fragment-Based Config Sharing**—to follow directly after the revised query parameter section. It's concise, technically precise, and clearly contrasts with the dynamic configuration method:
 
 ## Private Config Sharing (via URL Fragment)

@@ -90,10 +90,10 @@ function initializeDashboardMenu () {
 
   const handleReset = debounceLeading(() => {
     // Show confirmation dialog
-    const confirmed = confirm('Confirm environment reset: all configurations and services will be permanently deleted.')
+    const confirmed = confirm('Reset dashboard (boards, views, services) but keep saved states?')
 
     if (confirmed) {
-      StorageManager.clearAll()
+      StorageManager.clearAllExceptState()
       clearConfigFragment()
       location.reload()
     }

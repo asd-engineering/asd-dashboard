@@ -68,4 +68,44 @@ test.describe('StorageManager', () => {
     expect(result.s).toBeNull()
     expect(result.st).toBeNull()
   })
+
+  test('clearAllExceptState preserves state store', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const { default: sm } = await import('/storage/StorageManager.js')
+      localStorage.setItem('config', '{}')
+      localStorage.setItem('boards', '[]')
+      localStorage.setItem('services', '[]')
+      localStorage.setItem('lastUsedBoardId', 'b1')
+      localStorage.setItem('lastUsedViewId', 'v1')
+      localStorage.setItem('asd-dashboard-state', '{"version":1,"states":[{"name":"snap"}]}')
+      sm.clearAllExceptState()
+      return {
+        c: localStorage.getItem('config'),
+        b: localStorage.getItem('boards'),
+        s: localStorage.getItem('services'),
+        lb: localStorage.getItem('lastUsedBoardId'),
+        lv: localStorage.getItem('lastUsedViewId'),
+        st: localStorage.getItem('asd-dashboard-state')
+      }
+    })
+    expect(result.c).toBeNull()
+    expect(result.b).toBeNull()
+    expect(result.s).toBeNull()
+    expect(result.lb).toBeNull()
+    expect(result.lv).toBeNull()
+    expect(result.st).not.toBeNull()
+  })
+
+  test('clearStateStore empties saved states', async ({ page }) => {
+    const store = await page.evaluate(async () => {
+      const { default: sm } = await import('/storage/StorageManager.js')
+      await sm.saveStateStore({ version: 1, states: [{ name: 'one' }] })
+      await sm.clearStateStore()
+      return localStorage.getItem('asd-dashboard-state')
+    })
+    const parsed = JSON.parse(store)
+    expect(parsed.version).toBe(1)
+    expect(Array.isArray(parsed.states)).toBeTruthy()
+    expect(parsed.states.length).toBe(0)
+  })
 })
