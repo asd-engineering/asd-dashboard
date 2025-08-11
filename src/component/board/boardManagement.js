@@ -8,10 +8,11 @@ import { addWidget } from '../widget/widgetManagement.js'
 import { widgetStore } from '../widget/widgetStore.js'
 import { Logger } from '../../utils/Logger.js'
 import { boardGetUUID, viewGetUUID } from '../../utils/id.js'
-import StorageManager from '../../storage/StorageManager.js'
+import StorageManager, { APP_STATE_CHANGED } from '../../storage/StorageManager.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { saveWidgetState } from '../../storage/widgetStatePersister.js'
 import { updateWidgetCounter } from '../../component/menu/widgetSelectorPanel.js'
+import { updateServiceMenuLabels } from '../menu/serviceMenuLabels.js'
 
 /** @typedef {import('../../types.js').Board} Board */
 /** @typedef {import('../../types.js').View} View */
@@ -161,6 +162,8 @@ export async function switchView (boardId = getCurrentBoardId(), viewId) {
   }
 
   StorageManager.misc.setLastViewId(viewId)
+  updateServiceMenuLabels()
+  window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason: 'switch-view' } }))
 }
 
 /**
@@ -261,6 +264,8 @@ export async function switchBoard (boardId, viewId = null) {
     updateViewSelector(boardId)
     updateWidgetCounter()
     document.dispatchEvent(new Event('view:ready'))
+    updateServiceMenuLabels()
+    window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason: 'switch-board' } }))
   } else {
     logger.error(`Board with ID ${boardId} not found`)
   }
@@ -290,6 +295,8 @@ export function initializeBoards () {
       logger.log('Initializing board:', board)
       addBoardToUI(board)
     })
+
+    updateServiceMenuLabels()
 
     if (boards.length > 0) {
       const firstBoard = boards[0]
@@ -351,6 +358,9 @@ export async function renameBoard (boardId, newBoardName) {
   })
 
   if (found) {
+    updateBoardSelector()
+    updateServiceMenuLabels()
+    window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason: 'rename-board' } }))
     logger.log(`Renamed board ${boardId} to ${newBoardName}`)
   } else {
     logger.error(`Board with ID ${boardId} not found`)
@@ -420,7 +430,9 @@ export async function renameView (boardId, viewId, newViewName) {
   if (!viewFound) {
     return logger.error(`View with ID ${viewId} not found`)
   }
-
+  updateViewSelector(boardId)
+  updateServiceMenuLabels()
+  window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason: 'rename-view' } }))
   logger.log(`Renamed view ${viewId} to ${newViewName}`)
 }
 

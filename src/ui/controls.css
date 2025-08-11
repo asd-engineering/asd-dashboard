@@ -245,5 +245,20 @@ menu {
 }
 .dropdown.open > .dropdown-content { display: block; }
 .submenu { position: relative; }
-.submenu > .dropdown-content { top: 0; left: 100%; }
+.submenu > .dropdown-content {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  min-width: 220px;
+  display: none;
+  z-index: 11;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  padding: 4px 0;
+}
 .submenu.open > .dropdown-content { display: block; }
+.submenu-trigger {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 28ch;
+}

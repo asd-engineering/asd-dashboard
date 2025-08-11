@@ -13,8 +13,9 @@ test.describe('Board persistence', () => {
 
   test('new board persists after reload', async ({ page }) => {
     await handleDialog(page, 'prompt', boardName)
-    await page.click('#board-dropdown .dropbtn')
-    await page.click('#board-control a[data-action="create"]')
+    await page.hover('[data-testid="service-menu"]')
+    await page.hover('[data-testid="menu-board"]')
+    await page.click('[data-testid="submenu-boards"] [data-action="create"]')
     await expect(page.locator('#board-selector')).toContainText(boardName)
 
     await page.reload()
@@ -25,8 +26,9 @@ test.describe('Board persistence', () => {
 
   test('last view persists after reload', async ({ page }) => {
     await handleDialog(page, 'prompt', 'Second View')
-    await page.click('#view-dropdown .dropbtn')
-    await page.click('#view-control a[data-action="create"]')
+    await page.hover('[data-testid="service-menu"]')
+    await page.hover('[data-testid="menu-view"]')
+    await page.click('[data-testid="submenu-views"] [data-action="create"]')
     await expect(page.locator('#view-selector option:checked')).toHaveText('Second View')
 
     await page.reload()

@@ -10,36 +10,95 @@ test.describe('Service menu', () => {
     await addServices(page, 1);
   });
 
-  test('hover opens main menu sections', async ({ page }) => {
+  test('labels reflect current selection', async ({ page }) => {
+    await expect(page.locator('[data-role="label-board"]')).toHaveText('Default Board');
+    await expect(page.locator('[data-role="label-view"]')).toHaveText('Default View');
+  });
+
+  test('hover opens side dropdowns', async ({ page }) => {
     await page.hover('[data-testid="service-menu"]');
-    await expect(page.locator('#widget-selector-panel')).toBeVisible();
+    await page.hover('[data-testid="menu-board"]');
     await expect(page.locator('[data-testid="submenu-boards"]')).toBeVisible();
+    await page.hover('[data-testid="menu-view"]');
     await expect(page.locator('[data-testid="submenu-views"]')).toBeVisible();
   });
 
-  test('create board via submenu', async ({ page }) => {
+  test('actions wired', async ({ page }) => {
+    page.on('dialog', dialog => dialog.accept());
+
     await handleDialog(page, 'prompt', 'SM Board');
     await page.hover('[data-testid="service-menu"]');
-    await page.hover('[data-testid="submenu-boards"]');
+    await page.hover('[data-testid="menu-board"]');
     await page.click('[data-testid="submenu-boards"] [data-action="create"]');
-    const boards = await getConfigBoards(page);
+    let boards = await getConfigBoards(page);
     expect(boards.some(b => b.name === 'SM Board')).toBeTruthy();
-  });
 
-  test('reset view via submenu', async ({ page }) => {
-    await page.on('dialog', dialog => dialog.accept());
+    await handleDialog(page, 'prompt', 'SM Renamed');
     await page.hover('[data-testid="service-menu"]');
-    await page.hover('[data-testid="submenu-views"]');
+    await page.hover('[data-testid="menu-board"]');
+    await page.click('[data-testid="submenu-boards"] [data-action="rename"]');
+    await expect(page.locator('#board-selector option:checked')).toHaveText('SM Renamed');
+
+    await page.hover('[data-testid="service-menu"]');
+    await page.hover('[data-testid="menu-board"]');
+    await page.click('[data-testid="submenu-boards"] [data-action="delete"]');
+    boards = await getConfigBoards(page);
+    expect(boards.some(b => b.name === 'SM Renamed')).toBeFalsy();
+
+    await handleDialog(page, 'prompt', 'SM View');
+    await page.hover('[data-testid="service-menu"]');
+    await page.hover('[data-testid="menu-view"]');
+    await page.click('[data-testid="submenu-views"] [data-action="create"]');
+    await expect(page.locator('#view-selector option:checked')).toHaveText('SM View');
+
+    await handleDialog(page, 'prompt', 'SM View Renamed');
+    await page.hover('[data-testid="service-menu"]');
+    await page.hover('[data-testid="menu-view"]');
+    await page.click('[data-testid="submenu-views"] [data-action="rename"]');
+    await expect(page.locator('#view-selector option:checked')).toHaveText('SM View Renamed');
+
+    await page.hover('[data-testid="service-menu"]');
+    await page.hover('[data-testid="menu-view"]');
     await page.click('[data-testid="submenu-views"] [data-action="reset"]');
     await page.waitForFunction(() => document.querySelectorAll('.widget-wrapper').length === 0);
     await waitForWidgetStoreIdle(page);
+
+    await page.hover('[data-testid="service-menu"]');
+    await page.hover('[data-testid="menu-view"]');
+    await page.click('[data-testid="submenu-views"] [data-action="delete"]');
+    await expect(page.locator('#view-selector option:checked')).not.toHaveText('SM View Renamed');
   });
 
-  test('escape closes submenus then menu', async ({ page }) => {
+  test('rename updates labels', async ({ page }) => {
+    await handleDialog(page, 'prompt', 'Temp Board');
     await page.hover('[data-testid="service-menu"]');
-    await page.hover('[data-testid="submenu-boards"]');
+    await page.hover('[data-testid="menu-board"]');
+    await page.click('[data-testid="submenu-boards"] [data-action="create"]');
+    await handleDialog(page, 'prompt', 'Renamed Board');
+    await page.hover('[data-testid="service-menu"]');
+    await page.hover('[data-testid="menu-board"]');
+    await page.click('[data-testid="submenu-boards"] [data-action="rename"]');
+    await expect(page.locator('[data-role="label-board"]')).toHaveText('Renamed Board');
+
+    await handleDialog(page, 'prompt', 'Temp View');
+    await page.hover('[data-testid="service-menu"]');
+    await page.hover('[data-testid="menu-view"]');
+    await page.click('[data-testid="submenu-views"] [data-action="create"]');
+    await handleDialog(page, 'prompt', 'Renamed View');
+    await page.hover('[data-testid="service-menu"]');
+    await page.hover('[data-testid="menu-view"]');
+    await page.click('[data-testid="submenu-views"] [data-action="rename"]');
+    await expect(page.locator('[data-role="label-view"]')).toHaveText('Renamed View');
+  });
+
+  test('keyboard controls', async ({ page }) => {
+    await page.focus('#service-control');
+    await page.keyboard.press('Enter');
+    await page.focus('[data-testid="menu-view"] .submenu-trigger');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('[data-testid="submenu-views"]')).toBeVisible();
     await page.keyboard.press('Escape');
-    await expect(page.locator('[data-testid="submenu-boards"] .dropdown-content')).not.toBeVisible();
+    await expect(page.locator('[data-testid="submenu-views"]')).not.toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.locator('#service-control')).not.toHaveClass(/open/);
   });
