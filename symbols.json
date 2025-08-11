@@ -1,5 +1,13 @@
 [
   {
+    "name": "__openForTests",
+    "kind": "function",
+    "file": "src/component/menu/widgetSelectorPanel.js",
+    "description": "Open the widget selector panel for automated tests.",
+    "params": [],
+    "returns": "void"
+  },
+  {
     "name": "_ensureLimit",
     "kind": "function",
     "file": "src/component/widget/widgetStore.js",
@@ -157,7 +165,7 @@
     "name": "applyWidgetMenuVisibility",
     "kind": "function",
     "file": "src/component/menu/dashboardMenu.js",
-    "description": "Apply visibility of the widget menu based on configuration.",
+    "description": "Apply visibility of the widget menu based on persisted config.",
     "params": [],
     "returns": "void"
   },
@@ -606,7 +614,7 @@
     "name": "fetchServices",
     "kind": "function",
     "file": "src/utils/fetchServices.js",
-    "description": "Fetch the service list and update the service selector on the page.",
+    "description": "Fetch the service list and publish it to StorageManager. Emits a 'services-updated' event for the widget selector panel.",
     "params": [],
     "returns": "Promise<Array<Service>>"
   },
@@ -623,20 +631,6 @@
       }
     ],
     "returns": "HTMLElement|undefined"
-  },
-  {
-    "name": "findWidgetLocation",
-    "kind": "function",
-    "file": "src/component/widget/widgetManagement.js",
-    "description": "Locate the board and view containing a widget id.",
-    "params": [
-      {
-        "name": "id",
-        "type": "string",
-        "desc": ""
-      }
-    ],
-    "returns": "{boardId:string, viewId:string}|null"
   },
   {
     "name": "get",
@@ -1133,7 +1127,7 @@
     "name": "initializeDashboardMenu",
     "kind": "function",
     "file": "src/component/menu/dashboardMenu.js",
-    "description": "Set up event handlers for the dashboard menu and populate service options.",
+    "description": "Set up event handlers for the dashboard menu and populate widget selector.",
     "params": [],
     "returns": "void"
   },
@@ -1192,7 +1186,7 @@
     "name": "initializeWidgetSelectorPanel",
     "kind": "function",
     "file": "src/component/menu/widgetSelectorPanel.js",
-    "description": "Set up click handler for selecting services.",
+    "description": "Set up click/search/keyboard handlers for the selector.",
     "params": [],
     "returns": "void"
   },
@@ -1486,28 +1480,13 @@
     "params": [
       {
         "name": "options",
-        "type": "object",
-        "desc": "- Modal configuration."
+        "type": "string | {mode?: 'new'|'edit',service?: import('../../types.js').Service,url?: string,onClose?: Function}",
+        "desc": "- Modal configuration, or URL string (deprecated)."
       },
       {
-        "name": "options.mode",
-        "type": "'new'|'edit'",
-        "desc": ""
-      },
-      {
-        "name": "options.service",
-        "type": "import('../../types.js').Service",
-        "desc": ""
-      },
-      {
-        "name": "options.url",
-        "type": "string",
-        "desc": ""
-      },
-      {
-        "name": "options.onClose",
+        "name": "onCloseDeprecated",
         "type": "Function",
-        "desc": ""
+        "desc": "- Deprecated second param used when first arg is a string."
       }
     ],
     "returns": "void"
@@ -1555,14 +1534,6 @@
     "returns": "object|null"
   },
   {
-    "name": "populateServiceDropdown",
-    "kind": "function",
-    "file": "src/component/menu/dashboardMenu.js",
-    "description": "Populate the service drop-down with saved services.",
-    "params": [],
-    "returns": "void"
-  },
-  {
     "name": "populateWidgetSelectorPanel",
     "kind": "function",
     "file": "src/component/menu/widgetSelectorPanel.js",
@@ -1574,7 +1545,7 @@
     "name": "refreshRowCounts",
     "kind": "function",
     "file": "src/component/menu/widgetSelectorPanel.js",
-    "description": "Update the instance count labels for each service row.",
+    "description": "Update the instance count labels for each service row and enforce limits.",
     "params": [],
     "returns": "void"
   },
@@ -1811,6 +1782,14 @@
     "returns": "Promise<void>"
   },
   {
+    "name": "serviceGetUUID",
+    "kind": "function",
+    "file": "src/utils/id.js",
+    "description": "Generate a unique service id.",
+    "params": [],
+    "returns": "string"
+  },
+  {
     "name": "setBoards",
     "kind": "function",
     "file": "src/storage/StorageManager.js",
@@ -1903,7 +1882,7 @@
     "name": "setServices",
     "kind": "function",
     "file": "src/storage/StorageManager.js",
-    "description": "Persist the provided services array.",
+    "description": "Persist the provided services array after normalizing each object.",
     "params": [
       {
         "name": "services",
@@ -2167,7 +2146,7 @@
     "name": "updateWidgetCounter",
     "kind": "function",
     "file": "src/component/menu/widgetSelectorPanel.js",
-    "description": "Update the Active/Max counter in the panel.",
+    "description": "Update the Global/Max counter in the panel.",
     "params": [],
     "returns": "void"
   },

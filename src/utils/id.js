@@ -36,4 +36,14 @@ function viewGetUUID () {
   return `view-${getUUID()}`
 }
 
-export { widgetGetUUID, boardGetUUID, viewGetUUID }
+/**
+ * Generate a unique service id.
+ *
+ * @function serviceGetUUID
+ * @returns {string}
+ */
+function serviceGetUUID () {
+  return `srv-${getUUID()}`
+}
+
+export { widgetGetUUID, boardGetUUID, viewGetUUID, serviceGetUUID }

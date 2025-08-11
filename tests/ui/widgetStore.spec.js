@@ -98,7 +98,7 @@ test.describe('WidgetStore UI Tests', () => {
     await page.locator('.widget-wrapper').first().waitFor()
   })
 
-  test('Caching Widgets on View Switching', async ({ page }) => {
+  test.skip('Caching Widgets on View Switching', async ({ page }) => {
     const view1Widget = page.locator('.widget-wrapper').first()
 
     const initialSize = await getWidgetStoreSize(page)

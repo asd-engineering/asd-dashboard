@@ -174,12 +174,20 @@ export async function selectViewByLabel(page: Page, viewLabel: string) {
   );
 
   // Change the view
-  await page.selectOption("#view-selector", { label: viewLabel });
+  await page.evaluate((label) => {
+    const sel = document.querySelector('#view-selector') as HTMLSelectElement | null;
+    if (!sel) return;
+    const opt = Array.from(sel.options).find(o => o.textContent === label);
+    if (opt) {
+      sel.value = opt.value;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }, viewLabel);
 
   // Wait until the <div.board-view> id matches the selected value
   await page.waitForFunction(() => {
     const sel = document.querySelector("#view-selector") as HTMLSelectElement | null;
     const viewEl = document.querySelector(".board-view") as HTMLElement | null;
     return !!sel && !!viewEl && viewEl.id === sel.value;
-  });
+  }, undefined, { timeout: 5000 });
 }
