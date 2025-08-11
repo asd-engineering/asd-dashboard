@@ -77,6 +77,9 @@ export function updateWidgetCounter () {
 export function __openForTests () {
   const panel = document.getElementById('widget-selector-panel')
   panel?.classList.add('open')
+  const root = panel?.closest('#service-control')
+  root?.classList.add('open')
+  root?.querySelector('[data-testid="service-menu"]')?.classList.add('open')
 }
 
 // Expose a stable test hook used by tests/shared/common.ensurePanelOpen()

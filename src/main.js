@@ -14,8 +14,9 @@ import { fetchServices } from './utils/fetchServices.js'
 import { getConfig } from './utils/getConfig.js'
 import { openLocalStorageModal } from './component/modal/localStorageModal.js'
 import { openConfigModal } from './component/modal/configModal.js'
-import { initializeBoardDropdown } from './component/board/boardDropdown.js'
-import { initializeViewDropdown } from './component/view/viewDropdown.js'
+import { handleCreateBoard, handleRenameBoard, handleDeleteBoard } from './component/board/boardActions.js'
+import { handleCreateView, handleRenameView, handleDeleteView, handleResetView } from './component/view/viewActions.js'
+import { initServiceMenu, destroyServiceMenu } from './component/menu/serviceMenuController.js'
 import { loadFromFragment } from './utils/fragmentLoader.js'
 import { Logger } from './utils/Logger.js'
 import { widgetStore } from './component/widget/widgetStore.js'
@@ -63,10 +64,31 @@ async function main () {
   // 2. Initialize core UI elements
   initializeMainMenu()
   initializeDashboardMenu()
-  initializeBoardDropdown()
-  initializeViewDropdown()
   initializeDragAndDrop()
   initializeWidgetSelectorPanel() // NEW: wire up panel behavior
+  const serviceRoot = document.getElementById('service-control')
+  initServiceMenu(serviceRoot)
+  if (serviceRoot) {
+    /* eslint-disable no-void */
+    serviceRoot.addEventListener('menu:action', (e) => {
+      const detail = /** @type {any} */ (e).detail || {}
+      const { scope, action } = detail
+      if (scope === 'board') {
+        if (action === 'create') void handleCreateBoard()
+        else if (action === 'rename') void handleRenameBoard()
+        else if (action === 'delete') void handleDeleteBoard()
+      } else if (scope === 'view') {
+        if (action === 'create') void handleCreateView()
+        else if (action === 'rename') void handleRenameView()
+        else if (action === 'delete') void handleDeleteView()
+        else if (action === 'reset') void handleResetView()
+      }
+    })
+    /* eslint-enable no-void */
+  }
+  // expose for tests
+  // eslint-disable-next-line no-underscore-dangle, no-unused-expressions
+  /** @type {any} */ (window).__destroyServiceMenu = destroyServiceMenu
 
   // 3. Load services and configuration in parallel
   /** @type {import('./types.js').DashboardConfig} */

@@ -1,33 +1,14 @@
 // @ts-check
 /**
- * Dropdown handlers for view-specific actions.
+ * Action handlers for view-specific actions.
  *
- * @module viewDropdown
+ * @module viewActions
  */
 import { createView, renameView, deleteView, resetView } from '../board/boardManagement.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
-import { initializeDropdown } from '../utils/dropDownUtils.js'
 import { Logger } from '../../utils/Logger.js'
 
-const logger = new Logger('viewDropdown.js')
-
-/**
- * Set up the dropdown used for view management actions.
- *
- * @function initializeViewDropdown
- * @returns {void}
- */
-export function initializeViewDropdown () {
-  const viewDropdown = document.getElementById('view-dropdown')
-  logger.log('View dropdown initialized:', viewDropdown)
-
-  initializeDropdown(viewDropdown, {
-    create: handleCreateView,
-    rename: handleRenameView,
-    delete: handleDeleteView,
-    reset: handleResetView
-  })
-}
+const logger = new Logger('viewActions.js')
 
 /**
  * Create a new view on the active board.
@@ -35,7 +16,7 @@ export function initializeViewDropdown () {
  * @function handleCreateView
  * @returns {Promise<void>}
  */
-async function handleCreateView () {
+export async function handleCreateView () {
   const boardId = getCurrentBoardId()
   const viewName = prompt('Enter new view name:')
   if (viewName) {
@@ -56,7 +37,7 @@ async function handleCreateView () {
  * @function handleRenameView
  * @returns {Promise<void>}
  */
-async function handleRenameView () {
+export async function handleRenameView () {
   const boardId = getCurrentBoardId()
   const viewId = getCurrentViewId()
   const newViewName = prompt('Enter new view name:')
@@ -76,7 +57,7 @@ async function handleRenameView () {
  * @function handleDeleteView
  * @returns {Promise<void>}
  */
-async function handleDeleteView () {
+export async function handleDeleteView () {
   const boardId = getCurrentBoardId()
   const viewId = getCurrentViewId()
   if (confirm('Are you sure you want to delete this view?')) {
@@ -94,7 +75,7 @@ async function handleDeleteView () {
  * @function handleResetView
  * @returns {Promise<void>}
  */
-async function handleResetView () {
+export async function handleResetView () {
   const boardId = getCurrentBoardId()
   const viewId = getCurrentViewId()
   if (confirm('Are you sure you want to reset this view?')) {

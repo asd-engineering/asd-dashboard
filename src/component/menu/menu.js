@@ -138,28 +138,6 @@ function initializeMainMenu () {
   boardSelector.id = 'board-selector'
   boardControl.appendChild(boardSelector)
 
-  const boardDropdown = document.createElement('div')
-  boardDropdown.id = 'board-dropdown'
-  boardDropdown.className = 'dropdown'
-
-  const boardButton = document.createElement('button')
-  boardButton.className = 'dropbtn'
-  boardButton.textContent = 'Board Actions'
-  boardDropdown.appendChild(boardButton)
-
-  const boardDropdownContent = document.createElement('div')
-  boardDropdownContent.className = 'dropdown-content';
-
-  ['create', 'rename', 'delete'].forEach(action => {
-    const actionLink = document.createElement('a')
-    actionLink.href = '#'
-    actionLink.dataset.action = action
-    actionLink.textContent = action.charAt(0).toUpperCase() + action.slice(1) + ' Board'
-    boardDropdownContent.appendChild(actionLink)
-  })
-
-  boardDropdown.appendChild(boardDropdownContent)
-  boardControl.appendChild(boardDropdown)
   menu.appendChild(boardControl)
 
   // View control group
@@ -171,28 +149,6 @@ function initializeMainMenu () {
   viewSelector.id = 'view-selector'
   viewControl.appendChild(viewSelector)
 
-  const viewDropdown = document.createElement('div')
-  viewDropdown.id = 'view-dropdown'
-  viewDropdown.className = 'dropdown'
-
-  const viewButton = document.createElement('button')
-  viewButton.className = 'dropbtn'
-  viewButton.textContent = 'View Actions'
-  viewDropdown.appendChild(viewButton)
-
-  const viewDropdownContent = document.createElement('div')
-  viewDropdownContent.className = 'dropdown-content';
-
-  ['create', 'rename', 'delete', 'reset'].forEach(action => {
-    const actionLink = document.createElement('a')
-    actionLink.href = '#'
-    actionLink.dataset.action = action
-    actionLink.textContent = action.charAt(0).toUpperCase() + action.slice(1) + ' View'
-    viewDropdownContent.appendChild(actionLink)
-  })
-
-  viewDropdown.appendChild(viewDropdownContent)
-  viewControl.appendChild(viewDropdown)
   menu.appendChild(viewControl)
 
   const viewButtonMenu = document.createElement('div')
@@ -229,7 +185,62 @@ function initializeMainMenu () {
   dropdown.className = 'dropdown-content'
   widgetPanel.appendChild(dropdown)
 
-  serviceControl.appendChild(widgetPanel)
+  const serviceMenu = document.createElement('div')
+  serviceMenu.className = 'dropdown'
+  serviceMenu.dataset.testid = 'service-menu'
+  serviceMenu.setAttribute('role', 'menu')
+
+  const serviceContent = document.createElement('div')
+  serviceContent.className = 'dropdown-content'
+
+  serviceContent.appendChild(widgetPanel)
+
+  const boardsItem = document.createElement('div')
+  boardsItem.className = 'submenu'
+  boardsItem.dataset.submenu = 'board'
+  boardsItem.dataset.testid = 'submenu-boards'
+  boardsItem.textContent = 'Boards \u25B8'
+  boardsItem.setAttribute('aria-haspopup', 'true')
+  boardsItem.setAttribute('role', 'menuitem')
+
+  const boardsMenu = document.createElement('div')
+  boardsMenu.className = 'dropdown-content'
+  boardsMenu.setAttribute('role', 'menu')
+  ;['create', 'rename', 'delete'].forEach(action => {
+    const link = document.createElement('a')
+    link.href = '#'
+    link.dataset.action = action
+    link.textContent = action.charAt(0).toUpperCase() + action.slice(1) + ' Board'
+    link.setAttribute('role', 'menuitem')
+    boardsMenu.appendChild(link)
+  })
+  boardsItem.appendChild(boardsMenu)
+  serviceContent.appendChild(boardsItem)
+
+  const viewsItem = document.createElement('div')
+  viewsItem.className = 'submenu'
+  viewsItem.dataset.submenu = 'view'
+  viewsItem.dataset.testid = 'submenu-views'
+  viewsItem.textContent = 'Views \u25B8'
+  viewsItem.setAttribute('aria-haspopup', 'true')
+  viewsItem.setAttribute('role', 'menuitem')
+
+  const viewsMenu = document.createElement('div')
+  viewsMenu.className = 'dropdown-content'
+  viewsMenu.setAttribute('role', 'menu')
+  ;['create', 'rename', 'delete', 'reset'].forEach(action => {
+    const link = document.createElement('a')
+    link.href = '#'
+    link.dataset.action = action
+    link.textContent = action.charAt(0).toUpperCase() + action.slice(1) + ' View'
+    link.setAttribute('role', 'menuitem')
+    viewsMenu.appendChild(link)
+  })
+  viewsItem.appendChild(viewsMenu)
+  serviceContent.appendChild(viewsItem)
+
+  serviceMenu.appendChild(serviceContent)
+  serviceControl.appendChild(serviceMenu)
 
   menu.appendChild(serviceControl)
 

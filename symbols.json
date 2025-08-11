@@ -783,7 +783,7 @@
   {
     "name": "getSelectedBoardId",
     "kind": "function",
-    "file": "src/component/board/boardDropdown.js",
+    "file": "src/component/board/boardActions.js",
     "description": "Get the board id currently selected in the dropdown.",
     "params": [],
     "returns": "string"
@@ -849,7 +849,7 @@
   {
     "name": "handleCreateBoard",
     "kind": "function",
-    "file": "src/component/board/boardDropdown.js",
+    "file": "src/component/board/boardActions.js",
     "description": "Prompt the user for a board name and create it.",
     "params": [],
     "returns": "Promise<void>"
@@ -857,7 +857,7 @@
   {
     "name": "handleCreateView",
     "kind": "function",
-    "file": "src/component/view/viewDropdown.js",
+    "file": "src/component/view/viewActions.js",
     "description": "Create a new view on the active board.",
     "params": [],
     "returns": "Promise<void>"
@@ -865,7 +865,7 @@
   {
     "name": "handleDeleteBoard",
     "kind": "function",
-    "file": "src/component/board/boardDropdown.js",
+    "file": "src/component/board/boardActions.js",
     "description": "Delete the currently selected board after confirmation.",
     "params": [],
     "returns": "Promise<void>"
@@ -873,7 +873,7 @@
   {
     "name": "handleDeleteView",
     "kind": "function",
-    "file": "src/component/view/viewDropdown.js",
+    "file": "src/component/view/viewActions.js",
     "description": "Delete the active view after confirmation.",
     "params": [],
     "returns": "Promise<void>"
@@ -999,7 +999,7 @@
   {
     "name": "handleRenameBoard",
     "kind": "function",
-    "file": "src/component/board/boardDropdown.js",
+    "file": "src/component/board/boardActions.js",
     "description": "Prompt for a new name and rename the selected board.",
     "params": [],
     "returns": "Promise<void>"
@@ -1007,7 +1007,7 @@
   {
     "name": "handleRenameView",
     "kind": "function",
-    "file": "src/component/view/viewDropdown.js",
+    "file": "src/component/view/viewActions.js",
     "description": "Rename the currently selected view.",
     "params": [],
     "returns": "Promise<void>"
@@ -1015,7 +1015,7 @@
   {
     "name": "handleResetView",
     "kind": "function",
-    "file": "src/component/view/viewDropdown.js",
+    "file": "src/component/view/viewActions.js",
     "description": "Remove all widgets from the current view.",
     "params": [],
     "returns": "Promise<void>"
@@ -1124,14 +1124,6 @@
     "returns": ""
   },
   {
-    "name": "initializeBoardDropdown",
-    "kind": "function",
-    "file": "src/component/board/boardDropdown.js",
-    "description": "Attach dropdown actions for board management.",
-    "params": [],
-    "returns": "void"
-  },
-  {
     "name": "initializeBoards",
     "kind": "function",
     "file": "src/component/board/boardManagement.js",
@@ -1187,14 +1179,6 @@
     "kind": "function",
     "file": "src/component/widget/events/resizeHandler.js",
     "description": "Append resize handles to all widgets and register listeners.",
-    "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "initializeViewDropdown",
-    "kind": "function",
-    "file": "src/component/view/viewDropdown.js",
-    "description": "Set up the dropdown used for view management actions.",
     "params": [],
     "returns": "void"
   },

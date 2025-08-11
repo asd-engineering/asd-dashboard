@@ -1,32 +1,14 @@
 // @ts-check
 /**
- * UI handlers for the board actions dropdown.
+ * Action handlers for board management.
  *
- * @module boardDropdown
+ * @module boardActions
  */
 import { createBoard, renameBoard, deleteBoard, updateViewSelector } from './boardManagement.js'
-import { initializeDropdown } from '../utils/dropDownUtils.js'
 import { Logger } from '../../utils/Logger.js'
 import StorageManager from '../../storage/StorageManager.js'
 
-const logger = new Logger('boardDropdown.js')
-
-/**
- * Attach dropdown actions for board management.
- *
- * @function initializeBoardDropdown
- * @returns {void}
- */
-export function initializeBoardDropdown () {
-  const boardDropdown = document.getElementById('board-dropdown')
-  logger.log('Board dropdown initialized:', boardDropdown)
-
-  initializeDropdown(boardDropdown, {
-    create: handleCreateBoard,
-    rename: handleRenameBoard,
-    delete: handleDeleteBoard
-  })
-}
+const logger = new Logger('boardActions.js')
 
 /**
  * Prompt the user for a board name and create it.
@@ -34,7 +16,7 @@ export function initializeBoardDropdown () {
  * @function handleCreateBoard
  * @returns {Promise<void>}
  */
-async function handleCreateBoard () {
+export async function handleCreateBoard () {
   const boardName = prompt('Enter new board name:')
   if (boardName) {
     try {
@@ -52,7 +34,7 @@ async function handleCreateBoard () {
  * @function handleRenameBoard
  * @returns {Promise<void>}
  */
-async function handleRenameBoard () {
+export async function handleRenameBoard () {
   const boardId = getSelectedBoardId()
   const newBoardName = prompt('Enter new board name:')
   if (newBoardName) {
@@ -71,7 +53,7 @@ async function handleRenameBoard () {
  * @function handleDeleteBoard
  * @returns {Promise<void>}
  */
-async function handleDeleteBoard () {
+export async function handleDeleteBoard () {
   const boardId = getSelectedBoardId()
   if (confirm('Are you sure you want to delete this board?')) {
     try {
