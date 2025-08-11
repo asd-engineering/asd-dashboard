@@ -21,7 +21,9 @@ test.describe.skip('Saved States tab', () => {
 
     await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
     await page.click('#switch-environment')
-    
+    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
+
     const boards = await getBoardCount(page);
     expect(boards).toBeGreaterThan(0)
 

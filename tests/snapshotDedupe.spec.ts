@@ -55,6 +55,7 @@ import { injectSnapshot } from './shared/state.js'
   await expect(page.locator('#switch-environment')).toHaveText(/Switch environment/)
   await page.click('#switch-environment')
   await page.waitForLoadState('networkidle')
+  await page.waitForLoadState('load')
   const count = await page.evaluate(async () => {
     const { default: sm } = await import('/storage/StorageManager.js')
     return (await sm.loadStateStore()).states.length

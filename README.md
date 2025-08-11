@@ -32,7 +32,7 @@ The admin reset control clears boards, views, services and configuration while k
 
 ### Snapshot de-duplication
 
-Repeated exports with identical configuration and services no longer create duplicate snapshots. If the MD5 hash matches an existing snapshot, its timestamp is refreshed and it moves to the top of the list instead.
+Repeated exports with identical configuration and services no longer create duplicate snapshots. If the MD5 hash matches an existing snapshot, its timestamp is refreshed and it moves to the top of the list instead. Snapshots are de-duplicated by MD5 but keep their provided names.
 
 Here's the optimized version of the second part—**URL Fragment-Based Config Sharing**—to follow directly after the revised query parameter section. It's concise, technically precise, and clearly contrasts with the dynamic configuration method:
 
@@ -53,6 +53,7 @@ ASD Dashboard also supports sharing full configuration and service state using t
   * **Gzipped** and **base64url-encoded** for compactness
   * Decoded locally using modern browser APIs (e.g. `DecompressionStream`)
   * Persisted to `localStorage` when the page loads
+  * Switching environments triggers a single reload after clearing the fragment and saves the snapshot under the provided name (MD5-deduplicated)
 
 * **No servers are involved**: data stays fully client-side.
 
