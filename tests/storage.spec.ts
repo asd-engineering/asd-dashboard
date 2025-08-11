@@ -102,7 +102,7 @@ test.describe('StorageManager', () => {
       config: { x: 1 },
       maxInstances: 5
     })
-  }) // <<< --- FIX: This closing brace and parenthesis was missing.
+  })
 
   test('clearAllExceptState preserves state store', async ({ page }) => {
     const result = await page.evaluate(async () => {
