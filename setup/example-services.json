@@ -3,6 +3,7 @@
         "name": "ASD-toolbox",
         "url": "http://localhost:8000/asd/toolbox",
         "type": "api",
+        "template": "api-service",
         "maxInstances": 1,
         "config": {
           "minColumns": 1,

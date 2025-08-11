@@ -26,6 +26,18 @@ export const DEFAULT_CONFIG_TEMPLATE = {
     }
   },
   boards: [],
+  serviceTemplates: {
+    default: {
+      type: 'iframe',
+      maxInstances: 10,
+      config: { minColumns: 1, maxColumns: 8, minRows: 1, maxRows: 6 }
+    },
+    'api-service': {
+      type: 'api',
+      maxInstances: 5,
+      config: { minColumns: 1, maxColumns: 2, minRows: 1, maxRows: 2 }
+    }
+  },
   styling: {
     widget: { minColumns: 1, maxColumns: 8, minRows: 1, maxRows: 6 }
   }

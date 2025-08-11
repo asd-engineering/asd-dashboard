@@ -11,14 +11,13 @@ import { boardGetUUID, viewGetUUID } from '../../utils/id.js'
 import StorageManager from '../../storage/StorageManager.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { saveWidgetState } from '../../storage/widgetStatePersister.js'
+import { updateWidgetCounter } from '../../component/menu/widgetSelectorPanel.js'
 
 /** @typedef {import('../../types.js').Board} Board */
 /** @typedef {import('../../types.js').View} View */
 /** @typedef {import('../../types.js').Widget} Widget */
 
 const logger = new Logger('boardManagement.js')
-
-/** @type {Array<Board>} */
 
 /**
  * Create a board with a default view.
@@ -243,7 +242,10 @@ export async function switchBoard (boardId, viewId = null) {
     document.querySelector('.board').id = boardId
     const settings = StorageManager.getConfig()?.globalSettings || {}
     const preferred = settings.views?.viewToShow
-    const targetViewId = viewId || (preferred && board.views.some(v => v.id === preferred) ? preferred : (board.views.length > 0 ? board.views[0].id : null))
+    const targetViewId = viewId ||
+      (preferred && board.views.some(v => v.id === preferred)
+        ? preferred
+        : (board.views.length > 0 ? board.views[0].id : null))
 
     if (targetViewId) {
       await switchView(boardId, targetViewId)
@@ -254,7 +256,10 @@ export async function switchBoard (boardId, viewId = null) {
       StorageManager.misc.setLastViewId(null)
     }
 
+    // Persist and sync UI/counters using main's model + feature counter
     StorageManager.misc.setLastBoardId(boardId)
+    updateViewSelector(boardId)
+    updateWidgetCounter()
     document.dispatchEvent(new Event('view:ready'))
   } else {
     logger.error(`Board with ID ${boardId} not found`)
