@@ -131,7 +131,7 @@ async function main () {
   document.getElementById('open-config-modal')
     .addEventListener('click', /** @type {EventListener} */(handleConfigModal))
 
-  // --- PHASE 2: ACTIVE EVENT LISTENER ---
+  // ACTIVE EVENT LISTENER ---
   const onStateChange = (event) => {
     const { reason } = event.detail || {}
     logger.log(`[Event Listener] Reacting to state change. Reason: ${reason || 'unknown'}`)
@@ -142,14 +142,14 @@ async function main () {
       case 'config':
         updateBoardSelector()
         if (currentBoardId) updateViewSelector(currentBoardId)
-        // NEW: repopulate panel when config (e.g., boards/views) changes
+        // Repopulate panel when config (e.g., boards/views) changes
         populateWidgetSelectorPanel()
         refreshRowCounts()
         updateWidgetCounter()
         break
 
       case 'services':
-        // NEW: repopulate panel when services update
+        // Repopulate panel when services update
         populateWidgetSelectorPanel()
         refreshRowCounts()
         updateWidgetCounter()
@@ -160,7 +160,6 @@ async function main () {
   const debouncedUiUpdater = debounce(onStateChange, 150)
   window.addEventListener(APP_STATE_CHANGED, /** @type {EventListener} */(debouncedUiUpdater))
   logger.log('Active event listener for state changes has been initialized.')
-  // --- END ---
 
   logger.log('Application initialization finished')
   // Signal to Playwright that the initial load and render is complete.

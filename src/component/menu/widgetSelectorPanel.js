@@ -13,6 +13,14 @@ import StorageManager from '../../storage/StorageManager.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 
 /**
+ * Emit a standardized state change event.
+ * @param {'config'|'services'|string} reason
+ */
+function emitStateChange (reason) {
+  document.dispatchEvent(new CustomEvent('state-change', { detail: { reason } }))
+}
+
+/**
  * Compute total widgets across all boards/views from persisted state.
  * @returns {number}
  */
@@ -259,9 +267,8 @@ export function initializeWidgetSelectorPanel () {
         const updated = (StorageManager.getServices() || []).filter(s => !(s.url === url && s.name === name))
         StorageManager.setServices(updated)
 
-        document.dispatchEvent(new CustomEvent('services-updated'))
-        refreshRowCounts()
-        updateWidgetCounter()
+        // Standardized event; let main.js own the refresh pipeline.
+        emitStateChange('services')
       }
       return
     }
@@ -274,8 +281,7 @@ export function initializeWidgetSelectorPanel () {
         if (loc) await switchBoard(loc.boardId, loc.viewId)
       }
       closePanel()
-      refreshRowCounts()
-      updateWidgetCounter()
+      // No local refresh; rely on state-change if something actually altered state.
       return
     }
 
@@ -289,8 +295,8 @@ export function initializeWidgetSelectorPanel () {
     // Add widget for selected service
     if (url) {
       await addWidget(url, 1, 1, 'iframe', getCurrentBoardId(), getCurrentViewId())
-      refreshRowCounts()
-      updateWidgetCounter()
+      // Adding a widget changes state (counts/limits). Broadcast once.
+      emitStateChange('services')
     }
     closePanel()
   })
@@ -343,14 +349,18 @@ export function initializeWidgetSelectorPanel () {
     })
   }
 
-  document.addEventListener('click', event => {
-    const target = /** @type {Node} */(event.target)
-    if (!panel.contains(target)) closePanel()
+  // Bridge legacy 'services-updated' to standardized 'state-change:services'
+  document.addEventListener('services-updated', () => {
+    emitStateChange('services')
   })
 
-  document.addEventListener('services-updated', () => {
-    populateWidgetSelectorPanel()
-    refreshRowCounts()
-    updateWidgetCounter()
+  // React to standardized state changes from anywhere (incl. main.js)
+  document.addEventListener('state-change', (e) => {
+    const reason = /** @type {CustomEvent} */(e).detail?.reason
+    if (reason === 'services' || reason === 'config') {
+      populateWidgetSelectorPanel()
+      refreshRowCounts()
+      updateWidgetCounter()
+    }
   })
 }
