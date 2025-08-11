@@ -36,6 +36,8 @@ export function openFragmentDecisionModal ({ cfgParam, svcParam, nameParam }) {
         clearConfigFragment()
         logger.log('Fragment decision modal closed')
         resolve()
+        // Perform a single reload after clearing the hash
+        location.reload()
       },
       buildContent: (modal, closeModal) => {
         const msg1 = document.createElement('p')
@@ -110,14 +112,18 @@ export function openFragmentDecisionModal ({ cfgParam, svcParam, nameParam }) {
             const finalName = nameEl && 'value' in nameEl && typeof nameEl.value === 'string'
               ? nameEl.value.trim() || 'Imported'
               : 'Imported'
+            await StorageManager.saveStateSnapshot({
+              name: finalName,
+              type: 'imported',
+              cfg: cfgParam ?? '',
+              svc: svcParam ?? ''
+            })
             StorageManager.setConfig(cfgObj)
             StorageManager.setServices(svcArr)
-            await StorageManager.saveStateSnapshot({ name: finalName, type: 'imported', cfg: cfgParam || '', svc: svcParam || '' })
           } catch (e) {
             logger.error('Error applying fragment:', e)
           } finally {
             closeModal()
-            location.reload()
           }
         }
       }
