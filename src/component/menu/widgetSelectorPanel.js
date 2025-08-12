@@ -5,7 +5,7 @@
  *
  * @module widgetSelectorPanel
  */
-import { addWidget, removeWidget, findFirstLocationByServiceName } from '../widget/widgetManagement.js'
+import { addWidget, removeWidget, findFirstLocationByServiceId } from '../widget/widgetManagement.js'
 import { widgetStore } from '../widget/widgetStore.js'
 import { switchBoard } from '../board/boardManagement.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
@@ -150,6 +150,7 @@ export function populateWidgetSelectorPanel () {
     const item = document.createElement('div')
     item.className = 'widget-option'
     item.dataset.name = resolved.name
+    item.dataset.serviceId = resolved.id
     if (resolved.category) item.dataset.category = resolved.category
     if (resolved.subcategory) item.dataset.subcategory = resolved.subcategory
     if (Array.isArray(resolved.tags)) item.dataset.tags = resolved.tags.join(',')
@@ -239,6 +240,7 @@ export function initializeWidgetSelectorPanel () {
     const action = target.dataset.action
     const url = item.dataset.url
     const name = item.dataset.name
+    const serviceId = item.dataset.serviceId
 
     // Edit service metadata
     if (action === 'edit' && name) {
@@ -279,8 +281,8 @@ export function initializeWidgetSelectorPanel () {
     }
 
     // Navigate to first matching widget location
-    if (action === 'navigate' && name) {
-      const location = findFirstLocationByServiceName(name)
+    if (action === 'navigate' && serviceId) {
+      const location = findFirstLocationByServiceId(serviceId)
       if (location) {
         await switchBoard(location.boardId, location.viewId)
         showNotification(`Mapped to view containing '${name}' widget.`)

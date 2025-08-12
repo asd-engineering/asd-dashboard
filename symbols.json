@@ -635,6 +635,20 @@
     "returns": "Promise<Array<Service>>"
   },
   {
+    "name": "findFirstLocationByServiceId",
+    "kind": "function",
+    "file": "src/component/widget/widgetManagement.js",
+    "description": "Finds the board and view IDs for the first widget matching a service ID.",
+    "params": [
+      {
+        "name": "serviceId",
+        "type": "string",
+        "desc": "The ID of the service to find."
+      }
+    ],
+    "returns": "{boardId: string, viewId: string} | null"
+  },
+  {
     "name": "findFirstLocationByServiceName",
     "kind": "function",
     "file": "src/component/widget/widgetManagement.js",

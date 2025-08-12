@@ -377,4 +377,26 @@ function findFirstLocationByServiceName (serviceName) {
   return null
 }
 
-export { addWidget, removeWidget, updateWidgetOrders, createWidget, findWidgetLocation, findFirstLocationByServiceName }
+/**
+ * Finds the board and view IDs for the first widget matching a service ID.
+ * @function findFirstLocationByServiceId
+ * @param {string} serviceId The ID of the service to find.
+ * @returns {{boardId: string, viewId: string} | null} Location or null if not found.
+ */
+function findFirstLocationByServiceId (serviceId) {
+  if (!serviceId) return null
+  const boards = StorageManager.getBoards()
+  if (!Array.isArray(boards)) return null
+
+  for (const board of boards) {
+    if (!board || !Array.isArray(board.views)) continue
+    for (const view of board.views) {
+      const widgets = Array.isArray(view?.widgetState) ? view.widgetState : []
+      const hasMatch = widgets.some(w => w && 'serviceId' in w && w.serviceId === serviceId)
+      if (hasMatch) return { boardId: board.id, viewId: view.id }
+    }
+  }
+  return null
+}
+
+export { addWidget, removeWidget, updateWidgetOrders, createWidget, findWidgetLocation, findFirstLocationByServiceName, findFirstLocationByServiceId }
