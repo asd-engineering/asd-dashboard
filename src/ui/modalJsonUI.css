@@ -425,6 +425,3 @@ input[type="checkbox"]:checked {
 input[type="checkbox"]:checked::before {
   transform: translateX(20px);
 }
-.modal__label:has(+ input[type="checkbox"]) {
-  text-align: left;
-}
