@@ -64,7 +64,8 @@ test.describe("Widget limits", () => {
     await page.locator(".widget-wrapper").first().waitFor();
     await ensurePanelOpen(page);
 
-    await page.locator("#board-selector").selectOption("b2");
+    await page.locator('[data-testid="board-panel"]').hover();
+    await page.locator('[data-testid="board-panel"] .panel-item', { hasText: 'B2' }).click();
     await page.click('#widget-selector-panel .widget-option:has-text("ASD-toolbox")');
 
     await page.waitForFunction(

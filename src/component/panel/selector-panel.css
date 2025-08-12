@@ -1,0 +1,13 @@
+.dropdown.panel{position:relative;display:inline-block}
+.dropdown.panel .dropdown-content{display:none;position:absolute;background:#f9f9f9;min-width:160px;box-shadow:0 8px 16px rgba(0,0,0,0.2);z-index:100}
+.dropdown.panel.open .dropdown-content{display:block}
+.panel-list{display:flex;flex-direction:column}
+.panel-item{padding:4px 8px;cursor:pointer;white-space:nowrap}
+.panel-item:hover{background:#f1f1f1}
+.panel-actions{position:relative}
+.panel-actions .side-content{display:none;position:absolute;left:100%;top:0;background:#f9f9f9;box-shadow:0 8px 16px rgba(0,0,0,0.2);z-index:101}
+.panel-actions.side-open .side-content{display:block}
+.side-content button{display:block;width:100%;padding:4px 8px;border:0;background:none;text-align:left;cursor:pointer}
+.side-content button:hover{background:#eee}
+.panel-search{width:140px;margin-right:4px}
+.panel-count{margin-left:4px;font-size:0.85em}
