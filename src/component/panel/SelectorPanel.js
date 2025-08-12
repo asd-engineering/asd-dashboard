@@ -65,10 +65,6 @@ export class SelectorPanel {
     wrap.setAttribute('role', 'menu')
     wrap.tabIndex = 0
 
-    const input = document.createElement('input')
-    input.className = 'panel-search'
-    input.placeholder = placeholder
-
     const arrow = document.createElement('span')
     arrow.className = 'panel-arrow'
     arrow.textContent = '▼'
@@ -76,6 +72,10 @@ export class SelectorPanel {
     const label = document.createElement('span')
     label.className = 'panel-label'
     label.style.display = 'none'
+
+    const input = document.createElement('input')
+    input.className = 'panel-search'
+    input.placeholder = placeholder
 
     let count = null
     if (showCount && typeof countText === 'function') {
@@ -95,8 +95,8 @@ export class SelectorPanel {
     list.className = 'panel-list'
     content.appendChild(list)
 
-    wrap.append(input, arrow, label)
-    if (count) wrap.appendChild(count)
+    wrap.append(arrow, label, input)
+    if (count) wrap.append(count)
     wrap.appendChild(content)
     root.appendChild(wrap)
 
@@ -137,6 +137,7 @@ export class SelectorPanel {
       const itemBtn = target.closest('[data-item-action]')
       if (itemBtn) {
         e.preventDefault()
+        e.stopPropagation()
         const action = /** @type {HTMLElement} */ (itemBtn).dataset.itemAction || ''
         const row = target.closest('[data-id]')
         const id = row ? /** @type {HTMLElement} */ (row).dataset.id || '' : ''
@@ -196,8 +197,18 @@ export class SelectorPanel {
       }
     }
 
-    if (this.dom.count && showCount && typeof countText === 'function') {
-      this.dom.count.textContent = countText()
+    if (this.dom.count) {
+      if (showCount && typeof countText === 'function') {
+        const txt = countText()
+        if (txt) {
+          this.dom.count.textContent = txt
+          this.dom.count.style.display = ''
+        } else {
+          this.dom.count.style.display = 'none'
+        }
+      } else {
+        this.dom.count.style.display = 'none'
+      }
     }
 
     this.dom.list.innerHTML = ''

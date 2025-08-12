@@ -1,9 +1,24 @@
 /* SelectorPanel styles */
-.dropdown.panel { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; background: #fff; }
-.dropdown.panel .panel-search { border: none; outline: none; width: 220px; }
-.dropdown.panel .panel-arrow { margin-left: 4px; }
-.panel-label { font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; width: 32ch; }
-.dropdown.panel .panel-count { margin-left: auto; font-size: 12px; opacity: 0.75; }
+.dropdown.panel {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+}
+.panel-arrow { margin-left: 4px; }
+.panel-label {
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 32ch;
+}
+.panel-search { border: none; outline: none; width: 220px; }
+.panel-count { margin-left: auto; font-size: 12px; opacity: 0.75; }
 .dropdown.panel .dropdown-content { position: absolute; top: 100%; left: 0; min-width: 340px; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 8px; display: none; box-shadow: 0 6px 24px rgba(0,0,0,.12); z-index: 20; }
 .dropdown.panel.open .dropdown-content { display: block; }
 
