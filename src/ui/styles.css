@@ -4,6 +4,7 @@
 @import url('/ui/notification.css');
 @import url('/ui/service-action.css');
 @import url('/ui/configTabs.css');
+@import url('/component/panel/selector-panel.css');
 
 /* Universal box-sizing */
 *, *::before, *::after {

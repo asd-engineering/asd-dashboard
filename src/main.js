@@ -13,8 +13,8 @@ import { initializeDragAndDrop } from './component/widget/events/dragDrop.js'
 import { fetchServices } from './utils/fetchServices.js'
 import { getConfig } from './utils/getConfig.js'
 import { openConfigModal } from './component/modal/configModal.js'
-import { initializeBoardDropdown } from './component/board/boardDropdown.js'
-import { initializeViewDropdown } from './component/view/viewDropdown.js'
+import { mountBoardControl } from './component/board/BoardControl.js'
+import { mountViewControl } from './component/view/ViewControl.js'
 import { loadFromFragment } from './utils/fragmentLoader.js'
 import { Logger } from './utils/Logger.js'
 import { widgetStore } from './component/widget/widgetStore.js'
@@ -62,8 +62,8 @@ async function main () {
   // 2. Initialize core UI elements
   initializeMainMenu()
   initializeDashboardMenu()
-  initializeBoardDropdown()
-  initializeViewDropdown()
+  const boardPanel = mountBoardControl()
+  const viewPanel = mountViewControl()
   initializeDragAndDrop()
   initializeWidgetSelectorPanel() // NEW: wire up panel behavior
 
@@ -112,6 +112,8 @@ async function main () {
     logger.log(`Switching to initial board: ${boardIdToLoad}, view: ${viewIdToLoad}`)
     await switchBoard(boardIdToLoad, viewIdToLoad)
     updateViewSelector(boardIdToLoad)
+    if (boardPanel) boardPanel.refresh()
+    if (viewPanel) viewPanel.refresh()
   } else {
     logger.warn('No boards available to display.')
   }
@@ -138,6 +140,8 @@ async function main () {
       case 'config':
         updateBoardSelector()
         if (currentBoardId) updateViewSelector(currentBoardId)
+        if (boardPanel) boardPanel.refresh()
+        if (viewPanel) viewPanel.refresh()
         // Repopulate panel when config (e.g., boards/views) changes
         populateWidgetSelectorPanel()
         refreshRowCounts()
