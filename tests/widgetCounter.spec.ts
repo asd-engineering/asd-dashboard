@@ -24,7 +24,7 @@ test.describe('Widget counters', () => {
     await page.click('#widget-selector-panel .widget-option:has-text("ASD-toolbox")')
     await page.locator('.widget-wrapper').first().waitFor()
 
-    await expect(page.locator('#widget-count')).toHaveText('Active: 1 / Used: 1 / Max: 1')
+    await expect(page.locator('#widget-count')).toHaveText('Running: 1/1 / Widgets: 1')
 
     await page.click('#widget-dropdown-toggle')
     const row = page.locator('#widget-selector-panel .widget-option:has-text("ASD-toolbox")')
