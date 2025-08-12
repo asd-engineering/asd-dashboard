@@ -50,7 +50,9 @@ ASD Dashboard also supports sharing full configuration and service state using t
 
 * Config and services are:
 
-  * **Gzipped** and **base64url-encoded** for compactness
+  * Compressed with built-in **deflate** (or legacy **gzip**) and base64url-encoded for compactness
+  * Optionally minified via a reversible key map for even shorter URLs
+  * Protected by a CRC32 checksum to detect truncated or corrupted fragments
   * Decoded locally using modern browser APIs (e.g. `DecompressionStream`)
   * Persisted to `localStorage` when the page loads
   * Switching environments triggers a single reload after clearing the fragment and saves the snapshot under the provided name (MD5-deduplicated)

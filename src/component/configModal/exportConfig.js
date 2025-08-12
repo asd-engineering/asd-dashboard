@@ -5,11 +5,21 @@
  * @module configModal/exportConfig
  */
 import { showNotification } from '../dialog/notification.js'
-import { gzipJsonToBase64url } from '../../utils/compression.js'
+import { encodeConfig } from '../../utils/compression.js'
 import { Logger } from '../../utils/Logger.js'
 import StorageManager from '../../storage/StorageManager.js'
 
 const logger = new Logger('exportConfig.js')
+
+// Reversible key map: map long property names to short tokens.
+// Populate this map to reduce URL size further.
+/** @type {Record<string,string>} */
+const KEY_MAP = {
+  // e.g. 'serviceId': 'i'
+}
+
+// Default compression algorithm. Deflate omits gzip headers and is slightly smaller.
+const DEFAULT_ALGO = 'deflate'
 
 /**
  * Generate shareable URL from stored config and services,
@@ -29,15 +39,25 @@ export async function exportConfig () {
       return
     }
 
-    const [cfgEnc, svcEnc] = await Promise.all([
-      gzipJsonToBase64url(cfg),
-      gzipJsonToBase64url(svc)
+    const [cfgRes, svcRes] = await Promise.all([
+      encodeConfig(cfg, { algo: DEFAULT_ALGO, keyMap: KEY_MAP, withChecksum: true }),
+      encodeConfig(svc, { algo: DEFAULT_ALGO, keyMap: KEY_MAP, withChecksum: true })
     ])
+    const cfgEnc = cfgRes.data
+    const svcEnc = svcRes.data
+    const cfgCrc = cfgRes.checksum || ''
+    const svcCrc = svcRes.checksum || ''
 
     const defaultName = `Snapshot ${new Date().toISOString()}`
     const name = prompt('Name this export', defaultName) || defaultName
 
-    const url = `${location.origin}${location.pathname}#cfg=${cfgEnc}&svc=${svcEnc}&name=${encodeURIComponent(name)}`
+    const params = new URLSearchParams()
+    params.set('cfg', cfgEnc)
+    params.set('svc', svcEnc)
+    params.set('name', encodeURIComponent(name))
+    params.set('algo', DEFAULT_ALGO)
+    params.set('cc', `${cfgCrc},${svcCrc}`)
+    const url = `${location.origin}${location.pathname}#${params.toString()}`
     await navigator.clipboard.writeText(url)
 
     const kb = (url.length / 1024).toFixed(1)

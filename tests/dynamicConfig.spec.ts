@@ -130,12 +130,13 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
     const url = await page.evaluate(() => (window as any).__copied);
     const hash = url.split("#")[1] || "";
     const params = new URLSearchParams(hash);
+    const algo = params.get("algo") || "gzip";
 
     const decode = (str: string) => {
       const pad = "=".repeat((4 - (str.length % 4)) % 4);
       const b64s = str.replace(/-/g, "+").replace(/_/g, "/") + pad;
       const buf = Buffer.from(b64s, "base64");
-      return gunzipSync(buf).toString();
+      return algo === "deflate" ? inflateRawSync(buf).toString() : gunzipSync(buf).toString();
     };
 
     const cfg = JSON.parse(decode(params.get("cfg")!));

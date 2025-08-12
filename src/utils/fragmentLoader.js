@@ -9,11 +9,17 @@
 
 import { Logger } from './Logger.js'
 import { showNotification } from '../component/dialog/notification.js'
-import { gunzipBase64urlToJson } from './compression.js'
+import { decodeConfig } from './compression.js'
 import { openFragmentDecisionModal } from '../component/modal/fragmentDecisionModal.js'
 import StorageManager from '../storage/StorageManager.js'
 
 const logger = new Logger('fragmentLoader.js')
+
+// Mirror the key map used during export. Keep this in sync.
+/** @type {Record<string,string>} */
+const KEY_MAP = {
+  // e.g. 'serviceId': 'i'
+}
 
 /**
  * Parse the URL fragment and store config/services in localStorage.
@@ -45,6 +51,11 @@ export async function loadFromFragment (wasExplicitLoad = false) {
   const cfgParam = params.get('cfg')
   const svcParam = params.get('svc')
   let nameParam = params.get('name') || 'Imported'
+  const algoParam = params.get('algo') || 'gzip'
+  const ccParam = params.get('cc')
+  const checks = ccParam ? ccParam.split(',') : []
+  const cfgChecksum = checks[0] || null
+  const svcChecksum = checks[1] || null
 
   if (wasExplicitLoad) {
     const searchParams = new URLSearchParams(location.search)
@@ -58,20 +69,28 @@ export async function loadFromFragment (wasExplicitLoad = false) {
     (Array.isArray(StorageManager.getConfig().boards) && StorageManager.getConfig().boards.length > 0)
 
   if ((cfgParam || svcParam) && hasLocalData && !wasExplicitLoad) {
-    await openFragmentDecisionModal({ cfgParam, svcParam, nameParam })
+    await openFragmentDecisionModal({ cfgParam, svcParam, nameParam, algoParam, ccParam })
     // Return shape mirrors explicit loads; callers typically ignore this branch.
     return { cfg: cfgParam, svc: svcParam, name: nameParam }
   }
 
   try {
     if (cfgParam) {
-      const cfg = await gunzipBase64urlToJson(cfgParam)
+      const cfg = await decodeConfig(cfgParam, {
+        algo: /** @type {'gzip'|'deflate'} */ (algoParam),
+        keyMap: KEY_MAP,
+        expectChecksum: cfgChecksum
+      })
       StorageManager.setConfig(cfg)
       logger.info('✅ Config geladen uit fragment')
     }
 
     if (svcParam) {
-      const svc = await gunzipBase64urlToJson(svcParam)
+      const svc = await decodeConfig(svcParam, {
+        algo: /** @type {'gzip'|'deflate'} */ (algoParam),
+        keyMap: KEY_MAP,
+        expectChecksum: svcChecksum
+      })
       StorageManager.setServices(svc)
       logger.info('✅ Services geladen uit fragment')
     }
