@@ -17,6 +17,7 @@ import { joinFromParams, parseChunksManifest } from './chunker.js'
 import { computeCRC32Hex } from './checksum.js'
 import { applyKeyMap } from './keymap.js'
 import { DEFAULT_CONFIG_TEMPLATE } from '../storage/defaultConfig.js'
+import { FRAG_MINIMIZE_ENABLED } from './fragmentConstants.js'
 
 const logger = new Logger('fragmentLoader.js')
 
@@ -25,8 +26,6 @@ const logger = new Logger('fragmentLoader.js')
 const KEY_MAP = {
   // e.g. 'serviceId': 'i'
 }
-
-const MINIMIZE_ENABLED = true
 
 /**
  * Parse the URL fragment and store config/services in localStorage.
@@ -49,7 +48,7 @@ export async function loadFromFragment (wasExplicitLoad = false) {
     if (location.hash.includes('cfg=') || location.hash.includes('svc=')) {
       showNotification('⚠️ DecompressionStream niet ondersteund door deze browser.', 4000, 'error')
     }
-    logger.warn('DecompressionStream niet ondersteund, fragment loader wordt overgeslagen.')
+    logger.warn('DecompressionStream niet ondersteund, fragment loader wordt overgeslagen.', { reason: 'unsupported API' })
     return
   }
 
@@ -109,8 +108,8 @@ export async function loadFromFragment (wasExplicitLoad = false) {
 
     const cfgDefaults = applyKeyMap(DEFAULT_CONFIG_TEMPLATE, KEY_MAP, 'encode')
     const svcDefaults = []
-    const cfgRestored = cfgObj ? (MINIMIZE_ENABLED ? restoreDeep(cfgObj, cfgDefaults) : cfgObj) : null
-    const svcRestored = svcArr ? (MINIMIZE_ENABLED ? restoreDeep(svcArr, svcDefaults) : svcArr) : null
+    const cfgRestored = cfgObj ? (FRAG_MINIMIZE_ENABLED ? restoreDeep(cfgObj, cfgDefaults) : cfgObj) : null
+    const svcRestored = svcArr ? (FRAG_MINIMIZE_ENABLED ? restoreDeep(svcArr, svcDefaults) : svcArr) : null
     const cfg = cfgRestored ? applyKeyMap(cfgRestored, KEY_MAP, 'decode') : null
     const svc = svcRestored ? applyKeyMap(svcRestored, KEY_MAP, 'decode') : null
 
@@ -123,8 +122,18 @@ export async function loadFromFragment (wasExplicitLoad = false) {
       StorageManager.setServices(svc)
       logger.info('✅ Services geladen uit fragment')
     }
+
+    // Telemetry: count successful imports.
+    // @ts-ignore
+    window.__fragmentImportSuccessCount = (window.__fragmentImportSuccessCount || 0) + 1
   } catch (e) {
-    logger.error('❌ Fout bij laden uit fragment:', e)
+    let reason = 'unknown'
+    if (e instanceof Error) {
+      if (e.message.includes('Checksum mismatch')) reason = 'checksum mismatch'
+      else if (e instanceof SyntaxError) reason = 'json parse'
+      else reason = e.message
+    }
+    logger.error('❌ Fout bij laden uit fragment:', { reason })
     showNotification('Fout bij laden van dashboardconfiguratie uit URL fragment.', 4000, 'error')
   }
 

@@ -33,6 +33,13 @@ test('deflate round-trip with key map and checksum', async () => {
   expect(decoded).toEqual(obj)
 })
 
+test('checksum detects tampered data', async () => {
+  const obj = { name: 'test', url: 'http://example.com' }
+  const { data, checksum } = await encodeConfig(obj, { algo: 'deflate', withChecksum: true })
+  const wrongChecksum = checksum ? checksum.slice(1) + checksum[0] : '00000000'
+  await expect(decodeConfig(data, { algo: 'deflate', expectChecksum: wrongChecksum })).rejects.toThrow(/Checksum mismatch/)
+})
+
 test('deflate with key map produces shorter URL than gzip', async () => {
   const gzipCfg = await gzipJsonToBase64url(ciConfig)
   const gzipSvc = await gzipJsonToBase64url(ciServices)
