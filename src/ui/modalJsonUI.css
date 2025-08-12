@@ -196,13 +196,13 @@ input[type="text"]:focus, input[type="number"]:focus {
   border-color: var(--text-accent);
   box-shadow: 0 0 0 3px var(--focus-ring-color);
 }
-input[type="checkbox"] {
+/* input[type="checkbox"] {
   width: 1.15em;
   height: 1.15em;
   accent-color: var(--text-accent);
   justify-self: start;
   margin: 8px 0 0 0;
-}
+} */
 div[style*="display: flex"] {
   background-color: var(--bg-item-card);
   border: 1px solid var(--border-color);
@@ -374,4 +374,57 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 
 #fragment-decision-modal >  .modal__btn-group {
   justify-content: flex-start
+}
+
+/* -------------------------------------------------------------------------- */
+/* ! 7. CHECKBOX AS TOGGLE SWITCH */
+/* -------------------------------------------------------------------------- */
+
+/* --- Checkbox as Toggle Switch --- */
+
+/* Hide the default checkbox and style it as the switch track */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  background-color: var(--border-color);
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.2s ease-in-out;
+
+  /* --- ALIGNMENT FIX --- */
+  /* This pushes the switch to the far right of its container */
+  justify-self: end;
+  margin-left: auto;
+  /* Ensure consistent vertical alignment */
+  align-self: center;
+}
+
+/* The white knob/thumb */
+input[type="checkbox"]::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: white;
+  top: 3px;
+  left: 3px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Styles for the "ON" state */
+input[type="checkbox"]:checked {
+  background-color: var(--color-success);
+}
+
+input[type="checkbox"]:checked::before {
+  transform: translateX(20px);
+}
+.modal__label:has(+ input[type="checkbox"]) {
+  text-align: left;
 }

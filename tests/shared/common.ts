@@ -189,5 +189,5 @@ export async function selectViewByLabel(page: Page, viewLabel: string) {
     const sel = document.querySelector("#view-selector") as HTMLSelectElement | null;
     const viewEl = document.querySelector(".board-view") as HTMLElement | null;
     return !!sel && !!viewEl && viewEl.id === sel.value;
-  }, undefined, { timeout: 5000 });
+  }, undefined, { timeout: 3000 });
 }
