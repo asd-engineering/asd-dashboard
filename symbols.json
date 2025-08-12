@@ -1389,7 +1389,7 @@
     "file": "src/component/board/BoardControl.js",
     "description": "Mount the board control panel into #board-control.",
     "params": [],
-    "returns": "void"
+    "returns": "SelectorPanel|null"
   },
   {
     "name": "mountViewControl",
@@ -1397,7 +1397,7 @@
     "file": "src/component/view/ViewControl.js",
     "description": "Mount the view control panel into #view-control.",
     "params": [],
-    "returns": "void"
+    "returns": "SelectorPanel|null"
   },
   {
     "name": "openConfigModal",

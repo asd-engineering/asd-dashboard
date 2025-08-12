@@ -31,6 +31,13 @@ export function mountViewControl () {
     testid: 'view-panel',
     placeholder: 'Search Views',
     showCount: false,
+    labelText: () => {
+      const bId = getCurrentBoardId() || StorageManager.misc.getLastBoardId()
+      const vId = StorageManager.misc.getLastViewId()
+      const b = (StorageManager.getBoards() || []).find(x => x.id === bId)
+      const v = b?.views.find(v => v.id === vId)
+      return '▼ View: ' + (v?.name ?? '—')
+    },
     getItems: () => {
       const bId = getCurrentBoardId() || StorageManager.misc.getLastBoardId()
       const board = (StorageManager.getBoards() || []).find(b => b.id === bId)

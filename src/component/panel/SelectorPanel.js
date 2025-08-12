@@ -26,7 +26,8 @@
  * @property {string} placeholder
  * @property {boolean} [showCount]
  * @property {(() => string) | null} [countText]
- * @property {() => SelectorItem[]} getItems
+ * @property {(() => string) | null} [labelText]
+  * @property {() => SelectorItem[]} getItems
  * @property {(id:string)=>void} [onSelect]
  * @property {(action:string, ctx:any)=>void} [onAction]
  * @property {(action:string, id:string, ctx:any)=>void} [onItemAction]
@@ -44,7 +45,7 @@ export class SelectorPanel {
    * @param {SelectorPanelCfg} cfg
    */
   constructor (cfg) {
-    this.cfg = { showCount: true, ...cfg }
+    this.cfg = { showCount: true, labelText: null, ...cfg }
     this.timers = { openClose: /** @type {any} */ (null) }
     this.state = { sideOpen: false }
     this.dom = /** @type {any} */ ({})
@@ -72,6 +73,10 @@ export class SelectorPanel {
     arrow.className = 'panel-arrow'
     arrow.textContent = '▼'
 
+    const label = document.createElement('span')
+    label.className = 'panel-label'
+    label.style.display = 'none'
+
     let count = null
     if (showCount && typeof countText === 'function') {
       count = document.createElement('span')
@@ -90,12 +95,12 @@ export class SelectorPanel {
     list.className = 'panel-list'
     content.appendChild(list)
 
-    wrap.append(input, arrow)
+    wrap.append(input, arrow, label)
     if (count) wrap.appendChild(count)
     wrap.appendChild(content)
     root.appendChild(wrap)
 
-    this.dom = { root, wrap, input, arrow, count, content, list, side }
+    this.dom = { root, wrap, input, arrow, label, count, content, list, side }
   }
 
   /** Bind DOM events */
@@ -178,7 +183,18 @@ export class SelectorPanel {
 
   /** Refresh list and counts */
   refresh () {
-    const { getItems, showCount, countText, actions = [], itemActions = [] } = this.cfg
+    const { getItems, showCount, countText, labelText, actions = [], itemActions = [] } = this.cfg
+
+    if (this.dom.label) {
+      if (typeof labelText === 'function') {
+        const txt = labelText()
+        this.dom.label.textContent = txt
+        this.dom.label.title = txt
+        this.dom.label.style.display = ''
+      } else {
+        this.dom.label.style.display = 'none'
+      }
+    }
 
     if (this.dom.count && showCount && typeof countText === 'function') {
       this.dom.count.textContent = countText()

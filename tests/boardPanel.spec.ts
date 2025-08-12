@@ -10,11 +10,28 @@ test.describe('Board panel', () => {
     await addServices(page, 1)
   })
 
+  test('renders header label and hides count', async ({ page }) => {
+    const panel = page.locator('[data-testid="board-panel"]')
+    await expect(panel.locator('.panel-label')).toHaveText(/▼ Board:\s+/)
+    await expect(panel.locator('.panel-count')).toHaveCount(0)
+  })
+
   test('opens dropdown and shows Actions ▸', async ({ page }) => {
     const panel = page.locator('[data-testid="board-panel"]')
     await panel.hover()
     await expect(panel.locator('.dropdown-content')).toBeVisible()
     await expect(panel.locator('[data-testid="panel-actions-trigger"]')).toBeVisible()
+  })
+
+  test('Actions ▸ focus ring visible via keyboard', async ({ page }) => {
+    const panel = page.locator('[data-testid="board-panel"]')
+    await panel.focus()
+    await page.keyboard.press('Enter')
+    await page.keyboard.press('Tab') // focus search
+    await page.keyboard.press('Tab') // focus Actions ▸
+    const trigger = panel.locator('[data-testid="panel-actions-trigger"]')
+    await expect(trigger).toBeFocused()
+    await expect(trigger).toHaveCSS('outline-style', 'solid')
   })
 
   test('Actions ▸ → New Board creates a board', async ({ page }) => {
