@@ -13,6 +13,7 @@ import { DEFAULT_CONFIG_TEMPLATE } from '../../storage/defaultConfig.js'
 import { exportConfig } from '../configModal/exportConfig.js'
 import { openFragmentDecisionModal } from './fragmentDecisionModal.js'
 import { JsonForm } from '../utils/json-form.js'
+import { JSON_FORM_ARRAY_DEFAULTS } from '../utils/json-form-defaults.js'
 
 /** @typedef {import('../../types.js').DashboardConfig} DashboardConfig */
 
@@ -49,7 +50,9 @@ export async function openConfigModal () {
             const formDiv = document.createElement('div')
             formDiv.id = 'config-form'
             formDiv.classList.add('modal__jsonform')
-            cfgForm = new JsonForm(formDiv, configData)
+            cfgForm = new JsonForm(formDiv, configData, {
+              defaultResolver: (_parent, key) => JSON_FORM_ARRAY_DEFAULTS[key]
+            })
 
             const textarea = document.createElement('textarea')
             textarea.id = 'config-json'
@@ -94,7 +97,9 @@ export async function openConfigModal () {
             const formDiv = document.createElement('div')
             formDiv.id = 'services-form'
             formDiv.classList.add('modal__jsonform', 'modal__textarea--grow')
-            svcForm = new JsonForm(formDiv, StorageManager.getServices())
+            svcForm = new JsonForm(formDiv, StorageManager.getServices(), {
+              defaultResolver: (_parent, key) => JSON_FORM_ARRAY_DEFAULTS[key || 'services']
+            })
 
             const textarea = document.createElement('textarea')
             textarea.id = 'config-services'

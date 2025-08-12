@@ -111,6 +111,8 @@ export function b64(obj: any) {
 export async function clearStorage(page: Page) {
   await navigate(page, "/");
   await page.evaluate(() => localStorage.clear());
+  // wait for any startup notifications to disappear to avoid intercepting clicks
+  await page.waitForSelector('dialog.user-notification', { state: 'detached' }).catch(() => {});
 }
 
 export async function getUnwrappedConfig(page: Page) {
