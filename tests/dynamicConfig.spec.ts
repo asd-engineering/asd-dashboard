@@ -169,13 +169,13 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
   test("after first load, config is used from localStorage", async ({ page }) => {
     const config = b64(ciConfig);
     await navigate(page, `/?config_base64=${config}`);
+    await page.waitForTimeout(50);
     await page.reload();
     await expect(page.locator("#widget-selector-panel")).toBeVisible();
   });
 
   test("changes via modal are saved and persist", async ({ page }) => {
     await navigate(page, `/?config_base64=${b64(ciConfig)}`);
-
     await page.click("#open-config-modal");
     await page.fill("#config-json", JSON.stringify({ ...ciConfig, boards: [] }));
     await page.click('button:has-text("Services")');
@@ -185,13 +185,22 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
 
     const stored = await getUnwrappedConfig(page);
     expect(Array.isArray(stored.boards)).toBeTruthy();
-    const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services') || '[]'));
+    const services = await page.evaluate(async () => {
+      const { default: sm } = await import('/storage/StorageManager.js');
+      return sm.getServices();
+    });
     expect(services.some((s) => s.name === 'svc1')).toBeTruthy();
   });
 
   test("removing config from localStorage shows popup again", async ({ page }) => {
     await navigate(page, `/?config_base64=${b64(ciConfig)}`);
-    await page.evaluate(() => localStorage.clear());
+    await page.evaluate(async () => {
+      localStorage.clear();
+      await new Promise(res => {
+        const req = indexedDB.deleteDatabase('asd-db');
+        req.onsuccess = req.onerror = req.onblocked = () => res(null);
+      });
+    });
     await page.reload();
     await expect(page.locator("#config-modal")).toBeVisible();
   });

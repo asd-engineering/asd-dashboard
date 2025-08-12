@@ -110,20 +110,19 @@ export function b64(obj: any) {
 
 export async function clearStorage(page: Page) {
   await navigate(page, "/");
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(async () => {
+    localStorage.clear();
+    await new Promise(res => {
+      const req = indexedDB.deleteDatabase('asd-db');
+      req.onsuccess = req.onerror = req.onblocked = () => res(null);
+    });
+  });
 }
 
 export async function getUnwrappedConfig(page: Page) {
-  return await page.evaluate(() => {
-    const raw = localStorage.getItem("config");
-    const parsed = raw ? JSON.parse(raw) : null;
-
-    const cfg = (parsed as any)?.data || parsed;
-
-    if (!cfg || typeof cfg !== "object") return { boards: [] };
-    if (!Array.isArray(cfg.boards)) cfg.boards = [];
-
-    return cfg;
+  return await page.evaluate(async () => {
+    const { default: sm } = await import('/storage/StorageManager.js');
+    return sm.getConfig();
   });
 }
 
@@ -157,11 +156,17 @@ export async function getShowMenuWidgetFlag(page: Page) {
 }
 
 export async function getLastUsedViewId(page: Page) {
-  return await page.evaluate(() => localStorage.getItem("lastUsedViewId"));
+  return await page.evaluate(async () => {
+    const { default: sm } = await import('/storage/StorageManager.js');
+    return sm.misc.getLastViewId();
+  });
 }
 
 export async function getLastUsedBoardId(page: Page) {
-  return await page.evaluate(() => localStorage.getItem("lastUsedBoardId"));
+  return await page.evaluate(async () => {
+    const { default: sm } = await import('/storage/StorageManager.js');
+    return sm.misc.getLastBoardId();
+  });
 }
 
 // Select a view by its visible label and wait until the DOM reflects it.

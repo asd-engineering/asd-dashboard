@@ -16,9 +16,10 @@ test.describe('Widgets', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await navigate(page,'/');
-    
-    await page.evaluate(() => {
-      localStorage.setItem('log', 'widgetManagement');
+
+    await page.evaluate(async () => {
+      const { default: sm } = await import('/storage/StorageManager.js');
+      sm.misc.setItem('log', 'widgetManagement');
     });
   });
 
