@@ -255,3 +255,107 @@ div[style*="display: flex"] > div {
 .modal__label + div > button:last-of-type:hover { background-color: #b6dcc2; }
 div[style*="display: flex"] > button { background-color: var(--color-danger-bg); color: var(--color-danger); }
 div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
+
+/* -------------------------------------------------------------------------- */
+/* ! 6. SAVED STATES TABLE STYLING */
+/* -------------------------------------------------------------------------- */
+
+/* --- Filter Input --- */
+#stateFilter {
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-md);
+  width: 100%;
+  box-sizing: border-box;
+}
+#stateFilter:focus {
+  outline: none;
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 3px var(--focus-ring-color);
+}
+
+/* --- Table Structure & Spacing --- */
+#stateTab table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+#stateTab th,
+#stateTab td {
+  padding: 12px var(--spacing-md);
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* --- Table Headers --- */
+#stateTab th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  background-color: var(--bg-modal);
+}
+
+/* --- Cells & Data Formatting --- */
+#stateTab td {
+  color: var(--text-primary);
+}
+
+/* Intelligently handle the long, unbreakable MD5 hash */
+#stateTab td:last-child {
+  font-family: var(--font-mono);
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.8rem;
+}
+
+/* --- Action Buttons in Table --- */
+#stateTab td button {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  background-color: #fff;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: all 150ms ease;
+}
+
+#stateTab td button.state-switch:hover {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+#stateTab td button:not(.state-switch):hover {
+  background-color: var(--color-danger-bg);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* --- "Delete All" Button --- */
+#stateTab > button {
+  display: block;
+  margin: var(--spacing-md) auto 0 auto;
+  width: fit-content;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-danger);
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+}
+
+#stateTab > button:hover {
+  background-color: var(--color-danger-bg);
+  border-color: var(--color-danger);
+}

@@ -218,7 +218,7 @@ export async function openConfigModal () {
 
       const exportButton = document.createElement('button')
       exportButton.textContent = 'Export'
-      exportButton.title = 'Genereer deelbare URL'
+      exportButton.title = 'Generate shareable URL'
       exportButton.classList.add('modal__btn', 'modal__btn--export')
       exportButton.addEventListener('click', exportConfig)
 
