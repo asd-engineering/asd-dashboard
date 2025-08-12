@@ -2132,7 +2132,7 @@
     "name": "updateWidgetCounter",
     "kind": "function",
     "file": "src/component/menu/widgetSelectorPanel.js",
-    "description": "Update the Active/Used/Max counter in the panel.",
+    "description": "Update the Running/Max and total Widgets counter in the panel.",
     "params": [],
     "returns": "void"
   },
