@@ -773,14 +773,6 @@
     "returns": "string|null"
   },
   {
-    "name": "getLocalStorageData",
-    "kind": "function",
-    "file": "src/component/modal/localStorageModal.js",
-    "description": "Retrieves and parses all JSON-formatted items from localStorage.",
-    "params": [],
-    "returns": "Record<string, any>"
-  },
-  {
     "name": "getSelectedBoardId",
     "kind": "function",
     "file": "src/component/board/boardDropdown.js",
@@ -1447,14 +1439,6 @@
     "returns": "Promise<void>"
   },
   {
-    "name": "openLocalStorageModal",
-    "kind": "function",
-    "file": "src/component/modal/localStorageModal.js",
-    "description": "Display a modal to inspect and modify `localStorage` keys.",
-    "params": [],
-    "returns": "void"
-  },
-  {
     "name": "openModal",
     "kind": "function",
     "file": "src/component/modal/modalFactory.js",
@@ -1754,20 +1738,6 @@
       }
     ],
     "returns": "Promise<string>"
-  },
-  {
-    "name": "saveLocalStorageData",
-    "kind": "function",
-    "file": "src/component/modal/localStorageModal.js",
-    "description": "Saves a data object to localStorage, serializing each value to a JSON string.",
-    "params": [
-      {
-        "name": "updatedData",
-        "type": "Record<string, any>",
-        "desc": "- The data to save."
-      }
-    ],
-    "returns": "void"
   },
   {
     "name": "saveStateSnapshot",

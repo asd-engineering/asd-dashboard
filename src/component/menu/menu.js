@@ -260,19 +260,11 @@ function initializeMainMenu () {
   swIcon.className = 'sw-icon'
   swLabel.appendChild(swIcon)
   adminControl.appendChild(swLabel)
-
-  const storageEditorLabel = document.createElement('label')
-  storageEditorLabel.id = 'localStorage-edit-button'
-  storageEditorLabel.ariaLabel = 'Storage editor'
-  storageEditorLabel.title = 'Storage editor'
-  storageEditorLabel.textContent = emojiList.floppyDisk.unicode
-  adminControl.appendChild(storageEditorLabel)
-
   const configEditorLabel = document.createElement('label')
   configEditorLabel.id = 'open-config-modal'
   configEditorLabel.ariaLabel = 'Config editor'
   configEditorLabel.title = 'Config editor'
-  configEditorLabel.textContent = emojiList.gear.unicode
+  configEditorLabel.textContent = emojiList.floppyDisk.unicode
   adminControl.appendChild(configEditorLabel)
 
   const resetButton = document.createElement('label')

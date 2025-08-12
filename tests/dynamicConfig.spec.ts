@@ -40,13 +40,13 @@ test.describe("Dashboard Config - Base64 via URL Params", () => {
 
   test("shows config modal on invalid base64", async ({ page }) => {
     await navigate(page, "/?config_base64=%%%");
-    await expect(page.locator("#localStorage-modal")).toBeVisible();
+    await expect(page.locator("#config-modal")).toBeVisible();
   });
 
   test("shows modal if base64 decodes to invalid JSON", async ({ page }) => {
     const bad = Buffer.from("{broken}").toString("base64");
     await navigate(page, `/?config_base64=${bad}`);
-    await expect(page.locator("#localStorage-modal")).toBeVisible();
+    await expect(page.locator("#config-modal")).toBeVisible();
   });
 });
 
@@ -178,11 +178,15 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
 
     await page.click("#open-config-modal");
     await page.fill("#config-json", JSON.stringify({ ...ciConfig, boards: [] }));
+    await page.click('button:has-text("Services")');
+    await page.fill('#config-services', JSON.stringify([{ name: 'svc1', url: 'http://svc1' }]));
     await page.click("#config-modal .modal__btn--save");
     await page.reload();
 
     const stored = await getUnwrappedConfig(page);
     expect(Array.isArray(stored.boards)).toBeTruthy();
+    const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services') || '[]'));
+    expect(services.some((s) => s.name === 'svc1')).toBeTruthy();
   });
 
   test("removing config from localStorage shows popup again", async ({ page }) => {

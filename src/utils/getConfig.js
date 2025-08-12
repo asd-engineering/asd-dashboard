@@ -5,7 +5,6 @@
  * @module getConfig
  */
 import { Logger } from './Logger.js'
-import { openLocalStorageModal } from '../component/modal/localStorageModal.js'
 import { showNotification } from '../component/dialog/notification.js'
 import { openConfigModal } from '../component/modal/configModal.js'
 import { DEFAULT_CONFIG_TEMPLATE } from '../storage/defaultConfig.js'
@@ -26,7 +25,9 @@ function parseBase64 (data) {
   } catch (e) {
     logger.error('Failed to parse base64 config:', e)
     showNotification('Invalid base64 configuration', 3000, 'error')
-    openLocalStorageModal()
+    openConfigModal().catch(error => {
+      logger.error('Error opening config modal:', error)
+    })
     return null
   }
 }
