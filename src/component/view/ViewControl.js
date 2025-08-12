@@ -47,6 +47,7 @@ export function mountViewControl () {
       const bId = getCurrentBoardId() || StorageManager.misc.getLastBoardId()
       await switchView(bId, viewId)
       refresh()
+      if (bId) updateViewSelector(bId)
     },
     onAction: async (action) => {
       const bId = getCurrentBoardId() || StorageManager.misc.getLastBoardId()

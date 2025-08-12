@@ -39,7 +39,11 @@ export function mountBoardControl () {
       const boards = StorageManager.getBoards() || []
       return boards.map(b => ({ id: b.id, label: b.name, meta: `${b.views.length} views` }))
     },
-    onSelect: async (boardId) => { await switchBoard(boardId); refresh() },
+    onSelect: async (boardId) => {
+      await switchBoard(boardId)
+      refresh()
+      updateBoardSelector()
+    },
     onAction: async (action) => {
       const currentId = StorageManager.misc.getLastBoardId()
       if (action === 'create') {
