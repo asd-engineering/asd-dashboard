@@ -45,6 +45,17 @@ export async function openConfigModal () {
           }
         },
         {
+          id: 'svcTab',
+          label: 'Services',
+          contentFn: () => {
+            const textarea = document.createElement('textarea')
+            textarea.id = 'config-services'
+            textarea.classList.add('modal__textarea--grow')
+            textarea.value = JSON.stringify(StorageManager.getServices(), null, 2)
+            return textarea
+          }
+        },
+        {
           id: 'stateTab',
           label: 'Saved States',
           populate: populateStateTab
@@ -100,18 +111,31 @@ export async function openConfigModal () {
       saveButton.textContent = 'Save'
       saveButton.classList.add('modal__btn', 'modal__btn--save')
       saveButton.addEventListener('click', () => {
+        /** @type {HTMLTextAreaElement|null} */
+        const cfgEl = modal.querySelector('#config-json')
+        /** @type {HTMLTextAreaElement|null} */
+        const svcEl = modal.querySelector('#config-services')
+        let cfg, svc
         try {
-          const textarea = /** @type {HTMLTextAreaElement} */(modal.querySelector('#config-json'))
-          const cfg = JSON.parse(textarea.value)
-          StorageManager.setConfig(cfg)
-          showNotification('Config saved to localStorage')
-          closeModal()
-          clearConfigFragment()
-          setTimeout(() => location.reload(), 500)
+          cfg = cfgEl ? JSON.parse(cfgEl.value) : {}
         } catch (e) {
-          logger.error('Invalid JSON:', e)
-          showNotification('Invalid JSON format', 3000, 'error')
+          logger.error('Invalid config JSON:', e)
+          showNotification('Invalid config JSON format', 3000, 'error')
+          return
         }
+        try {
+          svc = svcEl ? JSON.parse(svcEl.value) : []
+        } catch (e) {
+          logger.error('Invalid services JSON:', e)
+          showNotification('Invalid services JSON format', 3000, 'error')
+          return
+        }
+        StorageManager.setConfig(cfg)
+        StorageManager.setServices(Array.isArray(svc) ? svc : [])
+        showNotification('Config saved to localStorage')
+        closeModal()
+        clearConfigFragment()
+        setTimeout(() => location.reload(), 500)
       })
 
       const exportButton = document.createElement('button')

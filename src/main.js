@@ -12,7 +12,6 @@ import { initializeDashboardMenu, applyWidgetMenuVisibility } from './component/
 import { initializeDragAndDrop } from './component/widget/events/dragDrop.js'
 import { fetchServices } from './utils/fetchServices.js'
 import { getConfig } from './utils/getConfig.js'
-import { openLocalStorageModal } from './component/modal/localStorageModal.js'
 import { openConfigModal } from './component/modal/configModal.js'
 import { initializeBoardDropdown } from './component/board/boardDropdown.js'
 import { initializeViewDropdown } from './component/view/viewDropdown.js'
@@ -124,10 +123,7 @@ async function main () {
 
   // 7. Initialize modal triggers
   const buttonDebounce = 200
-  const handleLocalStorageModal = debounceLeading(openLocalStorageModal, buttonDebounce)
   const handleConfigModal = debounceLeading(openConfigModal, buttonDebounce)
-  document.getElementById('localStorage-edit-button')
-    .addEventListener('click', /** @type {EventListener} */(handleLocalStorageModal))
   document.getElementById('open-config-modal')
     .addEventListener('click', /** @type {EventListener} */(handleConfigModal))
 

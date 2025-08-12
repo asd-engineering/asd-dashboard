@@ -106,7 +106,6 @@ menu {
 }
 
 #toggle-widget-menu,
-#localStorage-edit-button,
 .icon-checkbox {
   display: inline-block;
   cursor: pointer;
