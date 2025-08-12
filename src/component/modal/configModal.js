@@ -12,6 +12,7 @@ import StorageManager from '../../storage/StorageManager.js'
 import { DEFAULT_CONFIG_TEMPLATE } from '../../storage/defaultConfig.js'
 import { exportConfig } from '../configModal/exportConfig.js'
 import { openFragmentDecisionModal } from './fragmentDecisionModal.js'
+import { JsonForm } from '../utils/json-form.js'
 
 /** @typedef {import('../../types.js').DashboardConfig} DashboardConfig */
 
@@ -27,6 +28,7 @@ export async function openConfigModal () {
   const storedConfig = StorageManager.getConfig()
   const configData = storedConfig || { ...DEFAULT_CONFIG_TEMPLATE }
   const last = StorageManager.misc.getItem('configModalTab') || 'cfgTab'
+  let cfgForm, svcForm
 
   openModal({
     id: 'config-modal',
@@ -37,22 +39,90 @@ export async function openConfigModal () {
           id: 'cfgTab',
           label: 'Configuration',
           contentFn: () => {
+            const wrap = document.createElement('div')
+            wrap.classList.add('modal__tab--column')
+
+            const toggle = document.createElement('button')
+            toggle.textContent = 'JSON mode'
+            toggle.classList.add('modal__btn', 'modal__btn--toggle')
+
+            const formDiv = document.createElement('div')
+            formDiv.id = 'config-form'
+            formDiv.classList.add('modal__jsonform', 'modal__textarea--grow')
+            cfgForm = new JsonForm(formDiv, configData)
+
             const textarea = document.createElement('textarea')
             textarea.id = 'config-json'
             textarea.classList.add('modal__textarea--grow')
+            textarea.style.display = 'none'
             textarea.value = JSON.stringify(configData, null, 2)
-            return textarea
+
+            toggle.addEventListener('click', () => {
+              if (formDiv.style.display !== 'none') {
+                const val = cfgForm.getValue()
+                textarea.value = JSON.stringify(val, null, 2)
+                formDiv.style.display = 'none'
+                textarea.style.display = 'block'
+                toggle.textContent = 'Form mode'
+              } else {
+                try {
+                  cfgForm.setValue(JSON.parse(textarea.value))
+                  textarea.style.display = 'none'
+                  formDiv.style.display = 'block'
+                  toggle.textContent = 'JSON mode'
+                } catch (e) {
+                  showNotification('Invalid JSON format', 3000, 'error')
+                }
+              }
+            })
+
+            wrap.append(toggle, formDiv, textarea)
+            return wrap
           }
         },
         {
           id: 'svcTab',
           label: 'Services',
           contentFn: () => {
+            const wrap = document.createElement('div')
+            wrap.classList.add('modal__tab--column')
+
+            const toggle = document.createElement('button')
+            toggle.textContent = 'JSON mode'
+            toggle.classList.add('modal__btn', 'modal__btn--toggle')
+
+            const formDiv = document.createElement('div')
+            formDiv.id = 'services-form'
+            formDiv.classList.add('modal__jsonform', 'modal__textarea--grow')
+            svcForm = new JsonForm(formDiv, StorageManager.getServices())
+
             const textarea = document.createElement('textarea')
             textarea.id = 'config-services'
             textarea.classList.add('modal__textarea--grow')
+            textarea.style.display = 'none'
             textarea.value = JSON.stringify(StorageManager.getServices(), null, 2)
-            return textarea
+
+            toggle.addEventListener('click', () => {
+              if (formDiv.style.display !== 'none') {
+                const val = svcForm.getValue()
+                textarea.value = JSON.stringify(val, null, 2)
+                formDiv.style.display = 'none'
+                textarea.style.display = 'block'
+                toggle.textContent = 'Form mode'
+              } else {
+                try {
+                  svcForm.setValue(JSON.parse(textarea.value))
+                  textarea.style.display = 'none'
+                  formDiv.style.display = 'block'
+                  toggle.textContent = 'JSON mode'
+                } catch (e) {
+                  showNotification('Invalid JSON format', 3000, 'error')
+                }
+              }
+            })
+
+            wrap.append(toggle, formDiv, textarea)
+            return wrap
           }
         },
         {
@@ -113,18 +183,26 @@ export async function openConfigModal () {
       saveButton.addEventListener('click', () => {
         /** @type {HTMLTextAreaElement|null} */
         const cfgEl = modal.querySelector('#config-json')
+        /** @type {HTMLDivElement|null} */
+        const cfgFormDiv = modal.querySelector('#config-form')
         /** @type {HTMLTextAreaElement|null} */
         const svcEl = modal.querySelector('#config-services')
+        /** @type {HTMLDivElement|null} */
+        const svcFormDiv = modal.querySelector('#services-form')
         let cfg, svc
         try {
-          cfg = cfgEl ? JSON.parse(cfgEl.value) : {}
+          cfg = cfgFormDiv && cfgFormDiv.style.display !== 'none'
+            ? cfgForm.getValue()
+            : cfgEl ? JSON.parse(cfgEl.value) : {}
         } catch (e) {
           logger.error('Invalid config JSON:', e)
           showNotification('Invalid config JSON format', 3000, 'error')
           return
         }
         try {
-          svc = svcEl ? JSON.parse(svcEl.value) : []
+          svc = svcFormDiv && svcFormDiv.style.display !== 'none'
+            ? svcForm.getValue()
+            : svcEl ? JSON.parse(svcEl.value) : []
         } catch (e) {
           logger.error('Invalid services JSON:', e)
           showNotification('Invalid services JSON format', 3000, 'error')

@@ -1221,6 +1221,14 @@
     "returns": "boolean"
   },
   {
+    "name": "JsonForm",
+    "kind": "class",
+    "file": "src/component/utils/json-form.js",
+    "description": "Lightweight renderer to edit plain objects as HTML inputs. Supports nested objects and arrays with add/remove controls.",
+    "params": [],
+    "returns": ""
+  },
+  {
     "name": "jsonGet",
     "kind": "function",
     "file": "src/storage/StorageManager.js",
@@ -1382,6 +1390,22 @@
       }
     ],
     "returns": "Array<Service>"
+  },
+  {
+    "name": "mountBoardControl",
+    "kind": "function",
+    "file": "src/component/board/BoardControl.js",
+    "description": "Mount board control into #board-control.",
+    "params": [],
+    "returns": "SelectorPanel|null"
+  },
+  {
+    "name": "mountViewControl",
+    "kind": "function",
+    "file": "src/component/view/ViewControl.js",
+    "description": "Mount view control into #view-control.",
+    "params": [],
+    "returns": "SelectorPanel|null"
   },
   {
     "name": "openConfigModal",
