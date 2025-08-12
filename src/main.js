@@ -30,6 +30,7 @@ import {
   refreshRowCounts
 } from './component/menu/widgetSelectorPanel.js'
 
+await StorageManager.init({ persist: true })
 const logger = new Logger('main.js')
 Logger.enableLogs('all')
 
@@ -84,16 +85,7 @@ async function main () {
   applyControlVisibility()
   applyWidgetMenuVisibility()
 
-  // 5. Migrate legacy boards key and load from config (remove before merging to main)
-  const oldBoards = JSON.parse(localStorage.getItem('boards') || '[]')
-  if (oldBoards.length > 0 && (!config.boards || config.boards.length === 0)) {
-    logger.log('Migrating old boards key into config')
-    StorageManager.updateConfig(cfg => { cfg.boards = oldBoards })
-    localStorage.removeItem('boards')
-    config.boards = oldBoards
-  }
-
-  // 6. Initialize boards and switch to the last used or default board/view
+  // 5. Initialize boards and switch to the last used or default board/view
   const initialBoardView = await initializeBoards()
 
   const lastUsedBoardId = StorageManager.misc.getLastBoardId()

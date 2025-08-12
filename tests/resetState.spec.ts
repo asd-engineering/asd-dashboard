@@ -28,7 +28,10 @@ import { navigate, getConfigBoards } from './shared/common'
 
     const boards = await getConfigBoards(page)
     expect(boards.some(b => b.id === 'b2')).toBeFalsy()
-    const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services') || '[]'))
+    const services = await page.evaluate(async () => {
+      const { default: sm } = await import('/storage/StorageManager.js');
+      return sm.getServices();
+    })
     expect(services.some(s => s.name === 'svc1')).toBeFalsy()
 
     await page.click('#open-config-modal')

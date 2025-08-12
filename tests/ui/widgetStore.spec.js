@@ -156,7 +156,13 @@ test.describe('WidgetStore UI Tests', () => {
     console.log('Widget count before hydration:', beforeHydration)
 
     await routeWithLRUConfig(page, widgetState, 2)
-    await page.evaluate(() => localStorage.clear())
+    await page.evaluate(async () => {
+      localStorage.clear()
+      await new Promise(resolve => {
+        const req = indexedDB.deleteDatabase('asd-db') // eslint-disable-line no-undef
+        req.onsuccess = req.onerror = req.onblocked = () => resolve(null)
+      })
+    })
     await page.reload()
 
     const afterHydration = await page.$$eval(

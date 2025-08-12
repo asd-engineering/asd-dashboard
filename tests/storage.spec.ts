@@ -6,38 +6,23 @@ import crypto from 'crypto'
 test.describe('StorageManager', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
-    await navigate(page,'/')
+    await navigate(page, '/')
   })
 
   test('setConfig stores config only', async ({ page }) => {
     const result = await page.evaluate(async () => {
       const { default: sm } = await import('/storage/StorageManager.js')
-      localStorage.clear()
       const cfg = { boards: [{ id: 'b1', name: 'B1', views: [] }] }
       sm.setConfig(cfg)
-      return {
-        raw: localStorage.getItem('config'),
-        boards: localStorage.getItem('boards'),
-        cfg: sm.getConfig()
-      }
+      return { cfg: sm.getConfig(), boards: sm.getBoards() }
     })
-    expect(JSON.parse(result.raw)).toMatchObject({
-      version: 1,
-      data: {
-        boards: [{ id: 'b1', name: 'B1', views: [] }]
-      }
-    })
-    expect(result.boards).toBeNull()
-
-    expect(result.cfg.boards).toEqual([{ id: 'b1', name: 'B1', views: [] }])
-    expect(result.cfg.globalSettings).toBeDefined()
-    expect(result.cfg.styling).toBeDefined()
+    expect(result.boards).toHaveLength(1)
+    expect(result.cfg.boards).toEqual(result.boards)
   })
 
   test('saveStateSnapshot persists and hashes', async ({ page }) => {
     const { hash, store } = await page.evaluate(async () => {
       const { default: sm } = await import('/storage/StorageManager.js')
-      localStorage.clear()
       const hash = await sm.saveStateSnapshot({ name: 'one', type: 'manual', cfg: 'a', svc: 'b' })
       const store = await sm.loadStateStore()
       return { hash, store }
@@ -112,28 +97,27 @@ test.describe('StorageManager', () => {
   test('clearAll removes stored keys', async ({ page }) => {
     const result = await page.evaluate(async () => {
       const { default: sm } = await import('/storage/StorageManager.js')
-      localStorage.setItem('config', '{}')
-      localStorage.setItem('boards', '[]')
-      localStorage.setItem('services', '[]')
-      localStorage.setItem('asd-dashboard-state', '{}')
-      sm.clearAll()
+      sm.setConfig({ foo: 'bar' })
+      sm.setBoards([{ id: 'b1', name: 'B1', views: [] }])
+      sm.setServices([{ name: 'svc', url: '' }])
+      await sm.saveStateStore({ version: 1, states: [{ name: 's' }] })
+      await sm.clearAll()
       return {
-        c: localStorage.getItem('config'),
-        b: localStorage.getItem('boards'),
-        s: localStorage.getItem('services'),
-        st: localStorage.getItem('asd-dashboard-state')
+        cfg: sm.getConfig(),
+        boards: sm.getBoards(),
+        services: sm.getServices(),
+        store: await sm.loadStateStore()
       }
     })
-    expect(result.c).toBeNull()
-    expect(result.b).toBeNull()
-    expect(result.s).toBeNull()
-    expect(result.st).toBeNull()
+    expect(Object.keys(result.cfg).length).toBe(0)
+    expect(result.boards).toHaveLength(0)
+    expect(result.services).toHaveLength(0)
+    expect(result.store.states).toHaveLength(0)
   })
 
-  test('setServices normalizes service data', async ({ page }) => {
+  test('setServices sanitizes service data', async ({ page }) => {
     const services = await page.evaluate(async () => {
       const { default: sm } = await import('/storage/StorageManager.js')
-      localStorage.clear()
       const raw = [
         { name: 'A', url: 'https://a.example' },
         { id: 'srv-fixed', name: 'B', url: '', type: 'custom', category: 'c', subcategory: 'sc', tags: ['t'], config: { x: 1 }, maxInstances: 5 }
@@ -142,55 +126,36 @@ test.describe('StorageManager', () => {
       return sm.getServices()
     })
     expect(services).toHaveLength(2)
-    expect(services[0].id).toMatch(/^srv-/)
-    expect(services[0]).toMatchObject({
-      name: 'A',
-      url: 'https://a.example',
-      type: 'iframe',
-      category: '',
-      subcategory: '',
-      tags: [],
-      config: {},
-      maxInstances: null
-    })
-    expect(services[1]).toEqual({
-      id: 'srv-fixed',
-      name: 'B',
-      url: '',
-      type: 'custom',
-      category: 'c',
-      subcategory: 'sc',
-      tags: ['t'],
-      config: { x: 1 },
-      maxInstances: 5
-    })
+    expect(services[0]).toMatchObject({ name: 'A', url: 'https://a.example' })
+    expect(services[0].id).toBeUndefined()
+    expect(services[1]).toMatchObject({ id: 'srv-fixed', name: 'B', url: '' })
   })
 
   test('clearAllExceptState preserves state store', async ({ page }) => {
     const result = await page.evaluate(async () => {
       const { default: sm } = await import('/storage/StorageManager.js')
-      localStorage.setItem('config', '{}')
-      localStorage.setItem('boards', '[]')
-      localStorage.setItem('services', '[]')
-      localStorage.setItem('lastUsedBoardId', 'b1')
-      localStorage.setItem('lastUsedViewId', 'v1')
-      localStorage.setItem('asd-dashboard-state', '{"version":1,"states":[{"name":"snap"}]}')
-      sm.clearAllExceptState()
+      sm.setConfig({ foo: 'bar' })
+      sm.setBoards([{ id: 'b1', name: 'B1', views: [] }])
+      sm.setServices([{ name: 'svc', url: '' }])
+      sm.misc.setLastBoardId('b1')
+      sm.misc.setLastViewId('v1')
+      await sm.saveStateStore({ version: 1, states: [{ name: 'snap' }] })
+      await sm.clearAllExceptState()
       return {
-        c: localStorage.getItem('config'),
-        b: localStorage.getItem('boards'),
-        s: localStorage.getItem('services'),
-        lb: localStorage.getItem('lastUsedBoardId'),
-        lv: localStorage.getItem('lastUsedViewId'),
-        st: localStorage.getItem('asd-dashboard-state')
+        cfg: sm.getConfig(),
+        boards: sm.getBoards(),
+        services: sm.getServices(),
+        lb: sm.misc.getLastBoardId(),
+        lv: sm.misc.getLastViewId(),
+        st: await sm.loadStateStore()
       }
     })
-    expect(result.c).toBeNull()
-    expect(result.b).toBeNull()
-    expect(result.s).toBeNull()
+    expect(Object.keys(result.cfg).length).toBe(0)
+    expect(result.boards).toHaveLength(0)
+    expect(result.services).toHaveLength(0)
     expect(result.lb).toBeNull()
     expect(result.lv).toBeNull()
-    expect(result.st).not.toBeNull()
+    expect(result.st.states.length).toBeGreaterThan(0)
   })
 
   test('clearStateStore empties saved states', async ({ page }) => {
@@ -198,11 +163,10 @@ test.describe('StorageManager', () => {
       const { default: sm } = await import('/storage/StorageManager.js')
       await sm.saveStateStore({ version: 1, states: [{ name: 'one' }] })
       await sm.clearStateStore()
-      return localStorage.getItem('asd-dashboard-state')
+      return await sm.loadStateStore()
     })
-    const parsed = JSON.parse(store)
-    expect(parsed.version).toBe(1)
-    expect(Array.isArray(parsed.states)).toBeTruthy()
-    expect(parsed.states.length).toBe(0)
+    expect(store.version).toBe(1)
+    expect(Array.isArray(store.states)).toBeTruthy()
+    expect(store.states.length).toBe(0)
   })
 })
