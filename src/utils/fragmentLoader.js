@@ -12,6 +12,11 @@ import { showNotification } from '../component/dialog/notification.js'
 import { decodeConfig } from './compression.js'
 import { openFragmentDecisionModal } from '../component/modal/fragmentDecisionModal.js'
 import StorageManager from '../storage/StorageManager.js'
+import { restoreDeep } from './minimizer.js'
+import { joinFromParams, parseChunksManifest } from './chunker.js'
+import { computeCRC32Hex } from './checksum.js'
+import { applyKeyMap } from './keymap.js'
+import { DEFAULT_CONFIG_TEMPLATE } from '../storage/defaultConfig.js'
 
 const logger = new Logger('fragmentLoader.js')
 
@@ -20,6 +25,8 @@ const logger = new Logger('fragmentLoader.js')
 const KEY_MAP = {
   // e.g. 'serviceId': 'i'
 }
+
+const MINIMIZE_ENABLED = true
 
 /**
  * Parse the URL fragment and store config/services in localStorage.
@@ -48,14 +55,16 @@ export async function loadFromFragment (wasExplicitLoad = false) {
 
   const hash = location.hash.startsWith('#') ? location.hash.slice(1) : ''
   const params = new URLSearchParams(hash)
-  const cfgParam = params.get('cfg')
-  const svcParam = params.get('svc')
   let nameParam = params.get('name') || 'Imported'
   const algoParam = params.get('algo') || 'gzip'
   const ccParam = params.get('cc')
   const checks = ccParam ? ccParam.split(',') : []
   const cfgChecksum = checks[0] || null
   const svcChecksum = checks[1] || null
+  const ccw = params.get('ccw')
+  parseChunksManifest(params.get('chunks') || '')
+  const cfgParam = joinFromParams('cfg', params)
+  const svcParam = joinFromParams('svc', params)
 
   if (wasExplicitLoad) {
     const searchParams = new URLSearchParams(location.search)
@@ -75,22 +84,42 @@ export async function loadFromFragment (wasExplicitLoad = false) {
   }
 
   try {
+    let cfgObj = null
+    let svcArr = null
     if (cfgParam) {
-      const cfg = await decodeConfig(cfgParam, {
+      const decoded = await decodeConfig(cfgParam, {
         algo: /** @type {'gzip'|'deflate'} */ (algoParam),
-        keyMap: KEY_MAP,
         expectChecksum: cfgChecksum
       })
+      cfgObj = decoded
+    }
+
+    if (svcParam) {
+      const decoded = await decodeConfig(svcParam, {
+        algo: /** @type {'gzip'|'deflate'} */ (algoParam),
+        expectChecksum: svcChecksum
+      })
+      svcArr = decoded
+    }
+
+    if (ccw) {
+      const calc = computeCRC32Hex(JSON.stringify({ c: cfgObj ?? null, s: svcArr ?? null }))
+      if (calc !== ccw) throw new Error(`Fragment ccw mismatch: expected ${ccw}, got ${calc}`)
+    }
+
+    const cfgDefaults = applyKeyMap(DEFAULT_CONFIG_TEMPLATE, KEY_MAP, 'encode')
+    const svcDefaults = []
+    const cfgRestored = cfgObj ? (MINIMIZE_ENABLED ? restoreDeep(cfgObj, cfgDefaults) : cfgObj) : null
+    const svcRestored = svcArr ? (MINIMIZE_ENABLED ? restoreDeep(svcArr, svcDefaults) : svcArr) : null
+    const cfg = cfgRestored ? applyKeyMap(cfgRestored, KEY_MAP, 'decode') : null
+    const svc = svcRestored ? applyKeyMap(svcRestored, KEY_MAP, 'decode') : null
+
+    if (cfg) {
       StorageManager.setConfig(cfg)
       logger.info('✅ Config geladen uit fragment')
     }
 
-    if (svcParam) {
-      const svc = await decodeConfig(svcParam, {
-        algo: /** @type {'gzip'|'deflate'} */ (algoParam),
-        keyMap: KEY_MAP,
-        expectChecksum: svcChecksum
-      })
+    if (svc) {
       StorageManager.setServices(svc)
       logger.info('✅ Services geladen uit fragment')
     }

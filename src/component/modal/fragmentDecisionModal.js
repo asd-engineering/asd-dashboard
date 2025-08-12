@@ -90,7 +90,7 @@ export function openFragmentDecisionModal ({ cfgParam, svcParam, nameParam, algo
          */
         async function applyFragment (overwrite) {
           try {
-            const algo = algoParam || new URLSearchParams(location.hash.slice(1)).get('algo') || 'gzip'
+            const algo = /** @type {'gzip'|'deflate'} */ (algoParam || new URLSearchParams(location.hash.slice(1)).get('algo') || 'gzip')
             const cc = ccParam || new URLSearchParams(location.hash.slice(1)).get('cc')
             const checks = cc ? cc.split(',') : []
             const cfgChecksum = checks[0] || null
