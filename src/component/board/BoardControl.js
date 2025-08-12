@@ -30,6 +30,11 @@ export function mountBoardControl () {
     testid: 'board-panel',
     placeholder: 'Search Boards',
     showCount: false,
+    labelText: () => {
+      const id = StorageManager.misc.getLastBoardId()
+      const b = (StorageManager.getBoards() || []).find(x => x.id === id)
+      return '▼ Board: ' + (b?.name ?? '—')
+    },
     getItems: () => {
       const boards = StorageManager.getBoards() || []
       return boards.map(b => ({ id: b.id, label: b.name, meta: `${b.views.length} views` }))

@@ -9,6 +9,12 @@ test.describe('View panel', () => {
     await addServices(page, 1)
   })
 
+  test('renders header label and hides count', async ({ page }) => {
+    const panel = page.locator('[data-testid="view-panel"]')
+    await expect(panel.locator('.panel-label')).toHaveText(/▼ View:\s+/)
+    await expect(panel.locator('.panel-count')).toHaveCount(0)
+  })
+
   test('opens dropdown and side Actions ▸', async ({ page }) => {
     const panel = page.locator('[data-testid="view-panel"]')
     await panel.hover()
