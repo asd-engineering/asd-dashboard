@@ -358,4 +358,32 @@ function findWidgetLocation (id) {
   return null
 }
 
-export { addWidget, removeWidget, updateWidgetOrders, createWidget, findWidgetLocation }
+/**
+ * Find the board and view containing the first instance of a widget by its serviceId.
+ * This function scans the persisted configuration, not the live widgetStore.
+ * @param {string} serviceId - The unique ID of the service to find.
+ * @returns {{boardId: string, viewId: string} | null} The location or null if not found.
+ */
+function findServiceLocation (serviceId) {
+  const boards = StorageManager.getBoards()
+  if (!boards || !serviceId) return null
+
+  for (const board of boards) {
+    for (const view of board.views || []) {
+      const exists = (view.widgetState || []).some(
+        w => w.serviceId === serviceId
+      )
+      if (exists) return { boardId: board.id, viewId: view.id }
+    }
+  }
+  return null
+}
+
+export {
+  addWidget,
+  removeWidget,
+  updateWidgetOrders,
+  createWidget,
+  findWidgetLocation,
+  findServiceLocation
+}

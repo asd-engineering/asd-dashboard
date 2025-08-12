@@ -84,3 +84,17 @@
   flex-direction: column;
   gap: 0.5rem;
 }
+
+.modal__jsonform {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-y: auto;
+}
+
+.modal__btn--toggle {
+  align-self: flex-end;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
