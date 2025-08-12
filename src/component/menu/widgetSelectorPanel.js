@@ -5,13 +5,21 @@
  *
  * @module widgetSelectorPanel
  */
-import { addWidget, removeWidget, findWidgetLocation } from '../widget/widgetManagement.js'
+import {
+  addWidget,
+  removeWidget,
+  findServiceLocation
+} from '../widget/widgetManagement.js'
 import { widgetStore } from '../widget/widgetStore.js'
 import { switchBoard } from '../board/boardManagement.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import StorageManager from '../../storage/StorageManager.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 import { resolveServiceConfig } from '../../utils/serviceUtils.js'
+import { showNotification } from '../dialog/notification.js'
+import { Logger } from '../../utils/Logger.js'
+
+const logger = new Logger('widgetSelectorPanel.js')
 
 /**
  * Emit a standardized state change event.
@@ -283,15 +291,40 @@ export function initializeWidgetSelectorPanel () {
       return
     }
 
-    // Navigate to first matching widget location
+    // Navigate to first matching widget location by searching the persisted config.
     if (action === 'navigate' && name) {
-      const el = widgetStore.findFirstWidgetByService(name)
-      if (el) {
-        const loc = findWidgetLocation(el.dataset.dataid)
-        if (loc) await switchBoard(loc.boardId, loc.viewId)
+      const service = (StorageManager.getServices() || []).find(
+        s => s.name === name
+      )
+      if (!service || !service.id) {
+        showNotification(
+          `Error: Could not find service definition for "${name}".`,
+          4000,
+          'error'
+        )
+        logger.error(`Service with name "${name}" not found in StorageManager.`)
+        closePanel()
+        return
       }
+
+      const location = findServiceLocation(service.id)
+
+      if (location) {
+        await switchBoard(location.boardId, location.viewId)
+        showNotification(
+          `Navigated to view containing "${name}".`,
+          2500,
+          'success'
+        )
+      } else {
+        showNotification(
+          `No instances of "${name}" found in any board.`,
+          3000,
+          'error'
+        )
+      }
+
       closePanel()
-      // No local refresh; rely on state-change if something actually altered state.
       return
     }
 
