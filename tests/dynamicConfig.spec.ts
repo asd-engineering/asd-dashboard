@@ -9,7 +9,9 @@ import {
   navigate,
   ensurePanelOpen,
 } from "./shared/common";
-import { gunzipSync } from "zlib";
+import { decodeConfig } from "../src/utils/compression.js";
+import { restoreDeep } from "../src/utils/minimizer.js";
+import { DEFAULT_CONFIG_TEMPLATE } from "../src/storage/defaultConfig.js";
 import { bootWithDashboardState } from "./shared/bootState.js";
 
 // Base64 params
@@ -130,17 +132,14 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
     const url = await page.evaluate(() => (window as any).__copied);
     const hash = url.split("#")[1] || "";
     const params = new URLSearchParams(hash);
-    const algo = params.get("algo") || "gzip";
-
-    const decode = (str: string) => {
-      const pad = "=".repeat((4 - (str.length % 4)) % 4);
-      const b64s = str.replace(/-/g, "+").replace(/_/g, "/") + pad;
-      const buf = Buffer.from(b64s, "base64");
-      return algo === "deflate" ? inflateRawSync(buf).toString() : gunzipSync(buf).toString();
-    };
-
-    const cfg = JSON.parse(decode(params.get("cfg")!));
-    const svc = JSON.parse(decode(params.get("svc")!));
+    const algo = (params.get("algo") || "gzip") as "gzip" | "deflate";
+    const cc = params.get("cc")?.split(",") || [];
+    const cfgChecksum = cc[0] || null;
+    const svcChecksum = cc[1] || null;
+    const cfgMin = await decodeConfig(params.get("cfg")!, { algo, expectChecksum: cfgChecksum });
+    const svcMin = await decodeConfig(params.get("svc")!, { algo, expectChecksum: svcChecksum });
+    const cfg = restoreDeep(cfgMin, DEFAULT_CONFIG_TEMPLATE);
+    const svc = restoreDeep(svcMin, []);
     expect(cfg.globalSettings.theme).toBe(ciConfig.globalSettings.theme);
     expect(svc.length).toBe(ciServices.length);
   });

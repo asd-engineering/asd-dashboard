@@ -8,6 +8,11 @@ import { showNotification } from '../dialog/notification.js'
 import { encodeConfig } from '../../utils/compression.js'
 import { Logger } from '../../utils/Logger.js'
 import StorageManager from '../../storage/StorageManager.js'
+import { minimizeDeep } from '../../utils/minimizer.js'
+import { splitIntoParams, formatChunksManifest } from '../../utils/chunker.js'
+import { computeCRC32Hex } from '../../utils/checksum.js'
+import { applyKeyMap } from '../../utils/keymap.js'
+import { DEFAULT_CONFIG_TEMPLATE } from '../../storage/defaultConfig.js'
 
 const logger = new Logger('exportConfig.js')
 
@@ -17,6 +22,9 @@ const logger = new Logger('exportConfig.js')
 const KEY_MAP = {
   // e.g. 'serviceId': 'i'
 }
+
+const MINIMIZE_ENABLED = true
+const CHUNK_MAX_LEN = 12000
 
 // Default compression algorithm. Deflate omits gzip headers and is slightly smaller.
 const DEFAULT_ALGO = 'deflate'
@@ -39,24 +47,47 @@ export async function exportConfig () {
       return
     }
 
+    const cfgMapped = applyKeyMap(cfg, KEY_MAP, 'encode')
+    const svcMapped = applyKeyMap(svc, KEY_MAP, 'encode')
+    const cfgDefaults = applyKeyMap(DEFAULT_CONFIG_TEMPLATE, KEY_MAP, 'encode')
+    const svcDefaults = []
+
+    const cfgMin = MINIMIZE_ENABLED
+      ? minimizeDeep(cfgMapped, cfgDefaults, { dropEmpties: true }) ?? {}
+      : cfgMapped
+    const svcMin = MINIMIZE_ENABLED
+      ? minimizeDeep(svcMapped, svcDefaults, { dropEmpties: true }) ?? []
+      : svcMapped
+
     const [cfgRes, svcRes] = await Promise.all([
-      encodeConfig(cfg, { algo: DEFAULT_ALGO, keyMap: KEY_MAP, withChecksum: true }),
-      encodeConfig(svc, { algo: DEFAULT_ALGO, keyMap: KEY_MAP, withChecksum: true })
+      encodeConfig(cfgMin, { algo: DEFAULT_ALGO, withChecksum: true }),
+      encodeConfig(svcMin, { algo: DEFAULT_ALGO, withChecksum: true })
     ])
     const cfgEnc = cfgRes.data
     const svcEnc = svcRes.data
     const cfgCrc = cfgRes.checksum || ''
     const svcCrc = svcRes.checksum || ''
 
+    const ccw = computeCRC32Hex(JSON.stringify({ c: cfgMin, s: svcMin }))
+
     const defaultName = `Snapshot ${new Date().toISOString()}`
     const name = prompt('Name this export', defaultName) || defaultName
 
     const params = new URLSearchParams()
-    params.set('cfg', cfgEnc)
-    params.set('svc', svcEnc)
     params.set('name', encodeURIComponent(name))
     params.set('algo', DEFAULT_ALGO)
     params.set('cc', `${cfgCrc},${svcCrc}`)
+    params.set('ccw', ccw)
+
+    const cfgPairs = splitIntoParams('cfg', cfgEnc, CHUNK_MAX_LEN)
+    const svcPairs = splitIntoParams('svc', svcEnc, CHUNK_MAX_LEN)
+    for (const [k, v] of [...cfgPairs, ...svcPairs]) params.set(k, v)
+
+    const manifest = formatChunksManifest({
+      cfg: cfgPairs.length > 1 ? cfgPairs.length : 0,
+      svc: svcPairs.length > 1 ? svcPairs.length : 0
+    })
+    if (manifest) params.set('chunks', manifest)
     const url = `${location.origin}${location.pathname}#${params.toString()}`
     await navigator.clipboard.writeText(url)
 
@@ -65,7 +96,7 @@ export async function exportConfig () {
     logger.info(`Exported config URL (${url.length} chars) named ${name}`)
 
     if (url.length > 60000) {
-      showNotification('⚠️ URL is very large and may not work in all browsers', 6000, 'error')
+      showNotification('⚠️ URL is very large even with chunking and may not work in all browsers', 6000, 'error')
       logger.warn(`Exported URL length: ${url.length}`)
     }
 

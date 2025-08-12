@@ -69,7 +69,8 @@ ASD Dashboard also supports sharing full configuration and service state using t
 ### Practical Limits
 
 * Works reliably up to \~60KB total URL length (more than enough for hundreds of services)
-* Shows a warning if the link becomes too large for some browsers
+* Very long `cfg`/`svc` parameters are automatically chunked (`cfg0,cfg1,...`) when exceeding 12KB each. A `chunks` manifest (e.g. `chunks=cfg:3;svc:2`) plus a whole-payload checksum `ccw` guard reassembly.
+* Shows a warning if the link becomes too large even after chunking
 * Fails gracefully if compression is unsupported (e.g., older Safari versions)
 
 ### Use Case Example

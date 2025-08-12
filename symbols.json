@@ -711,6 +711,20 @@
     "returns": "HTMLElement|undefined"
   },
   {
+    "name": "formatChunksManifest",
+    "kind": "function",
+    "file": "src/utils/chunker.js",
+    "description": "",
+    "params": [
+      {
+        "name": "m",
+        "type": "Record<string,number>",
+        "desc": ""
+      }
+    ],
+    "returns": "string"
+  },
+  {
     "name": "get",
     "kind": "function",
     "file": "src/component/widget/widgetStore.js",
@@ -1283,6 +1297,25 @@
     "returns": "boolean"
   },
   {
+    "name": "joinFromParams",
+    "kind": "function",
+    "file": "src/utils/chunker.js",
+    "description": "Join numbered fragment parameters back into a single string.",
+    "params": [
+      {
+        "name": "name",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "params",
+        "type": "URLSearchParams",
+        "desc": ""
+      }
+    ],
+    "returns": "string|null"
+  },
+  {
     "name": "jsonGet",
     "kind": "function",
     "file": "src/storage/StorageManager.js",
@@ -1444,6 +1477,30 @@
       }
     ],
     "returns": "Array<Service>"
+  },
+  {
+    "name": "minimizeDeep",
+    "kind": "function",
+    "file": "src/utils/minimizer.js",
+    "description": "Recursively prune defaults and empties from a value.",
+    "params": [
+      {
+        "name": "value",
+        "type": "any",
+        "desc": ""
+      },
+      {
+        "name": "defaults",
+        "type": "any",
+        "desc": ""
+      },
+      {
+        "name": "opts",
+        "type": "{ dropEmpties?: boolean }",
+        "desc": ""
+      }
+    ],
+    "returns": "any"
   },
   {
     "name": "mountBoardControl",
@@ -1610,6 +1667,20 @@
       }
     ],
     "returns": "object|null"
+  },
+  {
+    "name": "parseChunksManifest",
+    "kind": "function",
+    "file": "src/utils/chunker.js",
+    "description": "Parse a chunk manifest string like \"cfg:3;svc:2\".",
+    "params": [
+      {
+        "name": "s",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "Record<string,number>"
   },
   {
     "name": "populateWidgetSelectorPanel",
@@ -1784,6 +1855,25 @@
       }
     ],
     "returns": "Promise<void>"
+  },
+  {
+    "name": "restoreDeep",
+    "kind": "function",
+    "file": "src/utils/minimizer.js",
+    "description": "Restore pruned values by filling defaults for missing keys.",
+    "params": [
+      {
+        "name": "minimized",
+        "type": "any",
+        "desc": ""
+      },
+      {
+        "name": "defaults",
+        "type": "any",
+        "desc": ""
+      }
+    ],
+    "returns": "any"
   },
   {
     "name": "runSilentImportFlowIfRequested",
@@ -2059,6 +2149,30 @@
       }
     ],
     "returns": "Promise<void>"
+  },
+  {
+    "name": "splitIntoParams",
+    "kind": "function",
+    "file": "src/utils/chunker.js",
+    "description": "Split a string into URL fragment parameters, adding numeric suffixes when needed.",
+    "params": [
+      {
+        "name": "name",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "data",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "maxLen",
+        "type": "number",
+        "desc": ""
+      }
+    ],
+    "returns": "Array<[string,string]>"
   },
   {
     "name": "stopResize",
