@@ -162,6 +162,30 @@
     "returns": "Promise<void>"
   },
   {
+    "name": "applyKeyMap",
+    "kind": "function",
+    "file": "src/utils/keymap.js",
+    "description": "Recursively apply a key map in the specified direction.",
+    "params": [
+      {
+        "name": "value",
+        "type": "any",
+        "desc": ""
+      },
+      {
+        "name": "map",
+        "type": "Record<string,string>",
+        "desc": ""
+      },
+      {
+        "name": "direction",
+        "type": "'encode'|'decode'",
+        "desc": ""
+      }
+    ],
+    "returns": "any"
+  },
+  {
     "name": "applyWidgetMenuVisibility",
     "kind": "function",
     "file": "src/component/menu/dashboardMenu.js",
@@ -268,6 +292,34 @@
     "description": "Closes the modal, removes the backdrop and event listeners, and calls the close callback.",
     "params": [],
     "returns": "void"
+  },
+  {
+    "name": "computeCRC32",
+    "kind": "function",
+    "file": "src/utils/checksum.js",
+    "description": "Compute the CRC32 of a string.",
+    "params": [
+      {
+        "name": "s",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "number"
+  },
+  {
+    "name": "computeCRC32Hex",
+    "kind": "function",
+    "file": "src/utils/checksum.js",
+    "description": "Compute CRC32 and return zero-padded hex.",
+    "params": [
+      {
+        "name": "s",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "string"
   },
   {
     "name": "configureWidget",
@@ -423,15 +475,20 @@
     "name": "decodeConfig",
     "kind": "function",
     "file": "src/utils/compression.js",
-    "description": "Convenience wrapper for decoding dashboard configuration objects.",
+    "description": "Decode a base64url string into an object, verifying checksum and applying key map.",
     "params": [
       {
         "name": "str",
         "type": "string",
         "desc": ""
+      },
+      {
+        "name": "opts",
+        "type": "{algo?: 'gzip'|'deflate', keyMap?: Record<string,string>|null, expectChecksum?: string|null}",
+        "desc": ""
       }
     ],
-    "returns": "Promise<object>"
+    "returns": "Promise<any>"
   },
   {
     "name": "deepEqual",
@@ -511,15 +568,20 @@
     "name": "encodeConfig",
     "kind": "function",
     "file": "src/utils/compression.js",
-    "description": "Convenience wrapper for encoding dashboard configuration objects.",
+    "description": "Encode an object to a base64url string with optional minification and checksum.",
     "params": [
       {
-        "name": "cfg",
-        "type": "object",
+        "name": "obj",
+        "type": "any",
+        "desc": ""
+      },
+      {
+        "name": "opts",
+        "type": "{algo?: 'gzip'|'deflate', keyMap?: Record<string,string>|null, withChecksum?: boolean}",
         "desc": ""
       }
     ],
-    "returns": "Promise<string>"
+    "returns": "Promise<{data:string, checksum?:string}>"
   },
   {
     "name": "enlarge",
@@ -647,6 +709,20 @@
       }
     ],
     "returns": "HTMLElement|undefined"
+  },
+  {
+    "name": "formatChunksManifest",
+    "kind": "function",
+    "file": "src/utils/chunker.js",
+    "description": "",
+    "params": [
+      {
+        "name": "m",
+        "type": "Record<string,number>",
+        "desc": ""
+      }
+    ],
+    "returns": "string"
   },
   {
     "name": "get",
@@ -814,7 +890,7 @@
     "name": "gunzipBase64urlToJson",
     "kind": "function",
     "file": "src/utils/compression.js",
-    "description": "Decode and gunzip a base64url string to a JavaScript object.",
+    "description": "Decode and gunzip a base64url string to a JavaScript object. Backwards-compatible wrapper.",
     "params": [
       {
         "name": "str",
@@ -822,13 +898,13 @@
         "desc": ""
       }
     ],
-    "returns": "Promise<object>"
+    "returns": "Promise<any>"
   },
   {
     "name": "gzipJsonToBase64url",
     "kind": "function",
     "file": "src/utils/compression.js",
-    "description": "Gzip a JavaScript object and encode it as base64url.",
+    "description": "Gzip a JavaScript object and encode it as base64url. Backwards-compatible wrapper.",
     "params": [
       {
         "name": "obj",
@@ -1221,6 +1297,25 @@
     "returns": "boolean"
   },
   {
+    "name": "joinFromParams",
+    "kind": "function",
+    "file": "src/utils/chunker.js",
+    "description": "Join numbered fragment parameters back into a single string.",
+    "params": [
+      {
+        "name": "name",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "params",
+        "type": "URLSearchParams",
+        "desc": ""
+      }
+    ],
+    "returns": "string|null"
+  },
+  {
     "name": "jsonGet",
     "kind": "function",
     "file": "src/storage/StorageManager.js",
@@ -1384,6 +1479,46 @@
     "returns": "Array<Service>"
   },
   {
+    "name": "minimizeDeep",
+    "kind": "function",
+    "file": "src/utils/minimizer.js",
+    "description": "Recursively prune defaults and empties from a value.",
+    "params": [
+      {
+        "name": "value",
+        "type": "any",
+        "desc": ""
+      },
+      {
+        "name": "defaults",
+        "type": "any",
+        "desc": ""
+      },
+      {
+        "name": "opts",
+        "type": "{ dropEmpties?: boolean }",
+        "desc": ""
+      }
+    ],
+    "returns": "any"
+  },
+  {
+    "name": "mountBoardControl",
+    "kind": "function",
+    "file": "src/component/board/BoardControl.js",
+    "description": "Mount board control into #board-control.",
+    "params": [],
+    "returns": "SelectorPanel|null"
+  },
+  {
+    "name": "mountViewControl",
+    "kind": "function",
+    "file": "src/component/view/ViewControl.js",
+    "description": "Mount view control into #view-control.",
+    "params": [],
+    "returns": "SelectorPanel|null"
+  },
+  {
     "name": "openConfigModal",
     "kind": "function",
     "file": "src/component/modal/configModal.js",
@@ -1432,7 +1567,7 @@
     "params": [
       {
         "name": "params",
-        "type": "{cfgParam:string|null,svcParam:string|null,nameParam:string}",
+        "type": "{cfgParam:string|null,svcParam:string|null,nameParam:string,algoParam?:string|null,ccParam?:string|null}",
         "desc": "cfgParam - Encoded config fragment. svcParam - Encoded service fragment. nameParam - Default snapshot name."
       }
     ],
@@ -1532,6 +1667,20 @@
       }
     ],
     "returns": "object|null"
+  },
+  {
+    "name": "parseChunksManifest",
+    "kind": "function",
+    "file": "src/utils/chunker.js",
+    "description": "Parse a chunk manifest string like \"cfg:3;svc:2\".",
+    "params": [
+      {
+        "name": "s",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "Record<string,number>"
   },
   {
     "name": "populateWidgetSelectorPanel",
@@ -1706,6 +1855,25 @@
       }
     ],
     "returns": "Promise<void>"
+  },
+  {
+    "name": "restoreDeep",
+    "kind": "function",
+    "file": "src/utils/minimizer.js",
+    "description": "Restore pruned values by filling defaults for missing keys.",
+    "params": [
+      {
+        "name": "minimized",
+        "type": "any",
+        "desc": ""
+      },
+      {
+        "name": "defaults",
+        "type": "any",
+        "desc": ""
+      }
+    ],
+    "returns": "any"
   },
   {
     "name": "runSilentImportFlowIfRequested",
@@ -1981,6 +2149,30 @@
       }
     ],
     "returns": "Promise<void>"
+  },
+  {
+    "name": "splitIntoParams",
+    "kind": "function",
+    "file": "src/utils/chunker.js",
+    "description": "Split a string into URL fragment parameters, adding numeric suffixes when needed.",
+    "params": [
+      {
+        "name": "name",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "data",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "maxLen",
+        "type": "number",
+        "desc": ""
+      }
+    ],
+    "returns": "Array<[string,string]>"
   },
   {
     "name": "stopResize",
