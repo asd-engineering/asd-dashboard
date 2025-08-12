@@ -48,6 +48,17 @@ ASD Dashboard also supports sharing full configuration and service state using t
   https://your-dashboard.app/#cfg=<compressed>&svc=<compressed>
   ```
 
+### Fragment Parameters
+
+The fragment follows standard `URLSearchParams` semantics and may include:
+
+* `name` – human-readable snapshot name
+* `cfg` / `svc` – compressed config and service payloads
+* `algo` – compression algorithm (`deflate` by default, `gzip` for legacy links)
+* `cc` – per-payload CRC32 checksums (`cfg,svc`)
+* `ccw` – whole-payload checksum over both payloads
+* `chunks` – optional manifest when `cfg` or `svc` are split (`cfg:3;svc:2`)
+
 * Config and services are:
 
   * Compressed with built-in **deflate** (or legacy **gzip**) and base64url-encoded for compactness

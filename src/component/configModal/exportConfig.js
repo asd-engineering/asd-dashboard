@@ -13,6 +13,12 @@ import { splitIntoParams, formatChunksManifest } from '../../utils/chunker.js'
 import { computeCRC32Hex } from '../../utils/checksum.js'
 import { applyKeyMap } from '../../utils/keymap.js'
 import { DEFAULT_CONFIG_TEMPLATE } from '../../storage/defaultConfig.js'
+import {
+  FRAG_DEFAULT_ALGO,
+  FRAG_MINIMIZE_ENABLED,
+  FRAG_CHUNK_MAX_LEN,
+  FRAG_WARN_URL_LEN
+} from '../../utils/fragmentConstants.js'
 
 const logger = new Logger('exportConfig.js')
 
@@ -23,11 +29,7 @@ const KEY_MAP = {
   // e.g. 'serviceId': 'i'
 }
 
-const MINIMIZE_ENABLED = true
-const CHUNK_MAX_LEN = 12000
-
-// Default compression algorithm. Deflate omits gzip headers and is slightly smaller.
-const DEFAULT_ALGO = 'deflate'
+// Feature flags and defaults are centralized in fragmentConstants.
 
 /**
  * Generate shareable URL from stored config and services,
@@ -52,16 +54,16 @@ export async function exportConfig () {
     const cfgDefaults = applyKeyMap(DEFAULT_CONFIG_TEMPLATE, KEY_MAP, 'encode')
     const svcDefaults = []
 
-    const cfgMin = MINIMIZE_ENABLED
+    const cfgMin = FRAG_MINIMIZE_ENABLED
       ? minimizeDeep(cfgMapped, cfgDefaults, { dropEmpties: true }) ?? {}
       : cfgMapped
-    const svcMin = MINIMIZE_ENABLED
+    const svcMin = FRAG_MINIMIZE_ENABLED
       ? minimizeDeep(svcMapped, svcDefaults, { dropEmpties: true }) ?? []
       : svcMapped
 
     const [cfgRes, svcRes] = await Promise.all([
-      encodeConfig(cfgMin, { algo: DEFAULT_ALGO, withChecksum: true }),
-      encodeConfig(svcMin, { algo: DEFAULT_ALGO, withChecksum: true })
+      encodeConfig(cfgMin, { algo: FRAG_DEFAULT_ALGO, withChecksum: true }),
+      encodeConfig(svcMin, { algo: FRAG_DEFAULT_ALGO, withChecksum: true })
     ])
     const cfgEnc = cfgRes.data
     const svcEnc = svcRes.data
@@ -74,13 +76,13 @@ export async function exportConfig () {
     const name = prompt('Name this export', defaultName) || defaultName
 
     const params = new URLSearchParams()
-    params.set('name', encodeURIComponent(name))
-    params.set('algo', DEFAULT_ALGO)
+    params.set('name', name)
+    params.set('algo', FRAG_DEFAULT_ALGO)
     params.set('cc', `${cfgCrc},${svcCrc}`)
     params.set('ccw', ccw)
 
-    const cfgPairs = splitIntoParams('cfg', cfgEnc, CHUNK_MAX_LEN)
-    const svcPairs = splitIntoParams('svc', svcEnc, CHUNK_MAX_LEN)
+    const cfgPairs = splitIntoParams('cfg', cfgEnc, FRAG_CHUNK_MAX_LEN)
+    const svcPairs = splitIntoParams('svc', svcEnc, FRAG_CHUNK_MAX_LEN)
     for (const [k, v] of [...cfgPairs, ...svcPairs]) params.set(k, v)
 
     const manifest = formatChunksManifest({
@@ -95,7 +97,7 @@ export async function exportConfig () {
     showNotification(`✅ URL copied to clipboard! (${kb} KB)`, 4000, 'success')
     logger.info(`Exported config URL (${url.length} chars) named ${name}`)
 
-    if (url.length > 60000) {
+    if (url.length > FRAG_WARN_URL_LEN) {
       showNotification('⚠️ URL is very large even with chunking and may not work in all browsers', 6000, 'error')
       logger.warn(`Exported URL length: ${url.length}`)
     }

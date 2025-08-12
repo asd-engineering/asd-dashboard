@@ -11,6 +11,9 @@ import { mergeBoards, mergeServices } from '../../utils/merge.js'
 import { Logger } from '../../utils/Logger.js'
 import { showNotification } from '../dialog/notification.js'
 import StorageManager from '../../storage/StorageManager.js'
+import { restoreDeep } from '../../utils/minimizer.js'
+import { DEFAULT_CONFIG_TEMPLATE } from '../../storage/defaultConfig.js'
+import { FRAG_MINIMIZE_ENABLED } from '../../utils/fragmentConstants.js'
 
 /** @typedef {import('../../types.js').DashboardConfig} DashboardConfig */
 /** @typedef {import('../../types.js').Service} Service */
@@ -107,12 +110,15 @@ export function openFragmentDecisionModal ({ cfgParam, svcParam, nameParam, algo
                   expectChecksum: cfgChecksum
                 })
               )
+              const cfgFull = FRAG_MINIMIZE_ENABLED
+                ? restoreDeep(decoded, DEFAULT_CONFIG_TEMPLATE)
+                : decoded
               if (overwrite) {
-                cfgObj = decoded
+                cfgObj = cfgFull
               } else {
                 const currentBoards = StorageManager.getBoards()
-                const mergedBoards = mergeBoards(currentBoards, decoded.boards || [])
-                cfgObj = { ...cfgObj, ...decoded, boards: mergedBoards }
+                const mergedBoards = mergeBoards(currentBoards, cfgFull.boards || [])
+                cfgObj = { ...cfgObj, ...cfgFull, boards: mergedBoards }
               }
             }
 
@@ -124,10 +130,13 @@ export function openFragmentDecisionModal ({ cfgParam, svcParam, nameParam, algo
                   expectChecksum: svcChecksum
                 })
               )
+              const svcFull = FRAG_MINIMIZE_ENABLED
+                ? restoreDeep(decodedSvc, [])
+                : decodedSvc
               if (overwrite) {
-                svcArr = decodedSvc
+                svcArr = svcFull
               } else {
-                svcArr = mergeServices(svcArr, decodedSvc)
+                svcArr = mergeServices(svcArr, svcFull)
               }
             }
 
