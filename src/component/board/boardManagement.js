@@ -515,6 +515,22 @@ export async function resetView (boardId, viewId) {
 }
 
 /**
+ * Reset all views within a board by clearing their widget state.
+ *
+ * @param {string} boardId - Identifier of the board to reset.
+ * @function resetBoard
+ * @returns {Promise<void>}
+ */
+export async function resetBoard (boardId) {
+  const board = StorageManager.getBoards().find(b => b.id === boardId)
+  if (!board) return logger.error(`Board with ID ${boardId} not found`)
+  for (const v of board.views) {
+    await resetView(boardId, v.id)
+  }
+  logger.log(`Reset board ${boardId}`)
+}
+
+/**
  * Rebuilds the board selector dropdown from the in-memory `boards` array.
  * @function updateBoardSelector
  * @returns {void}
