@@ -1384,6 +1384,22 @@
     "returns": "Array<Service>"
   },
   {
+    "name": "mountBoardControl",
+    "kind": "function",
+    "file": "src/component/board/BoardControl.js",
+    "description": "Mount the board control panel into #board-control.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "mountViewControl",
+    "kind": "function",
+    "file": "src/component/view/ViewControl.js",
+    "description": "Mount the view control panel into #view-control.",
+    "params": [],
+    "returns": "void"
+  },
+  {
     "name": "openConfigModal",
     "kind": "function",
     "file": "src/component/modal/configModal.js",
@@ -1646,6 +1662,20 @@
         "name": "id",
         "type": "string",
         "desc": ""
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "resetBoard",
+    "kind": "function",
+    "file": "src/component/board/boardManagement.js",
+    "description": "Reset all views within a board by clearing their widget state.",
+    "params": [
+      {
+        "name": "boardId",
+        "type": "string",
+        "desc": "- Identifier of the board to reset."
       }
     ],
     "returns": "Promise<void>"

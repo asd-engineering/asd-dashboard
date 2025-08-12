@@ -1,42 +1,87 @@
 import { test, expect } from './fixtures'
-import { handleDialog, getConfigBoards, getLastUsedViewId, addServices, navigate } from './shared/common'
 import { routeServicesConfig } from './shared/mocking'
-import { waitForWidgetStoreIdle } from './shared/state.js'
+import { navigate, addServices } from './shared/common'
 
-const newViewName = 'New View'
-
-// tests for view panel actions
-
-test.describe('View Panel', () => {
+test.describe('View panel', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await navigate(page, '/')
     await addServices(page, 1)
   })
 
-  test('create view via side action', async ({ page }) => {
-    await handleDialog(page, 'prompt', newViewName)
-    await page.locator('[data-testid="view-panel"]').hover()
-    await page.locator('[data-testid="view-panel"] [data-testid="panel-actions-trigger"]').hover()
-    await page.locator('[data-testid="view-panel"] .side-content button', { hasText: 'Create View' }).click()
-    const boards = await getConfigBoards(page)
-    const boardId = await page.locator('.board').getAttribute('id')
-    const board = boards.find(b => b.id === boardId)
-    const created = board.views.find(v => v.name === newViewName)
-    expect(created).toBeDefined()
-    const lastId = await getLastUsedViewId(page)
-    expect(lastId).toBe(created.id)
+  test('opens dropdown and side Actions ▸', async ({ page }) => {
+    const panel = page.locator('[data-testid="view-panel"]')
+    await panel.hover()
+    await expect(panel.locator('.dropdown-content')).toBeVisible()
+    await panel.locator('[data-testid="panel-actions-trigger"]').click()
+    await expect(panel.locator('.dropdown-content.side-open .side-content')).toBeVisible()
+    await expect(panel.locator('.side-content .panel-action', { hasText: 'New View' })).toBeVisible()
+    await expect(panel.locator('.side-content .panel-action', { hasText: 'Reset View' })).toBeVisible()
   })
 
-  test('reset view', async ({ page }) => {
-    await handleDialog(page, 'confirm')
-    await page.locator('[data-testid="view-panel"]').hover()
-    await page.locator('[data-testid="view-panel"] [data-testid="panel-actions-trigger"]').hover()
-    await page.locator('[data-testid="view-panel"] .side-content button', { hasText: 'Reset View' }).click()
-    await page.waitForFunction(() => {
-      const container = document.getElementById('widget-container')
-      return container && container.querySelectorAll('.widget-wrapper').length === 0
-    })
-    await waitForWidgetStoreIdle(page)
+  test('per-item rename/delete and Reset View', async ({ page }) => {
+    const panel = page.locator('[data-testid="view-panel"]')
+    await panel.hover()
+
+    const v1 = 'Playwright View'
+    page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(v1) })
+    await panel.locator('[data-testid="panel-actions-trigger"]').click()
+    await panel.locator('.side-content .panel-action', { hasText: 'New View' }).click()
+    await panel.hover()
+    await expect(panel.locator('.panel-item', { hasText: v1 })).toBeVisible()
+
+    const renameBtn = panel.locator('.panel-item', { hasText: v1 }).locator('[data-item-action="rename"]').first()
+    const v2 = 'Renamed View'
+    page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(v2) })
+    await renameBtn.click()
+    await expect(panel.locator('.panel-item', { hasText: v2 })).toBeVisible()
+
+    await panel.locator('[data-testid="panel-actions-trigger"]').click()
+    page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
+    await panel.locator('.side-content .panel-action', { hasText: 'Reset View' }).click()
+    await panel.hover()
+
+    const deleteBtn = panel.locator('.panel-item', { hasText: v2 }).locator('[data-item-action="delete"]').first()
+    page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
+    await deleteBtn.click()
+    await panel.hover()
+    await expect(panel.locator('.panel-item', { hasText: v2 })).toHaveCount(0)
+  })
+
+  test('keyboard interactions', async ({ page }) => {
+    const panel = page.locator('[data-testid="view-panel"]')
+    await panel.focus()
+    await page.keyboard.press('Enter')
+    await expect(panel.locator('.dropdown-content')).toBeVisible()
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('ArrowRight')
+    await expect(panel.locator('.dropdown-content.side-open .side-content')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(panel.locator('.dropdown-content.side-open .side-content')).toHaveCount(0)
+    await panel.focus()
+    await page.keyboard.press('Escape')
+    await expect(panel.locator('.dropdown-content')).toBeHidden()
+  })
+
+  test('search filters view list', async ({ page }) => {
+    const panel = page.locator('[data-testid="view-panel"]')
+    await panel.hover()
+
+    const names = ['Alpha View', 'Beta View']
+    for (const name of names) {
+      page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(name) })
+      await panel.locator('[data-testid="panel-actions-trigger"]').click()
+      await panel.locator('.side-content .panel-action', { hasText: 'New View' }).click()
+      await panel.hover()
+    }
+    await expect(panel.locator('.panel-item', { hasText: names[0] })).toBeVisible()
+    await expect(panel.locator('.panel-item', { hasText: names[1] })).toBeVisible()
+
+    await panel.locator('.panel-search').fill('alpha')
+    await expect(panel.locator('.panel-item', { hasText: names[0] })).toBeVisible()
+    await expect(panel.locator('.panel-item', { hasText: names[1] })).toHaveAttribute('hidden', '')
+    await expect(panel.locator('[data-testid="panel-actions-trigger"]')).toBeVisible()
   })
 })
+
