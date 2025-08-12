@@ -1,10 +1,9 @@
 @import url('/ui/widget.css');
 @import url('/ui/controls.css');
-@import url('/ui/modal.css');
 @import url('/ui/notification.css');
 @import url('/ui/service-action.css');
-@import url('/ui/configTabs.css');
 @import url('/component/panel/selector-panel.css');
+@import url('/ui/modalJsonUI.css');
 
 /* Universal box-sizing */
 *, *::before, *::after {

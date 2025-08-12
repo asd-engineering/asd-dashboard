@@ -48,7 +48,7 @@ export async function openConfigModal () {
 
             const formDiv = document.createElement('div')
             formDiv.id = 'config-form'
-            formDiv.classList.add('modal__jsonform', 'modal__textarea--grow')
+            formDiv.classList.add('modal__jsonform')
             cfgForm = new JsonForm(formDiv, configData)
 
             const textarea = document.createElement('textarea')
