@@ -359,3 +359,19 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
   background-color: var(--color-danger-bg);
   border-color: var(--color-danger);
 }
+
+#fragment-decision-modal {
+  display: flex;
+  flex-direction: column; /* stack everything vertically */
+  padding: 10px;
+}
+
+#fragment-decision-modal > #importName {
+  display: block;       /* full-width row */
+  margin: 10px 0;       /* spacing from p and buttons */
+  max-width: 40%;
+}
+
+#fragment-decision-modal >  .modal__btn-group {
+  justify-content: flex-start
+}
