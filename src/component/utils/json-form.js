@@ -11,9 +11,12 @@ export class JsonForm {
    * @constructor
    * @param {HTMLElement} container element that will host the form
    * @param {object} [data={}] initial object to render
+   * @param {{defaultResolver?:(parent?:object|Array, key?:string|number)=>*, arrayDefaults?:Record<string,*>}} [options] optional behavior overrides
    */
-  constructor (container, data = {}) {
+  constructor (container, data = {}, options = {}) {
     this.container = container
+    this.defaultResolver = options.defaultResolver
+    this.arrayDefaults = options.arrayDefaults || {}
     this.setValue(data)
   }
 
@@ -101,7 +104,7 @@ export class JsonForm {
     add.type = 'button'
     add.textContent = '+'
     add.addEventListener('click', () => {
-      arr.push(this.#defaultFor(arr[0]))
+      arr.push(this.#defaultFor(arr[0], parent, key))
       this.setValue(this.data)
     })
     wrap.appendChild(add)
@@ -147,15 +150,32 @@ export class JsonForm {
   /**
    * Guess default value for new array items.
    *
-   * @param {*} sample
+   * If the array already has a sample element, clone its structure.
+   * Otherwise attempt to resolve a default from the provided resolver or map.
+   *
+   * @param {*} sample existing first array element used as a template
+   * @param {object|Array|undefined} parent parent object/array containing the array
+   * @param {string|number|undefined} key key under which the array resides in the parent
    * @returns {*}
    */
-  #defaultFor (sample) {
-    const t = typeof sample
-    if (t === 'number') return 0
-    if (t === 'boolean') return false
-    if (Array.isArray(sample)) return []
-    if (sample && t === 'object') return {}
+  #defaultFor (sample, parent, key) {
+    if (sample !== undefined) {
+      const t = typeof sample
+      if (t === 'number') return 0
+      if (t === 'boolean') return false
+      if (Array.isArray(sample)) return []
+      if (sample && t === 'object') return structuredClone(sample)
+      return ''
+    }
+
+    let resolved
+    if (typeof this.defaultResolver === 'function') {
+      resolved = this.defaultResolver(parent, key)
+    } else if (key !== undefined && key in this.arrayDefaults) {
+      resolved = this.arrayDefaults[key]
+    }
+
+    if (resolved !== undefined) return structuredClone(resolved)
     return ''
   }
 }
