@@ -33,7 +33,7 @@ export function mountBoardControl () {
     labelText: () => {
       const id = StorageManager.misc.getLastBoardId()
       const b = (StorageManager.getBoards() || []).find(x => x.id === id)
-      return '▼ Board: ' + (b?.name ?? '—')
+      return 'Board: ' + (b?.name ?? '—')
     },
     getItems: () => {
       const boards = StorageManager.getBoards() || []
@@ -72,8 +72,8 @@ export function mountBoardControl () {
       { label: 'Reset Board', action: 'reset' }
     ],
     itemActions: [
-      { action: 'rename', title: 'Rename board', icon: '✏️' },
-      { action: 'delete', title: 'Delete board', icon: '🗑' }
+      { action: 'rename', title: 'Rename board' },
+      { action: 'delete', title: 'Delete board' }
     ]
   })
 

@@ -11,7 +11,8 @@
 }
 .panel-arrow { margin-left: 4px; }
 .panel-label {
-  font-weight: 600;
+  font-weight: 500;
+  color: #111;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
@@ -28,13 +29,45 @@
 .panel-item-label { font-weight: 500; }
 .panel-item-meta { opacity: .7; font-size: 12px; }
 .panel-item-actions { display: inline-flex; gap: 6px; }
-.panel-item-icon { border: 1px solid transparent; background: transparent; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
-.panel-item-icon:hover { border-color: #e5e5e5; background: #fff; }
+#controls .panel-item-actions .panel-item-icon {
+  background: none;
+  border: none;
+  padding: 0.2rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+#controls .panel-item-actions .panel-item-icon:hover {
+  background-color: rgba(0,0,0,0.06);
+  transform: translateY(-1px);
+}
 
-.panel-actions-trigger { font-weight: 600; grid-template-columns: 1fr; }
-.panel-actions-trigger:focus { outline: 2px solid #2684ff; outline-offset: 2px; }
+.panel-actions-trigger {
+  font-weight: 500;
+  background: transparent;
+  grid-template-columns: 1fr;
+}
+.panel-actions-trigger:hover { background: #f6f8fa; }
+.panel-actions-trigger:focus {
+  outline: 2px solid #2684ff;
+  outline-offset: 2px;
+}
 .dropdown.panel .side-content { display: none; position: absolute; top: 0; left: 100%; min-width: 220px; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.12); }
 .dropdown.panel .dropdown-content.side-open .side-content { display: block; }
-.panel-action { padding: 6px 8px; width: 100%; text-align: left; border: 1px solid #cde; background: #eef9ff; border-radius: 4px; margin-bottom: 6px; cursor: pointer; }
-.panel-action:last-child { margin-bottom: 0; }
+.side-content .panel-action {
+  padding: 6px 8px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  transition: background-color .15s ease, transform .15s ease;
+}
+.side-content .panel-action:hover {
+  background: #f6f8fa;
+  transform: translateY(-1px);
+}
+.side-content .panel-action:last-child { margin-bottom: 0; }
 

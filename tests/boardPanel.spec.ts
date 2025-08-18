@@ -12,7 +12,9 @@ test.describe('Board panel', () => {
 
   test('renders header label and hides count', async ({ page }) => {
     const panel = page.locator('[data-testid="board-panel"]')
-    await expect(panel.locator('.panel-label')).toHaveText(/▼ Board:\s+/)
+    await expect(panel.locator('.panel-arrow')).toHaveText('▼')
+    await expect(panel.locator('.panel-label')).toHaveText(/Board:\s+/)
+    await expect(panel.locator('.panel-label')).not.toContainText('▼')
     await expect(panel.locator('.panel-count')).toHaveCount(0)
   })
 
@@ -21,6 +23,14 @@ test.describe('Board panel', () => {
     await panel.hover()
     await expect(panel.locator('.dropdown-content')).toBeVisible()
     await expect(panel.locator('[data-testid="panel-actions-trigger"]')).toBeVisible()
+  })
+
+  test('side opens on hover', async ({ page }) => {
+    const panel = page.locator('[data-testid="board-panel"]')
+    await panel.hover()
+    const trigger = panel.locator('[data-testid="panel-actions-trigger"]')
+    await trigger.hover()
+    await expect(panel.locator('.dropdown-content.side-open .side-content')).toBeVisible()
   })
 
   test('Actions ▸ focus ring visible via keyboard', async ({ page }) => {
@@ -39,7 +49,8 @@ test.describe('Board panel', () => {
     const newName = 'Playwright Board'
     page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(newName) })
     await panel.hover()
-    await panel.locator('[data-testid="panel-actions-trigger"]').click()
+    const trigger = panel.locator('[data-testid="panel-actions-trigger"]')
+    await trigger.hover()
     await expect(panel.locator('.dropdown-content.side-open .side-content')).toBeVisible()
     await panel.locator('.side-content .panel-action', { hasText: 'New Board' }).click()
     await panel.hover()
@@ -67,6 +78,15 @@ test.describe('Board panel', () => {
     page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
     await deleteBtn.click()
     await expect(panel.locator('.panel-item', { hasText: renamed })).toHaveCount(0)
+  })
+
+  test('item icons hover styling', async ({ page }) => {
+    const panel = page.locator('[data-testid="board-panel"]')
+    await panel.hover()
+    const icon = panel.locator('[data-item-action="rename"]').first()
+    await expect(icon).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+    await icon.hover()
+    await expect(icon).toHaveCSS('background-color', 'rgba(0, 0, 0, 0.06)')
   })
 
   test('search filters boards but keeps Actions ▸', async ({ page }) => {

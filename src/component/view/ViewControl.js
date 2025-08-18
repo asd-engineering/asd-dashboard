@@ -36,7 +36,7 @@ export function mountViewControl () {
       const vId = StorageManager.misc.getLastViewId()
       const b = (StorageManager.getBoards() || []).find(x => x.id === bId)
       const v = b?.views.find(v => v.id === vId)
-      return '▼ View: ' + (v?.name ?? '—')
+      return 'View: ' + (v?.name ?? '—')
     },
     getItems: () => {
       const bId = getCurrentBoardId() || StorageManager.misc.getLastBoardId()
@@ -77,8 +77,8 @@ export function mountViewControl () {
       { label: 'Reset View', action: 'reset' }
     ],
     itemActions: [
-      { action: 'rename', title: 'Rename view', icon: '✏️' },
-      { action: 'delete', title: 'Delete view', icon: '🗑' }
+      { action: 'rename', title: 'Rename view' },
+      { action: 'delete', title: 'Delete view' }
     ]
   })
 
