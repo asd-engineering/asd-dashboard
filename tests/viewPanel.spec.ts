@@ -11,7 +11,9 @@ test.describe('View panel', () => {
 
   test('renders header label and hides count', async ({ page }) => {
     const panel = page.locator('[data-testid="view-panel"]')
-    await expect(panel.locator('.panel-label')).toHaveText(/▼ View:\s+/)
+    await expect(panel.locator('.panel-arrow')).toHaveText('▼')
+    await expect(panel.locator('.panel-label')).toHaveText(/View:\s+/)
+    await expect(panel.locator('.panel-label')).not.toContainText('▼')
     await expect(panel.locator('.panel-count')).toHaveCount(0)
   })
 
@@ -19,7 +21,8 @@ test.describe('View panel', () => {
     const panel = page.locator('[data-testid="view-panel"]')
     await panel.hover()
     await expect(panel.locator('.dropdown-content')).toBeVisible()
-    await panel.locator('[data-testid="panel-actions-trigger"]').click()
+    const trigger = panel.locator('[data-testid="panel-actions-trigger"]')
+    await trigger.hover()
     await expect(panel.locator('.dropdown-content.side-open .side-content')).toBeVisible()
     await expect(panel.locator('.side-content .panel-action', { hasText: 'New View' })).toBeVisible()
     await expect(panel.locator('.side-content .panel-action', { hasText: 'Reset View' })).toBeVisible()
@@ -31,7 +34,8 @@ test.describe('View panel', () => {
 
     const v1 = 'Playwright View'
     page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(v1) })
-    await panel.locator('[data-testid="panel-actions-trigger"]').click()
+    const trigger = panel.locator('[data-testid="panel-actions-trigger"]')
+    await trigger.hover()
     await panel.locator('.side-content .panel-action', { hasText: 'New View' }).click()
     await panel.hover()
     await expect(panel.locator('.panel-item', { hasText: v1 })).toBeVisible()
@@ -42,7 +46,7 @@ test.describe('View panel', () => {
     await renameBtn.click()
     await expect(panel.locator('.panel-item', { hasText: v2 })).toBeVisible()
 
-    await panel.locator('[data-testid="panel-actions-trigger"]').click()
+    await trigger.hover()
     page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
     await panel.locator('.side-content .panel-action', { hasText: 'Reset View' }).click()
     await panel.hover()
@@ -77,7 +81,8 @@ test.describe('View panel', () => {
     const names = ['Alpha View', 'Beta View']
     for (const name of names) {
       page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(name) })
-      await panel.locator('[data-testid="panel-actions-trigger"]').click()
+      const trigger = panel.locator('[data-testid="panel-actions-trigger"]')
+      await trigger.hover()
       await panel.locator('.side-content .panel-action', { hasText: 'New View' }).click()
       await panel.hover()
     }

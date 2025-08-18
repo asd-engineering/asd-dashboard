@@ -1,5 +1,5 @@
 // @ts-check
-const emojiList = {
+export const emojiList = {
   puzzle: { icon: '🧩', unicode: '\u{1F9E9}', description: 'Widget to grid' },
   satellite: { icon: '📡', unicode: '\u{1F4E1}', description: 'Serviceworker' },
   cross: { icon: '❌', unicode: '\u{274C}', description: 'Delete widget' },

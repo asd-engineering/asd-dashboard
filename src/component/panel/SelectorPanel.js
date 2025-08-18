@@ -1,4 +1,5 @@
 // @ts-check
+import { emojiList } from '../../ui/unicodeEmoji.js'
 /**
  * Generic Service-style selector panel:
  * - Hover/keyboard open/close
@@ -33,8 +34,8 @@
  * @property {(action:string, id:string, ctx:any)=>void} [onItemAction]
  * @property {() => any} [context]
  * @property {{label:string,action:string}[]} [actions]
- * @property {{action:string,title:string,icon:string}[]} [itemActions]
- */
+ * @property {{action:string,title:string,icon?:string}[]} [itemActions]
+*/
 
 /**
  * Generic service-style selector panel with optional side dropdown and per-item actions.
@@ -49,6 +50,7 @@ export class SelectorPanel {
     this.timers = { openClose: /** @type {any} */ (null) }
     this.state = { sideOpen: false }
     this.dom = /** @type {any} */ ({})
+    this.hoverFns = /** @type {any} */ ({})
     this.render()
     this.bind()
     this.refresh()
@@ -112,10 +114,18 @@ export class SelectorPanel {
     const onEnter = () => schedule(open, 0)
     const onLeave = () => schedule(close, 200)
 
+    this.hoverFns = {
+      enter: () => schedule(() => this.toggleSide(true), 0),
+      leave: () => schedule(() => this.toggleSide(false), 200)
+    }
+
     for (const el of [this.dom.wrap, this.dom.content]) {
       el.addEventListener('mouseenter', onEnter)
       el.addEventListener('mouseleave', onLeave)
     }
+
+    this.dom.side.addEventListener('mouseenter', this.hoverFns.enter)
+    this.dom.side.addEventListener('mouseleave', this.hoverFns.leave)
 
     this.dom.wrap.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -223,6 +233,9 @@ export class SelectorPanel {
       trigger.innerHTML = '<span class="panel-item-label">Actions ▸</span>'
       this.dom.list.appendChild(trigger)
 
+      trigger.addEventListener('mouseenter', this.hoverFns.enter)
+      trigger.addEventListener('mouseleave', this.hoverFns.leave)
+
       for (const a of actions) {
         const b = document.createElement('button')
         b.type = 'button'
@@ -257,6 +270,10 @@ export class SelectorPanel {
       if (itemActions.length) {
         const acts = document.createElement('span')
         acts.className = 'panel-item-actions'
+        const iconMap = {
+          rename: emojiList.edit.unicode,
+          delete: emojiList.cross.unicode
+        }
         for (const a of itemActions) {
           const b = document.createElement('button')
           b.type = 'button'
@@ -264,7 +281,7 @@ export class SelectorPanel {
           b.dataset.itemAction = a.action
           b.title = a.title
           b.setAttribute('aria-label', a.title)
-          b.textContent = a.icon
+          b.textContent = a.icon || iconMap[a.action] || ''
           acts.appendChild(b)
         }
         row.appendChild(acts)
