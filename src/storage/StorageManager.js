@@ -92,39 +92,33 @@ async function migrateFromLocalStorageIfNeeded () {
   try { lastBoardId = localStorage.getItem(LS_KEYS.LAST_BOARD) } catch {}
   try { lastViewId = localStorage.getItem(LS_KEYS.LAST_VIEW) } catch {}
 
-  const cfgData = sanitizeConfig(rawCfg?.data || rawCfg || {})
-  const boards = sanitizeBoards(rawBoards || cfgData.boards || [])
-  const services = sanitizeServices(rawSvcs || [])
+  const cfg = sanitizeConfig(rawCfg?.data || rawCfg || {})
+  const boards = sanitizeBoards(rawBoards || cfg.boards || [])
+  const svcs = sanitizeServices(rawSvcs || [])
 
-  if (cfgData.boards) delete cfgData.boards
+  if (cfg.boards) delete cfg.boards
 
-  if (rawCfg || rawBoards || rawSvcs || rawState || lastBoardId || lastViewId) {
-    await Promise.all([
-      kv.set('config', 'v1', cfgData),
-      kv.set('boards', 'v1', boards),
-      kv.set('services', 'v1', services),
-      kv.set('state_store', 'v1', rawState || { version: 1, states: [] })
-    ])
-    if (lastBoardId) await setMeta('lastBoardId', lastBoardId)
-    if (lastViewId) await setMeta('lastViewId', lastViewId)
-    const byteLen = obj => { try { return new TextEncoder().encode(JSON.stringify(obj)).length } catch { return -1 } }
-    await kv.set('meta', 'storeSizes', {
-      config: byteLen(cfgData),
-      boards: byteLen(boards),
-      services: byteLen(services),
-      state_store: byteLen(rawState || { version: 1, states: [] })
-    })
-    await setMeta('migrationAt', new Date().toISOString())
-  }
+  const writes = []
+  if (Object.keys(cfg).length) writes.push(kv.set('config', 'v1', cfg))
+  if (boards.length) writes.push(kv.set('boards', 'v1', boards))
+  if (svcs.length) writes.push(kv.set('services', 'v1', svcs))
+  if (rawState) writes.push(kv.set('state_store', 'v1', rawState))
+  if (writes.length) await Promise.all(writes)
 
-  localStorage.removeItem(LS_KEYS.CONFIG)
-  localStorage.removeItem(LS_KEYS.BOARDS)
-  localStorage.removeItem(LS_KEYS.SERVICES)
-  localStorage.removeItem(LS_KEYS.STATE)
-  localStorage.removeItem(LS_KEYS.LAST_BOARD)
-  localStorage.removeItem(LS_KEYS.LAST_VIEW)
+  if (lastBoardId) await setMeta('lastBoardId', lastBoardId)
+  if (lastViewId) await setMeta('lastViewId', lastViewId)
+
+  try {
+    localStorage.removeItem(LS_KEYS.CONFIG)
+    localStorage.removeItem(LS_KEYS.BOARDS)
+    localStorage.removeItem(LS_KEYS.SERVICES)
+    localStorage.removeItem(LS_KEYS.STATE)
+    localStorage.removeItem(LS_KEYS.LAST_BOARD)
+    localStorage.removeItem(LS_KEYS.LAST_VIEW)
+  } catch {}
 
   await setMeta('migrated', true)
+  await setMeta('migrationAt', new Date().toISOString())
 }
 
 /**
@@ -143,6 +137,38 @@ async function warmCache () {
   for (const key of metaKeys) {
     cache.meta[key] = await kv.get('meta', key)
   }
+}
+
+/**
+ * Compute byte length of a JSON-serializable object.
+ * @param {any} obj
+ * @returns {number}
+ */
+function byteLen (obj) {
+  try { return new TextEncoder().encode(JSON.stringify(obj)).length } catch { return -1 }
+}
+
+/**
+ * Record quota and store size metrics after initialization.
+ * @returns {Promise<void>}
+ */
+async function recordMetricsAfterInit () {
+  if (typeof navigator !== 'undefined' && navigator.storage?.estimate) {
+    try {
+      const est = await navigator.storage.estimate()
+      const quota = { usage: est.usage ?? null, quota: est.quota ?? null }
+      await kv.set('meta', 'quota', quota)
+      cache.meta.quota = quota
+    } catch {}
+  }
+  const sizes = {
+    config: byteLen(cache.config),
+    boards: byteLen(cache.boards),
+    services: byteLen(cache.services),
+    state_store: byteLen((await kv.get('state_store', 'v1')) ?? {})
+  }
+  await kv.set('meta', 'storeSizes', sizes)
+  cache.meta.storeSizes = sizes
 }
 
 /**
@@ -172,18 +198,14 @@ export const StorageManager = {
       kv = lsKV
       await warmCache()
       await setMeta('driver', 'localStorage')
+      await recordMetricsAfterInit()
       dispatchChange('driver-fallback', { driver: 'localStorage' })
       busInit()
       return
     }
     if (opts.persist) await requestPersistence()
     await setMeta('driver', kv === idbKV ? 'idb' : 'localStorage')
-    if (typeof navigator !== 'undefined' && navigator.storage?.estimate) {
-      try {
-        const est = await navigator.storage.estimate()
-        await kv.set('meta', 'quota', { usage: est.usage ?? null, quota: est.quota ?? null })
-      } catch {}
-    }
+    await recordMetricsAfterInit()
     busInit()
     busOnMessage(async m => {
       if (!m || m.type !== 'STORE_UPDATED') return
