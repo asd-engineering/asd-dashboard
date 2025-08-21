@@ -8,10 +8,18 @@ import { idbKV } from './adapters/idbKV.js'
 import { lsKV } from './adapters/lsKV.js'
 
 /**
+ * @typedef {Object} KV
+ * @property {(store:string,key:string)=>Promise<any>} get
+ * @property {(store:string,key:string,val:any)=>Promise<void>} set
+ * @property {(store:string,key:string)=>Promise<void>} del
+ * @property {(store:string)=>Promise<void>} clear
+ */
+
+/**
  * Create a storage driver, preferring IndexedDB unless forced otherwise.
  * @function createDriver
  * @param {boolean} [forceLocal=false]
- * @returns {typeof idbKV}
+ * @returns {KV}
  */
 export function createDriver (forceLocal = false) {
   const idbAvailable = typeof indexedDB !== 'undefined'

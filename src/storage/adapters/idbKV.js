@@ -9,14 +9,16 @@ const DB_NAME = 'asd-db'
 const VERSION = 1
 const STORES = ['config', 'boards', 'services', 'state_store', 'meta']
 
-const versionChangeHandlers = []
+let versionChangeHandler = null
 
 /**
  * Register a callback for database version changes.
  * @param {() => void} h
+ * @returns {() => void}
  */
 export function onVersionChange (h) {
-  versionChangeHandlers.push(h)
+  versionChangeHandler = h
+  return () => { if (versionChangeHandler === h) versionChangeHandler = null }
 }
 
 /**
@@ -36,15 +38,10 @@ function openDB () {
     req.onblocked = () => reject(new Error('IDB open blocked'))
     req.onsuccess = () => {
       const db = req.result
-      db.onversionchange = () => {
-        try { db.close() } catch {}
-        for (const h of versionChangeHandlers) {
-          try { h() } catch {}
-        }
-      }
+      db.onversionchange = () => { try { db.close() } catch {}; if (versionChangeHandler) versionChangeHandler() }
       resolve(db)
     }
-    req.onerror = () => reject(req.error)
+    req.onerror = () => reject(req.error || new Error('IDB open failed'))
   })
 }
 
