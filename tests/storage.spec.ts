@@ -52,6 +52,50 @@ test('remote bus fan-in emits remote-update', async ({ page }) => {
   expect(detail).toEqual({ reason: 'remote-update:boards', store: 'boards' })
 })
 
+test('sanitizeBoards filters invalid entries', async ({ page }) => {
+  const len = await page.evaluate(async () => {
+    const { sanitizeBoards } = await import('/storage/validators.js')
+    return sanitizeBoards([{}, null, { id: 'a', name: 'A', views: [] }]).length
+  })
+  expect(len).toBe(1)
+})
+
+test('setBoards applies sanitization and persists', async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    const { StorageManager: sm } = await import('/storage/StorageManager.js')
+    await sm.init({ persist: false, forceLocal: true })
+    sm.setBoards([{}, { id: 'a', name: 'A', views: [] }])
+    await new Promise(r => setTimeout(r, 0))
+    const cached = sm.getBoards()
+    const persisted = JSON.parse(localStorage.getItem('asd.boards.v1') || 'null') || []
+    return { cached: cached.length, persisted: persisted.length }
+  })
+  expect(result).toEqual({ cached: 1, persisted: 1 })
+})
+
+test('migration runs once and cleans legacy keys', async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    localStorage.setItem('config', JSON.stringify({}))
+    localStorage.setItem('boards', JSON.stringify([{ id: 'b1', name: 'B1', views: [] }]))
+    const { StorageManager: sm } = await import('/storage/StorageManager.js')
+    await sm.init({ persist: false, forceLocal: true })
+    await sm.init({ persist: false, forceLocal: true })
+    return { ls: localStorage.getItem('boards'), migrated: sm.misc.getItem('migrated') }
+  })
+  expect(result.ls).toBeNull()
+  expect(result.migrated).toBe(true)
+})
+
+test('meta contains storeSizes and quota after init', async ({ page }) => {
+  const meta = await page.evaluate(async () => {
+    const { StorageManager: sm } = await import('/storage/StorageManager.js')
+    await sm.init({ persist: false, forceLocal: true })
+    return { storeSizes: sm.misc.getItem('storeSizes'), quota: sm.misc.getItem('quota') }
+  })
+  expect(meta.storeSizes).toBeTruthy()
+  expect(meta.quota).toBeTruthy()
+})
+
   test('setConfig stores config only', async ({ page }) => {
     const result = await page.evaluate(async () => {
       const { StorageManager: sm } = await import('/storage/StorageManager.js')
