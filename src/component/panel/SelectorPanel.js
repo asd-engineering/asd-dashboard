@@ -3,15 +3,17 @@ import { emojiList } from '../../ui/unicodeEmoji.js'
 /**
  * Generic Service-style selector panel:
  * - Hover/keyboard open/close
- * - Search filter
+ * - Search filter (case/diacritic/whitespace normalized)
  * - OPTIONAL right-side count (hidden when not configured)
  * - FIRST ROW = "Actions ▸" → opens side dropdown with action buttons
- * - OPTIONAL per-item icon actions (e.g., rename ✏️, delete 🗑) rendered on each row
+ * - OPTIONAL per-item icon actions (e.g., rename ✏️, delete ⛔) rendered on each row
  *
- * Emits DOM events (and also calls callbacks if provided):
- *   'panel:select'      { id }
- *   'panel:action'      { action, context }
- *   'panel:item-action' { action, id, context }
+ * Emits DOM events (CustomEvent with `{ bubbles:true, composed:true }`):
+ *   'selector:select'      { id }
+ *   'selector:action'      { action, context }
+ *   'selector:item-action' { action, id, context }
+ *   'selector:opened'
+ *   'selector:closed'
  *
  * @module SelectorPanel
  */
@@ -28,7 +30,7 @@ import { emojiList } from '../../ui/unicodeEmoji.js'
  * @property {boolean} [showCount]
  * @property {(() => string) | null} [countText]
  * @property {(() => string) | null} [labelText]
-  * @property {() => SelectorItem[]} getItems
+ * @property {() => SelectorItem[]} getItems
  * @property {(id:string)=>void} [onSelect]
  * @property {(action:string, ctx:any)=>void} [onAction]
  * @property {(action:string, id:string, ctx:any)=>void} [onItemAction]
@@ -36,6 +38,20 @@ import { emojiList } from '../../ui/unicodeEmoji.js'
  * @property {{label:string,action:string}[]} [actions]
  * @property {{action:string,title:string,icon?:string}[]} [itemActions]
 */
+
+/**
+ * Normalize strings for filtering.
+ * @param {string} s
+ * @returns {string}
+ */
+function normalize (s) {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
 
 /**
  * Generic service-style selector panel with optional side dropdown and per-item actions.
@@ -48,9 +64,10 @@ export class SelectorPanel {
   constructor (cfg) {
     this.cfg = { showCount: true, labelText: null, ...cfg }
     this.timers = { openClose: /** @type {any} */ (null) }
-    this.state = { sideOpen: false }
+    this.state = { sideOpen: false, wasFocused: false }
     this.dom = /** @type {any} */ ({})
     this.hoverFns = /** @type {any} */ ({})
+    this.handlers = /** @type {any} */ ({})
     this.render()
     this.bind()
     this.refresh()
@@ -107,12 +124,10 @@ export class SelectorPanel {
 
   /** Bind DOM events */
   bind () {
-    const open = () => { this.dom.wrap.classList.add('open') }
-    const close = () => { this.dom.wrap.classList.remove('open'); this.closeSide() }
     const schedule = (fn, ms) => { clearTimeout(this.timers.openClose); this.timers.openClose = setTimeout(fn, ms) }
 
-    const onEnter = () => schedule(open, 0)
-    const onLeave = () => schedule(close, 200)
+    const onEnter = () => schedule(() => this.open(), 0)
+    const onLeave = () => schedule(() => this.close(), 200)
 
     this.hoverFns = {
       enter: () => schedule(() => this.toggleSide(true), 0),
@@ -127,22 +142,23 @@ export class SelectorPanel {
     this.dom.side.addEventListener('mouseenter', this.hoverFns.enter)
     this.dom.side.addEventListener('mouseleave', this.hoverFns.leave)
 
-    this.dom.wrap.addEventListener('keydown', (e) => {
+    const onKeydown = (e) => {
       if (e.key === 'Escape') {
         if (this.state.sideOpen) this.closeSide()
-        else this.dom.wrap.classList.remove('open')
+        else this.close()
       } else if (e.key === 'Enter' || e.key === ' ') {
-        this.dom.wrap.classList.add('open')
+        this.open()
       } else if (e.key === 'ArrowLeft') {
         if (this.state.sideOpen) this.closeSide()
-        else this.dom.wrap.classList.remove('open')
+        else this.close()
       }
-    })
+    }
+    this.dom.wrap.addEventListener('keydown', onKeydown)
 
-    this.dom.input.addEventListener('input', () => this.filter(this.dom.input.value))
+    const onInput = () => this.filter(this.dom.input.value)
+    this.dom.input.addEventListener('input', onInput)
 
-    // clicks inside list: actions first, then selection
-    this.dom.list.addEventListener('click', (e) => {
+    const onListClick = (e) => {
       const target = /** @type {HTMLElement} */ (e.target)
       const itemBtn = target.closest('[data-item-action]')
       if (itemBtn) {
@@ -151,6 +167,7 @@ export class SelectorPanel {
         const action = /** @type {HTMLElement} */ (itemBtn).dataset.itemAction || ''
         const row = target.closest('[data-id]')
         const id = row ? /** @type {HTMLElement} */ (row).dataset.id || '' : ''
+        this.close()
         this.dispatchItemAction(action, id)
         return
       }
@@ -163,23 +180,23 @@ export class SelectorPanel {
       const row = target.closest('[data-id]')
       if (row) {
         e.preventDefault()
-        this.dispatchSelect(/** @type {HTMLElement} */ (row).dataset.id || '')
-        this.dom.wrap.classList.remove('open')
+        const id = /** @type {HTMLElement} */ (row).dataset.id || ''
+        this.close()
+        this.dispatchSelect(id)
       }
-    })
+    }
+    this.dom.list.addEventListener('click', onListClick)
 
-    // side buttons
-    this.dom.side.addEventListener('click', (e) => {
+    const onSideClick = (e) => {
       const btn = /** @type {HTMLElement|null} */ (e.target instanceof HTMLElement ? e.target.closest('[data-action]') : null)
       if (!btn) return
       e.preventDefault()
+      this.close()
       this.dispatchAction(btn.dataset.action || '')
-      this.dom.wrap.classList.remove('open')
-      this.closeSide()
-    })
+    }
+    this.dom.side.addEventListener('click', onSideClick)
 
-    // Keyboard: ArrowRight on first row opens side
-    this.dom.list.addEventListener('keydown', (e) => {
+    const onListKeydown = (e) => {
       const onFirstRow = /** @type {HTMLElement|null} */ (
         document.activeElement instanceof HTMLElement
           ? document.activeElement.closest('[data-testid="panel-actions-trigger"]')
@@ -189,7 +206,29 @@ export class SelectorPanel {
         e.preventDefault()
         this.toggleSide(true, { focusFirst: true })
       }
-    })
+    }
+    this.dom.list.addEventListener('keydown', onListKeydown)
+
+    // close on modal open/close
+    this.handlers.onModalOpen = () => {
+      const active = document.activeElement
+      this.state.wasFocused = !!(active && this.dom.wrap.contains(active))
+      this.close()
+    }
+    this.handlers.onModalClose = () => {
+      if (this.state.wasFocused) this.dom.wrap.focus()
+      this.state.wasFocused = false
+    }
+    document.addEventListener('modal:open', this.handlers.onModalOpen)
+    document.addEventListener('modal:close', this.handlers.onModalClose)
+
+    this.handlers.onEnter = onEnter
+    this.handlers.onLeave = onLeave
+    this.handlers.onKeydown = onKeydown
+    this.handlers.onInput = onInput
+    this.handlers.onListClick = onListClick
+    this.handlers.onSideClick = onSideClick
+    this.handlers.onListKeydown = onListKeydown
   }
 
   /** Refresh list and counts */
@@ -251,7 +290,7 @@ export class SelectorPanel {
       const row = document.createElement('div')
       row.className = 'panel-item'
       row.dataset.id = it.id
-      row.dataset.filterable = `${it.label} ${it.meta || ''}`
+      row.dataset.filterable = normalize(`${it.label} ${it.meta || ''}`)
       row.tabIndex = 0
 
       const left = document.createElement('span')
@@ -272,7 +311,7 @@ export class SelectorPanel {
         acts.className = 'panel-item-actions'
         const iconMap = {
           rename: emojiList.edit.unicode,
-          delete: emojiList.cross.unicode
+          delete: emojiList.noEntry.unicode
         }
         for (const a of itemActions) {
           const b = document.createElement('button')
@@ -296,12 +335,29 @@ export class SelectorPanel {
    * @param {string} q
    */
   filter (q) {
-    const needle = (q || '').toLowerCase()
+    const needle = normalize(q)
     this.dom.list.querySelectorAll('.panel-item').forEach(el => {
       if (el.classList.contains('panel-actions-trigger')) return
-      const txt = (el.getAttribute('data-filterable') || '').toLowerCase()
+      const txt = el.getAttribute('data-filterable') || ''
       el.toggleAttribute('hidden', !txt.includes(needle))
     })
+  }
+
+  /** Open dropdown */
+  open () {
+    if (!this.dom.wrap.classList.contains('open')) {
+      this.dom.wrap.classList.add('open')
+      this.dom.wrap.dispatchEvent(new CustomEvent('selector:opened', { bubbles: true, composed: true }))
+    }
+  }
+
+  /** Close dropdown */
+  close () {
+    if (this.dom.wrap.classList.contains('open')) {
+      this.dom.wrap.classList.remove('open')
+      this.closeSide()
+      this.dom.wrap.dispatchEvent(new CustomEvent('selector:closed', { bubbles: true, composed: true }))
+    }
   }
 
   /** Toggle side panel */
@@ -321,21 +377,39 @@ export class SelectorPanel {
 
   /** Dispatch selection */
   dispatchSelect (id) {
-    this.dom.wrap.dispatchEvent(new CustomEvent('panel:select', { bubbles: true, detail: { id } }))
+    this.dom.wrap.dispatchEvent(new CustomEvent('selector:select', { bubbles: true, composed: true, detail: { id } }))
     if (typeof this.cfg.onSelect === 'function') this.cfg.onSelect(id)
   }
 
   /** Dispatch top-level action */
   dispatchAction (action) {
     const ctx = this.cfg.context ? this.cfg.context() : null
-    this.dom.wrap.dispatchEvent(new CustomEvent('panel:action', { bubbles: true, detail: { action, context: ctx } }))
+    this.dom.wrap.dispatchEvent(new CustomEvent('selector:action', { bubbles: true, composed: true, detail: { action, context: ctx } }))
     if (typeof this.cfg.onAction === 'function') this.cfg.onAction(action, ctx)
   }
 
   /** Dispatch per-item action */
   dispatchItemAction (action, id) {
     const ctx = this.cfg.context ? this.cfg.context() : null
-    this.dom.wrap.dispatchEvent(new CustomEvent('panel:item-action', { bubbles: true, detail: { action, id, context: ctx } }))
+    this.dom.wrap.dispatchEvent(new CustomEvent('selector:item-action', { bubbles: true, composed: true, detail: { action, id, context: ctx } }))
     if (typeof this.cfg.onItemAction === 'function') this.cfg.onItemAction(action, id, ctx)
+  }
+
+  /** Unbind all event listeners */
+  destroy () {
+    const { wrap, content, side, list, input } = this.dom
+    wrap.removeEventListener('mouseenter', this.handlers.onEnter)
+    wrap.removeEventListener('mouseleave', this.handlers.onLeave)
+    content.removeEventListener('mouseenter', this.handlers.onEnter)
+    content.removeEventListener('mouseleave', this.handlers.onLeave)
+    side.removeEventListener('mouseenter', this.hoverFns.enter)
+    side.removeEventListener('mouseleave', this.hoverFns.leave)
+    wrap.removeEventListener('keydown', this.handlers.onKeydown)
+    input.removeEventListener('input', this.handlers.onInput)
+    list.removeEventListener('click', this.handlers.onListClick)
+    side.removeEventListener('click', this.handlers.onSideClick)
+    list.removeEventListener('keydown', this.handlers.onListKeydown)
+    document.removeEventListener('modal:open', this.handlers.onModalOpen)
+    document.removeEventListener('modal:close', this.handlers.onModalClose)
   }
 }

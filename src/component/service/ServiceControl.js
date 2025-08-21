@@ -151,7 +151,7 @@ export function mountServiceControl () {
     itemActions: [
       { action: 'navigate', title: 'Locate widget', icon: emojiList.magnifyingGlass.unicode },
       { action: 'edit', title: 'Edit widget', icon: emojiList.edit.unicode },
-      { action: 'remove', title: 'Delete widget type', icon: emojiList.cross.unicode }
+      { action: 'remove', title: 'Delete widget type', icon: emojiList.noEntry.unicode }
     ]
   })
 

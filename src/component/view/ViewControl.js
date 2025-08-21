@@ -79,7 +79,7 @@ export function mountViewControl () {
     ],
     itemActions: [
       { action: 'rename', title: 'Rename view', icon: emojiList.edit.unicode },
-      { action: 'delete', title: 'Delete view', icon: emojiList.cross.unicode }
+      { action: 'delete', title: 'Delete view', icon: emojiList.noEntry.unicode }
     ]
   })
 

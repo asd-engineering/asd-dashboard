@@ -8,6 +8,7 @@ import { showNotification } from '../dialog/notification.js'
 import { gzipJsonToBase64url } from '../../utils/compression.js'
 import { Logger } from '../../utils/Logger.js'
 import StorageManager from '../../storage/StorageManager.js'
+import emojiList from '../../ui/unicodeEmoji.js'
 
 const logger = new Logger('exportConfig.js')
 
@@ -25,7 +26,7 @@ export async function exportConfig () {
 
     if (!cfg || !svc) {
       logger.warn('Export aborted: missing config or services')
-      showNotification('❌ Cannot export: config or services are missing', 4000, 'error')
+      showNotification(`${emojiList.cross.icon} Cannot export: config or services are missing`, 4000, 'error')
       return
     }
 
@@ -51,7 +52,7 @@ export async function exportConfig () {
 
     await StorageManager.saveStateSnapshot({ name, type: 'exported', cfg: cfgEnc, svc: svcEnc })
   } catch (e) {
-    showNotification('❌ Failed to export config', 4000, 'error')
+    showNotification(`${emojiList.cross.icon} Failed to export config`, 4000, 'error')
     logger.error('Export failed', e)
   }
 }
