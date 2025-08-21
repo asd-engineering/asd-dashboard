@@ -18,7 +18,7 @@ test.describe('Widgets', () => {
     await navigate(page,'/');
 
     await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js');
+      const { StorageManager: sm } = await import('/storage/StorageManager.js');
       sm.misc.setItem('log', 'widgetManagement');
     });
   });

@@ -6,7 +6,7 @@
  */
 import { Logger } from './Logger.js'
 import { showNotification } from '../component/dialog/notification.js'
-import StorageManager from '../storage/StorageManager.js'
+import { StorageManager } from '../storage/StorageManager.js'
 
 /** @typedef {import('../types.js').Service} Service */
 

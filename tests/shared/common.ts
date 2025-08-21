@@ -121,7 +121,7 @@ export async function clearStorage(page: Page) {
 
 export async function getUnwrappedConfig(page: Page) {
   return await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js');
+    const { StorageManager: sm } = await import('/storage/StorageManager.js');
     return sm.getConfig();
   });
 }
@@ -157,14 +157,14 @@ export async function getShowMenuWidgetFlag(page: Page) {
 
 export async function getLastUsedViewId(page: Page) {
   return await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js');
+    const { StorageManager: sm } = await import('/storage/StorageManager.js');
     return sm.misc.getLastViewId();
   });
 }
 
 export async function getLastUsedBoardId(page: Page) {
   return await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js');
+    const { StorageManager: sm } = await import('/storage/StorageManager.js');
     return sm.misc.getLastBoardId();
   });
 }

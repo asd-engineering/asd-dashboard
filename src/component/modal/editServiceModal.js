@@ -6,7 +6,7 @@
  * @module editServiceModal
  */
 import { openModal } from './modalFactory.js'
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 
 /**
  * Open a modal allowing the user to edit a service definition.

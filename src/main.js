@@ -19,7 +19,7 @@ import { loadFromFragment } from './utils/fragmentLoader.js'
 import { Logger } from './utils/Logger.js'
 import { widgetStore } from './component/widget/widgetStore.js'
 import { debounce, debounceLeading } from './utils/utils.js'
-import StorageManager, { APP_STATE_CHANGED } from './storage/StorageManager.js'
+import { StorageManager, APP_STATE_CHANGED } from './storage/StorageManager.js'
 import { runSilentImportFlowIfRequested } from './flows/silentImportFlow.js'
 
 // NEW: widget selector panel (replaces populateServiceDropdown())

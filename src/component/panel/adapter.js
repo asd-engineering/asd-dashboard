@@ -3,7 +3,7 @@
  * Thin adapter mapping selector panel actions to existing handlers.
  * @module panel/adapter
  */
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 import { getCurrentBoardId as domBoardId, getCurrentViewId as domViewId } from '../../utils/elements.js'
 import {
   switchBoard,

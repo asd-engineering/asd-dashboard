@@ -38,7 +38,7 @@ test.describe('Save Service Modal', () => {
     
     // Verify it was saved to storage
     const services = await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js')
+      const { StorageManager: sm } = await import('/storage/StorageManager.js')
       return sm.getServices()
     })
     expect(services.some(s => s.url === url && s.name === 'Manual Service')).toBeTruthy()
@@ -57,7 +57,7 @@ test.describe('Save Service Modal', () => {
 
     // Verify it was NOT saved to storage
     const services = await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js')
+      const { StorageManager: sm } = await import('/storage/StorageManager.js')
       return sm.getServices()
     })
     expect(services.some(s => s.url === url)).toBeFalsy()
