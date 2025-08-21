@@ -7,7 +7,7 @@
 import { createBoard, renameBoard, deleteBoard, updateViewSelector } from './boardManagement.js'
 import { initializeDropdown } from '../utils/dropDownUtils.js'
 import { Logger } from '../../utils/Logger.js'
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 
 const logger = new Logger('boardDropdown.js')
 

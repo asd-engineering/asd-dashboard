@@ -13,7 +13,7 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: os.cpus().length -1,
+  workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['json', { outputFile: 'playwright-report.json' }]

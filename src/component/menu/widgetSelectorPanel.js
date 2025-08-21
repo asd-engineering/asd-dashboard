@@ -13,7 +13,7 @@ import {
 import { widgetStore } from '../widget/widgetStore.js'
 import { switchBoard } from '../board/boardManagement.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 import { resolveServiceConfig } from '../../utils/serviceUtils.js'
 import { showNotification } from '../dialog/notification.js'

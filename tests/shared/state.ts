@@ -40,7 +40,7 @@ export async function setLocalItem(
 ): Promise<void> {
   await page.evaluate(
     async ({ key, value }) => {
-      const { default: sm } = await import("/storage/StorageManager.js");
+      const { StorageManager: sm } = await import("/storage/StorageManager.js");
       sm.misc.setItem(key, value);
     },
     { key, value },
@@ -64,7 +64,7 @@ export async function injectSnapshot(
 ): Promise<void> {
   await page.evaluate(
     async ({ cfg, svc, name }) => {
-      const { default: sm } = await import("/storage/StorageManager.js");
+      const { StorageManager: sm } = await import("/storage/StorageManager.js");
       const { gzipJsonToBase64url } = await import("/utils/compression.js");
       const encodedCfg = await gzipJsonToBase64url(cfg);
       const encodedSvc = await gzipJsonToBase64url(svc);

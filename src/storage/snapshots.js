@@ -5,7 +5,7 @@
  * @module snapshots
  */
 
-import StorageManager from './StorageManager.js'
+import { StorageManager } from './StorageManager.js'
 import { gzipJsonToBase64url } from '../utils/compression.js'
 
 /**

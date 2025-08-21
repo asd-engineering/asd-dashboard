@@ -6,7 +6,7 @@
  * @module saveServiceModal
  */
 import { openModal } from './modalFactory.js'
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 import { addWidget } from '../widget/widgetManagement.js'
 import { refreshRowCounts, updateWidgetCounter } from '../menu/widgetSelectorPanel.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'

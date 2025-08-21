@@ -8,7 +8,7 @@ import { Logger } from './Logger.js'
 import { showNotification } from '../component/dialog/notification.js'
 import { openConfigModal } from '../component/modal/configModal.js'
 import { DEFAULT_CONFIG_TEMPLATE } from '../storage/defaultConfig.js'
-import StorageManager from '../storage/StorageManager.js'
+import { StorageManager } from '../storage/StorageManager.js'
 import { deepEqual } from '../utils/objectUtils.js'
 
 const logger = new Logger('getConfig.js')

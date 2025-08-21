@@ -37,7 +37,7 @@ test.describe("Secure fragments loading configuration", () => {
     // Now re-import StorageManager in a fresh JS context
     // ToDo: refactor logic below
     const result = await page.evaluate(async () => {
-      const sm = (await import("/storage/StorageManager.js")).default;
+      const sm = (await import("/storage/StorageManager.js")).StorageManager;
       const snapshot = (await sm.loadStateStore()).states.find(
         (s) => s.name === "MySnapshot",
       );

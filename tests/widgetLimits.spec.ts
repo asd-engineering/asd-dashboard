@@ -197,7 +197,7 @@ test.describe("Widget limits", () => {
     expect(countB).toBe(" (0/1)");
 
     await page.evaluate(async () => {
-      const StorageManager = (await import("/storage/StorageManager.js")).default;
+      const StorageManager = (await import("/storage/StorageManager.js")).StorageManager;
       StorageManager.updateBoards((boards) => {
         const board = boards.find((b) => b.id === "b");
         const view = board?.views.find((v) => v.id === "v");

@@ -18,7 +18,7 @@ test("verify config and services from URL fragment does not load before user dec
   
   const config = await getUnwrappedConfig(page);
   const services = await page.evaluate(async () => {
-    const { default: sm } = await import("/storage/StorageManager.js");
+    const { StorageManager: sm } = await import("/storage/StorageManager.js");
     return sm.getServices();
   });
 
@@ -93,7 +93,7 @@ test("imports fragment silently when query import flag is set", async ({ page })
   expect(theme).toBe("light");
 
   const snapshots = await page.evaluate(async () => {
-    const { default: sm } = await import("/storage/StorageManager.js");
+    const { StorageManager: sm } = await import("/storage/StorageManager.js");
     const store = await sm.loadStateStore();
     return store.states.map(s => ({ name: s.name, type: s.type }));
   });

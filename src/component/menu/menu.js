@@ -7,7 +7,7 @@
 import emojiList from '../../ui/unicodeEmoji.js'
 import { showNotification } from '../dialog/notification.js'
 import { debounceLeading } from '../../utils/utils.js'
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 
 /**
  * Initialize service worker controls in the menu.

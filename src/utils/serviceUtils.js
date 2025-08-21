@@ -3,7 +3,7 @@
  * Utilities for resolving service configurations with templates.
  * @module utils/serviceUtils
  */
-import StorageManager from '../storage/StorageManager.js'
+import { StorageManager } from '../storage/StorageManager.js'
 import { deepMerge } from './objectUtils.js'
 
 /**

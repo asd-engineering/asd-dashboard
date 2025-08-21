@@ -9,7 +9,7 @@ import { injectSnapshot } from './shared/state.js'
   await clearStorage(page)
   await navigate(page, '/')
   await page.evaluate(async ({ cfg, svc }) => {
-    const { default: sm } = await import('/storage/StorageManager.js')
+    const { StorageManager: sm } = await import('/storage/StorageManager.js')
     sm.setConfig(cfg)
     sm.setServices(svc)
   }, { cfg: ciConfig, svc: ciServices })
@@ -19,7 +19,7 @@ import { injectSnapshot } from './shared/state.js'
   page.on('dialog', d => d.accept())
   await page.click('#config-modal .modal__btn--export')
   const first = await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js')
+    const { StorageManager: sm } = await import('/storage/StorageManager.js')
     const store = await sm.loadStateStore()
     return store.states[0]
   })
@@ -29,7 +29,7 @@ import { injectSnapshot } from './shared/state.js'
   await page.click('.tabs button[data-tab="cfgTab"]')
   await page.click('#config-modal .modal__btn--export')
   const second = await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js')
+    const { StorageManager: sm } = await import('/storage/StorageManager.js')
     const store = await sm.loadStateStore()
     return store.states[0]
   })
@@ -43,7 +43,7 @@ import { injectSnapshot } from './shared/state.js'
   await clearStorage(page)
   await navigate(page, '/')
   await page.evaluate(async ({ cfg, svc }) => {
-    const { default: sm } = await import('/storage/StorageManager.js')
+    const { StorageManager: sm } = await import('/storage/StorageManager.js')
     sm.setConfig(cfg)
     sm.setServices(svc)
   }, { cfg: ciConfig, svc: ciServices })
@@ -59,11 +59,11 @@ import { injectSnapshot } from './shared/state.js'
   ])
   await page.waitForFunction(() => document.body.dataset.ready === 'true')
   const count = await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js')
+    const { StorageManager: sm } = await import('/storage/StorageManager.js')
     return (await sm.loadStateStore()).states.length
   })
   const theme = await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js')
+    const { StorageManager: sm } = await import('/storage/StorageManager.js')
     return sm.getConfig().globalSettings.theme
   })
   expect(count).toBe(1)
