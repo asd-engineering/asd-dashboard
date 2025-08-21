@@ -134,7 +134,7 @@ export async function loadFromFragment (wasExplicitLoad = false) {
       else if (e instanceof SyntaxError) reason = 'json parse'
       else reason = e.message
     }
-    logger.error(`${emojiList.cross.icon} Fout bij laden uit fragment:`, reason)
+    logger.error(`${emojiList.cross.icon} Fout bij laden uit fragment:`, { reason })
     showNotification('Fout bij laden van dashboardconfiguratie uit URL fragment.', 4000, 'error')
   }
 
