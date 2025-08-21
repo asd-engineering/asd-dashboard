@@ -9,23 +9,48 @@ test.describe('StorageManager', () => {
     await navigate(page, '/')
   })
 
-  test('named export only', async ({ page }) => {
+test('named export only', async ({ page }) => {
     const result = await page.evaluate(async () => {
       const mod = await import('/storage/StorageManager.js')
       return { hasNamed: 'StorageManager' in mod, hasDefault: 'default' in mod }
-    })
-    expect(result.hasNamed).toBe(true)
-    expect(result.hasDefault).toBe(false)
   })
+  expect(result.hasNamed).toBe(true)
+  expect(result.hasDefault).toBe(false)
+})
 
-  test('forceLocal sets driver meta', async ({ page }) => {
+test('setBoards emits update event', async ({ page }) => {
+  const detail = await page.evaluate(async () => {
+    const { StorageManager: sm, APP_STATE_CHANGED } = await import('/storage/StorageManager.js')
+    await sm.init({ persist: false, forceLocal: true })
+    return await new Promise(resolve => {
+      window.addEventListener(APP_STATE_CHANGED, e => resolve((e as CustomEvent).detail))
+      sm.setBoards([])
+    })
+  })
+  expect(detail).toEqual({ reason: 'update:boards', store: 'boards' })
+})
+
+test('forceLocal sets driver meta', async ({ page }) => {
     const driver = await page.evaluate(async () => {
       const { StorageManager: sm } = await import('/storage/StorageManager.js')
       await sm.init({ persist: false, forceLocal: true })
       return sm.misc.getItem('driver')
-    })
-    expect(driver).toBe('localStorage')
   })
+  expect(driver).toBe('localStorage')
+})
+
+test('remote bus fan-in emits remote-update', async ({ page }) => {
+  const detail = await page.evaluate(async () => {
+    const { StorageManager: sm, APP_STATE_CHANGED } = await import('/storage/StorageManager.js')
+    await sm.init({ persist: false, forceLocal: true })
+    return await new Promise(resolve => {
+      window.addEventListener(APP_STATE_CHANGED, e => resolve((e as CustomEvent).detail))
+      const ch = new BroadcastChannel('asd-storage')
+      ch.postMessage({ type: 'STORE_UPDATED', store: 'boards', at: Date.now() })
+    })
+  })
+  expect(detail).toEqual({ reason: 'remote-update:boards', store: 'boards' })
+})
 
   test('setConfig stores config only', async ({ page }) => {
     const result = await page.evaluate(async () => {
@@ -33,9 +58,30 @@ test.describe('StorageManager', () => {
       const cfg = { boards: [{ id: 'b1', name: 'B1', views: [] }] }
       sm.setConfig(cfg)
       return { cfg: sm.getConfig(), boards: sm.getBoards() }
+  })
+  expect(result.boards).toHaveLength(1)
+  expect(result.cfg.boards).toEqual(result.boards)
+  })
+
+  test('IDB open blocked falls back to localStorage', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const { StorageManager: sm, APP_STATE_CHANGED } = await import('/storage/StorageManager.js')
+      const originalOpen = indexedDB.open.bind(indexedDB)
+      const fakeOpen = () => {
+        const req = {} as IDBOpenDBRequest
+        setTimeout(() => { req.onblocked && req.onblocked({} as IDBVersionChangeEvent) }, 0)
+        return req
+      }
+      indexedDB.open = fakeOpen as any
+      const event = new Promise(resolve => {
+        window.addEventListener(APP_STATE_CHANGED, e => resolve((e as CustomEvent).detail))
+      })
+      await sm.init({ persist: false })
+      indexedDB.open = originalOpen
+      return { driver: sm.misc.getItem('driver'), detail: await event }
     })
-    expect(result.boards).toHaveLength(1)
-    expect(result.cfg.boards).toEqual(result.boards)
+    expect(result.driver).toBe('localStorage')
+    expect(result.detail).toEqual({ reason: 'driver-fallback', driver: 'localStorage' })
   })
 
   test('saveStateSnapshot persists and hashes', async ({ page }) => {

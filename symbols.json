@@ -355,7 +355,7 @@
         "desc": ""
       }
     ],
-    "returns": "typeof idbKV"
+    "returns": "KV"
   },
   {
     "name": "createResizeOverlay",

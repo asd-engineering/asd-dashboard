@@ -8,7 +8,7 @@ import { md5Hex } from '../utils/hash.js'
 import { createDriver } from './driver.js'
 import { sanitizeBoards, sanitizeConfig, sanitizeServices } from './validators.js'
 import { busInit, busPost, busOnMessage } from './bus.js'
-import { idbKV, onVersionChange as onIDBVersionChange } from './adapters/idbKV.js'
+import { idbKV, onVersionChange } from './adapters/idbKV.js'
 
 /**
  * CURRENT_VERSION for stored data schema.
@@ -33,11 +33,15 @@ const cache = {
 /**
  * Dispatch an application state change event.
  * @param {string} reason
- * @param {object} payload
+ * @param {object} [detail]
  * @returns {void}
  */
-function dispatchChange (reason, payload) {
-  window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason, ...payload } }))
+function dispatchChange (reason, detail = {}) {
+  try {
+    window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason, ...detail } }))
+  } catch (e) {
+    console.warn('dispatchChange failed:', e)
+  }
 }
 
 // -- helpers ---------------------------------------------------------------
@@ -168,7 +172,7 @@ export const StorageManager = {
       kv = lsKV
       await warmCache()
       await setMeta('driver', 'localStorage')
-      dispatchChange('driver-fallback', { store: 'meta' })
+      dispatchChange('driver-fallback', { driver: 'localStorage' })
       busInit()
       return
     }
@@ -203,11 +207,11 @@ export const StorageManager = {
       }
     })
     if (kv === idbKV) {
-      onIDBVersionChange(async () => {
+      onVersionChange(async () => {
         const { lsKV } = await import('./adapters/lsKV.js')
         kv = lsKV
         await setMeta('driver', 'localStorage')
-        dispatchChange('versionchange', { store: 'meta' })
+        dispatchChange('driver-fallback', { driver: 'localStorage' })
       })
     }
   },
@@ -227,7 +231,7 @@ export const StorageManager = {
     kv.set('boards', 'v1', boards)
     busPost({ type: 'STORE_UPDATED', store: 'config', at: Date.now() })
     busPost({ type: 'STORE_UPDATED', store: 'boards', at: Date.now() })
-    dispatchChange('config', { store: 'config' })
+    dispatchChange('update:config', { store: 'config' })
   },
   updateConfig (updater) {
     const cfg = StorageManager.getConfig()
@@ -245,7 +249,7 @@ export const StorageManager = {
     cache.config.boards = sanitized
     kv.set('boards', 'v1', sanitized)
     busPost({ type: 'STORE_UPDATED', store: 'boards', at: Date.now() })
-    dispatchChange('boards', { store: 'boards' })
+    dispatchChange('update:boards', { store: 'boards' })
   },
   updateBoards (updater) {
     const boards = StorageManager.getBoards()
@@ -262,7 +266,7 @@ export const StorageManager = {
     cache.services = sanitized
     kv.set('services', 'v1', sanitized)
     busPost({ type: 'STORE_UPDATED', store: 'services', at: Date.now() })
-    dispatchChange('services', { store: 'services' })
+    dispatchChange('update:services', { store: 'services' })
   },
 
   // ---- State store ----
@@ -272,7 +276,7 @@ export const StorageManager = {
   async saveStateStore (store) {
     await kv.set('state_store', 'v1', store)
     busPost({ type: 'STORE_UPDATED', store: 'state_store', at: Date.now() })
-    dispatchChange('state_store', { store: 'state_store' })
+    dispatchChange('update:state_store', { store: 'state_store' })
   },
   async saveStateSnapshot ({ name, type, cfg, svc }) {
     const store = await StorageManager.loadStateStore()
