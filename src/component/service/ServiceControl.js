@@ -122,10 +122,10 @@ export function mountServiceControl () {
       const svc = (StorageManager.getServices() || []).find(s => s.id === id)
       if (!svc) return
       const resolved = resolveServiceConfig(svc)
-      if (action === 'edit') {
+      if (action === 'rename') {
         const mod = await import('../modal/saveServiceModal.js')
         mod.openSaveServiceModal({ mode: 'edit', service: svc })
-      } else if (action === 'remove') {
+      } else if (action === 'delete') {
         // eslint-disable-next-line no-alert
         if (confirm('Remove this service and all its widgets?')) {
           document.querySelectorAll('.widget-wrapper').forEach(async el => {
@@ -159,14 +159,16 @@ export function mountServiceControl () {
     actions: [
       { label: 'New Service', action: 'create' }
     ],
+    primaryAction: { label: 'New Service', action: 'create' },
+    selectVerb: () => 'Add',
     itemActionsFor: (item) => {
       /** @type {{action:string,title:string,icon:string}[]} */
       const acts = []
       if (item.canNavigate) {
         acts.push({ action: 'navigate', title: 'Locate widget', icon: emojiList.magnifyingGlass.unicode })
       }
-      acts.push({ action: 'edit', title: 'Edit widget', icon: emojiList.edit.unicode })
-      acts.push({ action: 'remove', title: 'Delete widget type', icon: emojiList.noEntry.unicode })
+      acts.push({ action: 'rename', title: 'Rename service', icon: emojiList.edit.unicode })
+      acts.push({ action: 'delete', title: 'Delete service', icon: emojiList.cross.unicode })
       return acts
     }
   })

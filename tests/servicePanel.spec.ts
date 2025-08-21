@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
-import { addServices } from './shared/common'
+import { addServices, clearStorage } from './shared/common'
 
 // Basic structure tests for service selector panel
 
@@ -19,7 +19,7 @@ test.describe('Service panel', () => {
     await expect(panel.locator('.panel-count')).toBeVisible()
 
     const order = await panel.evaluate((el) => Array.from(el.children).map(c => c.className))
-    expect(order.slice(0,4)).toEqual(['panel-arrow','panel-label','panel-search','panel-count'])
+    expect(order.slice(0,7)).toEqual(['panel-arrow','panel-label','panel-search','panel-spacer','panel-count','panel-cta','panel-quick-add'])
   })
 
   test('icons toggle visibility and magnifier conditional', async ({ page }) => {
@@ -36,5 +36,48 @@ test.describe('Service panel', () => {
     await expect(firstActs).toHaveCSS('opacity', '0')
     await expect(first.locator('[data-item-action="navigate"]')).toHaveCount(1)
     await expect(second.locator('[data-item-action="navigate"]')).toHaveCount(0)
+    await first.hover()
+    await expect(first.locator('[data-item-action="delete"]')).toHaveText('❌')
+  })
+
+  test('header shows primary CTA without Actions row', async ({ page }) => {
+    const panel = page.locator('[data-testid="service-panel"]')
+    await panel.hover()
+    await expect(panel.locator('.panel-cta')).toHaveText('New Service')
+    await expect(panel.locator('.panel-quick-add')).toHaveCount(0)
+    await expect(panel.locator('[data-testid="panel-actions-trigger"]')).toHaveCount(0)
+  })
+
+  test('empty state renders CTA and hides Actions', async ({ page }) => {
+    await clearStorage(page)
+    await page.goto('/')
+    const panel = page.locator('[data-testid="service-panel"]')
+    await panel.hover()
+    await expect(panel.locator('.panel-empty-title')).toHaveText('No Services yet')
+    await expect(panel.locator('.panel-empty-cta')).toHaveText('+ New Service')
+    await expect(panel.locator('.panel-search')).toBeVisible()
+    await expect(panel.locator('[data-testid="panel-actions-trigger"]')).toHaveCount(0)
+  })
+
+  test('meta column aligned regardless of navigate icon', async ({ page }) => {
+    await addServices(page, 1)
+    const panel = page.locator('[data-testid="service-panel"]')
+    await panel.hover()
+    const firstMeta = await panel.locator('.panel-item').nth(1).locator('.panel-item-meta').boundingBox()
+    const secondMeta = await panel.locator('.panel-item').nth(2).locator('.panel-item-meta').boundingBox()
+    const dx = Math.abs((firstMeta?.x || 0) - (secondMeta?.x || 0))
+    expect(dx).toBeLessThanOrEqual(1)
+  })
+
+  test('label affordance and keyboard create', async ({ page }) => {
+    const panel = page.locator('[data-testid="service-panel"]')
+    await panel.hover()
+    const first = panel.locator('.panel-item').nth(1)
+    await expect(first).toHaveAttribute('aria-label', /^Add:/)
+    await first.hover()
+    await expect(first.locator('.panel-item-hint')).toHaveText('Click to add')
+    await panel.locator('.panel-cta').focus()
+    page.once('dialog', d => d.dismiss())
+    await page.keyboard.press('Enter')
   })
 })

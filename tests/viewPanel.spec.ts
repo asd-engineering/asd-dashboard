@@ -30,6 +30,8 @@ test.describe('View panel', () => {
     await expect(acts).toHaveCSS('opacity', '0')
     await first.focus()
     await expect(acts).toHaveCSS('opacity', '1')
+    await first.hover()
+    await expect(first.locator('[data-item-action="delete"]')).toHaveText('❌')
   })
 
   test('opens dropdown and side Actions ▸', async ({ page }) => {
@@ -41,6 +43,28 @@ test.describe('View panel', () => {
     await expect(panel.locator('.dropdown-content.side-open .side-content')).toBeVisible()
     await expect(panel.locator('.side-content .panel-action', { hasText: 'New View' })).toBeVisible()
     await expect(panel.locator('.side-content .panel-action', { hasText: 'Reset View' })).toBeVisible()
+  })
+
+  test('header quick-add creates view', async ({ page }) => {
+    const panel = page.locator('[data-testid="view-panel"]')
+    await panel.hover()
+    await expect(panel.locator('.panel-quick-add')).toHaveText('➕')
+    await panel.locator('.panel-quick-add').focus()
+    const name = 'Quick View'
+    page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(name) })
+    await page.keyboard.press('Enter')
+    await expect(panel.locator('.side-content')).toHaveCount(0)
+    await panel.hover()
+    await expect(panel.locator('.panel-item', { hasText: name })).toBeVisible()
+  })
+
+  test('label hint and aria for switch', async ({ page }) => {
+    const panel = page.locator('[data-testid="view-panel"]')
+    await panel.hover()
+    const first = panel.locator('.panel-item').nth(1)
+    await expect(first).toHaveAttribute('aria-label', /^Switch:/)
+    await first.hover()
+    await expect(first.locator('.panel-item-hint')).toHaveText('Click to switch')
   })
 
   test('per-item rename/delete and Reset View', async ({ page }) => {
@@ -72,7 +96,7 @@ test.describe('View panel', () => {
 
     await row2.hover()
     const deleteBtn = row2.locator('[data-item-action="delete"]').first()
-    await expect(deleteBtn).toHaveText('⛔')
+    await expect(deleteBtn).toHaveText('❌')
     page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
     await deleteBtn.click()
     await panel.hover()

@@ -31,6 +31,30 @@ test.describe('Board panel', () => {
     await row.focus()
     await expect(acts).toHaveCSS('opacity', '1')
     await expect(panel.locator('[data-item-action="navigate"]')).toHaveCount(0)
+    await row.hover()
+    await expect(row.locator('[data-item-action="delete"]')).toHaveText('❌')
+  })
+
+  test('header quick-add button visible and creates board', async ({ page }) => {
+    const panel = page.locator('[data-testid="board-panel"]')
+    await panel.hover()
+    await expect(panel.locator('.panel-quick-add')).toHaveText('➕')
+    await panel.locator('.panel-quick-add').focus()
+    const newName = 'Quick Board'
+    page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(newName) })
+    await page.keyboard.press('Enter')
+    await expect(panel.locator('.side-content')).toHaveCount(0)
+    await panel.hover()
+    await expect(panel.locator('.panel-item', { hasText: newName })).toBeVisible()
+  })
+
+  test('label hint and aria for switch', async ({ page }) => {
+    const panel = page.locator('[data-testid="board-panel"]')
+    await panel.hover()
+    const first = panel.locator('.panel-item').nth(1)
+    await expect(first).toHaveAttribute('aria-label', /^Switch:/)
+    await first.hover()
+    await expect(first.locator('.panel-item-hint')).toHaveText('Click to switch')
   })
 
   test('opens dropdown and shows Actions ▸', async ({ page }) => {
@@ -95,7 +119,7 @@ test.describe('Board panel', () => {
 
     await rowRenamed.hover()
     const deleteBtn = rowRenamed.locator('[data-item-action="delete"]').first()
-    await expect(deleteBtn).toHaveText('⛔')
+    await expect(deleteBtn).toHaveText('❌')
     page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
     await deleteBtn.click()
     await expect(panel.locator('.panel-item', { hasText: renamed })).toHaveCount(0)

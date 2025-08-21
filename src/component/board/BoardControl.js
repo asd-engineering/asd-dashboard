@@ -72,9 +72,12 @@ export function mountBoardControl () {
       { label: 'New Board', action: 'create' },
       { label: 'Reset Board', action: 'reset' }
     ],
+    primaryAction: { label: 'New Board', action: 'create' },
+    quickAddAction: { title: 'New Board', action: 'create', icon: emojiList.plus.unicode },
+    selectVerb: () => 'Switch',
     itemActionsFor: () => [
       { action: 'rename', title: 'Rename board', icon: emojiList.edit.unicode },
-      { action: 'delete', title: 'Delete board', icon: emojiList.noEntry.unicode }
+      { action: 'delete', title: 'Delete board', icon: emojiList.cross.unicode }
     ]
   })
 

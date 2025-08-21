@@ -38,6 +38,9 @@ import { emojiList } from '../../ui/unicodeEmoji.js'
  * @property {{label:string,action:string}[]} [actions]
  * @property {{action:string,title:string,icon?:string}[]} [itemActions]
  * @property {(item:SelectorItem)=>{action:string,title:string,icon?:string}[]} [itemActionsFor]
+ * @property {{label:string,action:string}} [primaryAction]
+ * @property {{title:string,action:string,icon:string}} [quickAddAction]
+ * @property {(item:SelectorItem)=>string} [selectVerb]
 */
 
 /**
@@ -96,12 +99,24 @@ export class SelectorPanel {
     const input = document.createElement('input')
     input.className = 'panel-search'
     input.placeholder = placeholder
+    const spacer = document.createElement('span')
+    spacer.className = 'panel-spacer'
 
     let count = null
     if (showCount && typeof countText === 'function') {
       count = document.createElement('span')
       count.className = 'panel-count'
     }
+
+    const cta = document.createElement('button')
+    cta.type = 'button'
+    cta.className = 'panel-cta'
+    cta.style.display = 'none'
+
+    const quickAdd = document.createElement('button')
+    quickAdd.type = 'button'
+    quickAdd.className = 'panel-quick-add'
+    quickAdd.style.display = 'none'
 
     const content = document.createElement('div')
     content.className = 'dropdown-content'
@@ -115,12 +130,13 @@ export class SelectorPanel {
     list.className = 'panel-list'
     content.appendChild(list)
 
-    wrap.append(arrow, label, input)
+    wrap.append(arrow, label, input, spacer)
     if (count) wrap.append(count)
+    wrap.append(cta, quickAdd)
     wrap.appendChild(content)
     root.appendChild(wrap)
 
-    this.dom = { root, wrap, input, arrow, label, count, content, list, side }
+    this.dom = { root, wrap, input, arrow, label, count, cta, quickAdd, spacer, content, list, side }
   }
 
   /** Bind DOM events */
@@ -230,11 +246,18 @@ export class SelectorPanel {
     this.handlers.onListClick = onListClick
     this.handlers.onSideClick = onSideClick
     this.handlers.onListKeydown = onListKeydown
+
+    this.dom.cta.addEventListener('click', () => {
+      if (this.cfg.primaryAction) this.dispatchAction(this.cfg.primaryAction.action)
+    })
+    this.dom.quickAdd.addEventListener('click', () => {
+      if (this.cfg.quickAddAction) this.dispatchAction(this.cfg.quickAddAction.action)
+    })
   }
 
   /** Refresh list and counts */
   refresh () {
-    const { getItems, showCount, countText, labelText, actions: topActions = [], itemActions = [], itemActionsFor } = this.cfg
+    const { getItems, showCount, countText, labelText, actions: topActions = [], itemActions = [], itemActionsFor, primaryAction, quickAddAction, selectVerb } = this.cfg
 
     if (this.dom.label) {
       if (typeof labelText === 'function') {
@@ -261,11 +284,72 @@ export class SelectorPanel {
       }
     }
 
+    // header actions
+    const hasCreate = topActions.some(a => (primaryAction && a.action === primaryAction.action) || (quickAddAction && a.action === quickAddAction.action))
+    const singleCreate = topActions.length === 1 && hasCreate
+
+    if (primaryAction && singleCreate) {
+      this.dom.cta.textContent = primaryAction.label
+      this.dom.cta.title = primaryAction.label
+      this.dom.cta.setAttribute('aria-label', primaryAction.label)
+      this.dom.cta.style.display = ''
+      this.dom.cta.style.marginLeft = this.dom.count ? '6px' : 'auto'
+    } else {
+      this.dom.cta.style.display = 'none'
+    }
+
+    if (quickAddAction && hasCreate && topActions.length > 1) {
+      this.dom.quickAdd.textContent = quickAddAction.icon
+      this.dom.quickAdd.title = quickAddAction.title
+      this.dom.quickAdd.setAttribute('aria-label', quickAddAction.title)
+      this.dom.quickAdd.style.display = ''
+      this.dom.quickAdd.style.marginLeft = this.dom.count ? '6px' : 'auto'
+    } else {
+      this.dom.quickAdd.style.display = 'none'
+    }
+
     this.dom.list.innerHTML = ''
     this.dom.side.innerHTML = ''
+    if (this.dom.empty) {
+      this.dom.empty.remove()
+      this.dom.empty = null
+    }
 
-    // First row: actions trigger + side content (if any actions are configured)
-    if (topActions.length) {
+    const items = getItems()
+    if (items.length === 0) {
+      this.dom.list.style.display = 'none'
+      this.dom.side.style.display = 'none'
+      const empty = document.createElement('div')
+      empty.className = 'panel-empty'
+      const src = primaryAction || quickAddAction
+      if (src) {
+        const base = ('label' in src ? src.label : src.title).replace(/^New\s+/i, '').trim()
+        const plural = base.endsWith('s') ? base + 'es' : base + 's'
+        const titleEl = document.createElement('div')
+        titleEl.className = 'panel-empty-title'
+        titleEl.textContent = `No ${plural} yet`
+        empty.appendChild(titleEl)
+        if (primaryAction) {
+          const btn = document.createElement('button')
+          btn.type = 'button'
+          btn.className = 'panel-empty-cta'
+          btn.textContent = `+ ${primaryAction.label}`
+          btn.title = primaryAction.label
+          btn.setAttribute('aria-label', primaryAction.label)
+          btn.addEventListener('click', () => this.dispatchAction(primaryAction.action))
+          empty.appendChild(btn)
+        }
+      }
+      this.dom.content.appendChild(empty)
+      this.dom.empty = empty
+      return
+    }
+
+    this.dom.list.style.display = ''
+    this.dom.side.style.display = ''
+
+    const showActionsTrigger = topActions.length > 1 || (topActions.length === 1 && !singleCreate)
+    if (showActionsTrigger) {
       const trigger = document.createElement('div')
       trigger.className = 'panel-item panel-actions-trigger'
       trigger.dataset.testid = 'panel-actions-trigger'
@@ -286,47 +370,52 @@ export class SelectorPanel {
       }
     }
 
-    const items = getItems()
     for (const it of items) {
       const row = document.createElement('div')
       row.className = 'panel-item'
       row.dataset.id = it.id
       row.dataset.filterable = normalize(`${it.label} ${it.meta || ''}`)
       row.tabIndex = 0
+      row.setAttribute('role', 'button')
+
+      if (typeof selectVerb === 'function') {
+        const verb = selectVerb(it)
+        const lbl = `${verb}: ${it.label}`
+        row.setAttribute('aria-label', lbl)
+        row.title = lbl
+      }
 
       const left = document.createElement('span')
       left.className = 'panel-item-label'
       left.textContent = it.label
       row.appendChild(left)
 
-      if (it.meta) {
-        const meta = document.createElement('span')
-        meta.className = 'panel-item-meta'
-        meta.textContent = ` ${it.meta}`
-        row.appendChild(meta)
-      }
+      const hint = document.createElement('span')
+      hint.className = 'panel-item-hint'
+      hint.setAttribute('aria-hidden', 'true')
+      if (typeof selectVerb === 'function') hint.textContent = `Click to ${selectVerb(it).toLowerCase()}`
+      row.appendChild(hint)
 
-      // inline actions on the right
+      const meta = document.createElement('span')
+      meta.className = 'panel-item-meta'
+      meta.textContent = it.meta ? ` ${it.meta}` : ''
+      row.appendChild(meta)
+
+      const acts = document.createElement('span')
+      acts.className = 'panel-item-actions'
       const actions = typeof itemActionsFor === 'function' ? itemActionsFor(it) : itemActions
-      if (actions.length) {
-        const acts = document.createElement('span')
-        acts.className = 'panel-item-actions'
-        const iconMap = {
-          rename: emojiList.edit.unicode,
-          delete: emojiList.noEntry.unicode
-        }
-        for (const a of actions) {
-          const b = document.createElement('button')
-          b.type = 'button'
-          b.className = 'panel-item-icon'
-          b.dataset.itemAction = a.action
-          b.title = a.title
-          b.setAttribute('aria-label', a.title)
-          b.textContent = a.icon || iconMap[a.action] || ''
-          acts.appendChild(b)
-        }
-        row.appendChild(acts)
+      const iconMap = { rename: emojiList.edit.unicode, delete: emojiList.cross.unicode }
+      for (const a of actions) {
+        const b = document.createElement('button')
+        b.type = 'button'
+        b.className = 'panel-item-icon'
+        b.dataset.itemAction = a.action
+        b.title = a.title
+        b.setAttribute('aria-label', a.title)
+        b.textContent = a.icon || iconMap[a.action] || ''
+        acts.appendChild(b)
       }
+      row.appendChild(acts)
 
       this.dom.list.appendChild(row)
     }

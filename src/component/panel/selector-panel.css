@@ -24,16 +24,19 @@
 .dropdown.panel.open .dropdown-content { display: block; }
 
 .panel-list { display: flex; flex-direction: column; gap: 6px; }
-.panel-item { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
+.panel-item { display: grid; grid-template-columns: 1fr auto var(--actions-width, 72px); gap: 6px; align-items: center; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
 .panel-item[hidden] { display: none !important; }
 .panel-item:hover { background: #f6f8fa; }
-.panel-item-label { font-weight: 400; }
+.panel-item-label { font-weight: 400; text-decoration: none; }
 .panel-item-meta { opacity: .7; font-size: 12px; }
 .panel-item-actions {
   display: inline-flex;
   gap: 6px;
+  justify-content: flex-end;
   opacity: 0;
   pointer-events: none;
+  visibility: visible;
+  width: var(--actions-width, 72px);
   transition: opacity .15s ease;
 }
 .panel-item:hover .panel-item-actions,
@@ -85,4 +88,54 @@
   transform: translateY(-1px);
 }
 .side-content .panel-action:last-child { margin-bottom: 0; }
+
+.panel-spacer { flex: 1; }
+.panel-cta,
+.panel-quick-add {
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: background-color .15s ease, transform .15s ease;
+}
+.panel-quick-add { font-size: 1rem; }
+.panel-cta:hover,
+.panel-quick-add:hover {
+  background: #f6f8fa;
+  transform: translateY(-1px);
+}
+
+.panel-item:hover .panel-item-label,
+.panel-item:focus-within .panel-item-label {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.panel-item-hint {
+  opacity: 0;
+  margin-left: 6px;
+  font-size: 12px;
+  color: #6b7280;
+  transition: opacity .15s ease;
+}
+.panel-item:hover .panel-item-hint,
+.panel-item:focus-within .panel-item-hint {
+  opacity: 1;
+}
+
+.panel-empty { text-align: center; padding: 20px 0; }
+.panel-empty-title { margin-bottom: 12px; }
+.panel-empty-cta {
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color .15s ease, transform .15s ease;
+}
+.panel-empty-cta:hover {
+  background: #f6f8fa;
+  transform: translateY(-1px);
+}
 
