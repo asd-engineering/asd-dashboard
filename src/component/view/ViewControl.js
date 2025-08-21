@@ -77,11 +77,9 @@ export function mountViewControl () {
       if (bId) updateViewSelector(bId)
     },
     actions: [
-      { label: 'New View', action: 'create' },
-      { label: 'Reset View', action: 'reset' }
+      { key: 'create', label: 'New View' },
+      { key: 'reset', label: 'Reset View' }
     ],
-    primaryAction: { label: 'New View', action: 'create' },
-    quickAddAction: { title: 'New View', action: 'create', icon: emojiList.plus.unicode },
     selectVerb: () => 'Switch',
     itemActionsFor: () => [
       { action: 'rename', title: 'Rename view', icon: emojiList.edit.unicode },

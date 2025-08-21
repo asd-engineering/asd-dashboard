@@ -7,8 +7,8 @@ import {
   getConfigBoards,
   b64,
   navigate,
-  ensurePanelOpen,
 } from "./shared/common";
+import { ensurePanelOpen } from './shared/panels'
 import { decodeConfig } from "../src/utils/compression.js";
 import { restoreDeep } from "../src/utils/minimizer.js";
 import { DEFAULT_CONFIG_TEMPLATE } from "../src/storage/defaultConfig.js";
@@ -23,10 +23,10 @@ test.describe("Dashboard Config - Base64 via URL Params", () => {
 
     await navigate(page, `/?config_base64=${config}&services_base64=${services}`);
 
-    // Service panel should render with all services (actions row + items)
-    await ensurePanelOpen(page);
+    // Service panel should render with all services
+    await ensurePanelOpen(page, 'service-panel');
     await expect(page.locator('[data-testid="service-panel"] .panel-item')).toHaveCount(
-      ciServices.length + 1
+      ciServices.length
     );
 
     // Boards are available in the UI
@@ -217,7 +217,7 @@ test.describe("Dashboard Functionality - Building from Services", () => {
       `/?config_base64=${b64(cfg)}&services_base64=${b64(ciServices)}`
     );
 
-    await ensurePanelOpen(page);
+    await ensurePanelOpen(page, 'service-panel');
     // Click first available service option (index 1 skips the placeholder/search row if present)
     await page.locator('[data-testid="service-panel"] .panel-item').nth(1).click();
 

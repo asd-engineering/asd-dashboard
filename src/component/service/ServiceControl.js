@@ -157,9 +157,8 @@ export function mountServiceControl () {
       panel.refresh()
     },
     actions: [
-      { label: 'New Service', action: 'create' }
+      { key: 'create', label: 'New Service' }
     ],
-    primaryAction: { label: 'New Service', action: 'create' },
     selectVerb: () => 'Add',
     itemActionsFor: (item) => {
       /** @type {{action:string,title:string,icon:string}[]} */
