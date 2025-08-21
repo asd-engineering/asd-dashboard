@@ -19,8 +19,8 @@ import { emojiList } from '../../ui/unicodeEmoji.js'
  */
 
 /**
- * @typedef {{id:string,label:string,meta?:string}} SelectorItem
- */
+ * @typedef {{id:string,label:string,meta?:string,[key:string]:any}} SelectorItem
+*/
 
 /**
  * @typedef {Object} SelectorPanelCfg
@@ -37,6 +37,7 @@ import { emojiList } from '../../ui/unicodeEmoji.js'
  * @property {() => any} [context]
  * @property {{label:string,action:string}[]} [actions]
  * @property {{action:string,title:string,icon?:string}[]} [itemActions]
+ * @property {(item:SelectorItem)=>{action:string,title:string,icon?:string}[]} [itemActionsFor]
 */
 
 /**
@@ -233,7 +234,7 @@ export class SelectorPanel {
 
   /** Refresh list and counts */
   refresh () {
-    const { getItems, showCount, countText, labelText, actions = [], itemActions = [] } = this.cfg
+    const { getItems, showCount, countText, labelText, actions: topActions = [], itemActions = [], itemActionsFor } = this.cfg
 
     if (this.dom.label) {
       if (typeof labelText === 'function') {
@@ -264,7 +265,7 @@ export class SelectorPanel {
     this.dom.side.innerHTML = ''
 
     // First row: actions trigger + side content (if any actions are configured)
-    if (actions.length) {
+    if (topActions.length) {
       const trigger = document.createElement('div')
       trigger.className = 'panel-item panel-actions-trigger'
       trigger.dataset.testid = 'panel-actions-trigger'
@@ -275,7 +276,7 @@ export class SelectorPanel {
       trigger.addEventListener('mouseenter', this.hoverFns.enter)
       trigger.addEventListener('mouseleave', this.hoverFns.leave)
 
-      for (const a of actions) {
+      for (const a of topActions) {
         const b = document.createElement('button')
         b.type = 'button'
         b.className = 'panel-action'
@@ -306,14 +307,15 @@ export class SelectorPanel {
       }
 
       // inline actions on the right
-      if (itemActions.length) {
+      const actions = typeof itemActionsFor === 'function' ? itemActionsFor(it) : itemActions
+      if (actions.length) {
         const acts = document.createElement('span')
         acts.className = 'panel-item-actions'
         const iconMap = {
           rename: emojiList.edit.unicode,
           delete: emojiList.noEntry.unicode
         }
-        for (const a of itemActions) {
+        for (const a of actions) {
           const b = document.createElement('button')
           b.type = 'button'
           b.className = 'panel-item-icon'

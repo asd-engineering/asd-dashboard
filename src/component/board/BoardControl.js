@@ -72,7 +72,7 @@ export function mountBoardControl () {
       { label: 'New Board', action: 'create' },
       { label: 'Reset Board', action: 'reset' }
     ],
-    itemActions: [
+    itemActionsFor: () => [
       { action: 'rename', title: 'Rename board', icon: emojiList.edit.unicode },
       { action: 'delete', title: 'Delete board', icon: emojiList.noEntry.unicode }
     ]

@@ -17,6 +17,21 @@ test.describe('View panel', () => {
     await expect(panel.locator('.panel-count')).toHaveCount(0)
   })
 
+  test('shows widget counts and icon visibility on hover/focus', async ({ page }) => {
+    const panel = page.locator('[data-testid="view-panel"]')
+    await panel.hover()
+    const first = panel.locator('.panel-item').nth(1)
+    await expect(first.locator('.panel-item-meta')).toContainText('widgets')
+    const acts = first.locator('.panel-item-actions')
+    await expect(acts).toHaveCSS('opacity', '0')
+    await first.hover()
+    await expect(acts).toHaveCSS('opacity', '1')
+    await panel.locator('.panel-search').hover()
+    await expect(acts).toHaveCSS('opacity', '0')
+    await first.focus()
+    await expect(acts).toHaveCSS('opacity', '1')
+  })
+
   test('opens dropdown and side Actions ▸', async ({ page }) => {
     const panel = page.locator('[data-testid="view-panel"]')
     await panel.hover()
@@ -40,19 +55,23 @@ test.describe('View panel', () => {
     await panel.hover()
     await expect(panel.locator('.panel-item', { hasText: v1 })).toBeVisible()
 
-    const renameBtn = panel.locator('.panel-item', { hasText: v1 }).locator('[data-item-action="rename"]').first()
+    const row = panel.locator('.panel-item', { hasText: v1 })
+    await row.hover()
+    const renameBtn = row.locator('[data-item-action="rename"]').first()
     await expect(renameBtn).toHaveText('✏️')
     const v2 = 'Renamed View'
     page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(v2) })
     await renameBtn.click()
-    await expect(panel.locator('.panel-item', { hasText: v2 })).toBeVisible()
+    const row2 = panel.locator('.panel-item', { hasText: v2 })
+    await expect(row2).toBeVisible()
 
     await trigger.hover()
     page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
     await panel.locator('.side-content .panel-action', { hasText: 'Reset View' }).click()
     await panel.hover()
 
-    const deleteBtn = panel.locator('.panel-item', { hasText: v2 }).locator('[data-item-action="delete"]').first()
+    await row2.hover()
+    const deleteBtn = row2.locator('[data-item-action="delete"]').first()
     await expect(deleteBtn).toHaveText('⛔')
     page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
     await deleteBtn.click()

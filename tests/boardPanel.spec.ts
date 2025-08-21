@@ -18,6 +18,21 @@ test.describe('Board panel', () => {
     await expect(panel.locator('.panel-count')).toHaveCount(0)
   })
 
+  test('icons hidden at rest, shown on hover/focus, no magnifier', async ({ page }) => {
+    const panel = page.locator('[data-testid="board-panel"]')
+    await panel.hover()
+    const row = panel.locator('.panel-item').nth(1)
+    const acts = row.locator('.panel-item-actions')
+    await expect(acts).toHaveCSS('opacity', '0')
+    await row.hover()
+    await expect(acts).toHaveCSS('opacity', '1')
+    await panel.locator('.panel-search').hover()
+    await expect(acts).toHaveCSS('opacity', '0')
+    await row.focus()
+    await expect(acts).toHaveCSS('opacity', '1')
+    await expect(panel.locator('[data-item-action="navigate"]')).toHaveCount(0)
+  })
+
   test('opens dropdown and shows Actions ▸', async ({ page }) => {
     const panel = page.locator('[data-testid="board-panel"]')
     await panel.hover()
@@ -66,16 +81,20 @@ test.describe('Board panel', () => {
     await panel.locator('[data-testid="panel-actions-trigger"]').click()
     await panel.locator('.side-content .panel-action', { hasText: 'New Board' }).click()
     await panel.hover()
-    await expect(panel.locator('.panel-item', { hasText: initial })).toBeVisible()
+    const row = panel.locator('.panel-item', { hasText: initial })
+    await expect(row).toBeVisible()
 
-    const renameBtn = panel.locator('.panel-item', { hasText: initial }).locator('[data-item-action="rename"]').first()
+    await row.hover()
+    const renameBtn = row.locator('[data-item-action="rename"]').first()
     await expect(renameBtn).toHaveText('✏️')
     const renamed = 'Renamed Board'
     page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(renamed) })
     await renameBtn.click()
-    await expect(panel.locator('.panel-item', { hasText: renamed })).toBeVisible()
+    const rowRenamed = panel.locator('.panel-item', { hasText: renamed })
+    await expect(rowRenamed).toBeVisible()
 
-    const deleteBtn = panel.locator('.panel-item', { hasText: renamed }).locator('[data-item-action="delete"]').first()
+    await rowRenamed.hover()
+    const deleteBtn = rowRenamed.locator('[data-item-action="delete"]').first()
     await expect(deleteBtn).toHaveText('⛔')
     page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
     await deleteBtn.click()
@@ -101,7 +120,9 @@ test.describe('Board panel', () => {
   test('item icons hover styling', async ({ page }) => {
     const panel = page.locator('[data-testid="board-panel"]')
     await panel.hover()
-    const icon = panel.locator('[data-item-action="rename"]').first()
+    const row = panel.locator('.panel-item').nth(1)
+    await row.hover()
+    const icon = row.locator('[data-item-action="rename"]').first()
     await expect(icon).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
     await icon.hover()
     await expect(icon).toHaveCSS('background-color', 'rgba(0, 0, 0, 0.06)')

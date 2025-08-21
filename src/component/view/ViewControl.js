@@ -42,7 +42,10 @@ export function mountViewControl () {
     getItems: () => {
       const bId = getCurrentBoardId() || StorageManager.misc.getLastBoardId()
       const board = (StorageManager.getBoards() || []).find(b => b.id === bId)
-      return (board?.views || []).map(v => ({ id: v.id, label: v.name }))
+      return (board?.views || []).map(v => {
+        const widgetsCount = (v.widgetState || []).length
+        return { id: v.id, label: v.name, meta: `${widgetsCount} widgets`, widgetsCount }
+      })
     },
     onSelect: async (viewId) => {
       const bId = getCurrentBoardId() || StorageManager.misc.getLastBoardId()
@@ -77,7 +80,7 @@ export function mountViewControl () {
       { label: 'New View', action: 'create' },
       { label: 'Reset View', action: 'reset' }
     ],
-    itemActions: [
+    itemActionsFor: () => [
       { action: 'rename', title: 'Rename view', icon: emojiList.edit.unicode },
       { action: 'delete', title: 'Delete view', icon: emojiList.noEntry.unicode }
     ]

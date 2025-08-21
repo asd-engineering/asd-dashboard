@@ -87,10 +87,21 @@ export function mountServiceControl () {
       const overGlobal = typeof widgetStore.maxSize === 'number' && widgetStore.widgets.size >= widgetStore.maxSize
       return services.map(svc => {
         const resolved = resolveServiceConfig(svc)
-        const active = countServiceInstances(resolved.id)
+        const instances = countServiceInstances(resolved.id)
         const max = resolved.maxInstances ?? '∞'
-        const overService = typeof resolved.maxInstances === 'number' && active >= resolved.maxInstances
-        return { id: resolved.id, label: resolved.name, meta: `(${active}/${max})`, url: resolved.url, overService, name: resolved.name, overGlobal }
+        const overService = typeof resolved.maxInstances === 'number' && instances >= resolved.maxInstances
+        const canNavigate = instances > 0
+        return {
+          id: resolved.id,
+          label: resolved.name,
+          meta: `(${instances}/${max})`,
+          url: resolved.url,
+          overService,
+          name: resolved.name,
+          overGlobal,
+          instances,
+          canNavigate
+        }
       })
     },
     onSelect: async (id) => {
@@ -148,11 +159,16 @@ export function mountServiceControl () {
     actions: [
       { label: 'New Service', action: 'create' }
     ],
-    itemActions: [
-      { action: 'navigate', title: 'Locate widget', icon: emojiList.magnifyingGlass.unicode },
-      { action: 'edit', title: 'Edit widget', icon: emojiList.edit.unicode },
-      { action: 'remove', title: 'Delete widget type', icon: emojiList.noEntry.unicode }
-    ]
+    itemActionsFor: (item) => {
+      /** @type {{action:string,title:string,icon:string}[]} */
+      const acts = []
+      if (item.canNavigate) {
+        acts.push({ action: 'navigate', title: 'Locate widget', icon: emojiList.magnifyingGlass.unicode })
+      }
+      acts.push({ action: 'edit', title: 'Edit widget', icon: emojiList.edit.unicode })
+      acts.push({ action: 'remove', title: 'Delete widget type', icon: emojiList.noEntry.unicode })
+      return acts
+    }
   })
 
   window.__openWidgetPanel = () => panel.dom.wrap.classList.add('open')
