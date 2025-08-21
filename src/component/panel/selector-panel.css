@@ -11,7 +11,7 @@
 }
 .panel-arrow { margin-left: 4px; }
 .panel-label {
-  font-weight: 500;
+  font-weight: 400;
   color: #111;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -25,10 +25,12 @@
 
 .panel-list { display: flex; flex-direction: column; gap: 6px; }
 .panel-item { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
+.panel-item[hidden] { display: none !important; }
 .panel-item:hover { background: #f6f8fa; }
-.panel-item-label { font-weight: 500; }
+.panel-item-label { font-weight: 400; }
 .panel-item-meta { opacity: .7; font-size: 12px; }
 .panel-item-actions { display: inline-flex; gap: 6px; }
+#controls .panel-item-actions .panel-item-icon,
 .panel-item-actions .panel-item-icon {
   background: none;
   border: none;
@@ -38,13 +40,15 @@
   cursor: pointer;
   transition: transform 0.2s ease, background-color 0.2s ease;
 }
+
+#controls .panel-item-actions .panel-item-icon:hover,
 .panel-item-actions .panel-item-icon:hover {
   background-color: rgba(0,0,0,0.06);
   transform: translateY(-1px);
 }
 
 .panel-actions-trigger {
-  font-weight: 500;
+  font-weight: 400;
   background: transparent;
   grid-template-columns: 1fr;
 }

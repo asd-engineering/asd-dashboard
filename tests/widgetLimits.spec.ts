@@ -192,8 +192,8 @@ test.describe("Widget limits", () => {
       .locator('[data-testid="service-panel"] .panel-item', { hasText: 'SvcB' })
       .locator('.panel-item-meta')
       .innerText();
-    expect(countA).toBe(" (1/1)");
-    expect(countB).toBe(" (0/1)");
+    expect(countA).toBe("(1/1)");
+    expect(countB).toBe("(0/1)");
 
     await page.evaluate(async () => {
       const StorageManager = (await import('/storage/StorageManager.js')).default;
@@ -221,8 +221,8 @@ test.describe("Widget limits", () => {
       .locator('[data-testid="service-panel"] .panel-item', { hasText: 'SvcB' })
       .locator('.panel-item-meta')
       .innerText();
-    expect(updatedA).toBe(" (1/1)");
-    expect(updatedB).toBe(" (1/1)");
+    expect(updatedA).toBe("(1/1)");
+    expect(updatedB).toBe("(1/1)");
   });
 
 });

@@ -6,6 +6,7 @@
 import { SelectorPanel } from '../panel/SelectorPanel.js'
 import StorageManager from '../../storage/StorageManager.js'
 import { createBoard, renameBoard, deleteBoard, switchBoard, resetBoard, updateBoardSelector } from './boardManagement.js'
+import emojiList from '../../ui/unicodeEmoji.js'
 
 /**
  * Mount the board control panel into #board-control.
@@ -72,8 +73,8 @@ export function mountBoardControl () {
       { label: 'Reset Board', action: 'reset' }
     ],
     itemActions: [
-      { action: 'rename', title: 'Rename board' },
-      { action: 'delete', title: 'Delete board' }
+      { action: 'rename', title: 'Rename board', icon: emojiList.edit.unicode },
+      { action: 'delete', title: 'Delete board', icon: emojiList.noEntry.unicode }
     ]
   })
 

@@ -41,6 +41,7 @@ test.describe('View panel', () => {
     await expect(panel.locator('.panel-item', { hasText: v1 })).toBeVisible()
 
     const renameBtn = panel.locator('.panel-item', { hasText: v1 }).locator('[data-item-action="rename"]').first()
+    await expect(renameBtn).toHaveText('✏️')
     const v2 = 'Renamed View'
     page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(v2) })
     await renameBtn.click()
@@ -52,6 +53,7 @@ test.describe('View panel', () => {
     await panel.hover()
 
     const deleteBtn = panel.locator('.panel-item', { hasText: v2 }).locator('[data-item-action="delete"]').first()
+    await expect(deleteBtn).toHaveText('⛔')
     page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
     await deleteBtn.click()
     await panel.hover()

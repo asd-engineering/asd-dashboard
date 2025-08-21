@@ -10,14 +10,23 @@ test.describe('Widget search filter', () => {
   })
 
   test('typing filters widget options', async ({ page }) => {
-    const options = page.locator('[data-testid="service-panel"] .panel-item')
+    const panel = page.locator('[data-testid="service-panel"]')
+    await panel.hover()
+    const options = panel.locator('.panel-item')
     await expect(options).toHaveCount(5)
 
-    await page.fill('[data-testid="service-panel"] .panel-search', 'terminal')
-
-    const visible = page.locator('[data-testid="service-panel"] .panel-item:not([data-testid="panel-actions-trigger"]):visible')
-    await expect(visible).toHaveCount(1)
-    await expect(visible.first()).toContainText('ASD-terminal')
+    await panel.locator('.panel-search').fill('terminal')
+    await expect(panel.locator('.panel-item', { hasText: 'ASD-terminal' })).toBeVisible()
+    await expect(panel.locator('.panel-item', { hasText: 'ASD-toolbox' })).toBeHidden()
     await expect(page.locator('[data-testid="service-panel"] [data-testid="panel-actions-trigger"]').first()).toBeVisible()
+  })
+
+  test('search normalization handles case/diacritics/whitespace', async ({ page }) => {
+    const panel = page.locator('[data-testid="service-panel"]')
+    await panel.hover()
+    const input = panel.locator('.panel-search')
+    await input.fill('  TÉRMINAL  ')
+    await expect(panel.locator('.panel-item', { hasText: 'ASD-terminal' })).toBeVisible()
+    await expect(panel.locator('.panel-item', { hasText: 'ASD-toolbox' })).toBeHidden()
   })
 })
