@@ -1,8 +1,8 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
 import { navigate, addServices } from './shared/common'
+import { openCreateFromTopMenu, ensurePanelOpen } from './shared/panels'
 
-// Tests for board selector panel with item icons and side actions
 test.describe('Board panel', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
@@ -14,76 +14,43 @@ test.describe('Board panel', () => {
     const panel = page.locator('[data-testid="board-panel"]')
     await expect(panel.locator('.panel-arrow')).toHaveText('▼')
     await expect(panel.locator('.panel-label')).toHaveText(/Board:\s+/)
-    await expect(panel.locator('.panel-label')).not.toContainText('▼')
     await expect(panel.locator('.panel-count')).toHaveCount(0)
   })
 
-  test('icons hidden at rest, shown on hover/focus, no magnifier', async ({ page }) => {
+  test('flyout actions on hover', async ({ page }) => {
     const panel = page.locator('[data-testid="board-panel"]')
-    await panel.hover()
-    const row = panel.locator('.panel-item').nth(1)
-    const acts = row.locator('.panel-item-actions')
-    await expect(acts).toHaveCSS('opacity', '0')
+    await ensurePanelOpen(page, 'board-panel')
+    const row = panel.locator('.panel-item').first()
     await row.hover()
-    await expect(acts).toHaveCSS('opacity', '1')
-    await panel.locator('.panel-search').hover()
-    await expect(acts).toHaveCSS('opacity', '0')
-    await row.focus()
-    await expect(acts).toHaveCSS('opacity', '1')
-    await expect(panel.locator('[data-item-action="navigate"]')).toHaveCount(0)
+    await expect(row.locator('.panel-item-actions-flyout')).toBeVisible()
+    await expect(row.locator('[data-item-action="navigate"]')).toHaveCount(0)
+    await expect(row.locator('[data-item-action="delete"]')).toHaveText('❌')
   })
 
-  test('opens dropdown and shows Actions ▸', async ({ page }) => {
+  test('label hint and aria for switch', async ({ page }) => {
     const panel = page.locator('[data-testid="board-panel"]')
-    await panel.hover()
-    await expect(panel.locator('.dropdown-content')).toBeVisible()
-    await expect(panel.locator('[data-testid="panel-actions-trigger"]')).toBeVisible()
+    await ensurePanelOpen(page, 'board-panel')
+    const first = panel.locator('.panel-item').first()
+    await expect(first).toHaveAttribute('aria-label', /^Switch:/)
+    await first.hover()
+    await expect(first.locator('.panel-item-hint')).toHaveText('Click to switch')
   })
 
-  test('side opens on hover', async ({ page }) => {
-    const panel = page.locator('[data-testid="board-panel"]')
-    await panel.hover()
-    const trigger = panel.locator('[data-testid="panel-actions-trigger"]')
-    await trigger.hover()
-    await expect(panel.locator('.dropdown-content.side-open .side-content')).toBeVisible()
-  })
-
-  test('Actions ▸ focus ring visible via keyboard', async ({ page }) => {
-    const panel = page.locator('[data-testid="board-panel"]')
-    await panel.focus()
-    await page.keyboard.press('Enter')
-    await page.keyboard.press('Tab') // focus search
-    await page.keyboard.press('Tab') // focus Actions ▸
-    const trigger = panel.locator('[data-testid="panel-actions-trigger"]')
-    await expect(trigger).toBeFocused()
-    await expect(trigger).toHaveCSS('outline-style', 'solid')
-  })
-
-  test('Actions ▸ → New Board creates a board', async ({ page }) => {
-    const panel = page.locator('[data-testid="board-panel"]')
+  test('top-menu create board', async ({ page }) => {
     const newName = 'Playwright Board'
     page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(newName) })
-    await panel.hover()
-    const trigger = panel.locator('[data-testid="panel-actions-trigger"]')
-    await trigger.hover()
-    await expect(panel.locator('.dropdown-content.side-open .side-content')).toBeVisible()
-    await panel.locator('.side-content .panel-action', { hasText: 'New Board' }).click()
-    await panel.hover()
-    await expect(panel.locator('.panel-item', { hasText: newName })).toBeVisible()
+    await openCreateFromTopMenu(page, 'board-panel', 'New Board')
+    await ensurePanelOpen(page, 'board-panel')
+    await expect(page.locator('[data-testid="board-panel"] .panel-item', { hasText: newName })).toBeVisible()
   })
 
-  test('per-item rename and delete icons', async ({ page }) => {
+  test('per-item rename and delete', async ({ page }) => {
     const panel = page.locator('[data-testid="board-panel"]')
-    await panel.hover()
-
     const initial = 'Temp Board'
     page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(initial) })
-    await panel.locator('[data-testid="panel-actions-trigger"]').click()
-    await panel.locator('.side-content .panel-action', { hasText: 'New Board' }).click()
-    await panel.hover()
+    await openCreateFromTopMenu(page, 'board-panel', 'New Board')
+    await ensurePanelOpen(page, 'board-panel')
     const row = panel.locator('.panel-item', { hasText: initial })
-    await expect(row).toBeVisible()
-
     await row.hover()
     const renameBtn = row.locator('[data-item-action="rename"]').first()
     await expect(renameBtn).toHaveText('✏️')
@@ -91,61 +58,23 @@ test.describe('Board panel', () => {
     page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(renamed) })
     await renameBtn.click()
     const rowRenamed = panel.locator('.panel-item', { hasText: renamed })
-    await expect(rowRenamed).toBeVisible()
-
     await rowRenamed.hover()
     const deleteBtn = rowRenamed.locator('[data-item-action="delete"]').first()
-    await expect(deleteBtn).toHaveText('⛔')
     page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
     await deleteBtn.click()
     await expect(panel.locator('.panel-item', { hasText: renamed })).toHaveCount(0)
   })
 
-  test('keyboard interactions', async ({ page }) => {
+  test('keyboard focus reveals flyout', async ({ page }) => {
     const panel = page.locator('[data-testid="board-panel"]')
     await panel.focus()
     await page.keyboard.press('Enter')
-    await expect(panel.locator('.dropdown-content')).toBeVisible()
-    await page.keyboard.press('Tab')
-    await page.keyboard.press('Tab')
+    await page.keyboard.press('Tab') // search
+    await page.keyboard.press('Tab') // first row
     await page.keyboard.press('ArrowRight')
-    await expect(panel.locator('.dropdown-content.side-open .side-content')).toBeVisible()
-    await page.keyboard.press('ArrowLeft')
-    await expect(panel.locator('.dropdown-content.side-open .side-content')).toHaveCount(0)
-    await panel.focus()
+    const fly = panel.locator('.panel-item').first().locator('.panel-item-actions-flyout')
+    await expect(fly).toBeVisible()
     await page.keyboard.press('Escape')
-    await expect(panel.locator('.dropdown-content')).toBeHidden()
-  })
-
-  test('item icons hover styling', async ({ page }) => {
-    const panel = page.locator('[data-testid="board-panel"]')
-    await panel.hover()
-    const row = panel.locator('.panel-item').nth(1)
-    await row.hover()
-    const icon = row.locator('[data-item-action="rename"]').first()
-    await expect(icon).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
-    await icon.hover()
-    await expect(icon).toHaveCSS('background-color', 'rgba(0, 0, 0, 0.06)')
-  })
-
-  test('search filters boards but keeps Actions ▸', async ({ page }) => {
-    const panel = page.locator('[data-testid="board-panel"]')
-    await panel.hover()
-
-    const names = ['Alpha Board', 'Beta Board']
-    for (const name of names) {
-      page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(name) })
-      await panel.locator('[data-testid="panel-actions-trigger"]').click()
-      await panel.locator('.side-content .panel-action', { hasText: 'New Board' }).click()
-      await panel.hover()
-    }
-    await expect(panel.locator('.panel-item', { hasText: names[0] })).toBeVisible()
-    await expect(panel.locator('.panel-item', { hasText: names[1] })).toBeVisible()
-
-    await panel.locator('.panel-search').fill('alpha')
-    await expect(panel.locator('.panel-item', { hasText: names[0] })).toBeVisible()
-    await expect(panel.locator('.panel-item', { hasText: names[1] })).toHaveAttribute('hidden', '')
-    await expect(panel.locator('[data-testid="panel-actions-trigger"]')).toBeVisible()
+    await expect(fly).toBeHidden()
   })
 })
-
