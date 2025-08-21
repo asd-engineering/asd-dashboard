@@ -5,7 +5,7 @@
  * @module widgetStore
  */
 import { Logger } from '../../utils/Logger.js'
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 
 /**
  * Lightweight LRU cache storing widget elements by id.

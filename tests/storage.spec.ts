@@ -9,9 +9,27 @@ test.describe('StorageManager', () => {
     await navigate(page, '/')
   })
 
+  test('named export only', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const mod = await import('/storage/StorageManager.js')
+      return { hasNamed: 'StorageManager' in mod, hasDefault: 'default' in mod }
+    })
+    expect(result.hasNamed).toBe(true)
+    expect(result.hasDefault).toBe(false)
+  })
+
+  test('forceLocal sets driver meta', async ({ page }) => {
+    const driver = await page.evaluate(async () => {
+      const { StorageManager: sm } = await import('/storage/StorageManager.js')
+      await sm.init({ persist: false, forceLocal: true })
+      return sm.misc.getItem('driver')
+    })
+    expect(driver).toBe('localStorage')
+  })
+
   test('setConfig stores config only', async ({ page }) => {
     const result = await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js')
+      const { StorageManager: sm } = await import('/storage/StorageManager.js')
       const cfg = { boards: [{ id: 'b1', name: 'B1', views: [] }] }
       sm.setConfig(cfg)
       return { cfg: sm.getConfig(), boards: sm.getBoards() }
@@ -22,7 +40,7 @@ test.describe('StorageManager', () => {
 
   test('saveStateSnapshot persists and hashes', async ({ page }) => {
     const { hash, store } = await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js')
+      const { StorageManager: sm } = await import('/storage/StorageManager.js')
       const hash = await sm.saveStateSnapshot({ name: 'one', type: 'manual', cfg: 'a', svc: 'b' })
       const store = await sm.loadStateStore()
       return { hash, store }
@@ -73,7 +91,7 @@ test.describe('StorageManager', () => {
 
   test('saveStateSnapshot updates name on duplicate md5 and keeps md5 stable', async ({ page }) => {
     const result = await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js')
+      const { StorageManager: sm } = await import('/storage/StorageManager.js')
       const orig = Date.now
       let t = 1
       Date.now = () => t++
@@ -96,7 +114,7 @@ test.describe('StorageManager', () => {
 
   test('clearAll removes stored keys', async ({ page }) => {
     const result = await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js')
+      const { StorageManager: sm } = await import('/storage/StorageManager.js')
       sm.setConfig({ foo: 'bar' })
       sm.setBoards([{ id: 'b1', name: 'B1', views: [] }])
       sm.setServices([{ name: 'svc', url: '' }])
@@ -117,7 +135,7 @@ test.describe('StorageManager', () => {
 
   test('setServices sanitizes service data', async ({ page }) => {
     const services = await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js')
+      const { StorageManager: sm } = await import('/storage/StorageManager.js')
       const raw = [
         { name: 'A', url: 'https://a.example' },
         { id: 'srv-fixed', name: 'B', url: '', type: 'custom', category: 'c', subcategory: 'sc', tags: ['t'], config: { x: 1 }, maxInstances: 5 }
@@ -133,7 +151,7 @@ test.describe('StorageManager', () => {
 
   test('clearAllExceptState preserves state store', async ({ page }) => {
     const result = await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js')
+      const { StorageManager: sm } = await import('/storage/StorageManager.js')
       sm.setConfig({ foo: 'bar' })
       sm.setBoards([{ id: 'b1', name: 'B1', views: [] }])
       sm.setServices([{ name: 'svc', url: '' }])
@@ -160,7 +178,7 @@ test.describe('StorageManager', () => {
 
   test('clearStateStore empties saved states', async ({ page }) => {
     const store = await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js')
+      const { StorageManager: sm } = await import('/storage/StorageManager.js')
       await sm.saveStateStore({ version: 1, states: [{ name: 'one' }] })
       await sm.clearStateStore()
       return await sm.loadStateStore()

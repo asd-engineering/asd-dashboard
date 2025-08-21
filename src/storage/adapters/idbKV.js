@@ -9,6 +9,16 @@ const DB_NAME = 'asd-db'
 const VERSION = 1
 const STORES = ['config', 'boards', 'services', 'state_store', 'meta']
 
+const versionChangeHandlers = []
+
+/**
+ * Register a callback for database version changes.
+ * @param {() => void} h
+ */
+export function onVersionChange (h) {
+  versionChangeHandlers.push(h)
+}
+
 /**
  * Open the IndexedDB database.
  * @returns {Promise<IDBDatabase>}
@@ -23,7 +33,17 @@ function openDB () {
         if (!db.objectStoreNames.contains(name)) db.createObjectStore(name)
       }
     }
-    req.onsuccess = () => resolve(req.result)
+    req.onblocked = () => reject(new Error('IDB open blocked'))
+    req.onsuccess = () => {
+      const db = req.result
+      db.onversionchange = () => {
+        try { db.close() } catch {}
+        for (const h of versionChangeHandlers) {
+          try { h() } catch {}
+        }
+      }
+      resolve(db)
+    }
     req.onerror = () => reject(req.error)
   })
 }

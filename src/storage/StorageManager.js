@@ -7,6 +7,8 @@
 import { md5Hex } from '../utils/hash.js'
 import { createDriver } from './driver.js'
 import { sanitizeBoards, sanitizeConfig, sanitizeServices } from './validators.js'
+import { busInit, busPost, busOnMessage } from './bus.js'
+import { idbKV, onVersionChange as onIDBVersionChange } from './adapters/idbKV.js'
 
 /**
  * CURRENT_VERSION for stored data schema.
@@ -26,6 +28,16 @@ const cache = {
   boards: [],
   services: [],
   meta: { migrated: false }
+}
+
+/**
+ * Dispatch an application state change event.
+ * @param {string} reason
+ * @param {object} payload
+ * @returns {void}
+ */
+function dispatchChange (reason, payload) {
+  window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason, ...payload } }))
 }
 
 // -- helpers ---------------------------------------------------------------
@@ -91,6 +103,14 @@ async function migrateFromLocalStorageIfNeeded () {
     ])
     if (lastBoardId) await setMeta('lastBoardId', lastBoardId)
     if (lastViewId) await setMeta('lastViewId', lastViewId)
+    const byteLen = obj => { try { return new TextEncoder().encode(JSON.stringify(obj)).length } catch { return -1 } }
+    await kv.set('meta', 'storeSizes', {
+      config: byteLen(cfgData),
+      boards: byteLen(boards),
+      services: byteLen(services),
+      state_store: byteLen(rawState || { version: 1, states: [] })
+    })
+    await setMeta('migrationAt', new Date().toISOString())
   }
 
   localStorage.removeItem(LS_KEYS.CONFIG)
@@ -131,7 +151,7 @@ async function requestPersistence () {
 }
 
 // -- API ------------------------------------------------------------------
-const StorageManager = {
+export const StorageManager = {
   /**
    * Initialize storage layer, perform migration and warm the cache.
    * @function init
@@ -139,10 +159,57 @@ const StorageManager = {
    * @returns {Promise<void>}
    */
   async init (opts = { persist: true, forceLocal: false }) {
-    kv = createDriver(!!opts.forceLocal)
-    await migrateFromLocalStorageIfNeeded()
-    await warmCache()
+    try {
+      kv = createDriver(!!opts.forceLocal)
+      await migrateFromLocalStorageIfNeeded()
+      await warmCache()
+    } catch (e) {
+      const { lsKV } = await import('./adapters/lsKV.js')
+      kv = lsKV
+      await warmCache()
+      await setMeta('driver', 'localStorage')
+      dispatchChange('driver-fallback', { store: 'meta' })
+      busInit()
+      return
+    }
     if (opts.persist) await requestPersistence()
+    await setMeta('driver', kv === idbKV ? 'idb' : 'localStorage')
+    if (typeof navigator !== 'undefined' && navigator.storage?.estimate) {
+      try {
+        const est = await navigator.storage.estimate()
+        await kv.set('meta', 'quota', { usage: est.usage ?? null, quota: est.quota ?? null })
+      } catch {}
+    }
+    busInit()
+    busOnMessage(async m => {
+      if (!m || m.type !== 'STORE_UPDATED') return
+      const store = m.store
+      if (store === 'config') {
+        const cfg = (await kv.get('config', 'v1')) ?? {}
+        cache.config = sanitizeConfig(cfg)
+        cache.config.boards = cache.boards
+        dispatchChange('remote-update:config', { store: 'config' })
+      } else if (store === 'boards') {
+        const boards = (await kv.get('boards', 'v1')) ?? []
+        cache.boards = sanitizeBoards(boards)
+        cache.config.boards = cache.boards
+        dispatchChange('remote-update:boards', { store: 'boards' })
+      } else if (store === 'services') {
+        const services = (await kv.get('services', 'v1')) ?? []
+        cache.services = sanitizeServices(services)
+        dispatchChange('remote-update:services', { store: 'services' })
+      } else if (store === 'state_store') {
+        dispatchChange('remote-update:state_store', { store: 'state_store' })
+      }
+    })
+    if (kv === idbKV) {
+      onIDBVersionChange(async () => {
+        const { lsKV } = await import('./adapters/lsKV.js')
+        kv = lsKV
+        await setMeta('driver', 'localStorage')
+        dispatchChange('versionchange', { store: 'meta' })
+      })
+    }
   },
 
   // ---- Config ----
@@ -158,7 +225,9 @@ const StorageManager = {
     cache.config.boards = boards
     kv.set('config', 'v1', sanitized)
     kv.set('boards', 'v1', boards)
-    window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason: 'config' } }))
+    busPost({ type: 'STORE_UPDATED', store: 'config', at: Date.now() })
+    busPost({ type: 'STORE_UPDATED', store: 'boards', at: Date.now() })
+    dispatchChange('config', { store: 'config' })
   },
   updateConfig (updater) {
     const cfg = StorageManager.getConfig()
@@ -175,7 +244,8 @@ const StorageManager = {
     cache.boards = sanitized
     cache.config.boards = sanitized
     kv.set('boards', 'v1', sanitized)
-    window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason: 'boards' } }))
+    busPost({ type: 'STORE_UPDATED', store: 'boards', at: Date.now() })
+    dispatchChange('boards', { store: 'boards' })
   },
   updateBoards (updater) {
     const boards = StorageManager.getBoards()
@@ -191,7 +261,8 @@ const StorageManager = {
     const sanitized = sanitizeServices(services)
     cache.services = sanitized
     kv.set('services', 'v1', sanitized)
-    window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason: 'services' } }))
+    busPost({ type: 'STORE_UPDATED', store: 'services', at: Date.now() })
+    dispatchChange('services', { store: 'services' })
   },
 
   // ---- State store ----
@@ -200,6 +271,8 @@ const StorageManager = {
   },
   async saveStateStore (store) {
     await kv.set('state_store', 'v1', store)
+    busPost({ type: 'STORE_UPDATED', store: 'state_store', at: Date.now() })
+    dispatchChange('state_store', { store: 'state_store' })
   },
   async saveStateSnapshot ({ name, type, cfg, svc }) {
     const store = await StorageManager.loadStateStore()
@@ -279,5 +352,3 @@ export function upsertSnapshotByMd5 (store, { name, type, cfg, svc }) {
   list.unshift({ name, type, md5, cfg, svc, ts })
   return { store, md5, updated: false }
 }
-
-export default StorageManager

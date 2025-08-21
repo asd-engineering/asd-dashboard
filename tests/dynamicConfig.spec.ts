@@ -186,7 +186,7 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
     const stored = await getUnwrappedConfig(page);
     expect(Array.isArray(stored.boards)).toBeTruthy();
     const services = await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js');
+      const { StorageManager: sm } = await import('/storage/StorageManager.js');
       return sm.getServices();
     });
     expect(services.some((s) => s.name === 'svc1')).toBeTruthy();

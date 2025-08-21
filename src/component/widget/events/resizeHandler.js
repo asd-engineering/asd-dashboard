@@ -7,7 +7,7 @@
 import { saveWidgetState } from '../../../storage/widgetStatePersister.js'
 import { debounce } from '../../../utils/utils.js'
 import { Logger } from '../../../utils/Logger.js'
-import StorageManager from '../../../storage/StorageManager.js'
+import { StorageManager } from '../../../storage/StorageManager.js'
 import { resolveServiceConfig } from '../../../utils/serviceUtils.js'
 
 const logger = new Logger('resizeHandler.js')

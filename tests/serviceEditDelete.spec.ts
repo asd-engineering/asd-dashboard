@@ -27,7 +27,7 @@ test.describe('Service Edit/Delete', () => {
     await expect(modal).toBeHidden()
 
     const services = await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js');
+      const { StorageManager: sm } = await import('/storage/StorageManager.js');
       return sm.getServices();
     })
     expect(services.some(s => s.name === 'Toolbox X' && s.url === 'http://localhost/x')).toBeTruthy()
@@ -43,7 +43,7 @@ test.describe('Service Edit/Delete', () => {
     await page.waitForSelector('.widget-wrapper', { state: 'detached' })
 
     const services = await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js');
+      const { StorageManager: sm } = await import('/storage/StorageManager.js');
       return sm.getServices();
     })
     expect(services.find(s => s.name === 'ASD-terminal')).toBeUndefined()

@@ -5,7 +5,7 @@
  * @module fetchServices
  */
 import { Logger } from '../../../utils/Logger.js'
-import StorageManager from '../../../storage/StorageManager.js'
+import { StorageManager } from '../../../storage/StorageManager.js'
 
 const logger = new Logger('fetchServices.js')
 
