@@ -1,13 +1,5 @@
 [
   {
-    "name": "__openForTests",
-    "kind": "function",
-    "file": "src/component/menu/widgetSelectorPanel.js",
-    "description": "Open the widget selector panel for automated tests.",
-    "params": [],
-    "returns": "void"
-  },
-  {
     "name": "_ensureLimit",
     "kind": "function",
     "file": "src/component/widget/widgetStore.js",
@@ -1267,14 +1259,6 @@
     "returns": "void"
   },
   {
-    "name": "initializeWidgetSelectorPanel",
-    "kind": "function",
-    "file": "src/component/menu/widgetSelectorPanel.js",
-    "description": "Set up click/search/keyboard handlers for the selector.",
-    "params": [],
-    "returns": "void"
-  },
-  {
     "name": "initSW",
     "kind": "function",
     "file": "src/component/menu/menu.js",
@@ -1506,7 +1490,15 @@
     "name": "mountBoardControl",
     "kind": "function",
     "file": "src/component/board/BoardControl.js",
-    "description": "Mount board control into #board-control.",
+    "description": "Mount the board control panel into #board-control.",
+    "params": [],
+    "returns": "SelectorPanel|null"
+  },
+  {
+    "name": "mountServiceControl",
+    "kind": "function",
+    "file": "src/component/service/ServiceControl.js",
+    "description": "Mount the service control panel into #widget-selector-panel.",
     "params": [],
     "returns": "SelectorPanel|null"
   },
@@ -1514,7 +1506,7 @@
     "name": "mountViewControl",
     "kind": "function",
     "file": "src/component/view/ViewControl.js",
-    "description": "Mount view control into #view-control.",
+    "description": "Mount the view control panel into #view-control.",
     "params": [],
     "returns": "SelectorPanel|null"
   },
@@ -1683,22 +1675,6 @@
     "returns": "Record<string,number>"
   },
   {
-    "name": "populateWidgetSelectorPanel",
-    "kind": "function",
-    "file": "src/component/menu/widgetSelectorPanel.js",
-    "description": "Populate dropdown list with saved services.",
-    "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "refreshRowCounts",
-    "kind": "function",
-    "file": "src/component/menu/widgetSelectorPanel.js",
-    "description": "Update the instance count labels for each service row and enforce limits.",
-    "params": [],
-    "returns": "void"
-  },
-  {
     "name": "registerServiceWorker",
     "kind": "function",
     "file": "src/component/menu/menu.js",
@@ -1795,6 +1771,20 @@
         "name": "id",
         "type": "string",
         "desc": ""
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
+    "name": "resetBoard",
+    "kind": "function",
+    "file": "src/component/board/boardManagement.js",
+    "description": "Reset all views within a board by clearing their widget state.",
+    "params": [
+      {
+        "name": "boardId",
+        "type": "string",
+        "desc": "- Identifier of the board to reset."
       }
     ],
     "returns": "Promise<void>"
@@ -2318,14 +2308,6 @@
         "desc": "- Identifier of the board whose views will be shown."
       }
     ],
-    "returns": "void"
-  },
-  {
-    "name": "updateWidgetCounter",
-    "kind": "function",
-    "file": "src/component/menu/widgetSelectorPanel.js",
-    "description": "Update the Running/Max and total Widgets counter in the panel.",
-    "params": [],
     "returns": "void"
   },
   {

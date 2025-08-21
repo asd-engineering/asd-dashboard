@@ -27,6 +27,7 @@ export function openModal ({ id, buildContent, onCloseCallback, showCloseIcon = 
   }
 
   logger.log(`Opening modal ${id}`)
+  document.dispatchEvent(new CustomEvent('modal:open', { bubbles: true, composed: true }))
 
   /**
    * Handles the 'Escape' key press to close the modal.
@@ -94,6 +95,7 @@ export function openModal ({ id, buildContent, onCloseCallback, showCloseIcon = 
     backdrop.remove()
     window.removeEventListener('keydown', handleEscape)
     if (typeof onCloseCallback === 'function') onCloseCallback()
+    document.dispatchEvent(new CustomEvent('modal:close', { bubbles: true, composed: true }))
   }
 
   buildContent(modal, closeModal)

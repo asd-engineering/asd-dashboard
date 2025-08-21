@@ -23,12 +23,7 @@ import StorageManager, { APP_STATE_CHANGED } from './storage/StorageManager.js'
 import { runSilentImportFlowIfRequested } from './flows/silentImportFlow.js'
 
 // NEW: widget selector panel (replaces populateServiceDropdown())
-import {
-  populateWidgetSelectorPanel,
-  initializeWidgetSelectorPanel,
-  updateWidgetCounter,
-  refreshRowCounts
-} from './component/menu/widgetSelectorPanel.js'
+import { mountServiceControl } from './component/service/ServiceControl.js'
 
 const logger = new Logger('main.js')
 Logger.enableLogs('all')
@@ -64,8 +59,8 @@ async function main () {
   initializeDashboardMenu()
   const boardPanel = mountBoardControl()
   const viewPanel = mountViewControl()
+  const servicePanel = mountServiceControl()
   initializeDragAndDrop()
-  initializeWidgetSelectorPanel() // NEW: wire up panel behavior
 
   // 3. Load services and configuration in parallel
   /** @type {import('./types.js').DashboardConfig} */
@@ -118,10 +113,8 @@ async function main () {
     logger.warn('No boards available to display.')
   }
 
-  // Initial widget selector population/counter (after services & boards)
-  populateWidgetSelectorPanel()
-  refreshRowCounts()
-  updateWidgetCounter()
+  // Initial service panel population (after services & boards)
+  servicePanel?.refresh()
 
   // 7. Initialize modal triggers
   const buttonDebounce = 200
@@ -143,16 +136,12 @@ async function main () {
         if (boardPanel) boardPanel.refresh()
         if (viewPanel) viewPanel.refresh()
         // Repopulate panel when config (e.g., boards/views) changes
-        populateWidgetSelectorPanel()
-        refreshRowCounts()
-        updateWidgetCounter()
+        servicePanel?.refresh()
         break
 
       case 'services':
         // Repopulate panel when services update
-        populateWidgetSelectorPanel()
-        refreshRowCounts()
-        updateWidgetCounter()
+        servicePanel?.refresh()
         break
     }
   }

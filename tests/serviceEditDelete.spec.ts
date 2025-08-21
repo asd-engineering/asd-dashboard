@@ -12,12 +12,12 @@ test.describe('Service Edit/Delete', () => {
   })
 
   test('edit service updates list', async ({ page }) => {
-    const serviceRow = page.locator('#widget-selector-panel .widget-option:has-text("ASD-toolbox")');
+    const serviceRow = page.locator('[data-testid="service-panel"] .panel-item:has-text("ASD-toolbox")');
     
     // *** FIX: Hover over the row first to make action buttons appear ***
     await serviceRow.hover();
     
-    await serviceRow.locator('button[data-action="edit"]').click();
+    await serviceRow.locator('[data-item-action="edit"]').click();
 
     const modal = page.locator('#save-service-modal') // The modal ID is now save-service-modal
     await expect(modal).toBeVisible()
@@ -28,15 +28,15 @@ test.describe('Service Edit/Delete', () => {
 
     const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services')))
     expect(services.some(s => s.name === 'Toolbox X' && s.url === 'http://localhost/x')).toBeTruthy()
-    await expect(page.locator('#widget-selector-panel .widget-option').filter({ hasText: 'Toolbox X' })).toHaveCount(1)
+    await expect(page.locator('[data-testid="service-panel"] .panel-item').filter({ hasText: 'Toolbox X' })).toHaveCount(1)
   })
 
   test('delete service removes widgets', async ({ page }) => {
-    await page.click('#widget-selector-panel .widget-option:has-text("ASD-terminal")')
+    await page.click('[data-testid="service-panel"] .panel-item:has-text("ASD-terminal")')
     await expect(page.locator('.widget-wrapper')).toHaveCount(1)
 
     page.on('dialog', d => d.accept())
-    await page.click('#widget-selector-panel .widget-option:has-text("ASD-terminal") button[data-action="remove"]')
+    await page.click('[data-testid="service-panel"] .panel-item:has-text("ASD-terminal") [data-item-action="remove"]')
     await page.waitForSelector('.widget-wrapper', { state: 'detached' })
 
     const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services')))

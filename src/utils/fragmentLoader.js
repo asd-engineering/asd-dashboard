@@ -12,6 +12,7 @@ import { showNotification } from '../component/dialog/notification.js'
 import { decodeConfig } from './compression.js'
 import { openFragmentDecisionModal } from '../component/modal/fragmentDecisionModal.js'
 import StorageManager from '../storage/StorageManager.js'
+import emojiList from '../ui/unicodeEmoji.js'
 import { restoreDeep } from './minimizer.js'
 import { joinFromParams, parseChunksManifest } from './chunker.js'
 import { computeCRC32Hex } from './checksum.js'
@@ -133,7 +134,7 @@ export async function loadFromFragment (wasExplicitLoad = false) {
       else if (e instanceof SyntaxError) reason = 'json parse'
       else reason = e.message
     }
-    logger.error('❌ Fout bij laden uit fragment:', { reason })
+    logger.error(`${emojiList.cross.icon} Fout bij laden uit fragment:`, { reason })
     showNotification('Fout bij laden van dashboardconfiguratie uit URL fragment.', 4000, 'error')
   }
 

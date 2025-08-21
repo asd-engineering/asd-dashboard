@@ -2,7 +2,7 @@ name: Playwright Tests (PR)
 
 on:
   pull_request:
-    branches: [main, develop, feature/**]
+    branches: [main, develop, feature/**, codex/**]
 
 jobs:
   call-playwright:

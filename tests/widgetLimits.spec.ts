@@ -66,7 +66,7 @@ test.describe("Widget limits", () => {
 
     await page.locator('[data-testid="board-panel"]').hover();
     await page.locator('[data-testid="board-panel"] .panel-item', { hasText: 'B2' }).click();
-    await page.click('#widget-selector-panel .widget-option:has-text("ASD-toolbox")');
+    await page.click('[data-testid="service-panel"] .panel-item:has-text("ASD-toolbox")');
 
     await page.waitForFunction(
       () => document.querySelectorAll(".widget-wrapper").length === 1
@@ -98,7 +98,7 @@ test.describe("Widget limits", () => {
     await page.locator(".widget-wrapper").first().waitFor();
     await ensurePanelOpen(page);
 
-    await page.click('#widget-selector-panel .widget-option:has-text("ASD-terminal")');
+    await page.click('[data-testid="service-panel"] .panel-item:has-text("ASD-terminal")');
 
     const modal = page.locator("#eviction-modal");
     await expect(modal).toBeVisible();
@@ -125,7 +125,7 @@ test.describe("Widget limits", () => {
 
     await routeLimits(page, boards, services, 5);
     await navigate(page, "/");
-    await page.waitForSelector("#widget-selector-panel");
+    await page.waitForSelector('[data-testid="service-panel"]');
     await ensurePanelOpen(page);
 
     await page.evaluate(async () => {
@@ -182,47 +182,47 @@ test.describe("Widget limits", () => {
     await navigate(page, "/");
     await ensurePanelOpen(page);
 
-    await page.evaluate(async () => {
-      const mod = await import("/component/menu/widgetSelectorPanel.js");
-      mod.populateWidgetSelectorPanel();
-    });
+    await page.evaluate(() => document.dispatchEvent(new CustomEvent('state-change', { detail: { reason: 'services' } })));
 
     const countA = await page
-      .locator('#widget-selector-panel .widget-option[data-name="SvcA"] .widget-option-count')
+      .locator('[data-testid="service-panel"] .panel-item', { hasText: 'SvcA' })
+      .locator('.panel-item-meta')
       .innerText();
     const countB = await page
-      .locator('#widget-selector-panel .widget-option[data-name="SvcB"] .widget-option-count')
+      .locator('[data-testid="service-panel"] .panel-item', { hasText: 'SvcB' })
+      .locator('.panel-item-meta')
       .innerText();
-    expect(countA).toBe(" (1/1)");
-    expect(countB).toBe(" (0/1)");
+    expect(countA).toBe("(1/1)");
+    expect(countB).toBe("(0/1)");
 
     await page.evaluate(async () => {
-      const StorageManager = (await import("/storage/StorageManager.js")).default;
+      const StorageManager = (await import('/storage/StorageManager.js')).default;
       StorageManager.updateBoards((boards) => {
-        const board = boards.find((b) => b.id === "b");
-        const view = board?.views.find((v) => v.id === "v");
+        const board = boards.find((b) => b.id === 'b');
+        const view = board?.views.find((v) => v.id === 'v');
         view?.widgetState.push({
-          order: "1",
-          url: "http://localhost:8000/asd/toolbox",
-          type: "web",
-          dataid: "W2",
-          serviceId: "svc2",
-          columns: "1",
-          rows: "1",
+          order: '1',
+          url: 'http://localhost:8000/asd/toolbox',
+          type: 'web',
+          dataid: 'W2',
+          serviceId: 'svc2',
+          columns: '1',
+          rows: '1'
         });
       });
-      const mod = await import("/component/menu/widgetSelectorPanel.js");
-      mod.refreshRowCounts();
+      document.dispatchEvent(new CustomEvent('state-change', { detail: { reason: 'services' } }));
     });
 
     const updatedA = await page
-      .locator('#widget-selector-panel .widget-option[data-name="SvcA"] .widget-option-count')
+      .locator('[data-testid="service-panel"] .panel-item', { hasText: 'SvcA' })
+      .locator('.panel-item-meta')
       .innerText();
     const updatedB = await page
-      .locator('#widget-selector-panel .widget-option[data-name="SvcB"] .widget-option-count')
+      .locator('[data-testid="service-panel"] .panel-item', { hasText: 'SvcB' })
+      .locator('.panel-item-meta')
       .innerText();
-    expect(updatedA).toBe(" (1/1)");
-    expect(updatedB).toBe(" (1/1)");
+    expect(updatedA).toBe("(1/1)");
+    expect(updatedB).toBe("(1/1)");
   });
 
 });
