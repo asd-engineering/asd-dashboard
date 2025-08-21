@@ -48,9 +48,22 @@ ASD Dashboard also supports sharing full configuration and service state using t
   https://your-dashboard.app/#cfg=<compressed>&svc=<compressed>
   ```
 
+### Fragment Parameters
+
+The fragment follows standard `URLSearchParams` semantics and may include:
+
+* `name` – human-readable snapshot name
+* `cfg` / `svc` – compressed config and service payloads
+* `algo` – compression algorithm (`deflate` by default, `gzip` for legacy links)
+* `cc` – per-payload CRC32 checksums (`cfg,svc`)
+* `ccw` – whole-payload checksum over both payloads
+* `chunks` – optional manifest when `cfg` or `svc` are split (`cfg:3;svc:2`)
+
 * Config and services are:
 
-  * **Gzipped** and **base64url-encoded** for compactness
+  * Compressed with built-in **deflate** (or legacy **gzip**) and base64url-encoded for compactness
+  * Optionally minified via a reversible key map for even shorter URLs
+  * Protected by a CRC32 checksum to detect truncated or corrupted fragments
   * Decoded locally using modern browser APIs (e.g. `DecompressionStream`)
   * Persisted to `localStorage` when the page loads
   * Switching environments triggers a single reload after clearing the fragment and saves the snapshot under the provided name (MD5-deduplicated)
@@ -67,7 +80,8 @@ ASD Dashboard also supports sharing full configuration and service state using t
 ### Practical Limits
 
 * Works reliably up to \~60KB total URL length (more than enough for hundreds of services)
-* Shows a warning if the link becomes too large for some browsers
+* Very long `cfg`/`svc` parameters are automatically chunked (`cfg0,cfg1,...`) when exceeding 12KB each. A `chunks` manifest (e.g. `chunks=cfg:3;svc:2`) plus a whole-payload checksum `ccw` guard reassembly.
+* Shows a warning if the link becomes too large even after chunking
 * Fails gracefully if compression is unsupported (e.g., older Safari versions)
 
 ### Use Case Example

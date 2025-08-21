@@ -9,12 +9,24 @@
 
 import { Logger } from './Logger.js'
 import { showNotification } from '../component/dialog/notification.js'
-import { gunzipBase64urlToJson } from './compression.js'
+import { decodeConfig } from './compression.js'
 import { openFragmentDecisionModal } from '../component/modal/fragmentDecisionModal.js'
 import StorageManager from '../storage/StorageManager.js'
 import emojiList from '../ui/unicodeEmoji.js'
+import { restoreDeep } from './minimizer.js'
+import { joinFromParams, parseChunksManifest } from './chunker.js'
+import { computeCRC32Hex } from './checksum.js'
+import { applyKeyMap } from './keymap.js'
+import { DEFAULT_CONFIG_TEMPLATE } from '../storage/defaultConfig.js'
+import { FRAG_MINIMIZE_ENABLED } from './fragmentConstants.js'
 
 const logger = new Logger('fragmentLoader.js')
+
+// Mirror the key map used during export. Keep this in sync.
+/** @type {Record<string,string>} */
+const KEY_MAP = {
+  // e.g. 'serviceId': 'i'
+}
 
 /**
  * Parse the URL fragment and store config/services in localStorage.
@@ -37,15 +49,22 @@ export async function loadFromFragment (wasExplicitLoad = false) {
     if (location.hash.includes('cfg=') || location.hash.includes('svc=')) {
       showNotification('⚠️ DecompressionStream niet ondersteund door deze browser.', 4000, 'error')
     }
-    logger.warn('DecompressionStream niet ondersteund, fragment loader wordt overgeslagen.')
+    logger.warn('DecompressionStream niet ondersteund, fragment loader wordt overgeslagen.', { reason: 'unsupported API' })
     return
   }
 
   const hash = location.hash.startsWith('#') ? location.hash.slice(1) : ''
   const params = new URLSearchParams(hash)
-  const cfgParam = params.get('cfg')
-  const svcParam = params.get('svc')
   let nameParam = params.get('name') || 'Imported'
+  const algoParam = params.get('algo') || 'gzip'
+  const ccParam = params.get('cc')
+  const checks = ccParam ? ccParam.split(',') : []
+  const cfgChecksum = checks[0] || null
+  const svcChecksum = checks[1] || null
+  const ccw = params.get('ccw')
+  parseChunksManifest(params.get('chunks') || '')
+  const cfgParam = joinFromParams('cfg', params)
+  const svcParam = joinFromParams('svc', params)
 
   if (wasExplicitLoad) {
     const searchParams = new URLSearchParams(location.search)
@@ -59,25 +78,63 @@ export async function loadFromFragment (wasExplicitLoad = false) {
     (Array.isArray(StorageManager.getConfig().boards) && StorageManager.getConfig().boards.length > 0)
 
   if ((cfgParam || svcParam) && hasLocalData && !wasExplicitLoad) {
-    await openFragmentDecisionModal({ cfgParam, svcParam, nameParam })
+    await openFragmentDecisionModal({ cfgParam, svcParam, nameParam, algoParam, ccParam })
     // Return shape mirrors explicit loads; callers typically ignore this branch.
     return { cfg: cfgParam, svc: svcParam, name: nameParam }
   }
 
   try {
+    let cfgObj = null
+    let svcArr = null
     if (cfgParam) {
-      const cfg = await gunzipBase64urlToJson(cfgParam)
+      const decoded = await decodeConfig(cfgParam, {
+        algo: /** @type {'gzip'|'deflate'} */ (algoParam),
+        expectChecksum: cfgChecksum
+      })
+      cfgObj = decoded
+    }
+
+    if (svcParam) {
+      const decoded = await decodeConfig(svcParam, {
+        algo: /** @type {'gzip'|'deflate'} */ (algoParam),
+        expectChecksum: svcChecksum
+      })
+      svcArr = decoded
+    }
+
+    if (ccw) {
+      const calc = computeCRC32Hex(JSON.stringify({ c: cfgObj ?? null, s: svcArr ?? null }))
+      if (calc !== ccw) throw new Error(`Fragment ccw mismatch: expected ${ccw}, got ${calc}`)
+    }
+
+    const cfgDefaults = applyKeyMap(DEFAULT_CONFIG_TEMPLATE, KEY_MAP, 'encode')
+    const svcDefaults = []
+    const cfgRestored = cfgObj ? (FRAG_MINIMIZE_ENABLED ? restoreDeep(cfgObj, cfgDefaults) : cfgObj) : null
+    const svcRestored = svcArr ? (FRAG_MINIMIZE_ENABLED ? restoreDeep(svcArr, svcDefaults) : svcArr) : null
+    const cfg = cfgRestored ? applyKeyMap(cfgRestored, KEY_MAP, 'decode') : null
+    const svc = svcRestored ? applyKeyMap(svcRestored, KEY_MAP, 'decode') : null
+
+    if (cfg) {
       StorageManager.setConfig(cfg)
       logger.info('✅ Config geladen uit fragment')
     }
 
-    if (svcParam) {
-      const svc = await gunzipBase64urlToJson(svcParam)
+    if (svc) {
       StorageManager.setServices(svc)
       logger.info('✅ Services geladen uit fragment')
     }
+
+    // Telemetry: count successful imports.
+    // @ts-ignore
+    window.__fragmentImportSuccessCount = (window.__fragmentImportSuccessCount || 0) + 1
   } catch (e) {
-    logger.error(`${emojiList.cross.icon} Fout bij laden uit fragment:`, e)
+    let reason = 'unknown'
+    if (e instanceof Error) {
+      if (e.message.includes('Checksum mismatch')) reason = 'checksum mismatch'
+      else if (e instanceof SyntaxError) reason = 'json parse'
+      else reason = e.message
+    }
+    logger.error(`${emojiList.cross.icon} Fout bij laden uit fragment:`, reason)
     showNotification('Fout bij laden van dashboardconfiguratie uit URL fragment.', 4000, 'error')
   }
 
