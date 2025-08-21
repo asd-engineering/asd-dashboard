@@ -12,6 +12,7 @@ import { showNotification } from '../component/dialog/notification.js'
 import { gunzipBase64urlToJson } from './compression.js'
 import { openFragmentDecisionModal } from '../component/modal/fragmentDecisionModal.js'
 import StorageManager from '../storage/StorageManager.js'
+import emojiList from '../ui/unicodeEmoji.js'
 
 const logger = new Logger('fragmentLoader.js')
 
@@ -76,7 +77,7 @@ export async function loadFromFragment (wasExplicitLoad = false) {
       logger.info('✅ Services geladen uit fragment')
     }
   } catch (e) {
-    logger.error('❌ Fout bij laden uit fragment:', e)
+    logger.error(`${emojiList.cross.icon} Fout bij laden uit fragment:`, e)
     showNotification('Fout bij laden van dashboardconfiguratie uit URL fragment.', 4000, 'error')
   }
 

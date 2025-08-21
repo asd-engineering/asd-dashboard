@@ -11,7 +11,9 @@ test.describe('Save Service Modal', () => {
   })
 
   test('opens when adding widget with manual URL', async ({ page }) => {
-    await page.click('#widget-selector-panel .new-service')
+    const trigger = page.locator('[data-testid="service-panel"] [data-testid="panel-actions-trigger"]')
+    await trigger.hover()
+    await page.locator('.side-content .panel-action', { hasText: 'New Service' }).click()
     const modal = page.locator('#save-service-modal')
     await expect(modal).toBeVisible()
     await expect(modal.locator('input#service-name')).toBeVisible()
@@ -19,7 +21,9 @@ test.describe('Save Service Modal', () => {
 
   test('saves manual service when confirmed', async ({ page }) => {
     const url = 'http://localhost/manual-save'
-    await page.click('#widget-selector-panel .new-service')
+    const trigger2 = page.locator('[data-testid="service-panel"] [data-testid="panel-actions-trigger"]')
+    await trigger2.hover()
+    await page.locator('.side-content .panel-action', { hasText: 'New Service' }).click()
     const modal = page.locator('#save-service-modal')
     await expect(modal).toBeVisible()
 
@@ -46,7 +50,9 @@ test.describe('Save Service Modal', () => {
 
   test('skipping manual service does not store it', async ({ page }) => {
     const url = 'http://localhost/manual-skip'
-    await page.click('#widget-selector-panel .new-service')
+    const trigger3 = page.locator('[data-testid="service-panel"] [data-testid="panel-actions-trigger"]')
+    await trigger3.hover()
+    await page.locator('.side-content .panel-action', { hasText: 'New Service' }).click()
     const modal = page.locator('#save-service-modal')
     await expect(modal).toBeVisible()
     await page.fill('#service-url', url) // Fill URL to be certain

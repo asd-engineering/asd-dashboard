@@ -69,15 +69,33 @@ test.describe('Board panel', () => {
     await expect(panel.locator('.panel-item', { hasText: initial })).toBeVisible()
 
     const renameBtn = panel.locator('.panel-item', { hasText: initial }).locator('[data-item-action="rename"]').first()
+    await expect(renameBtn).toHaveText('✏️')
     const renamed = 'Renamed Board'
     page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(renamed) })
     await renameBtn.click()
     await expect(panel.locator('.panel-item', { hasText: renamed })).toBeVisible()
 
     const deleteBtn = panel.locator('.panel-item', { hasText: renamed }).locator('[data-item-action="delete"]').first()
+    await expect(deleteBtn).toHaveText('⛔')
     page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
     await deleteBtn.click()
     await expect(panel.locator('.panel-item', { hasText: renamed })).toHaveCount(0)
+  })
+
+  test('keyboard interactions', async ({ page }) => {
+    const panel = page.locator('[data-testid="board-panel"]')
+    await panel.focus()
+    await page.keyboard.press('Enter')
+    await expect(panel.locator('.dropdown-content')).toBeVisible()
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('ArrowRight')
+    await expect(panel.locator('.dropdown-content.side-open .side-content')).toBeVisible()
+    await page.keyboard.press('ArrowLeft')
+    await expect(panel.locator('.dropdown-content.side-open .side-content')).toHaveCount(0)
+    await panel.focus()
+    await page.keyboard.press('Escape')
+    await expect(panel.locator('.dropdown-content')).toBeHidden()
   })
 
   test('item icons hover styling', async ({ page }) => {

@@ -7,6 +7,7 @@ import { SelectorPanel } from '../panel/SelectorPanel.js'
 import StorageManager from '../../storage/StorageManager.js'
 import { getCurrentBoardId } from '../../utils/elements.js'
 import { createView, renameView, deleteView, resetView, switchView, updateViewSelector } from '../board/boardManagement.js'
+import emojiList from '../../ui/unicodeEmoji.js'
 
 /**
  * Mount the view control panel into #view-control.
@@ -77,8 +78,8 @@ export function mountViewControl () {
       { label: 'Reset View', action: 'reset' }
     ],
     itemActions: [
-      { action: 'rename', title: 'Rename view' },
-      { action: 'delete', title: 'Delete view' }
+      { action: 'rename', title: 'Rename view', icon: emojiList.edit.unicode },
+      { action: 'delete', title: 'Delete view', icon: emojiList.noEntry.unicode }
     ]
   })
 
