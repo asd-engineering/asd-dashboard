@@ -29,7 +29,7 @@
 .panel-item-label { font-weight: 500; }
 .panel-item-meta { opacity: .7; font-size: 12px; }
 .panel-item-actions { display: inline-flex; gap: 6px; }
-#controls .panel-item-actions .panel-item-icon {
+.panel-item-actions .panel-item-icon {
   background: none;
   border: none;
   padding: 0.2rem;
@@ -38,7 +38,7 @@
   cursor: pointer;
   transition: transform 0.2s ease, background-color 0.2s ease;
 }
-#controls .panel-item-actions .panel-item-icon:hover {
+.panel-item-actions .panel-item-icon:hover {
   background-color: rgba(0,0,0,0.06);
   transform: translateY(-1px);
 }

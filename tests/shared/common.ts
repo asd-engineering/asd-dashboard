@@ -4,7 +4,7 @@ export async function ensurePanelOpen(page: Page) {
   // Triggers a test-only hook in the app (if present) to open the panel,
   // then waits for the CSS "open" state to be applied.
   await page.evaluate(() => (window as any).__openWidgetPanel?.());
-  await page.waitForSelector("#widget-selector-panel.open");
+  await page.waitForSelector('[data-testid="service-panel"].open');
 }
 
 // Helper function to add services via the widget selector panel
@@ -17,7 +17,7 @@ export async function addServices(page: Page, count: number) {
   // If your panel requires an explicit toggle click to render items, uncomment:
   // await page.click("#widget-dropdown-toggle");
   for (let i = 0; i < count; i++) {
-    await page.locator("#widget-selector-panel .widget-option").nth(i + 1).click();
+    await page.locator('[data-testid="service-panel"] .panel-item').nth(i + 1).click();
   }
 }
 
@@ -28,7 +28,7 @@ export async function selectServiceByName(page: Page, serviceName: string) {
   await ensurePanelOpen(page);
   // If a toggle is needed in your build, uncomment:
   // await page.click("#widget-dropdown-toggle");
-  await page.click(`#widget-selector-panel .widget-option:has-text("${serviceName}")`);
+  await page.click(`[data-testid="service-panel"] .panel-item:has-text("${serviceName}")`);
 }
 
 /**

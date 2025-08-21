@@ -80,6 +80,21 @@ test.describe('Board panel', () => {
     await expect(panel.locator('.panel-item', { hasText: renamed })).toHaveCount(0)
   })
 
+  test('keyboard interactions', async ({ page }) => {
+    const panel = page.locator('[data-testid="board-panel"]')
+    await panel.focus()
+    await page.keyboard.press('Enter')
+    await expect(panel.locator('.dropdown-content')).toBeVisible()
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('ArrowRight')
+    await expect(panel.locator('.dropdown-content.side-open .side-content')).toBeVisible()
+    await page.keyboard.press('ArrowLeft')
+    await expect(panel.locator('.dropdown-content.side-open .side-content')).toHaveCount(0)
+    await page.keyboard.press('Escape')
+    await expect(panel.locator('.dropdown-content')).toBeHidden()
+  })
+
   test('item icons hover styling', async ({ page }) => {
     const panel = page.locator('[data-testid="board-panel"]')
     await panel.hover()

@@ -21,9 +21,9 @@ test.describe("Dashboard Config - Base64 via URL Params", () => {
 
     await navigate(page, `/?config_base64=${config}&services_base64=${services}`);
 
-    // Widget selector should render with all services (panel option + items)
+    // Service panel should render with all services (actions row + items)
     await ensurePanelOpen(page);
-    await expect(page.locator("#widget-selector-panel .widget-option")).toHaveCount(
+    await expect(page.locator('[data-testid="service-panel"] .panel-item')).toHaveCount(
       ciServices.length + 1
     );
 
@@ -157,7 +157,7 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
     await page.click("#config-modal .modal__btn--save");
 
     // Panel present after config applied
-    await page.waitForSelector("#widget-selector-panel");
+    await page.waitForSelector('[data-testid="service-panel"]');
 
     const stored = await getUnwrappedConfig(page);
     expect(stored.globalSettings.theme).toBe(ciConfig.globalSettings.theme);
@@ -170,7 +170,7 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
     const config = b64(ciConfig);
     await navigate(page, `/?config_base64=${config}`);
     await page.reload();
-    await expect(page.locator("#widget-selector-panel")).toBeVisible();
+    await expect(page.locator('[data-testid="service-panel"]')).toBeVisible();
   });
 
   test("changes via modal are saved and persist", async ({ page }) => {
@@ -219,7 +219,7 @@ test.describe("Dashboard Functionality - Building from Services", () => {
 
     await ensurePanelOpen(page);
     // Click first available service option (index 1 skips the placeholder/search row if present)
-    await page.locator("#widget-selector-panel .widget-option").nth(1).click();
+    await page.locator('[data-testid="service-panel"] .panel-item').nth(1).click();
 
     await expect(page.locator(".widget-wrapper")).toHaveCount(1);
 
