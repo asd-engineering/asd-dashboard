@@ -43,6 +43,15 @@ test.describe('View panel', () => {
     await expect(panel.locator('.side-content .panel-action', { hasText: 'Reset View' })).toBeVisible()
   })
 
+  test('header quick-add creates a view', async ({ page }) => {
+    const panel = page.locator('[data-testid="view-panel"]')
+    const name = 'Quick View'
+    page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(name) })
+    await panel.locator('.panel-quick-add').click()
+    await panel.hover()
+    await expect(panel.locator('.panel-item', { hasText: name })).toBeVisible()
+  })
+
   test('per-item rename/delete and Reset View', async ({ page }) => {
     const panel = page.locator('[data-testid="view-panel"]')
     await panel.hover()
@@ -71,13 +80,13 @@ test.describe('View panel', () => {
     await panel.hover()
 
     await row2.hover()
-    const deleteBtn = row2.locator('[data-item-action="delete"]').first()
-    await expect(deleteBtn).toHaveText('⛔')
-    page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
-    await deleteBtn.click()
-    await panel.hover()
-    await expect(panel.locator('.panel-item', { hasText: v2 })).toHaveCount(0)
-  })
+      const deleteBtn = row2.locator('[data-item-action="delete"]').first()
+      await expect(deleteBtn).toHaveText('❌')
+      page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
+      await deleteBtn.click()
+      await panel.hover()
+      await expect(panel.locator('.panel-item', { hasText: v2 })).toHaveCount(0)
+    })
 
   test('keyboard interactions', async ({ page }) => {
     const panel = page.locator('[data-testid="view-panel"]')
@@ -93,6 +102,15 @@ test.describe('View panel', () => {
     await panel.focus()
     await page.keyboard.press('Escape')
     await expect(panel.locator('.dropdown-content')).toBeHidden()
+  })
+
+  test('row shows hint and aria uses Switch', async ({ page }) => {
+    const panel = page.locator('[data-testid="view-panel"]')
+    await panel.hover()
+    const row = panel.locator('.panel-item').nth(1)
+    await expect(row).toHaveAttribute('aria-label', /^Switch:/)
+    await row.hover()
+    await expect(row.locator('.panel-item-hint')).toHaveText('Click to switch')
   })
 
   test('search filters view list', async ({ page }) => {

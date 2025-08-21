@@ -72,6 +72,15 @@ test.describe('Board panel', () => {
     await expect(panel.locator('.panel-item', { hasText: newName })).toBeVisible()
   })
 
+  test('header quick-add creates a board', async ({ page }) => {
+    const panel = page.locator('[data-testid="board-panel"]')
+    const newName = 'Quick Board'
+    page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(newName) })
+    await panel.locator('.panel-quick-add').click()
+    await panel.hover()
+    await expect(panel.locator('.panel-item', { hasText: newName })).toBeVisible()
+  })
+
   test('per-item rename and delete icons', async ({ page }) => {
     const panel = page.locator('[data-testid="board-panel"]')
     await panel.hover()
@@ -95,10 +104,19 @@ test.describe('Board panel', () => {
 
     await rowRenamed.hover()
     const deleteBtn = rowRenamed.locator('[data-item-action="delete"]').first()
-    await expect(deleteBtn).toHaveText('⛔')
+    await expect(deleteBtn).toHaveText('❌')
     page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
     await deleteBtn.click()
     await expect(panel.locator('.panel-item', { hasText: renamed })).toHaveCount(0)
+  })
+
+  test('row shows hint and aria uses Switch', async ({ page }) => {
+    const panel = page.locator('[data-testid="board-panel"]')
+    await panel.hover()
+    const row = panel.locator('.panel-item').nth(1)
+    await expect(row).toHaveAttribute('aria-label', /^Switch:/)
+    await row.hover()
+    await expect(row.locator('.panel-item-hint')).toHaveText('Click to switch')
   })
 
   test('keyboard interactions', async ({ page }) => {

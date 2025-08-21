@@ -36,6 +36,9 @@ import { emojiList } from '../../ui/unicodeEmoji.js'
  * @property {(action:string, id:string, ctx:any)=>void} [onItemAction]
  * @property {() => any} [context]
  * @property {{label:string,action:string}[]} [actions]
+ * @property {{label:string,action:string}?} [primaryAction]
+ * @property {{title:string,action:string,icon:string}?} [quickAddAction]
+ * @property {(item:SelectorItem)=>string} [selectVerb]
  * @property {{action:string,title:string,icon?:string}[]} [itemActions]
  * @property {(item:SelectorItem)=>{action:string,title:string,icon?:string}[]} [itemActionsFor]
 */
@@ -76,7 +79,7 @@ export class SelectorPanel {
 
   /** Render base DOM structure */
   render () {
-    const { root, testid, placeholder, showCount, countText } = this.cfg
+    const { root, testid, placeholder, showCount, countText, primaryAction, quickAddAction } = this.cfg
     root.innerHTML = ''
 
     const wrap = document.createElement('div')
@@ -117,10 +120,28 @@ export class SelectorPanel {
 
     wrap.append(arrow, label, input)
     if (count) wrap.append(count)
+    const quick = quickAddAction ? document.createElement('button') : null
+    if (quick) {
+      quick.type = 'button'
+      quick.className = 'panel-quick-add'
+      quick.title = quickAddAction.title
+      quick.setAttribute('aria-label', quickAddAction.title)
+      quick.textContent = quickAddAction.icon
+      wrap.append(quick)
+    }
+    const cta = primaryAction ? document.createElement('button') : null
+    if (cta) {
+      cta.type = 'button'
+      cta.className = 'panel-cta'
+      cta.textContent = primaryAction.label
+      cta.title = primaryAction.label
+      cta.setAttribute('aria-label', primaryAction.label)
+      wrap.append(cta)
+    }
     wrap.appendChild(content)
     root.appendChild(wrap)
 
-    this.dom = { root, wrap, input, arrow, label, count, content, list, side }
+    this.dom = { root, wrap, input, arrow, label, count, content, list, side, cta, quick }
   }
 
   /** Bind DOM events */
@@ -210,6 +231,26 @@ export class SelectorPanel {
     }
     this.dom.list.addEventListener('keydown', onListKeydown)
 
+    if (this.dom.cta) {
+      const act = this.cfg.primaryAction?.action || ''
+      const onClick = () => this.dispatchAction(act)
+      const onKey = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }
+      this.dom.cta.addEventListener('click', onClick)
+      this.dom.cta.addEventListener('keydown', onKey)
+      this.handlers.onCta = onClick
+      this.handlers.onCtaKey = onKey
+    }
+
+    if (this.dom.quick) {
+      const act = this.cfg.quickAddAction?.action || ''
+      const onClick = () => this.dispatchAction(act)
+      const onKey = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }
+      this.dom.quick.addEventListener('click', onClick)
+      this.dom.quick.addEventListener('keydown', onKey)
+      this.handlers.onQuick = onClick
+      this.handlers.onQuickKey = onKey
+    }
+
     // close on modal open/close
     this.handlers.onModalOpen = () => {
       const active = document.activeElement
@@ -234,7 +275,7 @@ export class SelectorPanel {
 
   /** Refresh list and counts */
   refresh () {
-    const { getItems, showCount, countText, labelText, actions: topActions = [], itemActions = [], itemActionsFor } = this.cfg
+    const { getItems, showCount, countText, labelText, actions: topActions = [], itemActions = [], itemActionsFor, primaryAction, quickAddAction, selectVerb } = this.cfg
 
     if (this.dom.label) {
       if (typeof labelText === 'function') {
@@ -264,8 +305,26 @@ export class SelectorPanel {
     this.dom.list.innerHTML = ''
     this.dom.side.innerHTML = ''
 
-    // First row: actions trigger + side content (if any actions are configured)
-    if (topActions.length) {
+    const items = getItems()
+    const actions = items.length === 0 ? [] : topActions
+    const hasCreate = actions.some(a => a.action === 'create' || a.action === 'new')
+    const onlyCreate = actions.length === 1 && hasCreate
+
+    if (this.dom.cta) {
+      this.dom.cta.style.display = onlyCreate ? '' : 'none'
+      if (primaryAction) this.dom.cta.textContent = primaryAction.label
+    }
+    if (this.dom.quick) {
+      this.dom.quick.style.display = (actions.length > 1 && hasCreate && quickAddAction) ? '' : 'none'
+      if (quickAddAction) {
+        this.dom.quick.title = quickAddAction.title
+        this.dom.quick.setAttribute('aria-label', quickAddAction.title)
+        this.dom.quick.textContent = quickAddAction.icon
+      }
+    }
+
+    // First row: actions trigger + side content
+    if (actions.length > 0 && !onlyCreate) {
       const trigger = document.createElement('div')
       trigger.className = 'panel-item panel-actions-trigger'
       trigger.dataset.testid = 'panel-actions-trigger'
@@ -276,7 +335,7 @@ export class SelectorPanel {
       trigger.addEventListener('mouseenter', this.hoverFns.enter)
       trigger.addEventListener('mouseleave', this.hoverFns.leave)
 
-      for (const a of topActions) {
+      for (const a of actions) {
         const b = document.createElement('button')
         b.type = 'button'
         b.className = 'panel-action'
@@ -286,18 +345,54 @@ export class SelectorPanel {
       }
     }
 
-    const items = getItems()
+    if (items.length === 0) {
+      if (primaryAction) {
+        const empty = document.createElement('div')
+        empty.className = 'panel-empty'
+        const thing = primaryAction.label.replace(/^New\s+/i, '')
+        const plural = thing.endsWith('s') ? thing : thing + 's'
+        const title = document.createElement('div')
+        title.className = 'panel-empty-title'
+        title.textContent = `No ${plural} yet`
+        const btn = document.createElement('button')
+        btn.type = 'button'
+        btn.className = 'panel-cta'
+        btn.textContent = `+ ${primaryAction.label}`
+        btn.title = primaryAction.label
+        btn.setAttribute('aria-label', primaryAction.label)
+        btn.addEventListener('click', () => this.dispatchAction(primaryAction.action))
+        btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.dispatchAction(primaryAction.action) } })
+        empty.append(title, btn)
+        this.dom.list.appendChild(empty)
+      }
+      return
+    }
+
     for (const it of items) {
       const row = document.createElement('div')
       row.className = 'panel-item'
       row.dataset.id = it.id
       row.dataset.filterable = normalize(`${it.label} ${it.meta || ''}`)
       row.tabIndex = 0
+      row.setAttribute('role', 'button')
+      if (typeof selectVerb === 'function') {
+        const verbTxt = selectVerb(it)
+        const aria = `${verbTxt}: ${it.label}`
+        row.setAttribute('aria-label', aria)
+        row.title = aria
+      }
 
       const left = document.createElement('span')
       left.className = 'panel-item-label'
       left.textContent = it.label
       row.appendChild(left)
+
+      const hint = document.createElement('span')
+      hint.className = 'panel-item-hint'
+      hint.setAttribute('aria-hidden', 'true')
+      const hv = typeof selectVerb === 'function' ? selectVerb(it) : 'Select'
+      hint.textContent = `Click to ${hv.toLowerCase()}`
+      row.appendChild(hint)
 
       if (it.meta) {
         const meta = document.createElement('span')
@@ -306,16 +401,15 @@ export class SelectorPanel {
         row.appendChild(meta)
       }
 
-      // inline actions on the right
-      const actions = typeof itemActionsFor === 'function' ? itemActionsFor(it) : itemActions
-      if (actions.length) {
+      const actionsFor = typeof itemActionsFor === 'function' ? itemActionsFor(it) : itemActions
+      if (actionsFor.length) {
         const acts = document.createElement('span')
         acts.className = 'panel-item-actions'
         const iconMap = {
           rename: emojiList.edit.unicode,
-          delete: emojiList.noEntry.unicode
+          delete: emojiList.cross.unicode
         }
-        for (const a of actions) {
+        for (const a of actionsFor) {
           const b = document.createElement('button')
           b.type = 'button'
           b.className = 'panel-item-icon'
@@ -399,7 +493,7 @@ export class SelectorPanel {
 
   /** Unbind all event listeners */
   destroy () {
-    const { wrap, content, side, list, input } = this.dom
+    const { wrap, content, side, list, input, cta, quick } = this.dom
     wrap.removeEventListener('mouseenter', this.handlers.onEnter)
     wrap.removeEventListener('mouseleave', this.handlers.onLeave)
     content.removeEventListener('mouseenter', this.handlers.onEnter)
@@ -411,6 +505,10 @@ export class SelectorPanel {
     list.removeEventListener('click', this.handlers.onListClick)
     side.removeEventListener('click', this.handlers.onSideClick)
     list.removeEventListener('keydown', this.handlers.onListKeydown)
+    cta?.removeEventListener('click', this.handlers.onCta)
+    cta?.removeEventListener('keydown', this.handlers.onCtaKey)
+    quick?.removeEventListener('click', this.handlers.onQuick)
+    quick?.removeEventListener('keydown', this.handlers.onQuickKey)
     document.removeEventListener('modal:open', this.handlers.onModalOpen)
     document.removeEventListener('modal:close', this.handlers.onModalClose)
   }

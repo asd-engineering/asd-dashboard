@@ -76,14 +76,17 @@ export function mountViewControl () {
       refresh()
       if (bId) updateViewSelector(bId)
     },
+    primaryAction: { label: 'New View', action: 'create' },
+    quickAddAction: { title: 'New View', action: 'create', icon: emojiList.plus.unicode },
     actions: [
       { label: 'New View', action: 'create' },
       { label: 'Reset View', action: 'reset' }
     ],
     itemActionsFor: () => [
       { action: 'rename', title: 'Rename view', icon: emojiList.edit.unicode },
-      { action: 'delete', title: 'Delete view', icon: emojiList.noEntry.unicode }
-    ]
+      { action: 'delete', title: 'Delete view', icon: emojiList.cross.unicode }
+    ],
+    selectVerb: () => 'Switch'
   })
 
   /** Refresh panel items */
