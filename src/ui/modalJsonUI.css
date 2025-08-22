@@ -143,17 +143,21 @@
 }
 
 /* Subtabs inside JsonForm */
-.jf-subtabs {
+.modal .jf-subtabs {
   display: flex;
   gap: 0.25rem;
   margin: 0.25rem 0 0.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fff;
 }
-.jf-subtabs button {
+.modal .jf-subtabs button {
   padding: 0.35rem 0.5rem;
   border: 1px solid #d0d0d0;
   background: #f2f2f2;
 }
-.jf-subtabs button.active {
+.modal .jf-subtabs button.active {
   background: #e7e7e7;
   font-weight: 600;
 }

@@ -30,6 +30,7 @@ test.describe('config consistency', () => {
     await page.click('#config-modal .modal__btn--cancel')
     const stored = await getUnwrappedConfig(page)
     expect(stored.boards).toEqual(cfg.boards)
+    expect(typeof stored.boards[0].order).toBe('number')
   })
 
   test('saving config without boards removes boards storage', async ({ page }) => {

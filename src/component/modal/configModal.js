@@ -13,7 +13,7 @@ import { DEFAULT_CONFIG_TEMPLATE } from '../../storage/defaultConfig.js'
 import { exportConfig } from '../configModal/exportConfig.js'
 import { openFragmentDecisionModal } from './fragmentDecisionModal.js'
 import { JsonForm } from '../utils/json-form.js'
-import { JSON_FORM_ARRAY_DEFAULTS, JSON_FORM_TEMPLATES, JSON_FORM_PLACEHOLDERS } from '../utils/json-form-defaults.js'
+import { DEFAULT_TEMPLATES, DEFAULT_PLACEHOLDERS } from '../utils/json-form-defaults.js'
 
 /** @typedef {import('../../types.js').DashboardConfig} DashboardConfig */
 
@@ -45,16 +45,15 @@ export async function openConfigModal () {
 
             const toggle = document.createElement('button')
             toggle.textContent = 'JSON mode'
-            toggle.classList.add('modal__btn', 'modal__btn--toggle')
+            toggle.classList.add('modal__btn', 'modal__btn--toggle', 'modal__toggle')
 
             const formDiv = document.createElement('div')
             formDiv.id = 'config-form'
             formDiv.classList.add('modal__jsonform')
             cfgForm = new JsonForm(formDiv, configData, {
               topLevelTabs: { enabled: true, order: ['globalSettings', 'boards', 'serviceTemplates', 'styling'] },
-              templates: JSON_FORM_TEMPLATES,
-              placeholders: JSON_FORM_PLACEHOLDERS,
-              defaultResolver: (_parent, key) => JSON_FORM_ARRAY_DEFAULTS[key]
+              templates: DEFAULT_TEMPLATES,
+              placeholders: DEFAULT_PLACEHOLDERS
             })
 
             const textarea = document.createElement('textarea')
@@ -95,13 +94,15 @@ export async function openConfigModal () {
 
             const toggle = document.createElement('button')
             toggle.textContent = 'JSON mode'
-            toggle.classList.add('modal__btn', 'modal__btn--toggle')
+            toggle.classList.add('modal__btn', 'modal__btn--toggle', 'modal__toggle')
 
             const formDiv = document.createElement('div')
             formDiv.id = 'services-form'
             formDiv.classList.add('modal__jsonform', 'modal__textarea--grow')
             svcForm = new JsonForm(formDiv, StorageManager.getServices(), {
-              defaultResolver: (_parent, key) => JSON_FORM_ARRAY_DEFAULTS[key || 'services']
+              templates: DEFAULT_TEMPLATES,
+              placeholders: DEFAULT_PLACEHOLDERS,
+              rootPath: 'services'
             })
 
             const textarea = document.createElement('textarea')
