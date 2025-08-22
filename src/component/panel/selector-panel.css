@@ -43,7 +43,7 @@
 /* Menu wrapper */
 .menu { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
 .menu-item { position: relative; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
-.menu-item:hover { background: #f6f8fa; }
+.menu-item.hover-active { background: #f6f8fa; }
 .menu-item:focus { outline: 2px solid #2684ff; outline-offset: 2px; }
 
 /* --- PANEL LIST + ITEMS --- */
@@ -66,7 +66,7 @@
   border-radius: 4px;
   cursor: pointer;
 }
-.panel-item:hover { background: #f6f8fa; }
+.panel-item.hover-active { background: #f6f8fa; }
 .panel-item[hidden] { display: none !important; }
 
 .panel-item-label { font-weight: 400; text-decoration: none; }
@@ -76,7 +76,7 @@
 .panel-item-actions-placeholder { display: none !important; }
 
 /* Subtle affordance on hover/focus */
-.panel-item:hover .panel-item-label,
+.panel-item.hover-active .panel-item-label,
 .panel-item:focus-within .panel-item-label { text-decoration: underline; text-underline-offset: 2px; }
 
 /* -----------------------------------------------------------
@@ -112,9 +112,9 @@
 }
 
 /* Reveal on hover/focus: add the second row (panel-item context) */
-.panel-item:hover > .panel-item-hint,
+.panel-item.hover-active > .panel-item-hint,
 .panel-item:focus-within > .panel-item-hint { display: block; opacity: 1; }
-.panel-item:hover > .panel-item-actions-flyout,
+.panel-item.hover-active > .panel-item-actions-flyout,
 .panel-item:focus-within > .panel-item-actions-flyout { display: inline-flex; opacity: 1; }
 
 /* Icon-only buttons INSIDE panel items: bigger, borderless, no green */
@@ -149,7 +149,7 @@
 }
 
 /* Show both buttons on hover/focus of the menu row */
-.menu-item:hover .panel-item-actions-flyout,
+.menu-item.hover-active .panel-item-actions-flyout,
 .menu-item:focus-within .panel-item-actions-flyout {
   display: inline-flex;
   opacity: 1;

@@ -1,5 +1,6 @@
 // @ts-check
 import { emojiList } from '../../ui/unicodeEmoji.js'
+import { installHoverIntent } from './selector-hover-intent.js'
 /**
  * Generic selector panel with compact top menu and per-row flyout actions.
  *
@@ -89,6 +90,12 @@ export class SelectorPanel {
     this.render()
     this.bind()
     this.refresh()
+    this.hoverIntent = installHoverIntent({
+      root: this.dom.wrap,
+      selector: '.panel-item, .menu-item',
+      delay: 50,
+      activeClass: 'hover-active'
+    })
   }
 
   /** Render base DOM structure */
