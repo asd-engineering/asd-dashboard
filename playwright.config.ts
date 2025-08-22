@@ -22,7 +22,7 @@ export default defineConfig({
   // Faster feedback and less spend minutes in Githun Actions
   timeout: 10000, // Timeout for each test (in milliseconds) default is 30000
   expect: {
-      timeout: 4000, // Timeout for `expect` assertions
+      timeout: 500, // Timeout for `expect` assertions
   },
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
