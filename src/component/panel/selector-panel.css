@@ -8,6 +8,7 @@
   border: 1px solid #ddd;
   border-radius: 4px;
   background: #fff;
+  z-index: 100;
 }
 .panel-arrow { margin-left: 4px; }
 .panel-label {
@@ -66,7 +67,7 @@
 .panel-item[hidden] { display: none !important; }
 
 .panel-item-label { font-weight: 400; text-decoration: none; }
-.panel-item-meta  { opacity: .7; font-size: 12px; justify-self: end; white-space: nowrap; }
+.panel-item-meta  { opacity: .7; font-size: 14px; justify-self: end; white-space: nowrap; }
 
 /* Remove legacy spacer to reclaim width */
 .panel-item-actions-placeholder { display: none !important; }
