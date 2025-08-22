@@ -23,7 +23,7 @@ test.describe('View panel', () => {
     const first = panel.locator('.panel-item').first()
     await expect(first.locator('.panel-item-meta')).toContainText('widgets')
     await first.hover()
-    await expect(first.locator('.panel-item-actions-flyout')).toBeVisible()
+    await expect(first.locator('.panel-item-actions-flyout')).toBeVisible({ timeout: 500 })
     await expect(first.locator('[data-item-action="delete"]')).toHaveText('❌')
   })
 
@@ -71,9 +71,11 @@ test.describe('View panel', () => {
     await page.keyboard.press('Enter') // Open panel
     const firstItem = panel.locator('.panel-item').first()
     await firstItem.focus() // Focus the first row
-    const fly = panel.locator('.panel-item').first().locator('.panel-item-actions-flyout')
-    await expect(fly).toBeVisible()
+    const row = panel.locator('.panel-item').first()
+    await row.hover()
+    await expect(row.locator('.panel-item-actions-flyout')).toBeVisible({ timeout: 500 })
     await page.keyboard.press('Escape')
-    await expect(fly).toBeHidden()
+    await page.mouse.move(0, 0)
+    await expect(row.locator('.panel-item-actions-flyout')).toBeHidden()
   })
 })

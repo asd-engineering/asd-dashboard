@@ -30,12 +30,12 @@ test.describe('Service panel', () => {
     const panel = page.locator('[data-testid="service-panel"]')
     await ensurePanelOpen(page, 'service-panel')
 
-    const first = panel.locator('.panel-item').nth(0) 
+    const first = panel.locator('.panel-item').nth(0)
     const second = panel.locator('.panel-item').nth(1)
 
     await first.hover()
-    await expect(first.locator('.panel-item-actions-flyout')).toBeVisible()
-    await expect(first.locator('[data-item-action="navigate"]')).toHaveCount(1) 
+    await expect(first.locator('.panel-item-actions-flyout')).toBeVisible({ timeout: 500 })
+    await expect(first.locator('[data-item-action="navigate"]')).toHaveCount(1)
 
     await second.hover()
     await expect(first.locator('.panel-item-actions-flyout')).toBeHidden()

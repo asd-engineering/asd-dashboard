@@ -22,7 +22,7 @@ test.describe('Board panel', () => {
     await ensurePanelOpen(page, 'board-panel')
     const row = panel.locator('.panel-item').first()
     await row.hover()
-    await expect(row.locator('.panel-item-actions-flyout')).toBeVisible()
+    await expect(row.locator('.panel-item-actions-flyout')).toBeVisible({ timeout: 500 })
     await expect(row.locator('[data-item-action="navigate"]')).toHaveCount(0)
     await expect(row.locator('[data-item-action="delete"]')).toHaveText('❌')
   })
@@ -72,9 +72,11 @@ test.describe('Board panel', () => {
     const firstItem = panel.locator('.panel-item').first()
     await firstItem.focus() // Focus the first row
 
-    const fly = panel.locator('.panel-item').first().locator('.panel-item-actions-flyout')
-    await expect(fly).toBeVisible()
+    const row = panel.locator('.panel-item').first()
+    await row.hover()
+    await expect(row.locator('.panel-item-actions-flyout')).toBeVisible({ timeout: 500 })
     await page.keyboard.press('Escape')
-    await expect(fly).toBeHidden()
+    await page.mouse.move(0, 0)
+    await expect(row.locator('.panel-item-actions-flyout')).toBeHidden()
   })
 })

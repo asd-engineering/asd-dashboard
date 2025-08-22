@@ -16,5 +16,7 @@ export async function openCreateFromTopMenu (page: Page, panelTestId: 'service-p
   }
   const submenu = menu.locator('.menu-item').first()
   await submenu.hover()
-  await submenu.locator('.panel-item-actions-flyout button', { hasText: label }).first().click()
+  const actionBtn = submenu.locator('.panel-item-actions-flyout button', { hasText: label }).first()
+  await expect(actionBtn).toBeVisible({ timeout: 500 })
+  await actionBtn.click()
 }
