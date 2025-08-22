@@ -1,4 +1,4 @@
-/* SelectorPanel styles */
+/* Dropdown shell (unchanged essentials) */
 .dropdown.panel {
   position: relative;
   display: inline-flex;
@@ -20,70 +20,120 @@
 }
 .panel-search { border: none; outline: none; width: 220px; }
 .panel-count { margin-left: auto; font-size: 12px; opacity: 0.75; }
-.dropdown.panel .dropdown-content { position: absolute; top: 100%; left: 0; min-width: 340px; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 8px; display: none; box-shadow: 0 6px 24px rgba(0,0,0,.12); z-index: 20; }
+.dropdown.panel .dropdown-content {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 340px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px;
+  display: none;
+  box-shadow: 0 6px 24px rgba(0,0,0,.12);
+  z-index: 20;
+  overflow: visible;
+}
 .dropdown.panel.open .dropdown-content { display: block; }
 
+/* Menu wrapper */
 .menu { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
 .menu-item { position: relative; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
 .menu-item:hover { background: #f6f8fa; }
 .menu-item:focus { outline: 2px solid #2684ff; outline-offset: 2px; }
 
+/* --- PANEL LIST + ITEMS --- */
 .panel-list { display: flex; flex-direction: column; gap: 6px; }
-.panel-item { position: relative; display: grid; grid-template-columns: 1fr auto var(--actions-width,72px); gap: 6px; align-items: center; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
-.panel-item[hidden] { display: none !important; }
-.panel-item:hover { background: #f6f8fa; }
-.panel-item-label { font-weight: 400; text-decoration: none; }
-.panel-item-meta { opacity: .7; font-size: 12px; }
-.panel-item-actions-placeholder { width: var(--actions-width,72px); height: 1px; }
-.panel-item-hint {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  right: calc(var(--actions-width,72px) + 6px);
-  opacity: 0;
-  font-size: 12px;
-  color: #6b7280;
-  transition: opacity .15s ease;
-  pointer-events: none;
-}
-.panel-item:hover .panel-item-hint,
-.panel-item:focus-within .panel-item-hint { opacity: 1; }
 
-.panel-item-actions-flyout {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  transform: translateY(-50%);
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 4px;
-  display: none;
-  gap: 6px;
-  box-shadow: 0 6px 24px rgba(0,0,0,.12);
-}
-.panel-item:hover .panel-item-actions-flyout,
-.panel-item:focus-within .panel-item-actions-flyout,
-.menu-item:hover .panel-item-actions-flyout,
-.menu-item:focus-within .panel-item-actions-flyout { display: flex; }
+/* IMPORTANT: remove the reserved actions column; keep only label + count */
+/* Compact list at rest */
+.panel-list { display: flex; flex-direction: column; row-gap: 4px; }
 
-.panel-item-actions-flyout button,
-.panel-item-icon {
-  background: none;
-  border: none;
-  padding: 0.2rem;
+/* Two columns: label | right-aligned count */
+.panel-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr max-content;
+  grid-auto-rows: auto;
+  column-gap: 6px;
+  row-gap: 2px;               /* minimal vertical gap at rest */
+  align-items: center;
+  padding: 6px 8px;
   border-radius: 4px;
-  font-size: 1rem;
   cursor: pointer;
-  transition: transform 0.2s ease, background-color 0.2s ease;
 }
-.panel-item-actions-flyout button:hover,
-.panel-item-icon:hover { background-color: rgba(0,0,0,0.06); transform: translateY(-1px); }
+.panel-item:hover { background: #f6f8fa; }
+.panel-item[hidden] { display: none !important; }
 
+.panel-item-label { font-weight: 400; text-decoration: none; }
+.panel-item-meta  { opacity: .7; font-size: 12px; justify-self: end; white-space: nowrap; }
+
+/* Remove legacy spacer to reclaim width */
+.panel-item-actions-placeholder { display: none !important; }
+
+/* Subtle affordance on hover/focus */
 .panel-item:hover .panel-item-label,
 .panel-item:focus-within .panel-item-label { text-decoration: underline; text-underline-offset: 2px; }
 
-.panel-empty { text-align: center; padding: 20px 0; }
-.panel-empty-title { margin-bottom: 12px; }
-.panel-empty-cta { padding: 8px 12px; border: 1px solid #e5e7eb; background: #ffffff; border-radius: 6px; cursor: pointer; transition: background-color .15s ease, transform .15s ease; }
-.panel-empty-cta:hover { background: #f6f8fa; transform: translateY(-1px); }
+/* -----------------------------------------------------------
+   EXPANSION ROW (hint + actions) – hidden at rest, no layout
+   ----------------------------------------------------------- */
+.panel-item-hint,
+.panel-item-actions-flyout {
+  display: none;              /* IMPORTANT: no reserved space at rest */
+  opacity: 0;
+}
+
+/* Position them into a new grid row when shown */
+.panel-item-hint {
+  grid-column: 1 / 2;         /* left under label */
+  grid-row: 2;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.panel-item-actions-flyout {
+  grid-column: 2 / 3;         /* right under count */
+  grid-row: 2;
+  justify-self: end;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+/* Reveal on hover/focus: add the second row */
+.panel-item:hover .panel-item-hint,
+.panel-item:focus-within .panel-item-hint { display: block; opacity: 1; }
+.panel-item:hover .panel-item-actions-flyout,
+.panel-item:focus-within .panel-item-actions-flyout { display: inline-flex; opacity: 1; }
+
+/* Icon-only buttons: bigger, borderless, no green */
+.panel-item-actions-flyout button,
+.panel-item-icon {
+  appearance: none;
+  background: transparent !important;
+  border: 0;
+  padding: 2px;
+  line-height: 1;
+  border-radius: 4px;
+  font-size: 1.4rem;          /* slightly bigger */
+  cursor: pointer;
+  transition: transform .15s ease, background-color .15s ease;
+}
+.panel-item-actions-flyout button:hover,
+.panel-item-icon:hover {
+  background-color: rgba(0,0,0,0.06);
+  transform: translateY(-1px);
+}
+
+/* Accessibility */
+.panel-item:focus { outline: 2px solid #2684ff; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .panel-item-actions-flyout button, .panel-item-icon { transition: none; }
+}

@@ -1,11 +1,12 @@
 import { type Page, expect } from "@playwright/test";
+import { ensurePanelOpen } from './panels'
 
-export async function ensurePanelOpen(page: Page) {
-  // Triggers a test-only hook in the app (if present) to open the panel,
-  // then waits for the CSS "open" state to be applied.
-  await page.evaluate(() => (window as any).__openWidgetPanel?.());
-  await page.waitForSelector('[data-testid="service-panel"].open');
-}
+// export async function ensurePanelOpen(page: Page) {
+//   // Triggers a test-only hook in the app (if present) to open the panel,
+//   // then waits for the CSS "open" state to be applied.
+//   await page.evaluate(() => (window as any).__openWidgetPanel?.());
+//   await page.waitForSelector('[data-testid="service-panel"].open');
+// }
 
 // Helper function to add services via the widget selector panel
 /**
@@ -13,11 +14,11 @@ export async function ensurePanelOpen(page: Page) {
  * Skips index 0 if it’s a placeholder/search row.
  */
 export async function addServices(page: Page, count: number) {
-  await ensurePanelOpen(page);
+  await ensurePanelOpen(page, 'service-panel')
   // If your panel requires an explicit toggle click to render items, uncomment:
   // await page.click("#widget-dropdown-toggle");
   for (let i = 0; i < count; i++) {
-    await page.locator('[data-testid="service-panel"] .panel-item').nth(i + 1).click();
+    await page.locator('[data-testid="service-panel"] .panel-item').nth(i).click();
   }
 }
 
@@ -25,7 +26,7 @@ export async function addServices(page: Page, count: number) {
  * Select a service by its label using the widget selector panel.
  */
 export async function selectServiceByName(page: Page, serviceName: string) {
-  await ensurePanelOpen(page);
+  await ensurePanelOpen(page, 'service-panel')
   // If a toggle is needed in your build, uncomment:
   // await page.click("#widget-dropdown-toggle");
   await page.click(`[data-testid="service-panel"] .panel-item:has-text("${serviceName}")`);

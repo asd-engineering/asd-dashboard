@@ -19,6 +19,18 @@ body {
     overflow: auto;
 }
 
+menu::before {
+    content: "";
+    display: block;
+    width: 34px;
+    height: 36px;
+    background-image: url("/asd.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    padding: 20px;
+}
+
 header {
     background-color: #4CAF50;
     color: white;

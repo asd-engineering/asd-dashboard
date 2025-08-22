@@ -42,7 +42,13 @@ export function openEvictionModal (widgets) {
           const service = el.dataset.service || ''
           const key = service.toLowerCase().split('asd-')[1] || service.toLowerCase()
           const emoji = emojiList[key]?.unicode || '🧱'
-          const label = `${emoji} ${service} – ${title}`
+
+          let friendlyName = title
+          if (title === id && service) {
+            friendlyName = service
+          }
+          const label = `${emoji} ${friendlyName}`
+
           const opt = document.createElement('option')
           opt.value = id
           opt.textContent = label

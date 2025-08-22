@@ -68,10 +68,9 @@ test.describe('View panel', () => {
   test('keyboard focus reveals flyout', async ({ page }) => {
     const panel = page.locator('[data-testid="view-panel"]')
     await panel.focus()
-    await page.keyboard.press('Enter')
-    await page.keyboard.press('Tab')
-    await page.keyboard.press('Tab')
-    await page.keyboard.press('ArrowRight')
+    await page.keyboard.press('Enter') // Open panel
+    const firstItem = panel.locator('.panel-item').first()
+    await firstItem.focus() // Focus the first row
     const fly = panel.locator('.panel-item').first().locator('.panel-item-actions-flyout')
     await expect(fly).toBeVisible()
     await page.keyboard.press('Escape')

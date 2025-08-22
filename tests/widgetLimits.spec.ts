@@ -4,7 +4,7 @@ import { ciConfig } from "./data/ciConfig";
 import { ciServices } from "./data/ciServices";
 import { getUnwrappedConfig, navigate } from "./shared/common";
 import { waitForWidgetStoreIdle } from "./shared/state.js";
-import { ensurePanelOpen } from "./shared/common";
+import { ensurePanelOpen } from "./shared/panels";
 
 async function routeLimits(page, boards, services, maxSize = 2, configOverrides = {}) {
   await page.route("**/services.json", (route) =>
@@ -31,26 +31,11 @@ test.describe("Widget limits", () => {
       {
         id: "b1",
         name: "B1",
-        order: 0,
-        views: [
-          {
-            id: "v1",
-            name: "V1",
-            widgetState: [
-              {
-                order: "0",
-                url: "http://localhost:8000/asd/toolbox",
-                type: "web",
-                dataid: "W1",
-              },
-            ],
-          },
-        ],
+        views: [{ id: "v1", name: "V1", widgetState: [{ /* ... widget ... */ }] }],
       },
       {
         id: "b2",
         name: "B2",
-        order: 1,
         views: [{ id: "v2", name: "V2", widgetState: [] }],
       },
     ];
@@ -60,17 +45,27 @@ test.describe("Widget limits", () => {
 
     await routeLimits(page, boards, services, 5);
     await navigate(page, "/");
-
     await page.locator(".widget-wrapper").first().waitFor();
-    await ensurePanelOpen(page);
 
-    await page.locator('[data-testid="board-panel"]').hover();
+    // 1. Open the board panel and switch to B2
+    await ensurePanelOpen(page, 'board-panel');
     await page.locator('[data-testid="board-panel"] .panel-item', { hasText: 'B2' }).click();
+
+    // 2. Wait for the board switch to be fully complete.
+    // This is the crucial step to prevent the race condition.
+    await expect(page.locator('.board')).toHaveId('b2');
+
+    // 3. Now that the UI is stable, re-open the service panel to interact with it.
+    await ensurePanelOpen(page, 'service-panel');
+    
+    // 4. This click should now succeed. The test expects this to trigger a navigation
+    // back to B1 because the instance limit is reached.
     await page.click('[data-testid="service-panel"] .panel-item:has-text("ASD-toolbox")');
 
-    await page.waitForFunction(
-      () => document.querySelectorAll(".widget-wrapper").length === 1
-    );
+    // 5. Assert that the navigation back to B1 happened and the widget is visible.
+    await expect(page.locator('.board')).toHaveId('b1');
+    await expect(page.locator('.widget-wrapper')).toHaveCount(1);
+    await expect(page.locator('.widget-wrapper[data-dataid="W1"]')).toBeVisible();
   });
 
   test("evicts selected widget when store is full", async ({ page }) => {
@@ -96,7 +91,7 @@ test.describe("Widget limits", () => {
     await navigate(page, "/");
 
     await page.locator(".widget-wrapper").first().waitFor();
-    await ensurePanelOpen(page);
+    await ensurePanelOpen(page, 'service-panel')
 
     await page.click('[data-testid="service-panel"] .panel-item:has-text("ASD-terminal")');
 
@@ -126,7 +121,7 @@ test.describe("Widget limits", () => {
     await routeLimits(page, boards, services, 5);
     await navigate(page, "/");
     await page.waitForSelector('[data-testid="service-panel"]');
-    await ensurePanelOpen(page);
+    await ensurePanelOpen(page, 'service-panel')
 
     await page.evaluate(async () => {
       const { addWidget } = await import("/component/widget/widgetManagement.js");
@@ -180,7 +175,7 @@ test.describe("Widget limits", () => {
 
     await routeLimits(page, boards, services, 5);
     await navigate(page, "/");
-    await ensurePanelOpen(page);
+    await ensurePanelOpen(page, 'service-panel')
 
     await page.evaluate(() => document.dispatchEvent(new CustomEvent('state-change', { detail: { reason: 'services' } })));
 

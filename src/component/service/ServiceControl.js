@@ -108,10 +108,29 @@ export function mountServiceControl () {
       const svc = (StorageManager.getServices() || []).find(s => s.id === id)
       if (!svc) return
       const resolved = resolveServiceConfig(svc)
+
+      const instances = countServiceInstances(resolved.id)
+      const max = resolved.maxInstances
+
+      // If the service's instance limit is met or exceeded...
+      if (typeof max === 'number' && instances >= max) {
+        const location = findServiceLocation(resolved.id)
+        if (location) {
+          // ...navigate to the existing widget instead of adding a new one.
+          await switchBoard(location.boardId, location.viewId)
+          showNotification(`Limit reached. Navigated to existing "${resolved.name}" widget.`, 3000, 'success')
+        } else {
+          showNotification(`Limit for "${resolved.name}" reached, but existing widget could not be located.`, 4000, 'error')
+        }
+        return // IMPORTANT: Stop execution here.
+      }
+
+      // This code will now only run if the instance limit has not been reached
       await addWidget(resolved.url, 1, 1, 'iframe', getCurrentBoardId(), getCurrentViewId())
       emitStateChange('services')
       panel.refresh()
     },
+
     onAction: async (action) => {
       if (action === 'create') {
         const mod = await import('../modal/saveServiceModal.js')

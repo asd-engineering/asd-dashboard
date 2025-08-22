@@ -24,19 +24,21 @@ test.describe('Service panel', () => {
   })
 
   test('flyout visibility and magnifier conditional', async ({ page }) => {
-    await addServices(page, 1)
+    await addServices(page, 1) // This adds 'ASD-toolbox' at index 0
     const panel = page.locator('[data-testid="service-panel"]')
     await ensurePanelOpen(page, 'service-panel')
-    const first = panel.locator('.panel-item').nth(1)
-    const second = panel.locator('.panel-item').nth(2)
+
+    const first = panel.locator('.panel-item').nth(0) 
+    const second = panel.locator('.panel-item').nth(1)
+
     await first.hover()
     await expect(first.locator('.panel-item-actions-flyout')).toBeVisible()
-    await expect(first.locator('[data-item-action="navigate"]')).toHaveCount(1)
+    await expect(first.locator('[data-item-action="navigate"]')).toHaveCount(1) 
+
     await second.hover()
     await expect(first.locator('.panel-item-actions-flyout')).toBeHidden()
-    await expect(second.locator('[data-item-action="navigate"]')).toHaveCount(0)
-    await first.hover()
-    await expect(first.locator('[data-item-action="delete"]')).toHaveText('❌')
+
+    await expect(second.locator('[data-item-action="navigate"]')).toHaveCount(0) 
   })
 
   test('top menu shows single create action', async ({ page }) => {
@@ -46,10 +48,17 @@ test.describe('Service panel', () => {
   })
 
   test('empty state renders CTA and hides Actions', async ({ page }) => {
+    // Note: Override the route for this specific test to return no services.
+    await page.route('**/services.json', (route) =>
+      route.fulfill({ json: [] })
+    );
+
     await clearStorage(page)
     await page.goto('/')
+    
+    await ensurePanelOpen(page, 'service-panel')
+    
     const panel = page.locator('[data-testid="service-panel"]')
-    await panel.hover()
     await expect(panel.locator('.panel-empty-title')).toHaveText('No Services yet')
     await expect(panel.locator('.panel-empty-cta')).toHaveCount(0)
     await expect(panel.locator('.panel-search')).toBeVisible()

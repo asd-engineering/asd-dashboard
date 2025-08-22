@@ -1,8 +1,8 @@
-import { test, expect } from './fixtures'
+import { test } from './fixtures'
 import { routeServicesConfig } from './shared/mocking.js'
 import { selectServiceByName, navigate } from './shared/common.js'
 import { bootWithDashboardState } from './shared/bootState.js'
-import { ensurePanelOpen } from './shared/common'
+import { ensurePanelOpen } from './shared/panels'
 
 const saved = [{ name: 'Saved Service', url: 'http://localhost/saved' }]
 
@@ -17,7 +17,7 @@ test.describe('Use saved service', () => {
     await selectServiceByName(page, saved[0].name);
     await page.goto('/')
     await page.waitForLoadState('domcontentloaded')
-    await ensurePanelOpen(page)
+    await ensurePanelOpen(page, 'service-panel')
   })
 
   // test('selects saved service and adds widget', async ({ page }) => {

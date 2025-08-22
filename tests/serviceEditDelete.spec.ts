@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
-import { ensurePanelOpen } from './shared/common'
+import { ensurePanelOpen } from './shared/panels'
 
 
 test.describe('Service Edit/Delete', () => {
@@ -8,7 +8,7 @@ test.describe('Service Edit/Delete', () => {
     await routeServicesConfig(page)
     await page.goto('/')
     await page.waitForLoadState('domcontentloaded')
-    await ensurePanelOpen(page)
+    await ensurePanelOpen(page, 'service-panel')
   })
 
   test('edit service updates list', async ({ page }) => {
