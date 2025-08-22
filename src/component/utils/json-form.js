@@ -1,4 +1,5 @@
 // @ts-check
+import { matchPattern } from './match-pattern.js'
 /**
  * Lightweight renderer to edit plain objects as HTML inputs.
  * Supports nested objects and arrays with add/remove controls.
@@ -6,17 +7,32 @@
  * @module json-form
  * @class JsonForm
  */
+
+/**
+ * Options for JsonForm rendering.
+ *
+ * @typedef {object} JsonFormOptions
+ * @property {{enabled:boolean, order?:string[], labels?:Record<string,string>}} [topLevelTabs]
+ * @property {Record<string, any>} [templates]
+ * @property {Record<string, string>} [placeholders]
+ * @property {string} [rootPath]
+ */
 export class JsonForm {
   /**
-   * @constructor
+   * Create a JsonForm instance.
+   *
    * @param {HTMLElement} container element that will host the form
    * @param {object} [data={}] initial object to render
-   * @param {{defaultResolver?:(parent?:object|Array, key?:string|number)=>*, arrayDefaults?:Record<string,*>}} [options] optional behavior overrides
+   * @param {JsonFormOptions} [options] optional behavior overrides
    */
   constructor (container, data = {}, options = {}) {
     this.container = container
-    this.defaultResolver = options.defaultResolver
-    this.arrayDefaults = options.arrayDefaults || {}
+    this.templates = options.templates || {}
+    this.placeholders = options.placeholders || {}
+    this.topLevelTabs = options.topLevelTabs
+    this.rootPath = options.rootPath || ''
+    /** @type {string|undefined} */
+    this.activeTab = undefined
     this.setValue(data)
   }
 
@@ -27,8 +43,49 @@ export class JsonForm {
    */
   setValue (data) {
     this.data = structuredClone(data)
+    const prevTab = this.activeTab
     this.container.innerHTML = ''
-    this.container.appendChild(this.#renderNode(this.data))
+
+    const tabsOpt = this.topLevelTabs
+    const keys = data && typeof data === 'object' ? Object.keys(data) : []
+    if (tabsOpt?.enabled && keys.length > 1) {
+      const order = Array.isArray(tabsOpt.order) ? tabsOpt.order : []
+      const labels = tabsOpt.labels || {}
+      const sorted = [...order.filter(k => keys.includes(k)), ...keys.filter(k => !order.includes(k))]
+      const tabBar = document.createElement('div')
+      tabBar.className = 'jf-subtabs'
+      const content = document.createElement('div')
+      this.container.append(tabBar, content)
+
+      this.activeTab = prevTab && keys.includes(prevTab) ? prevTab : sorted[0]
+
+      const render = () => {
+        content.innerHTML = ''
+        if (this.activeTab) {
+          content.appendChild(this.#renderSection(this.activeTab))
+        }
+        Array.from(tabBar.children).forEach(btn => {
+          const b = /** @type {HTMLButtonElement} */(btn)
+          b.classList.toggle('active', b.dataset.key === this.activeTab)
+        })
+      }
+
+      sorted.forEach(k => {
+        const btn = document.createElement('button')
+        btn.textContent = labels[k] || k
+        btn.dataset.key = k
+        btn.addEventListener('click', () => {
+          this.activeTab = k
+          render()
+        })
+        tabBar.appendChild(btn)
+      })
+
+      render()
+    } else {
+      this.activeTab = undefined
+      this.container.appendChild(this.#renderNode(this.data, undefined, undefined, this.rootPath))
+    }
   }
 
   /**
@@ -46,12 +103,23 @@ export class JsonForm {
    * @param {*} value
    * @param {object|Array} [parent]
    * @param {string|number} [key]
+   * @param {string} path
    * @returns {HTMLElement}
    */
-  #renderNode (value, parent, key) {
-    if (Array.isArray(value)) return this.#renderArray(value, parent, key)
-    if (value && typeof value === 'object') return this.#renderObject(value, parent, key)
-    return this.#renderPrimitive(value, parent, key)
+  #renderNode (value, parent, key, path = '') {
+    if (Array.isArray(value)) return this.#renderArray(value, parent, key, path)
+    if (value && typeof value === 'object') return this.#renderObject(value, parent, key, path)
+    return this.#renderPrimitive(value, parent, key, path)
+  }
+
+  /**
+   * Render selected top-level section.
+   *
+   * @param {string} key
+   * @returns {HTMLElement}
+   */
+  #renderSection (key) {
+    return this.#renderNode(this.data[key], this.data, key, key)
   }
 
   /**
@@ -60,16 +128,20 @@ export class JsonForm {
    * @param {object} obj
    * @param {object|Array|undefined} parent
    * @param {string|number|undefined} key
+   * @param {string} path
    * @returns {HTMLElement}
-   */
-  #renderObject (obj, parent, key) {
+  */
+  #renderObject (obj, parent, key, path) {
     const wrap = document.createElement('div')
+    wrap.className = 'jf-object'
     Object.keys(obj).forEach(k => {
+      const row = document.createElement('div')
+      row.className = 'jf-row'
       const label = document.createElement('label')
-      label.className = 'modal__label'
       label.textContent = k
-      wrap.appendChild(label)
-      wrap.appendChild(this.#renderNode(obj[k], obj, k))
+      row.appendChild(label)
+      row.appendChild(this.#renderNode(obj[k], obj, k, path ? path + '.' + k : k))
+      wrap.appendChild(row)
     })
     return wrap
   }
@@ -80,19 +152,20 @@ export class JsonForm {
    * @param {Array} arr
    * @param {object|Array|undefined} parent
    * @param {string|number|undefined} key
+   * @param {string} path
    * @returns {HTMLElement}
-   */
-  #renderArray (arr, parent, key) {
+  */
+  #renderArray (arr, parent, key, path) {
     const wrap = document.createElement('div')
+    wrap.className = 'jf-array'
     arr.forEach((item, i) => {
       const row = document.createElement('div')
-      row.style.display = 'flex'
-      row.style.alignItems = 'center'
-      row.style.gap = '0.25rem'
-      row.appendChild(this.#renderNode(item, arr, i))
+      row.className = 'jf-row'
+      row.appendChild(this.#renderNode(item, arr, i, path + '[' + i + ']'))
       const del = document.createElement('button')
       del.type = 'button'
       del.textContent = '−'
+      del.classList.add('array__remove')
       del.addEventListener('click', () => {
         arr.splice(i, 1)
         this.setValue(this.data)
@@ -103,8 +176,12 @@ export class JsonForm {
     const add = document.createElement('button')
     add.type = 'button'
     add.textContent = '+'
+    add.classList.add('array__add')
     add.addEventListener('click', () => {
-      arr.push(this.#defaultFor(arr[0], parent, key))
+      const itemPath = path + '[' + arr.length + ']'
+      let next = matchPattern(itemPath, this.templates)?.value
+      if (next === undefined) next = this.#blankFor(arr[0])
+      arr.push(next)
       this.setValue(this.data)
     })
     wrap.appendChild(add)
@@ -117,19 +194,25 @@ export class JsonForm {
    * @param {*} value
    * @param {object|Array} parent
    * @param {string|number} key
+   * @param {string} path
    * @returns {HTMLElement}
-   */
-  #renderPrimitive (value, parent, key) {
+  */
+  #renderPrimitive (value, parent, key, path) {
+    const name = String(key)
     let el
-    const t = typeof value
-    if (t === 'number') {
+    const isNumKey = ['order', 'columns', 'rows', 'minColumns', 'maxColumns', 'minRows', 'maxRows', 'maxInstances'].includes(name) || typeof value === 'number'
+    const isBoolKey = typeof value === 'boolean'
+    if (isNumKey) {
       el = document.createElement('input')
       el.type = 'number'
-      el.value = String(value)
+      el.step = '1'
+      if (['columns', 'rows', 'minColumns', 'maxColumns', 'minRows', 'maxRows', 'maxInstances'].includes(name)) el.min = '1'
+      el.value = value == null ? '' : String(value)
       el.addEventListener('input', () => {
-        parent[key] = el.value === '' ? 0 : Number(el.value)
+        const v = el.value
+        parent[key] = v === '' ? null : parseInt(v, 10)
       })
-    } else if (t === 'boolean') {
+    } else if (isBoolKey) {
       el = document.createElement('input')
       el.type = 'checkbox'
       el.checked = Boolean(value)
@@ -144,38 +227,25 @@ export class JsonForm {
         parent[key] = el.value
       })
     }
+
+    const ph = matchPattern(path, this.placeholders)
+    if (ph && ph.kind === 'placeholder') el.placeholder = ph.value
+    el.dataset.path = path
     return el
   }
 
   /**
-   * Guess default value for new array items.
+   * Produce a blank value matching the sample's type.
    *
-   * If the array already has a sample element, clone its structure.
-   * Otherwise attempt to resolve a default from the provided resolver or map.
-   *
-   * @param {*} sample existing first array element used as a template
-   * @param {object|Array|undefined} parent parent object/array containing the array
-   * @param {string|number|undefined} key key under which the array resides in the parent
+   * @param {*} sample
    * @returns {*}
    */
-  #defaultFor (sample, parent, key) {
-    if (sample !== undefined) {
-      const t = typeof sample
-      if (t === 'number') return 0
-      if (t === 'boolean') return false
-      if (Array.isArray(sample)) return []
-      if (sample && t === 'object') return structuredClone(sample)
-      return ''
-    }
-
-    let resolved
-    if (typeof this.defaultResolver === 'function') {
-      resolved = this.defaultResolver(parent, key)
-    } else if (key !== undefined && key in this.arrayDefaults) {
-      resolved = this.arrayDefaults[key]
-    }
-
-    if (resolved !== undefined) return structuredClone(resolved)
+  #blankFor (sample) {
+    const t = typeof sample
+    if (t === 'number') return 0
+    if (t === 'boolean') return false
+    if (Array.isArray(sample)) return []
+    if (sample && t === 'object') return {}
     return ''
   }
 }

@@ -1,26 +1,29 @@
 // @ts-check
 /**
- * Default templates for arrays handled by JsonForm.
+ * Central defaults and placeholders for JsonForm.
  *
  * @module json-form-defaults
  */
 
-export const JSON_FORM_ARRAY_DEFAULTS = {
-  boards: { id: '', name: '', views: [] },
-  views: { id: '', name: '', widgetState: [] },
-  widgetState: {
+/**
+ * Templates mapped by dotted path patterns. Patterns may use `[]` to match
+ * any array index.
+ */
+export const DEFAULT_TEMPLATES = {
+  'boards[]': { id: '', name: '', order: 0, views: [] },
+  'boards[].views[]': { id: '', name: '', widgetState: [] },
+  'boards[].views[].widgetState[]': {
     dataid: '',
     serviceId: '',
+    order: 0,
     url: '',
     columns: 1,
     rows: 1,
-    type: '',
-    order: '',
+    type: 'iframe',
     metadata: {},
     settings: {}
   },
-  tags: '',
-  services: {
+  'services[]': {
     id: '',
     name: 'Unnamed Service',
     url: '',
@@ -32,5 +35,20 @@ export const JSON_FORM_ARRAY_DEFAULTS = {
     maxInstances: null,
     template: undefined,
     fallback: undefined
+  },
+  'services[].tags[]': '',
+  'serviceTemplates.default': {
+    type: 'iframe',
+    maxInstances: 10,
+    config: { minColumns: 1, maxColumns: 4, minRows: 1, maxRows: 4 }
   }
+}
+
+/**
+ * Placeholder texts mapped by path patterns.
+ */
+export const DEFAULT_PLACEHOLDERS = {
+  'globalSettings.widgetStoreUrl[]': 'https://…',
+  'boards[].views[].widgetState[].url': 'https://…',
+  'boards[].views[].widgetState[].type': 'iframe'
 }
