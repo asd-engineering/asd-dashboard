@@ -1383,8 +1383,14 @@
     "name": "loadFromFragment",
     "kind": "function",
     "file": "src/utils/fragmentLoader.js",
-    "description": "Parse the URL fragment and store config/services in localStorage. Logs info on success and alerts on failure.",
-    "params": [],
+    "description": "Parse the URL fragment and store config/services with the StorageManager",
+    "params": [
+      {
+        "name": "wasExplicitLoad",
+        "type": "boolean",
+        "desc": "- Skip guard when true."
+      }
+    ],
     "returns": "Promise<{cfg:string|null,svc:string|null,name:string}>"
   },
   {
