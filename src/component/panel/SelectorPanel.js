@@ -62,6 +62,17 @@ function hasCreate (a) {
 }
 
 /**
+ * Detect if an action is a reset-like action.
+ * @param {{key?:string,label?:string}} a
+ * @returns {boolean}
+ */
+function hasReset (a) {
+  const k = (a.key || '').toLowerCase()
+  const l = (a.label || '').toLowerCase()
+  return /reset/.test(k) || /reset/.test(l)
+}
+
+/**
  * Generic selector panel with compact menu.
  * @class
  */
@@ -262,14 +273,18 @@ export class SelectorPanel {
     if (this.dom.empty) { this.dom.empty.remove(); this.dom.empty = null }
 
     // build top menu
-    if (actions.length === 1 && hasCreate(actions[0])) {
+    if (actions.length === 1 && (hasCreate(actions[0]) || hasReset(actions[0]))) {
       const a = actions[0]
       const item = document.createElement('div')
       item.className = 'menu-item'
       item.dataset.menuAction = a.key
       item.tabIndex = 0
       item.setAttribute('role', 'menuitem')
-      item.textContent = `${emojiList.plus.unicode} ${a.label}`
+      item.textContent = hasCreate(a)
+        ? `${emojiList.plus.unicode} ${a.label}`
+        : hasReset(a)
+          ? `${emojiList.crossCycle.unicode} ${a.label}`
+          : a.label
       item.title = a.label
       item.setAttribute('aria-label', a.label)
       this.dom.menu.appendChild(item)
@@ -288,7 +303,11 @@ export class SelectorPanel {
         b.type = 'button'
         b.className = 'panel-action'
         b.dataset.menuAction = a.key
-        const lbl = hasCreate(a) ? `${emojiList.plus.unicode} ${a.label}` : a.label
+        const lbl = hasCreate(a)
+          ? `${emojiList.plus.unicode} ${a.label}`
+          : hasReset(a)
+            ? `${emojiList.crossCycle.unicode} ${a.label}`
+            : a.label
         b.textContent = lbl
         b.title = a.label
         b.setAttribute('aria-label', a.label)
