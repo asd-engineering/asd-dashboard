@@ -142,6 +142,36 @@
   resize: none;        /* Disable manual resize, container handles it */
 }
 
+/* Subtabs inside JsonForm */
+.jf-subtabs {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0.25rem 0 0.5rem;
+}
+.jf-subtabs button {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #d0d0d0;
+  background: #f2f2f2;
+}
+.jf-subtabs button.active {
+  background: #e7e7e7;
+  font-weight: 600;
+}
+
+/* Compact grid rows for labels and inputs */
+.jf-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 0.5rem;
+  align-items: center;
+}
+.jf-object > .jf-row + .jf-row {
+  margin-top: 0.25rem;
+}
+.jf-array > .jf-row {
+  margin-bottom: 0.25rem;
+}
+
 /* -------------------------------------------------------------------------- */
 /* ! 4. FORM GRID & FIELDS */
 /* -------------------------------------------------------------------------- */

@@ -13,7 +13,7 @@ import { DEFAULT_CONFIG_TEMPLATE } from '../../storage/defaultConfig.js'
 import { exportConfig } from '../configModal/exportConfig.js'
 import { openFragmentDecisionModal } from './fragmentDecisionModal.js'
 import { JsonForm } from '../utils/json-form.js'
-import { JSON_FORM_ARRAY_DEFAULTS } from '../utils/json-form-defaults.js'
+import { JSON_FORM_ARRAY_DEFAULTS, JSON_FORM_TEMPLATES, JSON_FORM_PLACEHOLDERS } from '../utils/json-form-defaults.js'
 
 /** @typedef {import('../../types.js').DashboardConfig} DashboardConfig */
 
@@ -51,6 +51,9 @@ export async function openConfigModal () {
             formDiv.id = 'config-form'
             formDiv.classList.add('modal__jsonform')
             cfgForm = new JsonForm(formDiv, configData, {
+              topLevelTabs: { enabled: true, order: ['globalSettings', 'boards', 'serviceTemplates', 'styling'] },
+              templates: JSON_FORM_TEMPLATES,
+              placeholders: JSON_FORM_PLACEHOLDERS,
               defaultResolver: (_parent, key) => JSON_FORM_ARRAY_DEFAULTS[key]
             })
 

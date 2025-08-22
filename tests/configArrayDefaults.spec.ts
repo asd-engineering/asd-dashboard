@@ -20,9 +20,10 @@ test.describe('config array defaults', () => {
     await page.click('#cfgTab .modal__btn--toggle')
 
     // add board, view and widget
-    await page.click('#config-form label:has-text("boards") + div > button:has-text("+")')
-    await page.click('#config-form label:has-text("views") + div > button:has-text("+")')
-    await page.click('#config-form label:has-text("widgetState") + div > button:has-text("+")')
+    await page.click('#config-form .jf-subtabs button:has-text("boards")')
+    await page.click('#config-form .jf-array > button:has-text("+")')
+    await page.click('#config-form label:has-text("views") + .jf-array > button:has-text("+")')
+    await page.click('#config-form label:has-text("widgetState") + .jf-array > button:has-text("+")')
 
     // widget fields rendered immediately
     await expect(page.locator('#config-form label:has-text("url") + input')).toBeVisible()
@@ -51,11 +52,11 @@ test.describe('config array defaults', () => {
     await page.click('#services-form label:has-text("tags") + div > button:has-text("+")')
     await expect(page.locator('#services-form label:has-text("tags") + div > div > input')).toBeVisible()
 
-    // clone existing service when adding another
+    // adding another service uses defaults, not cloning previous values
     const nameInput = page.locator('#services-form label:has-text("name") + input').first()
     await nameInput.fill('Service One')
     await page.click('#services-form > div > button:has-text("+")')
     const secondName = page.locator('#services-form label:has-text("name") + input').nth(1)
-    await expect(secondName).toHaveValue('Service One')
+    await expect(secondName).toHaveValue('Unnamed Service')
   })
 })

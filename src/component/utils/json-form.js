@@ -6,17 +6,31 @@
  * @module json-form
  * @class JsonForm
  */
+
+/**
+ * @typedef {object} JsonFormOptions
+ * @property {{enabled:boolean, order?:string[], labels?:Record<string,string>}} [topLevelTabs]
+ * @property {Record<string, any>} [templates]
+ * @property {Record<string, string>} [placeholders]
+ * @property {(parent?:object|Array, key?:string|number)=>*} [defaultResolver]
+ * @property {Record<string,*>} [arrayDefaults]
+ */
 export class JsonForm {
   /**
    * @constructor
    * @param {HTMLElement} container element that will host the form
    * @param {object} [data={}] initial object to render
-   * @param {{defaultResolver?:(parent?:object|Array, key?:string|number)=>*, arrayDefaults?:Record<string,*>}} [options] optional behavior overrides
+   * @param {JsonFormOptions} [options] optional behavior overrides
    */
   constructor (container, data = {}, options = {}) {
     this.container = container
     this.defaultResolver = options.defaultResolver
     this.arrayDefaults = options.arrayDefaults || {}
+    this.templates = options.templates || {}
+    this.placeholders = options.placeholders || {}
+    this.topLevelTabs = options.topLevelTabs
+    /** @type {string|undefined} */
+    this.activeTab = undefined
     this.setValue(data)
   }
 
@@ -27,8 +41,49 @@ export class JsonForm {
    */
   setValue (data) {
     this.data = structuredClone(data)
+    const prevTab = this.activeTab
     this.container.innerHTML = ''
-    this.container.appendChild(this.#renderNode(this.data))
+
+    const tabsOpt = this.topLevelTabs
+    const keys = data && typeof data === 'object' ? Object.keys(data) : []
+    if (tabsOpt?.enabled && keys.length > 1) {
+      const order = Array.isArray(tabsOpt.order) ? tabsOpt.order : []
+      const labels = tabsOpt.labels || {}
+      const sorted = [...order.filter(k => keys.includes(k)), ...keys.filter(k => !order.includes(k))]
+      const tabBar = document.createElement('div')
+      tabBar.className = 'jf-subtabs'
+      const content = document.createElement('div')
+      this.container.append(tabBar, content)
+
+      this.activeTab = prevTab && keys.includes(prevTab) ? prevTab : sorted[0]
+
+      const render = () => {
+        content.innerHTML = ''
+        if (this.activeTab) {
+          content.appendChild(this.#renderSection(this.activeTab))
+        }
+        Array.from(tabBar.children).forEach(btn => {
+          const b = /** @type {HTMLButtonElement} */(btn)
+          b.classList.toggle('active', b.dataset.key === this.activeTab)
+        })
+      }
+
+      sorted.forEach(k => {
+        const btn = document.createElement('button')
+        btn.textContent = labels[k] || k
+        btn.dataset.key = k
+        btn.addEventListener('click', () => {
+          this.activeTab = k
+          render()
+        })
+        tabBar.appendChild(btn)
+      })
+
+      render()
+    } else {
+      this.activeTab = undefined
+      this.container.appendChild(this.#renderNode(this.data, undefined, undefined, ''))
+    }
   }
 
   /**
@@ -48,10 +103,20 @@ export class JsonForm {
    * @param {string|number} [key]
    * @returns {HTMLElement}
    */
-  #renderNode (value, parent, key) {
-    if (Array.isArray(value)) return this.#renderArray(value, parent, key)
-    if (value && typeof value === 'object') return this.#renderObject(value, parent, key)
-    return this.#renderPrimitive(value, parent, key)
+  #renderNode (value, parent, key, path = '') {
+    if (Array.isArray(value)) return this.#renderArray(value, parent, key, path)
+    if (value && typeof value === 'object') return this.#renderObject(value, parent, key, path)
+    return this.#renderPrimitive(value, parent, key, path)
+  }
+
+  /**
+   * Render selected top-level section.
+   *
+   * @param {string} key
+   * @returns {HTMLElement}
+   */
+  #renderSection (key) {
+    return this.#renderNode(this.data[key], this.data, key, key)
   }
 
   /**
@@ -62,14 +127,17 @@ export class JsonForm {
    * @param {string|number|undefined} key
    * @returns {HTMLElement}
    */
-  #renderObject (obj, parent, key) {
+  #renderObject (obj, parent, key, path) {
     const wrap = document.createElement('div')
+    wrap.className = 'jf-object'
     Object.keys(obj).forEach(k => {
+      const row = document.createElement('div')
+      row.className = 'jf-row'
       const label = document.createElement('label')
-      label.className = 'modal__label'
       label.textContent = k
-      wrap.appendChild(label)
-      wrap.appendChild(this.#renderNode(obj[k], obj, k))
+      row.appendChild(label)
+      row.appendChild(this.#renderNode(obj[k], obj, k, path ? path + '.' + k : k))
+      wrap.appendChild(row)
     })
     return wrap
   }
@@ -82,14 +150,13 @@ export class JsonForm {
    * @param {string|number|undefined} key
    * @returns {HTMLElement}
    */
-  #renderArray (arr, parent, key) {
+  #renderArray (arr, parent, key, path) {
     const wrap = document.createElement('div')
+    wrap.className = 'jf-array'
     arr.forEach((item, i) => {
       const row = document.createElement('div')
-      row.style.display = 'flex'
-      row.style.alignItems = 'center'
-      row.style.gap = '0.25rem'
-      row.appendChild(this.#renderNode(item, arr, i))
+      row.className = 'jf-row'
+      row.appendChild(this.#renderNode(item, arr, i, path + '[' + i + ']'))
       const del = document.createElement('button')
       del.type = 'button'
       del.textContent = '−'
@@ -104,7 +171,7 @@ export class JsonForm {
     add.type = 'button'
     add.textContent = '+'
     add.addEventListener('click', () => {
-      arr.push(this.#defaultFor(arr[0], parent, key))
+      arr.push(this.#defaultFor(arr[0], parent, key, path + '[]'))
       this.setValue(this.data)
     })
     wrap.appendChild(add)
@@ -119,13 +186,15 @@ export class JsonForm {
    * @param {string|number} key
    * @returns {HTMLElement}
    */
-  #renderPrimitive (value, parent, key) {
+  #renderPrimitive (value, parent, key, path) {
     let el
     const t = typeof value
     if (t === 'number') {
       el = document.createElement('input')
       el.type = 'number'
+      el.step = '1'
       el.value = String(value)
+      if (['columns', 'rows', 'minColumns', 'minRows'].includes(String(key))) el.min = '1'
       el.addEventListener('input', () => {
         parent[key] = el.value === '' ? 0 : Number(el.value)
       })
@@ -144,6 +213,9 @@ export class JsonForm {
         parent[key] = el.value
       })
     }
+
+    const ph = this.#matchPattern(path, this.placeholders)
+    if (typeof ph === 'string') el.placeholder = ph
     return el
   }
 
@@ -158,15 +230,9 @@ export class JsonForm {
    * @param {string|number|undefined} key key under which the array resides in the parent
    * @returns {*}
    */
-  #defaultFor (sample, parent, key) {
-    if (sample !== undefined) {
-      const t = typeof sample
-      if (t === 'number') return 0
-      if (t === 'boolean') return false
-      if (Array.isArray(sample)) return []
-      if (sample && t === 'object') return structuredClone(sample)
-      return ''
-    }
+  #defaultFor (sample, parent, key, path) {
+    const tpl = this.#matchPattern(path, this.templates)
+    if (tpl !== undefined) return tpl
 
     let resolved
     if (typeof this.defaultResolver === 'function') {
@@ -174,8 +240,40 @@ export class JsonForm {
     } else if (key !== undefined && key in this.arrayDefaults) {
       resolved = this.arrayDefaults[key]
     }
-
     if (resolved !== undefined) return structuredClone(resolved)
+
+    if (sample !== undefined) {
+      const t = typeof sample
+      if (t === 'number') return 0
+      if (t === 'boolean') return false
+      if (Array.isArray(sample)) return []
+      if (sample && t === 'object') return {}
+      return ''
+    }
+
     return ''
+  }
+
+  /**
+   * Find the most specific match for a dotted/array path in a pattern map.
+   *
+   * @param {string} path
+   * @param {Record<string, any>} patterns
+   * @returns {*|undefined}
+   */
+  #matchPattern (path, patterns) {
+    if (!patterns) return undefined
+    let best
+    for (const [pattern, val] of Object.entries(patterns)) {
+      const regex = new RegExp('^' + pattern.replace(/\[\]/g, '\\[\\d+\\]').replace(/\./g, '\\.') + '$')
+      if (regex.test(path)) {
+        if (!best || pattern.length > best.pattern.length) {
+          best = { pattern, val }
+        }
+      }
+    }
+    if (!best) return undefined
+    const v = best.val
+    return typeof v === 'object' ? structuredClone(v) : v
   }
 }
