@@ -29,10 +29,10 @@ test.describe("Secure fragments loading configuration", () => {
     await page.waitForSelector("#fragment-decision-modal");
     await expect(page.locator("#importName")).toHaveValue(name);
 
-    // Trigger overwrite (this reloads the page)
-    await page.locator('#switch-environment').click();
-    await page.waitForLoadState('networkidle');
-    await page.waitForLoadState('load');
+    // This click will trigger a page reload
+    await page.locator('#switch-environment').click() 
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForSelector('[data-testid="board-panel"]');
 
     // Now re-import StorageManager in a fresh JS context
     // ToDo: refactor logic below

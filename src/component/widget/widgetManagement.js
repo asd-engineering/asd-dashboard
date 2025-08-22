@@ -178,8 +178,8 @@ async function createWidget (
  * Adds a new widget to the current view and persists the state.
  * @function addWidget
  * @param {string} url - The URL of the service to embed.
- * @param {number} [columns=1] - The number of grid columns for the widget to span.
- * @param {number} [rows=1] - The number of grid rows for the widget to span.
+ * @param {number} [columns] - The number of grid columns for the widget to span.
+ * @param {number} [rows] - The number of grid rows for the widget to span.
  * @param {string} [type='iframe'] - The type of the widget.
  * @param {string} boardId - The ID of the board to add the widget to.
  * @param {string} viewId - The ID of the view to add the widget to.
@@ -188,8 +188,8 @@ async function createWidget (
  */
 async function addWidget (
   url,
-  columns = 1,
-  rows = 1,
+  columns,
+  rows,
   type = 'iframe',
   boardId = null,
   viewId = null,
@@ -202,13 +202,17 @@ async function addWidget (
   boardId = boardId || getCurrentBoardId()
   viewId = viewId || getCurrentViewId()
 
+  await fetchServices() // Ensure services are loaded
   const serviceName = await getServiceFromUrl(url)
   if (window.asd.widgetStore.isAdding(serviceName)) return
   window.asd.widgetStore.lock(serviceName)
   try {
-    await fetchServices()
     const rawServiceObj = StorageManager.getServices().find((s) => s.name === serviceName) || {}
     const serviceObj = resolveServiceConfig(rawServiceObj)
+
+    // Determine final dimensions with fallbacks to template defaults
+    const finalColumns = columns ?? serviceObj.config?.columns ?? 1
+    const finalRows = rows ?? serviceObj.config?.rows ?? 1
 
     // Enforce global maxInstances (across live DOM and persisted config)
     const liveDataIds = Array.from(window.asd.widgetStore.widgets.values())
@@ -263,8 +267,8 @@ async function addWidget (
     const widgetWrapper = await createWidget(
       serviceName,
       url,
-      columns,
-      rows,
+      finalColumns,
+      finalRows,
       dataid
     )
 

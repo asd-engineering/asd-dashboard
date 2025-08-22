@@ -62,7 +62,7 @@ export function saveWidgetState (boardId = getCurrentBoardId(), viewId = getCurr
   try {
     // Use the atomic update helper for all board modifications.
     StorageManager.updateBoards(boards => {
-      const board = boards.find(b => b.id === boardId)
+      const board = boards.find(b => b.views.some(v => v.id === viewId))
       if (!board) {
         logger.error(`Board not found for saving state: ${boardId}`)
         return // Exit the updater callback

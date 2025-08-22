@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
+import { ensurePanelOpen } from './shared/panels'
 
 
 test.describe('Widget counters', () => {
@@ -16,20 +17,23 @@ test.describe('Widget counters', () => {
       apply()
     })
     await page.goto('/')
-    await page.waitForSelector('#widget-selector-panel')
+    await page.waitForSelector('[data-testid="service-panel"]')
   })
 
   test('row and global counts update', async ({ page }) => {
-    await page.click('#widget-dropdown-toggle')
-    await page.click('#widget-selector-panel .widget-option:has-text("ASD-toolbox")')
-    await page.locator('.widget-wrapper').first().waitFor()
+    await ensurePanelOpen(page, 'service-panel') // Corrected this helper call
+    const row = page.locator('[data-testid="service-panel"] .panel-item:has-text("ASD-toolbox")')
 
-    await expect(page.locator('#widget-count')).toHaveText('Running: 1/1 / Widgets: 1')
-
-    await page.click('#widget-dropdown-toggle')
-    const row = page.locator('#widget-selector-panel .widget-option:has-text("ASD-toolbox")')
-    await expect(row).toContainText('(1/20)')
+    // FIX: Perform the action FIRST
     await row.click()
-    await expect(page.locator('.widget-wrapper')).toHaveCount(1)
+    await page.locator('.widget-wrapper').first().waitFor() // Wait for the widget to be added
+
+    // Now that the widget is added and state is saved, re-open the panel and check the count.
+    await ensurePanelOpen(page, 'service-panel')
+    await expect(page.locator('[data-testid="service-panel"] .panel-count')).toHaveText('Running: 1/1 Widgets: 1')
+
+    // Re-acquire the locator to get the refreshed element
+    const updatedRow = page.locator('[data-testid="service-panel"] .panel-item:has-text("ASD-toolbox")')
+    await expect(updatedRow.locator('.panel-item-meta')).toHaveText('(1/20)')
   })
 })

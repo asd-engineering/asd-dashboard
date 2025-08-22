@@ -29,7 +29,7 @@ export const DEFAULT_CONFIG_TEMPLATE = {
   serviceTemplates: {
     default: {
       type: 'iframe',
-      maxInstances: 10,
+      maxInstances: 1,
       config: { minColumns: 1, maxColumns: 8, minRows: 1, maxRows: 6 }
     },
     'api-service': {

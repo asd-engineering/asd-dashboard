@@ -61,16 +61,16 @@ menu {
 /* Standard Buttons */
 #controls button {
   padding: 0.3rem 0.6rem;
-  background-color: #4caf50;
-  color: #fff;
+  color: grey;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  font-size: 1rem;
 }
 
 #controls button:hover {
-  background-color: #45a049;
+  background-color: white;
 }
 
 /* View-Button-Menu Overrides */
@@ -136,99 +136,3 @@ menu {
   z-index: 10;
 }
 
-/* --------------------------------------------------
-   Widget-Selector Panel
-   -------------------------------------------------- */
-#widget-selector-panel {
-  align-items: center;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-}
-
-#widget-search {
-  flex: 1 1 auto;
-}
-
-#widget-count {
-  margin-left: auto;
-  font-size: 0.8rem;
-  white-space: nowrap;
-}
-
-#widget-dropdown-toggle {
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.2s ease;
-}
-#widget-selector-panel.open #widget-dropdown-toggle {
-  transform: rotate(180deg);
-}
-
-/* --------------------------------------------------
-   Widget Options (hover, select, actions)
-   -------------------------------------------------- */
-#widget-selector-panel .widget-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 0.4rem 0.6rem;
-  border-radius: 6px;
-  transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-}
-
-#widget-selector-panel .widget-option > span:first-child {
-  flex: 1 1 auto;
-  margin-right: 0.5rem;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-#widget-selector-panel .widget-option:hover {
-  background-color: #eef7ff;
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-#widget-selector-panel .widget-option.selected {
-  background-color: #e0f7fa;
-  outline: 2px solid #31a840;
-  transform: scale(1.01);
-}
-
-/* Actions (🔍 ✏️ ❌) */
-#widget-selector-panel .widget-option-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  opacity: 0;
-  pointer-events: none;
-  position: relative;
-  z-index: 1;
-  transition: opacity 0.15s ease;
-}
-#widget-selector-panel .widget-option:hover .widget-option-actions,
-#widget-selector-panel .widget-option.selected .widget-option-actions {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-#widget-selector-panel .widget-option-actions button {
-  background: none;
-  border: none;
-  padding: 0.2rem;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: transform 0.2s ease, background-color 0.2s ease;
-}
-#widget-selector-panel .widget-option-actions button:hover {
-  transform: scale(1.2);
-  background-color: rgba(0,0,0,0.05);
-}
-#widget-selector-panel .widget-option-actions button[data-action="navigate"]:hover {
-  transform: scale(1.2) rotate(10deg);
-}
