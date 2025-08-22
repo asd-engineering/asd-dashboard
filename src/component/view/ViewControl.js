@@ -1,63 +1,94 @@
 // @ts-check
 /**
- * View control panel using SelectorPanel.
+ * View control panel wiring using SelectorPanel.
  * @module ViewControl
  */
 import { SelectorPanel } from '../panel/SelectorPanel.js'
-import * as adapter from '../panel/adapter.js'
+import StorageManager from '../../storage/StorageManager.js'
+import { getCurrentBoardId } from '../../utils/elements.js'
+import { createView, renameView, deleteView, resetView, switchView, updateViewSelector } from '../board/boardManagement.js'
+import emojiList from '../../ui/unicodeEmoji.js'
 
 /**
- * Mount view control into #view-control.
+ * Mount the view control panel into #view-control.
  * @function mountViewControl
  * @returns {SelectorPanel|null}
  */
 export function mountViewControl () {
-  const container = document.getElementById('view-control')
-  if (!container) return null
-  const select = container.querySelector('#view-selector')
-  container.innerHTML = ''
+  const root = /** @type {HTMLElement} */(document.getElementById('view-control'))
+  if (!root) return null
+
+  const select = root.querySelector('#view-selector')
+  root.innerHTML = ''
   if (select instanceof HTMLElement) {
     select.style.display = 'none'
-    container.appendChild(select)
+    root.appendChild(select)
   }
   const host = document.createElement('div')
-  container.appendChild(host)
+  root.appendChild(host)
 
   const panel = new SelectorPanel({
     root: host,
     testid: 'view-panel',
     placeholder: 'Search Views',
-    countText: () => {
-      const boards = adapter.getBoards()
-      const board = boards.find(b => b.id === adapter.getCurrentBoardId())
-      const views = board?.views || []
-      const current = views.find(v => v.id === adapter.getCurrentViewId())
-      return `Views: ${views.length}${current ? ` • Current: ${current.name}` : ''}`
+    showCount: false,
+    labelText: () => {
+      const bId = getCurrentBoardId() || StorageManager.misc.getLastBoardId()
+      const vId = StorageManager.misc.getLastViewId()
+      const b = (StorageManager.getBoards() || []).find(x => x.id === bId)
+      const v = b?.views.find(v => v.id === vId)
+      return 'View: ' + (v?.name ?? '—')
     },
     getItems: () => {
-      const boards = adapter.getBoards()
-      const board = boards.find(b => b.id === adapter.getCurrentBoardId())
-      const views = board?.views || []
-      return views.map(v => ({ id: v.id, label: v.name }))
+      const bId = getCurrentBoardId() || StorageManager.misc.getLastBoardId()
+      const board = (StorageManager.getBoards() || []).find(b => b.id === bId)
+      return (board?.views || []).map(v => {
+        const widgetsCount = (v.widgetState || []).length
+        return { id: v.id, label: v.name, meta: `${widgetsCount} widgets`, widgetsCount }
+      })
     },
-    onSelect: async id => {
-      await adapter.switchView(adapter.getCurrentBoardId(), id)
-      panel.refresh()
+    onSelect: async (viewId) => {
+      const bId = getCurrentBoardId() || StorageManager.misc.getLastBoardId()
+      await switchView(bId, viewId)
+      refresh()
+      if (bId) updateViewSelector(bId)
     },
-    onAction: async (action, ctx) => {
-      await adapter.handleViewAction(action, ctx)
-      panel.refresh()
+    onAction: async (action) => {
+      const bId = getCurrentBoardId() || StorageManager.misc.getLastBoardId()
+      if (action === 'create' && bId) {
+        const name = prompt('Enter new view name:')
+        if (name) await createView(bId, name)
+      } else if (action === 'reset') {
+        const vId = StorageManager.misc.getLastViewId()
+        if (bId && vId && confirm('Reset this view?')) await resetView(bId, vId)
+      }
+      refresh()
+      if (bId) updateViewSelector(bId)
     },
-    context: () => ({ boardId: adapter.getCurrentBoardId(), viewId: adapter.getCurrentViewId() }),
+    onItemAction: async (action, id) => {
+      const bId = getCurrentBoardId() || StorageManager.misc.getLastBoardId()
+      if (action === 'rename' && bId) {
+        const name = prompt('Enter new view name:')
+        if (name) await renameView(bId, id, name)
+      } else if (action === 'delete' && bId) {
+        if (confirm('Delete this view?')) await deleteView(bId, id)
+      }
+      refresh()
+      if (bId) updateViewSelector(bId)
+    },
     actions: [
-      { label: 'Create View', action: 'create' },
-      { label: 'Rename View', action: 'rename' },
-      { label: 'Delete View', action: 'delete' },
-      { label: 'Reset View', action: 'reset' }
+      { key: 'create', label: 'New View' },
+      { key: 'reset', label: 'Reset View' }
+    ],
+    selectVerb: () => 'Switch',
+    itemActionsFor: () => [
+      { action: 'rename', title: 'Rename view', icon: emojiList.edit.unicode },
+      { action: 'delete', title: 'Delete view', icon: emojiList.cross.unicode }
     ]
   })
 
-  // @ts-ignore
-  window.__viewPanel = panel
+  /** Refresh panel items */
+  function refresh () { panel.refresh() }
+  refresh()
   return panel
 }

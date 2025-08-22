@@ -151,7 +151,7 @@ test.describe('StorageManager', () => {
       subcategory: '',
       tags: [],
       config: {},
-      maxInstances: null
+      maxInstances: 1
     })
     expect(services[1]).toEqual({
       id: 'srv-fixed',
@@ -161,7 +161,7 @@ test.describe('StorageManager', () => {
       category: 'c',
       subcategory: 'sc',
       tags: ['t'],
-      config: { x: 1 },
+      config: { minColumns: 1, maxColumns: 8, minRows: 1, maxRows: 6, x: 1 },
       maxInstances: 5
     })
   })

@@ -38,6 +38,8 @@
  * @property {number} [maxColumns]
  * @property {number} [minRows]
  * @property {number} [maxRows]
+ * @property {number} [columns]
+ * @property {number} [rows]
  */
 
 /**

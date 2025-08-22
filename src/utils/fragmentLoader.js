@@ -12,6 +12,7 @@ import { showNotification } from '../component/dialog/notification.js'
 import { decodeConfig } from './compression.js'
 import { openFragmentDecisionModal } from '../component/modal/fragmentDecisionModal.js'
 import StorageManager from '../storage/StorageManager.js'
+import emojiList from '../ui/unicodeEmoji.js'
 import { restoreDeep } from './minimizer.js'
 import { joinFromParams, parseChunksManifest } from './chunker.js'
 import { computeCRC32Hex } from './checksum.js'
@@ -28,15 +29,9 @@ const KEY_MAP = {
 }
 
 /**
- * Parse the URL fragment and store config/services in localStorage.
- * Logs info on success and alerts on failure.
+ * Parse the URL fragment and store config/services with the StorageManager
  *
  * @function loadFromFragment
- * @returns {Promise<{cfg:string|null,svc:string|null,name:string}>}
- */
-/**
- * Load config/services from URL fragment into localStorage.
- *
  * @param {boolean} [wasExplicitLoad=false] - Skip guard when true.
  * @returns {Promise<{cfg:string|null,svc:string|null,name:string}>}
  */
@@ -46,9 +41,9 @@ export async function loadFromFragment (wasExplicitLoad = false) {
   window.__fragmentLoadCount = (window.__fragmentLoadCount || 0) + 1
   if (!('DecompressionStream' in window)) {
     if (location.hash.includes('cfg=') || location.hash.includes('svc=')) {
-      showNotification('⚠️ DecompressionStream niet ondersteund door deze browser.', 4000, 'error')
+      showNotification('⚠️ DecompressionStream not supported by this browser.', 4000, 'error')
     }
-    logger.warn('DecompressionStream niet ondersteund, fragment loader wordt overgeslagen.', { reason: 'unsupported API' })
+    logger.warn('DecompressionStream not supported, fragment loader skipped.', { reason: 'unsupported API' })
     return
   }
 
@@ -115,12 +110,12 @@ export async function loadFromFragment (wasExplicitLoad = false) {
 
     if (cfg) {
       StorageManager.setConfig(cfg)
-      logger.info('✅ Config geladen uit fragment')
+      logger.info('✅ Config loaded from fragment')
     }
 
     if (svc) {
       StorageManager.setServices(svc)
-      logger.info('✅ Services geladen uit fragment')
+      logger.info('✅ Services loaded from fragment')
     }
 
     // Telemetry: count successful imports.
@@ -133,8 +128,8 @@ export async function loadFromFragment (wasExplicitLoad = false) {
       else if (e instanceof SyntaxError) reason = 'json parse'
       else reason = e.message
     }
-    logger.error('❌ Fout bij laden uit fragment:', { reason })
-    showNotification('Fout bij laden van dashboardconfiguratie uit URL fragment.', 4000, 'error')
+    logger.error(`${emojiList.cross.icon} Error while loading from fragment:`, { reason })
+    showNotification('Error loading dashboard configuration from URL fragment.', 4000, 'error')
   }
 
   return { cfg: cfgParam, svc: svcParam, name: nameParam }

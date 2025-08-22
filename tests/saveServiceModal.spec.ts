@@ -1,17 +1,17 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking.js'
-import { ensurePanelOpen } from './shared/common'
+import { ensurePanelOpen, openCreateFromTopMenu } from './shared/panels'
 
 test.describe('Save Service Modal', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await page.goto('/')
     await page.waitForLoadState('domcontentloaded')
-    await ensurePanelOpen(page)
+    await ensurePanelOpen(page, 'service-panel')
   })
 
   test('opens when adding widget with manual URL', async ({ page }) => {
-    await page.click('#widget-selector-panel .new-service')
+    await openCreateFromTopMenu(page, 'service-panel', 'New Service')
     const modal = page.locator('#save-service-modal')
     await expect(modal).toBeVisible()
     await expect(modal.locator('input#service-name')).toBeVisible()
@@ -19,7 +19,7 @@ test.describe('Save Service Modal', () => {
 
   test('saves manual service when confirmed', async ({ page }) => {
     const url = 'http://localhost/manual-save'
-    await page.click('#widget-selector-panel .new-service')
+    await openCreateFromTopMenu(page, 'service-panel', 'New Service')
     const modal = page.locator('#save-service-modal')
     await expect(modal).toBeVisible()
 
@@ -46,7 +46,7 @@ test.describe('Save Service Modal', () => {
 
   test('skipping manual service does not store it', async ({ page }) => {
     const url = 'http://localhost/manual-skip'
-    await page.click('#widget-selector-panel .new-service')
+    await openCreateFromTopMenu(page, 'service-panel', 'New Service')
     const modal = page.locator('#save-service-modal')
     await expect(modal).toBeVisible()
     await page.fill('#service-url', url) // Fill URL to be certain

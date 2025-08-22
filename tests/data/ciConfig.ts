@@ -22,6 +22,17 @@ export const ciConfig = {
             "minRows": 1,
             "maxRows": 4
         }
+    },
+    "serviceTemplates": {
+        "default": {
+            "type": "iframe",
+            "maxInstances": 1,
+            "config": {}
+        },
+        "twoByTwo": {
+            "type": "iframe",
+            "config": { "columns": 2, "rows": 2 }
+        }
     }
 }
 

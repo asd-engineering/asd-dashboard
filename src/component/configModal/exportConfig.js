@@ -8,6 +8,7 @@ import { showNotification } from '../dialog/notification.js'
 import { encodeConfig } from '../../utils/compression.js'
 import { Logger } from '../../utils/Logger.js'
 import StorageManager from '../../storage/StorageManager.js'
+import emojiList from '../../ui/unicodeEmoji.js'
 import { minimizeDeep } from '../../utils/minimizer.js'
 import { splitIntoParams, formatChunksManifest } from '../../utils/chunker.js'
 import { computeCRC32Hex } from '../../utils/checksum.js'
@@ -45,7 +46,7 @@ export async function exportConfig () {
 
     if (!cfg || !svc) {
       logger.warn('Export aborted: missing config or services')
-      showNotification('❌ Cannot export: config or services are missing', 4000, 'error')
+      showNotification(`${emojiList.cross.icon} Cannot export: config or services are missing`, 4000, 'error')
       return
     }
 
@@ -104,7 +105,7 @@ export async function exportConfig () {
 
     await StorageManager.saveStateSnapshot({ name, type: 'exported', cfg: cfgEnc, svc: svcEnc })
   } catch (e) {
-    showNotification('❌ Failed to export config', 4000, 'error')
+    showNotification(`${emojiList.cross.icon} Failed to export config`, 4000, 'error')
     logger.error('Export failed', e)
   }
 }
