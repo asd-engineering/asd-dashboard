@@ -1267,6 +1267,40 @@
     "returns": "void"
   },
   {
+    "name": "installHoverIntent",
+    "kind": "function",
+    "file": "src/component/panel/selector-hover-intent.js",
+    "description": "Install hover intent listeners on a root element to toggle an active class after a delay only when the pointer rests over a target item.",
+    "params": [
+      {
+        "name": "cfg",
+        "type": "object",
+        "desc": ""
+      },
+      {
+        "name": "cfg.root",
+        "type": "Element",
+        "desc": "- Root element hosting the items."
+      },
+      {
+        "name": "cfg.selector",
+        "type": "string",
+        "desc": "- CSS selector to match actionable rows."
+      },
+      {
+        "name": "cfg.delay",
+        "type": "number",
+        "desc": "- Milliseconds before the active class is applied."
+      },
+      {
+        "name": "cfg.activeClass",
+        "type": "string",
+        "desc": "- Class toggled to reveal actions in CSS."
+      }
+    ],
+    "returns": "{dispose: () => void, rescan: () => void}"
+  },
+  {
     "name": "isAdding",
     "kind": "function",
     "file": "src/component/widget/widgetStore.js",
@@ -2026,7 +2060,7 @@
     "name": "setServices",
     "kind": "function",
     "file": "src/storage/StorageManager.js",
-    "description": "Persist the provided services array after normalizing each object.",
+    "description": "Persist the provided services array after resolving templates and normalizing.",
     "params": [
       {
         "name": "services",
