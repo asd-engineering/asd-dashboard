@@ -93,7 +93,7 @@ export class SelectorPanel {
     this.hoverIntent = installHoverIntent({
       root: this.dom.wrap,
       selector: '.panel-item, .menu-item',
-      delay: 250,
+      delay: 50,
       activeClass: 'hover-active'
     })
   }
