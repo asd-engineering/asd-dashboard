@@ -30,7 +30,7 @@ test.describe('Widget counters', () => {
 
     // Now that the widget is added and state is saved, re-open the panel and check the count.
     await ensurePanelOpen(page, 'service-panel')
-    await expect(page.locator('[data-testid="service-panel"] .panel-count')).toHaveText('Running: 1/1 / Widgets: 1')
+    await expect(page.locator('[data-testid="service-panel"] .panel-count')).toHaveText('Running: 1/1 Widgets: 1')
 
     // Re-acquire the locator to get the refreshed element
     const updatedRow = page.locator('[data-testid="service-panel"] .panel-item:has-text("ASD-toolbox")')

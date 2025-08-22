@@ -63,7 +63,7 @@ function globalCountText () {
   const maxFromConfig = cfg?.globalSettings?.maxTotalInstances
   const max = (typeof widgetStore?.maxSize === 'number' ? widgetStore.maxSize : null) ?? (typeof maxFromConfig === 'number' ? maxFromConfig : null)
   const maxDisplay = max !== null ? max : '∞'
-  return `Running: ${running}/${maxDisplay} / Widgets: ${widgets}`
+  return `Running: ${running}/${maxDisplay} Widgets: ${widgets}`
 }
 
 /**

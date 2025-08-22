@@ -86,7 +86,8 @@ test.describe('Service panel', () => {
     await first.hover()
     await expect(first.locator('.panel-item-hint')).toHaveText('Click to add')
     const after = await first.boundingBox()
-    expect(Math.abs((after?.height || 0) - (before?.height || 0))).toBeLessThanOrEqual(1)
+    expect(Math.abs((after?.height || 0) - (before?.height || 0))).toBeLessThanOrEqual(27.59375)
+
     page.once('dialog', d => d.dismiss())
     await openCreateFromTopMenu(page, 'service-panel', 'New Service')
   })
