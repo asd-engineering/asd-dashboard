@@ -2,6 +2,7 @@ import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
 import { handleDialog, getConfigBoards, navigate } from './shared/common'
 import { openCreateFromTopMenu, ensurePanelOpen } from './shared/panels'
+import { enableHoverTestMode } from './shared/uiHelpers';
 
 const boardName = 'Persist Board'
 
@@ -9,7 +10,7 @@ test.describe('Board persistence', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await navigate(page,'/')
-    
+    await enableHoverTestMode(page);
   })
 
   test('new board persists after reload', async ({ page }) => {
