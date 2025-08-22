@@ -2026,7 +2026,7 @@
     "name": "setServices",
     "kind": "function",
     "file": "src/storage/StorageManager.js",
-    "description": "Persist the provided services array after normalizing each object.",
+    "description": "Persist the provided services array after resolving templates and normalizing.",
     "params": [
       {
         "name": "services",
