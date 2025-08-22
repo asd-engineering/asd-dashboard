@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
-import { ensurePanelOpen } from './shared/common'
+import { ensurePanelOpen } from './shared/panels'
 
 
 test.describe('Service Edit/Delete', () => {
@@ -8,7 +8,7 @@ test.describe('Service Edit/Delete', () => {
     await routeServicesConfig(page)
     await page.goto('/')
     await page.waitForLoadState('domcontentloaded')
-    await ensurePanelOpen(page)
+    await ensurePanelOpen(page, 'service-panel')
   })
 
   test('edit service updates list', async ({ page }) => {
@@ -17,7 +17,7 @@ test.describe('Service Edit/Delete', () => {
     // *** FIX: Hover over the row first to make action buttons appear ***
     await serviceRow.hover();
     
-    await serviceRow.locator('[data-item-action="edit"]').click();
+    await serviceRow.locator('[data-item-action="rename"]').click();
 
     const modal = page.locator('#save-service-modal') // The modal ID is now save-service-modal
     await expect(modal).toBeVisible()
@@ -36,7 +36,7 @@ test.describe('Service Edit/Delete', () => {
     await expect(page.locator('.widget-wrapper')).toHaveCount(1)
 
     page.on('dialog', d => d.accept())
-    await page.click('[data-testid="service-panel"] .panel-item:has-text("ASD-terminal") [data-item-action="remove"]')
+    await page.click('[data-testid="service-panel"] .panel-item:has-text("ASD-terminal") [data-item-action="delete"]')
     await page.waitForSelector('.widget-wrapper', { state: 'detached' })
 
     const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services')))

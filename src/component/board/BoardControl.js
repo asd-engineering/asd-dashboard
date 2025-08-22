@@ -69,12 +69,13 @@ export function mountBoardControl () {
       updateBoardSelector()
     },
     actions: [
-      { label: 'New Board', action: 'create' },
-      { label: 'Reset Board', action: 'reset' }
+      { key: 'create', label: 'New Board' },
+      { key: 'reset', label: 'Reset Board' }
     ],
-    itemActions: [
+    selectVerb: () => 'Switch',
+    itemActionsFor: () => [
       { action: 'rename', title: 'Rename board', icon: emojiList.edit.unicode },
-      { action: 'delete', title: 'Delete board', icon: emojiList.noEntry.unicode }
+      { action: 'delete', title: 'Delete board', icon: emojiList.cross.unicode }
     ]
   })
 

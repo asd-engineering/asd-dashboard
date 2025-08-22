@@ -1,15 +1,19 @@
-/* SelectorPanel styles */
+/* Dropdown shell (unchanged essentials) */
 .dropdown.panel {
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 4px 6px;
-  border: 1px solid #ddd;
+  /* border: 1px solid #ddd; */
   border-radius: 4px;
   background: #fff;
+  z-index: 100;
 }
-.panel-arrow { margin-left: 4px; }
+.panel-arrow { 
+  font-size: 0.8rem;
+  margin-right: -2px;
+}
 .panel-label {
   font-weight: 400;
   color: #111;
@@ -20,58 +24,161 @@
 }
 .panel-search { border: none; outline: none; width: 220px; }
 .panel-count { margin-left: auto; font-size: 12px; opacity: 0.75; }
-.dropdown.panel .dropdown-content { position: absolute; top: 100%; left: 0; min-width: 340px; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 8px; display: none; box-shadow: 0 6px 24px rgba(0,0,0,.12); z-index: 20; }
+.dropdown.panel .dropdown-content {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 340px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px;
+  display: none;
+  box-shadow: 0 6px 24px rgba(0,0,0,.12);
+  z-index: 20;
+  overflow: visible;
+}
 .dropdown.panel.open .dropdown-content { display: block; }
 
+/* Menu wrapper */
+.menu { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+.menu-item { position: relative; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
+.menu-item:hover { background: #f6f8fa; }
+.menu-item:focus { outline: 2px solid #2684ff; outline-offset: 2px; }
+
+/* --- PANEL LIST + ITEMS --- */
 .panel-list { display: flex; flex-direction: column; gap: 6px; }
-.panel-item { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
-.panel-item[hidden] { display: none !important; }
-.panel-item:hover { background: #f6f8fa; }
-.panel-item-label { font-weight: 400; }
-.panel-item-meta { opacity: .7; font-size: 12px; }
-.panel-item-actions { display: inline-flex; gap: 6px; }
-#controls .panel-item-actions .panel-item-icon,
-.panel-item-actions .panel-item-icon {
-  background: none;
-  border: none;
-  padding: 0.2rem;
+
+/* IMPORTANT: remove the reserved actions column; keep only label + count */
+/* Compact list at rest */
+.panel-list { display: flex; flex-direction: column; row-gap: 4px; }
+
+/* Two columns: label | right-aligned count */
+.panel-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr max-content;
+  grid-auto-rows: auto;
+  column-gap: 6px;
+  row-gap: 2px;               /* minimal vertical gap at rest */
+  align-items: center;
+  padding: 6px 8px;
   border-radius: 4px;
-  font-size: 1rem;
   cursor: pointer;
-  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+.panel-item:hover { background: #f6f8fa; }
+.panel-item[hidden] { display: none !important; }
+
+.panel-item-label { font-weight: 400; text-decoration: none; }
+.panel-item-meta  { opacity: .7; font-size: 14px; justify-self: end; white-space: nowrap; }
+
+/* Remove legacy spacer to reclaim width */
+.panel-item-actions-placeholder { display: none !important; }
+
+/* Subtle affordance on hover/focus */
+.panel-item:hover .panel-item-label,
+.panel-item:focus-within .panel-item-label { text-decoration: underline; text-underline-offset: 2px; }
+
+/* -----------------------------------------------------------
+   EXPANSION ROW (hint + actions) – hidden at rest, no layout
+   ----------------------------------------------------------- */
+.panel-item-hint,
+.panel-item-actions-flyout {
+  display: none;              /* IMPORTANT: no reserved space at rest */
+  opacity: 0;
 }
 
-#controls .panel-item-actions .panel-item-icon:hover,
-.panel-item-actions .panel-item-icon:hover {
+/* Position them into a new grid row when shown (panel-item context only) */
+.panel-item > .panel-item-hint {
+  grid-column: 1 / 2;         /* left under label */
+  grid-row: 2;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.panel-item > .panel-item-actions-flyout {
+  grid-column: 2 / 3;         /* right under count */
+  grid-row: 2;
+  justify-self: end;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+/* Reveal on hover/focus: add the second row (panel-item context) */
+.panel-item:hover > .panel-item-hint,
+.panel-item:focus-within > .panel-item-hint { display: block; opacity: 1; }
+.panel-item:hover > .panel-item-actions-flyout,
+.panel-item:focus-within > .panel-item-actions-flyout { display: inline-flex; opacity: 1; }
+
+/* Icon-only buttons INSIDE panel items: bigger, borderless, no green */
+.panel-item > .panel-item-actions-flyout button,
+.panel-item > .panel-item-actions-flyout .panel-item-icon {
+  appearance: none;
+  background: transparent !important;
+  border: 0;
+  padding: 2px;
+  line-height: 1;
+  border-radius: 4px;
+  font-size: 1.4rem;          /* slightly bigger */
+  cursor: pointer;
+  transition: transform .15s ease, background-color .15s ease;
+}
+.panel-item > .panel-item-actions-flyout button:hover,
+.panel-item > .panel-item-actions-flyout .panel-item-icon:hover {
   background-color: rgba(0,0,0,0.06);
   transform: translateY(-1px);
 }
 
-.panel-actions-trigger {
-  font-weight: 400;
+/* -----------------------------
+   HEADER "Actions" (menu-item)
+   ----------------------------- */
+
+/* Hidden by default so the lone ➕ is not visible when idle */
+.menu-item .panel-item-actions-flyout { 
+  display: none;
+  opacity: 0;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Show both buttons on hover/focus of the menu row */
+.menu-item:hover .panel-item-actions-flyout,
+.menu-item:focus-within .panel-item-actions-flyout {
+  display: inline-flex;
+  opacity: 1;
+}
+
+/* Button look for header actions (text buttons, not big icons) */
+.menu-item .panel-item-actions-flyout .panel-action {
+  appearance: none;
   background: transparent;
-  grid-template-columns: 1fr;
-}
-.panel-actions-trigger:hover { background: #f6f8fa; }
-.panel-actions-trigger:focus {
-  outline: 2px solid #2684ff;
-  outline-offset: 2px;
-}
-.dropdown.panel .side-content { display: none; position: absolute; top: 0; left: 100%; min-width: 220px; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.12); }
-.dropdown.panel .dropdown-content.side-open .side-content { display: block; }
-.side-content .panel-action {
-  padding: 6px 8px;
-  width: 100%;
-  text-align: left;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
+  border: 1px solid transparent;   /* no border until hover */
   border-radius: 6px;
-  margin-bottom: 6px;
-  transition: background-color .15s ease, transform .15s ease;
+  padding: 6px 10px;
+  font-size: 0.95rem;              /* readable; emoji scales with it */
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease, transform .15s ease;
 }
-.side-content .panel-action:hover {
-  background: #f6f8fa;
+.menu-item .panel-item-actions-flyout .panel-action:hover,
+.menu-item .panel-item-actions-flyout .panel-action:focus-visible {
+  background: rgba(0,0,0,0.06);
+  border-color: #e5e7eb;
   transform: translateY(-1px);
 }
-.side-content .panel-action:last-child { margin-bottom: 0; }
 
+/* Accessibility */
+.panel-item:focus { outline: 2px solid #2684ff; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .panel-item > .panel-item-actions-flyout button,
+  .panel-item > .panel-item-actions-flyout .panel-item-icon,
+  .menu-item .panel-item-actions-flyout .panel-action { transition: none; }
+}
