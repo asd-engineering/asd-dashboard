@@ -31,7 +31,19 @@ test.describe("Widget limits", () => {
       {
         id: "b1",
         name: "B1",
-        views: [{ id: "v1", name: "V1", widgetState: [{ /* ... widget ... */ }] }],
+        views: [{
+          id: "v1",
+          name: "V1",
+          widgetState: [
+            {
+              order: "0",
+              url: "http://localhost:8000/asd/toolbox",
+              type: "web",
+              dataid: "W1",
+              serviceId: "toolbox"
+            }
+          ]
+        }],
       },
       {
         id: "b2",

@@ -1,4 +1,6 @@
-export const ciServices = [
+import type { Service } from '../../src/types.js'
+
+export const ciServices: Service[] = [
   {
     id: "toolbox",
     name: "ASD-toolbox",
@@ -50,5 +52,14 @@ export const ciServices = [
       minRows: 2,
       maxRows: 6,
     },
+  },
+  {
+    id: "templated",
+    name: "ASD-templated",
+    url: "http://localhost:8000/asd/templated",
+    type: "web",
+    template: "twoByTwo",
+    maxInstances: 20,
+    config: {},
   },
 ];

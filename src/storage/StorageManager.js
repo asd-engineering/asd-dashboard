@@ -198,27 +198,38 @@ const StorageManager = {
   },
 
   /**
-   * Persist the provided services array after normalizing each object.
+   * Persist the provided services array after resolving templates and normalizing.
    * @function setServices
    * @param {Array<Service>} services
    * @returns {void}
    */
   setServices (services) {
-    const normalizedServices = services.map(s => ({
-      id: s.id || serviceGetUUID(),
-      name: s.name || 'Unnamed Service',
-      url: s.url || '',
-      type: s.type || 'iframe',
-      category: s.category || '',
-      subcategory: s.subcategory || '',
-      tags: Array.isArray(s.tags) ? s.tags : [],
-      config: s.config || {},
-      maxInstances: s.maxInstances !== undefined ? s.maxInstances : null,
-      template: s.template,
-      fallback: s.fallback
-    }))
+    // 1. Get the current config to access the service templates
+    const config = this.getConfig() // 'this' refers to the StorageManager singleton
+    const templates = config.serviceTemplates || {}
 
-    jsonSet(KEYS.SERVICES, normalizedServices)
+    const resolvedAndNormalizedServices = services.map(rawService => {
+      // 2. Apply the appropriate template to get a fully resolved service object
+      const templateName = rawService.template || 'default'
+      const baseTemplate = templates[templateName] || templates.default || {}
+      const mergedService = deepMerge(baseTemplate, rawService)
+
+      // 3. Normalize the resolved object to guarantee essential fields
+      return {
+        ...mergedService, // Start with the fully merged object
+        id: mergedService.id || serviceGetUUID(),
+        name: mergedService.name || 'Unnamed Service',
+        url: mergedService.url || '',
+        type: mergedService.type || 'iframe',
+        category: mergedService.category || '',
+        subcategory: mergedService.subcategory || '',
+        tags: Array.isArray(mergedService.tags) ? mergedService.tags : [],
+        config: mergedService.config || {},
+        maxInstances: mergedService.maxInstances !== undefined ? mergedService.maxInstances : null
+      }
+    })
+
+    jsonSet(KEYS.SERVICES, resolvedAndNormalizedServices)
     window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason: 'services' } }))
   },
 

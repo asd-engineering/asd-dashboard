@@ -126,7 +126,7 @@ export function mountServiceControl () {
       }
 
       // This code will now only run if the instance limit has not been reached
-      await addWidget(resolved.url, 1, 1, 'iframe', getCurrentBoardId(), getCurrentViewId())
+      await addWidget(resolved.url, undefined, undefined, 'iframe', getCurrentBoardId(), getCurrentViewId())
       emitStateChange('services')
       panel.refresh()
     },
