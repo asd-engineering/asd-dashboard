@@ -5,12 +5,15 @@
   align-items: center;
   gap: 8px;
   padding: 4px 6px;
-  border: 1px solid #ddd;
+  /* border: 1px solid #ddd; */
   border-radius: 4px;
   background: #fff;
   z-index: 100;
 }
-.panel-arrow { margin-left: 4px; }
+.panel-arrow { 
+  font-size: 0.8rem;
+  margin-right: -2px;
+}
 .panel-label {
   font-weight: 400;
   color: #111;
