@@ -1,44 +1,15 @@
 // @ts-check
 /**
- * Default templates for arrays handled by JsonForm.
+ * Central defaults and placeholders for JsonForm.
  *
  * @module json-form-defaults
  */
 
-export const JSON_FORM_ARRAY_DEFAULTS = {
-  boards: { id: '', name: '', views: [] },
-  views: { id: '', name: '', widgetState: [] },
-  widgetState: {
-    dataid: '',
-    serviceId: '',
-    url: '',
-    columns: 1,
-    rows: 1,
-    type: '',
-    order: '',
-    metadata: {},
-    settings: {}
-  },
-  tags: '',
-  services: {
-    id: '',
-    name: 'Unnamed Service',
-    url: '',
-    type: 'iframe',
-    category: '',
-    subcategory: '',
-    tags: [],
-    config: {},
-    maxInstances: null,
-    template: undefined,
-    fallback: undefined
-  }
-}
-
 /**
- * Default templates for nested config arrays keyed by path patterns.
+ * Templates mapped by dotted path patterns. Patterns may use `[]` to match
+ * any array index.
  */
-export const JSON_FORM_TEMPLATES = {
+export const DEFAULT_TEMPLATES = {
   'boards[]': { id: '', name: '', order: 0, views: [] },
   'boards[].views[]': { id: '', name: '', widgetState: [] },
   'boards[].views[].widgetState[]': {
@@ -52,7 +23,20 @@ export const JSON_FORM_TEMPLATES = {
     metadata: {},
     settings: {}
   },
-  serviceTemplates: {},
+  'services[]': {
+    id: '',
+    name: 'Unnamed Service',
+    url: '',
+    type: 'iframe',
+    category: '',
+    subcategory: '',
+    tags: [],
+    config: {},
+    maxInstances: null,
+    template: undefined,
+    fallback: undefined
+  },
+  'services[].tags[]': '',
   'serviceTemplates.default': {
     type: 'iframe',
     maxInstances: 10,
@@ -63,7 +47,7 @@ export const JSON_FORM_TEMPLATES = {
 /**
  * Placeholder texts mapped by path patterns.
  */
-export const JSON_FORM_PLACEHOLDERS = {
+export const DEFAULT_PLACEHOLDERS = {
   'globalSettings.widgetStoreUrl[]': 'https://…',
   'boards[].views[].widgetState[].url': 'https://…',
   'boards[].views[].widgetState[].type': 'iframe'

@@ -20,7 +20,6 @@ test.describe('config array defaults', () => {
     await page.click('#cfgTab .modal__btn--toggle')
 
     // add board, view and widget
-    await page.click('#config-form .jf-subtabs button:has-text("boards")')
     await page.click('#config-form .jf-array > button:has-text("+")')
     await page.click('#config-form label:has-text("views") + .jf-array > button:has-text("+")')
     await page.click('#config-form label:has-text("widgetState") + .jf-array > button:has-text("+")')

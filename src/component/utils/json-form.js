@@ -1,4 +1,5 @@
 // @ts-check
+import { matchPattern } from './match-pattern.js'
 /**
  * Lightweight renderer to edit plain objects as HTML inputs.
  * Supports nested objects and arrays with add/remove controls.
@@ -8,27 +9,28 @@
  */
 
 /**
+ * Options for JsonForm rendering.
+ *
  * @typedef {object} JsonFormOptions
  * @property {{enabled:boolean, order?:string[], labels?:Record<string,string>}} [topLevelTabs]
  * @property {Record<string, any>} [templates]
  * @property {Record<string, string>} [placeholders]
- * @property {(parent?:object|Array, key?:string|number)=>*} [defaultResolver]
- * @property {Record<string,*>} [arrayDefaults]
+ * @property {string} [rootPath]
  */
 export class JsonForm {
   /**
-   * @constructor
+   * Create a JsonForm instance.
+   *
    * @param {HTMLElement} container element that will host the form
    * @param {object} [data={}] initial object to render
    * @param {JsonFormOptions} [options] optional behavior overrides
    */
   constructor (container, data = {}, options = {}) {
     this.container = container
-    this.defaultResolver = options.defaultResolver
-    this.arrayDefaults = options.arrayDefaults || {}
     this.templates = options.templates || {}
     this.placeholders = options.placeholders || {}
     this.topLevelTabs = options.topLevelTabs
+    this.rootPath = options.rootPath || ''
     /** @type {string|undefined} */
     this.activeTab = undefined
     this.setValue(data)
@@ -82,7 +84,7 @@ export class JsonForm {
       render()
     } else {
       this.activeTab = undefined
-      this.container.appendChild(this.#renderNode(this.data, undefined, undefined, ''))
+      this.container.appendChild(this.#renderNode(this.data, undefined, undefined, this.rootPath))
     }
   }
 
@@ -101,6 +103,7 @@ export class JsonForm {
    * @param {*} value
    * @param {object|Array} [parent]
    * @param {string|number} [key]
+   * @param {string} path
    * @returns {HTMLElement}
    */
   #renderNode (value, parent, key, path = '') {
@@ -125,8 +128,9 @@ export class JsonForm {
    * @param {object} obj
    * @param {object|Array|undefined} parent
    * @param {string|number|undefined} key
+   * @param {string} path
    * @returns {HTMLElement}
-   */
+  */
   #renderObject (obj, parent, key, path) {
     const wrap = document.createElement('div')
     wrap.className = 'jf-object'
@@ -148,8 +152,9 @@ export class JsonForm {
    * @param {Array} arr
    * @param {object|Array|undefined} parent
    * @param {string|number|undefined} key
+   * @param {string} path
    * @returns {HTMLElement}
-   */
+  */
   #renderArray (arr, parent, key, path) {
     const wrap = document.createElement('div')
     wrap.className = 'jf-array'
@@ -160,6 +165,7 @@ export class JsonForm {
       const del = document.createElement('button')
       del.type = 'button'
       del.textContent = '−'
+      del.classList.add('array__remove')
       del.addEventListener('click', () => {
         arr.splice(i, 1)
         this.setValue(this.data)
@@ -170,8 +176,12 @@ export class JsonForm {
     const add = document.createElement('button')
     add.type = 'button'
     add.textContent = '+'
+    add.classList.add('array__add')
     add.addEventListener('click', () => {
-      arr.push(this.#defaultFor(arr[0], parent, key, path + '[]'))
+      const itemPath = path + '[' + arr.length + ']'
+      let next = matchPattern(itemPath, this.templates)?.value
+      if (next === undefined) next = this.#blankFor(arr[0])
+      arr.push(next)
       this.setValue(this.data)
     })
     wrap.appendChild(add)
@@ -184,21 +194,25 @@ export class JsonForm {
    * @param {*} value
    * @param {object|Array} parent
    * @param {string|number} key
+   * @param {string} path
    * @returns {HTMLElement}
-   */
+  */
   #renderPrimitive (value, parent, key, path) {
+    const name = String(key)
     let el
-    const t = typeof value
-    if (t === 'number') {
+    const isNumKey = ['order', 'columns', 'rows', 'minColumns', 'maxColumns', 'minRows', 'maxRows', 'maxInstances'].includes(name) || typeof value === 'number'
+    const isBoolKey = typeof value === 'boolean'
+    if (isNumKey) {
       el = document.createElement('input')
       el.type = 'number'
       el.step = '1'
-      el.value = String(value)
-      if (['columns', 'rows', 'minColumns', 'minRows'].includes(String(key))) el.min = '1'
+      if (['columns', 'rows', 'minColumns', 'maxColumns', 'minRows', 'maxRows', 'maxInstances'].includes(name)) el.min = '1'
+      el.value = value == null ? '' : String(value)
       el.addEventListener('input', () => {
-        parent[key] = el.value === '' ? 0 : Number(el.value)
+        const v = el.value
+        parent[key] = v === '' ? null : parseInt(v, 10)
       })
-    } else if (t === 'boolean') {
+    } else if (isBoolKey) {
       el = document.createElement('input')
       el.type = 'checkbox'
       el.checked = Boolean(value)
@@ -214,66 +228,24 @@ export class JsonForm {
       })
     }
 
-    const ph = this.#matchPattern(path, this.placeholders)
-    if (typeof ph === 'string') el.placeholder = ph
+    const ph = matchPattern(path, this.placeholders)
+    if (ph && ph.kind === 'placeholder') el.placeholder = ph.value
+    el.dataset.path = path
     return el
   }
 
   /**
-   * Guess default value for new array items.
+   * Produce a blank value matching the sample's type.
    *
-   * If the array already has a sample element, clone its structure.
-   * Otherwise attempt to resolve a default from the provided resolver or map.
-   *
-   * @param {*} sample existing first array element used as a template
-   * @param {object|Array|undefined} parent parent object/array containing the array
-   * @param {string|number|undefined} key key under which the array resides in the parent
+   * @param {*} sample
    * @returns {*}
    */
-  #defaultFor (sample, parent, key, path) {
-    const tpl = this.#matchPattern(path, this.templates)
-    if (tpl !== undefined) return tpl
-
-    let resolved
-    if (typeof this.defaultResolver === 'function') {
-      resolved = this.defaultResolver(parent, key)
-    } else if (key !== undefined && key in this.arrayDefaults) {
-      resolved = this.arrayDefaults[key]
-    }
-    if (resolved !== undefined) return structuredClone(resolved)
-
-    if (sample !== undefined) {
-      const t = typeof sample
-      if (t === 'number') return 0
-      if (t === 'boolean') return false
-      if (Array.isArray(sample)) return []
-      if (sample && t === 'object') return {}
-      return ''
-    }
-
+  #blankFor (sample) {
+    const t = typeof sample
+    if (t === 'number') return 0
+    if (t === 'boolean') return false
+    if (Array.isArray(sample)) return []
+    if (sample && t === 'object') return {}
     return ''
-  }
-
-  /**
-   * Find the most specific match for a dotted/array path in a pattern map.
-   *
-   * @param {string} path
-   * @param {Record<string, any>} patterns
-   * @returns {*|undefined}
-   */
-  #matchPattern (path, patterns) {
-    if (!patterns) return undefined
-    let best
-    for (const [pattern, val] of Object.entries(patterns)) {
-      const regex = new RegExp('^' + pattern.replace(/\[\]/g, '\\[\\d+\\]').replace(/\./g, '\\.') + '$')
-      if (regex.test(path)) {
-        if (!best || pattern.length > best.pattern.length) {
-          best = { pattern, val }
-        }
-      }
-    }
-    if (!best) return undefined
-    const v = best.val
-    return typeof v === 'object' ? structuredClone(v) : v
   }
 }
