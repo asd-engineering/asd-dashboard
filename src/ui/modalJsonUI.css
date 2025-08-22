@@ -1,0 +1,427 @@
+/**
+ * Definitive and Unified Stylesheet for Configuration Modal (V12)
+ *
+ * This is a complete, self-contained stylesheet that replaces all previous
+ * versions, including modal.css and configTabs.css. It uses a robust CSS Grid
+ * layout for the main modal structure to permanently fix all scrolling and
+ * overflow issues while providing a polished, modern interface.
+ */
+
+/* -------------------------------------------------------------------------- */
+/* ! 1. VARIABLES & DESIGN TOKENS */
+/* -------------------------------------------------------------------------- */
+:root {
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --bg-modal: #f8f9fa;
+  --bg-header-footer: #ffffff;
+  --bg-content: #ffffff;
+  --bg-item-card: #f8f9fa;
+  --text-primary: #212529;
+  --text-secondary: #495057;
+  --text-label: #343a40;
+  --text-accent: #0d6efd;
+  --border-color: #dee2e6;
+  --focus-ring-color: rgba(13, 110, 253, 0.25);
+  --color-success: #198754;
+  --color-danger: #dc3545;
+  --color-success-bg: #d1e7dd;
+  --color-danger-bg: #f8d7da;
+  --border-radius: 8px;
+  --spacing-md: 16px;
+  --label-width: 220px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* ! 2. MODAL SHELL (GRID LAYOUT & SCROLL FIX) */
+/* -------------------------------------------------------------------------- */
+
+.modal {
+  /* Positioning & Sizing */
+  position: fixed;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  width: 70vw;
+  /* max-width: 1100px; */
+  height: 85vh;
+  border-radius: var(--border-radius);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+
+  /* CRITICAL LAYOUT FIX: Use CSS Grid for a robust Header/Content/Footer structure */
+  display: grid;
+  grid-template-rows: auto 1fr auto; /* Header (auto), Content (fills space), Footer (auto) */
+  overflow: hidden; /* Prevent the entire modal from scrolling */
+  background-color: var(--bg-modal);
+  border: 1px solid var(--border-color);
+}
+
+/* Size Modifiers */
+.modal--lg { width: 70vw; height: 85vh; }
+.modal--md { width: 50vw; height: auto; max-height: 85vh; }
+.modal--sm { width: 40vw; height: auto; max-height: 85vh; }
+
+@media (max-width: 768px) {
+  .modal { width: 95vw; height: 90vh; max-height: 90vh; }
+}
+
+/* -------------------------------------------------------------------------- */
+/* ! 3. MODAL COMPONENTS (HEADER, CONTENT, FOOTER) */
+/* -------------------------------------------------------------------------- */
+
+/* --- Header & Tab Redesign --- */
+.modal .tabs {
+  padding: 0 var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-header-footer);
+  display: flex; /* Keep flex for internal tab alignment */
+  gap: 0;
+}
+.modal .tabs button {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  padding: 14px 4px;
+  margin: 0 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 150ms ease;
+}
+.modal .tabs button:hover {
+  color: var(--text-primary);
+  border-bottom-color: var(--border-color);
+}
+.modal .tabs button.active {
+  font-weight: 600;
+  color: var(--text-accent);
+  border-bottom-color: var(--text-accent);
+}
+.modal .tabs button:first-child { margin-left: 0; }
+
+/* --- Footer Button Group --- */
+.modal .modal__btn-group {
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-header-footer);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px; /* For button spacing */
+}
+
+/* --- Content Panels --- */
+#cfgTab, #svcTab, #stateTab {
+  overflow: scroll; /* The grid cell must hide overflow */
+  display: flex; /* It's also a flex container for its own children */
+  flex-direction: column;
+}
+
+/* The actual scrollable form area */
+.modal__jsonform {
+  flex-grow: 1; /* Grow to fill the tab panel */
+  overflow-y: auto; /* THIS ENABLES SCROLLING */
+  padding: var(--spacing-md);
+  background-color: var(--bg-content);
+}
+/* Custom scrollbar */
+.modal__jsonform::-webkit-scrollbar { width: 10px; }
+.modal__jsonform::-webkit-scrollbar-track { background: transparent; }
+.modal__jsonform::-webkit-scrollbar-thumb { background-color: #ced4da; border-radius: 5px; border: 2px solid var(--bg-content); }
+
+/* .modal__tab--column {
+    overflow: auto;
+} */
+
+/* Styles for the raw JSON <textarea> */
+.modal__textarea--grow {
+  flex: 1 1 auto;      /* Grow to fill space */
+  min-height: 60vh;   /* Set a reasonable minimum height */
+  min-width: 60vw;
+  font-family: var(--font-mono);
+  white-space: pre;
+  resize: none;        /* Disable manual resize, container handles it */
+}
+
+/* -------------------------------------------------------------------------- */
+/* ! 4. FORM GRID & FIELDS */
+/* -------------------------------------------------------------------------- */
+#config-form > div, #services-form > div {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+div:has(> .modal__label) {
+  display: grid;
+  grid-template-columns: var(--label-width) 1fr;
+  gap: 12px var(--spacing-md);
+  align-items: start;
+}
+.modal__label + div {
+  grid-column: 1 / -1;
+  padding-left: var(--spacing-md);
+  margin-top: 8px;
+  border-left: 2px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+.modal__label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: right;
+  padding-top: 8px;
+  word-break: break-word;
+  text-transform: capitalize;
+}
+#config-form > div > label, #services-form > div > label, .modal__label + div > label {
+    grid-column: 1 / -1;
+    text-align: left;
+    padding: 0 0 8px 0;
+    margin: 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+input[type="text"], input[type="number"] {
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+input[type="text"]:focus, input[type="number"]:focus {
+  outline: none;
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 3px var(--focus-ring-color);
+}
+/* input[type="checkbox"] {
+  width: 1.15em;
+  height: 1.15em;
+  accent-color: var(--text-accent);
+  justify-self: start;
+  margin: 8px 0 0 0;
+} */
+div[style*="display: flex"] {
+  background-color: var(--bg-item-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  gap: var(--spacing-md);
+  align-items: center;
+}
+div[style*="display: flex"] > div {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* ! 5. BUTTONS */
+/* -------------------------------------------------------------------------- */
+.modal__btn, .modal .tabs button {
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+.modal__btn {
+  padding: 10px 15px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  transition: all 150ms ease;
+}
+.modal__btn--save { background-color: var(--color-success); border-color: var(--color-success); color: #fff; }
+.modal__btn--save:hover { background-color: #157347; border-color: #146c43;}
+.modal__btn--export { background-color: #6c757d; border-color: #6c757d; color: #fff; }
+.modal__btn--export:hover { background-color: #5c636a; border-color: #565e64; }
+.modal__btn--cancel { background-color: transparent; border-color: #6c757d; color: #6c757d; }
+.modal__btn--cancel:hover { background-color: #6c757d; color: #fff; }
+.modal__btn--toggle { align-self: flex-end; margin: 0 0 12px 0; }
+
+.modal__label + div > button:last-of-type, div[style*="display: flex"] > button {
+  flex-shrink: 0;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  font-weight: 300;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+.modal__label + div > button:last-of-type { background-color: var(--color-success-bg); color: var(--color-success); }
+.modal__label + div > button:last-of-type:hover { background-color: #b6dcc2; }
+div[style*="display: flex"] > button { background-color: var(--color-danger-bg); color: var(--color-danger); }
+div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
+
+/* -------------------------------------------------------------------------- */
+/* ! 6. SAVED STATES TABLE STYLING */
+/* -------------------------------------------------------------------------- */
+
+/* --- Filter Input --- */
+#stateFilter {
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-md);
+  width: 100%;
+  box-sizing: border-box;
+}
+#stateFilter:focus {
+  outline: none;
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 3px var(--focus-ring-color);
+}
+
+/* --- Table Structure & Spacing --- */
+#stateTab table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+#stateTab th,
+#stateTab td {
+  padding: 12px var(--spacing-md);
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* --- Table Headers --- */
+#stateTab th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  background-color: var(--bg-modal);
+}
+
+/* --- Cells & Data Formatting --- */
+#stateTab td {
+  color: var(--text-primary);
+}
+
+/* Intelligently handle the long, unbreakable MD5 hash */
+#stateTab td:last-child {
+  font-family: var(--font-mono);
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.8rem;
+}
+
+/* --- Action Buttons in Table --- */
+#stateTab td button {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  background-color: #fff;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: all 150ms ease;
+}
+
+#stateTab td button.state-switch:hover {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+#stateTab td button:not(.state-switch):hover {
+  background-color: var(--color-danger-bg);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* --- "Delete All" Button --- */
+#stateTab > button {
+  display: block;
+  margin: var(--spacing-md) auto 0 auto;
+  width: fit-content;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-danger);
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+}
+
+#stateTab > button:hover {
+  background-color: var(--color-danger-bg);
+  border-color: var(--color-danger);
+}
+
+#fragment-decision-modal {
+  display: flex;
+  flex-direction: column; /* stack everything vertically */
+  padding: 10px;
+}
+
+#fragment-decision-modal > #importName {
+  display: block;       /* full-width row */
+  margin: 10px 0;       /* spacing from p and buttons */
+  max-width: 40%;
+}
+
+#fragment-decision-modal >  .modal__btn-group {
+  justify-content: flex-start
+}
+
+/* -------------------------------------------------------------------------- */
+/* ! 7. CHECKBOX AS TOGGLE SWITCH */
+/* -------------------------------------------------------------------------- */
+
+/* --- Checkbox as Toggle Switch --- */
+
+/* Hide the default checkbox and style it as the switch track */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  background-color: var(--border-color);
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.2s ease-in-out;
+
+  /* --- ALIGNMENT FIX --- */
+  /* This pushes the switch to the far right of its container */
+  justify-self: end;
+  margin-left: auto;
+  /* Ensure consistent vertical alignment */
+  align-self: center;
+}
+
+/* The white knob/thumb */
+input[type="checkbox"]::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: white;
+  top: 3px;
+  left: 3px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Styles for the "ON" state */
+input[type="checkbox"]:checked {
+  background-color: var(--color-success);
+}
+
+input[type="checkbox"]:checked::before {
+  transform: translateX(20px);
+}

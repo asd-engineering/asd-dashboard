@@ -1316,6 +1316,14 @@
     "returns": "string|null"
   },
   {
+    "name": "JsonForm",
+    "kind": "class",
+    "file": "src/component/utils/json-form.js",
+    "description": "Lightweight renderer to edit plain objects as HTML inputs. Supports nested objects and arrays with add/remove controls.",
+    "params": [],
+    "returns": ""
+  },
+  {
     "name": "jsonGet",
     "kind": "function",
     "file": "src/storage/StorageManager.js",

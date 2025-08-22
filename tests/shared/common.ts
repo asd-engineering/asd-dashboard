@@ -111,6 +111,8 @@ export function b64(obj: any) {
 export async function clearStorage(page: Page) {
   await navigate(page, "/");
   await page.evaluate(() => localStorage.clear());
+  // wait for any startup notifications to disappear to avoid intercepting clicks
+  await page.waitForSelector('dialog.user-notification', { state: 'detached' }).catch(() => {});
 }
 
 export async function getUnwrappedConfig(page: Page) {
@@ -189,5 +191,5 @@ export async function selectViewByLabel(page: Page, viewLabel: string) {
     const sel = document.querySelector("#view-selector") as HTMLSelectElement | null;
     const viewEl = document.querySelector(".board-view") as HTMLElement | null;
     return !!sel && !!viewEl && viewEl.id === sel.value;
-  }, undefined, { timeout: 5000 });
+  }, undefined, { timeout: 3000 });
 }

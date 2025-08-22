@@ -299,7 +299,7 @@ export function initializeWidgetSelectorPanel () {
       if (!service || !service.id) {
         showNotification(
           `Error: Could not find service definition for "${name}".`,
-          4000,
+          3000,
           'error'
         )
         logger.error(`Service with name "${name}" not found in StorageManager.`)
@@ -313,13 +313,13 @@ export function initializeWidgetSelectorPanel () {
         await switchBoard(location.boardId, location.viewId)
         showNotification(
           `Navigated to view containing "${name}".`,
-          2500,
+          1500,
           'success'
         )
       } else {
         showNotification(
           `No instances of "${name}" found in any board.`,
-          3000,
+          1500,
           'error'
         )
       }
