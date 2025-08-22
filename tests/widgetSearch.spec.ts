@@ -14,7 +14,7 @@ test.describe('Widget search filter', () => {
     const panel = page.locator('[data-testid="service-panel"]')
     await ensurePanelOpen(page, 'service-panel')
     const options = panel.locator('.panel-item')
-    await expect(options).toHaveCount(4)
+    await expect(options).toHaveCount(5)
 
     await panel.locator('.panel-search').fill('terminal')
     await expect(panel.locator('.panel-item', { hasText: 'ASD-terminal' })).toBeVisible()
