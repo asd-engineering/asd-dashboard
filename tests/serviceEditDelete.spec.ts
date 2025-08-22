@@ -32,11 +32,17 @@ test.describe('Service Edit/Delete', () => {
   })
 
   test('delete service removes widgets', async ({ page }) => {
-    await page.click('[data-testid="service-panel"] .panel-item:has-text("ASD-terminal")')
+    const terminalRow = page.locator('[data-testid="service-panel"] .panel-item:has-text("ASD-terminal")')
+
+    // Open the service to render its widget
+    await terminalRow.click()
     await expect(page.locator('.widget-wrapper')).toHaveCount(1)
 
     page.on('dialog', d => d.accept())
-    await page.click('[data-testid="service-panel"] .panel-item:has-text("ASD-terminal") [data-item-action="delete"]')
+
+    // Reveal action buttons before attempting to delete
+    await terminalRow.hover()
+    await terminalRow.locator('[data-item-action="delete"]').click()
     await page.waitForSelector('.widget-wrapper', { state: 'detached' })
 
     const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services')))
