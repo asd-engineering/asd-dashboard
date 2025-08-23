@@ -171,9 +171,8 @@ test.describe('WidgetStore UI Tests', () => {
     )
     console.log('Widget count after hydration:', afterHydration)
 
-    await page.waitForFunction(
-      () => document.querySelectorAll('.widget-wrapper').length === 2
-    )
+    const widgets = page.locator('.widget-wrapper')
+    await expect(widgets).toHaveCount(2)
 
     const modal = page.locator('#eviction-modal')
     await modal.waitFor({ state: 'visible' })
@@ -182,10 +181,7 @@ test.describe('WidgetStore UI Tests', () => {
     await expect(modal).toBeHidden()
 
     await page.reload()
-
-    await page.waitForFunction(
-      () => document.querySelectorAll('.widget-wrapper').length === 2
-    )
+    await expect(widgets).toHaveCount(2)
 
     const ids = await page.$$eval('.widget-wrapper', (els) =>
       els.map((e) => e.getAttribute('data-dataid'))

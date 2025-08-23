@@ -21,5 +21,4 @@ export async function openCreateFromTopMenu (page: Page, panelTestId: 'service-p
     .first()
   await expect(actionBtn).toBeVisible()
   await actionBtn.click()
-  await page.waitForTimeout(500)
 }
