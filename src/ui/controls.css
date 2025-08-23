@@ -7,7 +7,7 @@ menu#controls {
   padding: 5px;
   background: var(--color-surface);
   /* Center the whole block on wide screens */
-  max-width: var(--controls-max-width, 1250px);
+  max-width: var(--controls-max-width, 1269px);
   margin: 0 auto;
   align-items: center;
 }
@@ -15,14 +15,11 @@ menu#controls {
 
 /* Group */
 .control-group {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.3rem;
   padding: 0.3rem;
   border-radius: var(--radius-3);
-  /* background: var(--color-soft); */
+  background: var(--color-soft);
   min-width: 0;
   max-width: 100%;
   word-break: break-word; /* Restored from old code */

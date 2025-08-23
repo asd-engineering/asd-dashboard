@@ -35,8 +35,8 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
   /* Controls */
-  --controls-gap-row: 0.5rem;
-  --controls-gap-col: 0.75rem;
+  --controls-gap-row: 0.4rem;
+  --controls-gap-col: 0.4rem;
   --controls-min-col: 280px;
 
   /* Admin icons */
