@@ -1,13 +1,5 @@
 [
   {
-    "name": "__openForTests",
-    "kind": "function",
-    "file": "src/component/menu/widgetSelectorPanel.js",
-    "description": "Open the widget selector panel for automated tests.",
-    "params": [],
-    "returns": "void"
-  },
-  {
     "name": "_ensureLimit",
     "kind": "function",
     "file": "src/component/widget/widgetStore.js",
@@ -1267,14 +1259,6 @@
     "returns": "void"
   },
   {
-    "name": "initializeWidgetSelectorPanel",
-    "kind": "function",
-    "file": "src/component/menu/widgetSelectorPanel.js",
-    "description": "Set up click/search/keyboard handlers for the selector.",
-    "params": [],
-    "returns": "void"
-  },
-  {
     "name": "initSW",
     "kind": "function",
     "file": "src/component/menu/menu.js",
@@ -1737,22 +1721,6 @@
       }
     ],
     "returns": "Record<string,number>"
-  },
-  {
-    "name": "populateWidgetSelectorPanel",
-    "kind": "function",
-    "file": "src/component/menu/widgetSelectorPanel.js",
-    "description": "Populate dropdown list with saved services.",
-    "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "refreshRowCounts",
-    "kind": "function",
-    "file": "src/component/menu/widgetSelectorPanel.js",
-    "description": "Update the instance count labels for each service row and enforce limits.",
-    "params": [],
-    "returns": "void"
   },
   {
     "name": "registerServiceWorker",
@@ -2388,14 +2356,6 @@
         "desc": "- Identifier of the board whose views will be shown."
       }
     ],
-    "returns": "void"
-  },
-  {
-    "name": "updateWidgetCounter",
-    "kind": "function",
-    "file": "src/component/menu/widgetSelectorPanel.js",
-    "description": "Update the Running/Max and total Widgets counter in the panel.",
-    "params": [],
     "returns": "void"
   },
   {
