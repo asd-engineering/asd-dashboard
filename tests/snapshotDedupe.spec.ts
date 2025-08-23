@@ -38,10 +38,11 @@ test('switch environment flow', async ({ page }) => {
   await page.click('.tabs button[data-tab="stateTab"]')
   await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
   await expect(page.locator('#switch-environment')).toContainText('Switch')
-  await Promise.all([
-    page.waitForNavigation(),
-    page.click('#switch-environment')
-  ])
+  
+  // FIX: Replace unreliable waitForNavigation with a click followed by a robust wait for the app's ready state.
+  await page.click('#switch-environment');
+  await page.waitForLoadState('domcontentloaded');
+
   await page.waitForFunction(() => document.body.dataset.ready === 'true')
   const count = await page.evaluate(async () => {
     const { default: sm } = await import('/storage/StorageManager.js')
@@ -53,7 +54,7 @@ test('switch environment flow', async ({ page }) => {
   })
   expect(count).toBe(1)
   expect(theme).toBe('dark')
- })
+})
 
 test('no restore wording remains', async ({ page }) => {
   await clearStorage(page)
@@ -66,4 +67,4 @@ test('no restore wording remains', async ({ page }) => {
   await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
   await expect(page.locator('text=Overwrite existing data')).toHaveCount(0)
   await page.click('#cancel-environment')
- })
+})

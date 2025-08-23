@@ -24,9 +24,10 @@ test.describe('Saved States tab', () => {
     await expect(page.locator('#stateTab tbody tr')).toHaveCount(2)
 
     await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
+    
     await page.click('#switch-environment')
-    await page.waitForLoadState('networkidle')
-    await page.waitForLoadState('load')
+    await page.waitForLoadState('domcontentloaded')
+    await page.waitForFunction(() => document.body.dataset.ready === 'true')
 
     const boards = await getBoardCount(page);
     expect(boards).toBeGreaterThan(0)

@@ -1,3 +1,4 @@
+// --- ./tests/shared/bootState.ts ---
 // @ts-check
 import { type Page } from "@playwright/test";
 
@@ -24,5 +25,6 @@ export async function bootWithDashboardState(
   );
 
   // Cold-boot the real app – no race conditions afterwards.
-  await page.goto(url, { waitUntil: "networkidle" });
+  // Use 'domcontentloaded' which is faster and more reliable than 'networkidle'.
+  await page.goto(url, { waitUntil: "domcontentloaded" });
 }
