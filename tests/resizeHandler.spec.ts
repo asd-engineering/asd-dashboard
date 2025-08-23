@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures';
 import { routeServicesConfig } from './shared/mocking';
-import { addServicesByName, navigate } from './shared/common';
+import { addServicesByName, navigate, clearStorage } from './shared/common';
 import { ciServices } from './data/ciServices';
 import { waitForWidgetStoreIdle } from './shared/state.js';
 
@@ -8,6 +8,7 @@ import { waitForWidgetStoreIdle } from './shared/state.js';
 test.describe('Resize Handler Functionality', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page);
+    await clearStorage(page);
     await navigate(page,'/');
     
   });

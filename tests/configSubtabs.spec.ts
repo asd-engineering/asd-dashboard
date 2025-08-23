@@ -12,7 +12,8 @@ test.describe('config subtabs', () => {
   })
 
   test('subtabs render and preserve edits', async ({ page }) => {
-    await page.click('#open-config-modal')
+    await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()))
+    await page.waitForSelector('#config-modal')
     await expect(page.locator('#config-form .jf-subtabs button:has-text("globalSettings")')).toBeVisible()
     await expect(page.locator('#config-form .jf-subtabs button:has-text("boards")')).toBeVisible()
     const themeInput = page.locator('#config-form label:has-text("theme") + input')
@@ -24,16 +25,17 @@ test.describe('config subtabs', () => {
   })
 
   test('add creates empty widget with placeholders', async ({ page }) => {
-    await page.click('#open-config-modal')
-    await page.click('#config-form .jf-subtabs button:has-text("boards")')
-    await page.click('#config-form .jf-array > button:has-text("+")')
-    await page.click('#config-form label:has-text("views") + .jf-array > button:has-text("+")')
-    await page.click('#config-form label:has-text("widgetState") + .jf-array > button:has-text("+")')
+    await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()))
+    await page.waitForSelector('#config-modal')
+    await page.locator('#config-form .jf-subtabs button:has-text("boards")').click()
+    await page.locator('#config-form .jf-array > button:has-text("+")').click()
+    await page.locator('#config-form label:has-text("views") + .jf-array > button:has-text("+")').click()
+    await page.locator('#config-form label:has-text("widgetState") + .jf-array > button:has-text("+")').click()
     const firstUrl = page.locator('#config-form label:has-text("url") + input').first()
     await firstUrl.fill('https://one')
     await page.locator('#config-form label:has-text("columns") + input').first().fill('2')
     await page.locator('#config-form label:has-text("rows") + input').first().fill('2')
-    await page.click('#config-form label:has-text("widgetState") + .jf-array > button:has-text("+")')
+    await page.locator('#config-form label:has-text("widgetState") + .jf-array > button:has-text("+")').click()
     const secondUrl = page.locator('#config-form label:has-text("url") + input').nth(1)
     await expect(secondUrl).toHaveValue('')
     await expect(secondUrl).toHaveAttribute('placeholder', 'https://…')

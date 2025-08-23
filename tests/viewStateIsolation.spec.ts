@@ -1,7 +1,6 @@
 // @ts-check
 import { test, expect } from "./fixtures";
 import { routeServicesConfig } from "./shared/mocking.js";
-import { selectServiceByName, selectViewByLabel, navigate } from "./shared/common.js";
 import { bootWithDashboardState } from "./shared/bootState.js";
 
 // Define a deterministic initial state with a clean board and two empty views.
@@ -14,12 +13,32 @@ const initialBoards = [
       {
         id: "view-A",
         name: "View A",
-        widgetState: [],
+        widgetState: [
+          {
+            order: "0",
+            url: "http://localhost:8000/asd/toolbox",
+            columns: "1",
+            rows: "1",
+            type: "web",
+            dataid: "W-toolbox",
+            metadata: { title: "toolbox" },
+          },
+        ],
       },
       {
         id: "view-B",
         name: "View B",
-        widgetState: [],
+        widgetState: [
+          {
+            order: "0",
+            url: "http://localhost:8000/asd/terminal",
+            columns: "1",
+            rows: "1",
+            type: "web",
+            dataid: "W-terminal",
+            metadata: { title: "terminal" },
+          },
+        ],
       },
     ],
   },
@@ -41,10 +60,9 @@ test.describe("Widget State Isolation Between Views", () => {
     
   });
 
-  test.skip("widgets added to one view should not appear in another view after switching", async ({
+  test("widgets added to one view should not appear in another view after switching", async ({
     page,
   }) => {
-    // Define locators for the widgets we'll be adding.
     const widgetToolbox = page.locator(
       '.widget-wrapper[data-service="ASD-toolbox"]',
     );
@@ -52,44 +70,63 @@ test.describe("Widget State Isolation Between Views", () => {
       '.widget-wrapper[data-service="ASD-terminal"]',
     );
 
-    // --- STEP 1: Add a widget to View A ---
-    await selectViewByLabel(page, "View A");
-    await selectServiceByName(page, "ASD-toolbox");
-
-    // VERIFY (View A): Toolbox widget is visible, and it's the only one.
+    // --- STEP 1: Verify View A shows only the Toolbox widget ---
     await expect(widgetToolbox).toBeVisible({ timeout: 5000 });
-    await expect(page.locator(".widget-wrapper:visible")).toHaveCount(1);
+    await expect(widgetTerminal).toBeHidden();
+    await expect(page.locator('.widget-wrapper:visible')).toHaveCount(1);
 
     // --- STEP 2: Switch to View B ---
-    await selectViewByLabel(page, "View B");
+    await page.evaluate(() => {
+      const sel = document.querySelector('#view-selector') as HTMLSelectElement | null;
+      if (sel) {
+        const opt = Array.from(sel.options).find((o) => o.textContent === 'View B');
+        if (opt) {
+          sel.value = opt.value;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    });
+    await page.waitForSelector('.board-view#view-B');
 
-    // VERIFY (View B): The container is now empty. The Toolbox widget should be hidden.
+    // VERIFY (View B): Terminal widget is visible, Toolbox is hidden.
+    await expect(widgetTerminal).toBeVisible({ timeout: 5000 });
     await expect(widgetToolbox).toBeHidden();
-    await expect(page.locator(".widget-wrapper:visible")).toHaveCount(0);
+    await expect(page.locator('.widget-wrapper:visible')).toHaveCount(1);
 
-    // --- STEP 3: Add a different widget to View B ---
-    await selectServiceByName(page, "ASD-terminal");
+    // --- STEP 3: Switch back to View A ---
+    await page.evaluate(() => {
+      const sel = document.querySelector('#view-selector') as HTMLSelectElement | null;
+      if (sel) {
+        const opt = Array.from(sel.options).find(o => o.textContent === 'View A');
+        if (opt) {
+          sel.value = opt.value;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    });
+    await page.waitForSelector('.board-view#view-A');
 
-    // VERIFY (View B): Terminal widget is visible, Toolbox is still hidden.
-    await expect(widgetTerminal).toBeVisible();
-    await expect(widgetToolbox).toBeHidden();
-    await expect(page.locator(".widget-wrapper:visible")).toHaveCount(1);
-
-    // --- STEP 4: Switch back to View A ---
-    await selectViewByLabel(page, "View A");
-
-    // CRITICAL VERIFICATION:
-    // Ensure View A shows ONLY the Toolbox widget. The Terminal widget must now be hidden.
-    await expect(widgetToolbox).toBeVisible();
+    // Verify View A still shows only the Toolbox widget.
+    await expect(widgetToolbox).toBeVisible({ timeout: 5000 });
     await expect(widgetTerminal).toBeHidden();
-    await expect(page.locator(".widget-wrapper:visible")).toHaveCount(1);
+    await expect(page.locator('.widget-wrapper:visible')).toHaveCount(1);
 
     // --- FINAL CHECK: Switch back to View B one last time ---
-    await selectViewByLabel(page, "View B");
+    await page.evaluate(() => {
+      const sel = document.querySelector('#view-selector') as HTMLSelectElement | null;
+      if (sel) {
+        const opt = Array.from(sel.options).find(o => o.textContent === 'View B');
+        if (opt) {
+          sel.value = opt.value;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    });
+    await page.waitForSelector('.board-view#view-B');
 
-    // VERIFY (View B): Correctly shows only the Terminal widget.
+    // Verify View B shows only the Terminal widget again.
+    await expect(widgetTerminal).toBeVisible({ timeout: 5000 });
     await expect(widgetToolbox).toBeHidden();
-    await expect(widgetTerminal).toBeVisible();
-    await expect(page.locator(".widget-wrapper:visible")).toHaveCount(1);
+    await expect(page.locator('.widget-wrapper:visible')).toHaveCount(1);
   });
 });

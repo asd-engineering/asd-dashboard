@@ -1,6 +1,6 @@
 import { test, expect } from '../fixtures'
 import { getWidgetStoreSize, waitForWidgetStoreIdle } from '../shared/state.js'
-import { navigate, selectViewByLabel } from '../shared/common.js'
+import { navigate } from '../shared/common.js'
 import { ciConfig, ciBoards } from '../data/ciConfig'
 import { ciServices } from '../data/ciServices'
 
@@ -98,21 +98,41 @@ test.describe('WidgetStore UI Tests', () => {
     await page.locator('.widget-wrapper').first().waitFor()
   })
 
-  test.skip('Caching Widgets on View Switching', async ({ page }) => {
+  test('Caching Widgets on View Switching', async ({ page }) => {
     const view1Widget = page.locator('.widget-wrapper').first()
 
     const initialSize = await getWidgetStoreSize(page)
     expect(initialSize).toBe(1)
     await expect(view1Widget).toBeVisible()
 
-    await selectViewByLabel(page, 'Modified View 2')
+    await page.evaluate(() => {
+      const sel = document.querySelector('#view-selector')
+      if (sel && sel.tagName === 'SELECT') {
+        const opt = Array.from(sel.options).find(o => o.textContent === 'Modified View 2')
+        if (opt) {
+          sel.value = opt.value
+          sel.dispatchEvent(new Event('change', { bubbles: true }))
+        }
+      }
+    })
+    await page.waitForSelector('.board-view#view-12345678')
     await expect(view1Widget).toBeHidden()
 
     const afterSwitchSize = await getWidgetStoreSize(page)
     expect(afterSwitchSize).toBe(2)
 
-    await selectViewByLabel(page, 'Modified View 1')
-    await expect(view1Widget).not.toBeVisible
+    await page.evaluate(() => {
+      const sel = document.querySelector('#view-selector')
+      if (sel && sel.tagName === 'SELECT') {
+        const opt = Array.from(sel.options).find(o => o.textContent === 'Modified View 1')
+        if (opt) {
+          sel.value = opt.value
+          sel.dispatchEvent(new Event('change', { bubbles: true }))
+        }
+      }
+    })
+    await page.waitForSelector('.board-view#view-1234567')
+    await expect(view1Widget).toBeVisible()
 
     const finalSize = await getWidgetStoreSize(page)
     expect(finalSize).toBe(2)

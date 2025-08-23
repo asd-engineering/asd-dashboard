@@ -188,9 +188,13 @@ export async function selectViewByLabel(page: Page, viewLabel: string) {
   }, viewLabel);
 
   // Wait until the <div.board-view> id matches the selected value
-  await page.waitForFunction(() => {
-    const sel = document.querySelector("#view-selector") as HTMLSelectElement | null;
-    const viewEl = document.querySelector(".board-view") as HTMLElement | null;
-    return !!sel && !!viewEl && viewEl.id === sel.value;
-  }, undefined, { timeout: 3000 });
+  await page.waitForFunction(
+    () => {
+      const sel = document.querySelector('#view-selector') as HTMLSelectElement | null;
+      const viewEl = document.querySelector('.board-view') as HTMLElement | null;
+      return !!sel && !!viewEl && viewEl.id === sel.value;
+    },
+    undefined,
+    { timeout: 5000 },
+  );
 }

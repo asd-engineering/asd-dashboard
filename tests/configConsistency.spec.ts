@@ -1,13 +1,14 @@
 // @ts-check
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
-import { handleDialog, getUnwrappedConfig, navigate } from './shared/common'
+import { handleDialog, getUnwrappedConfig, navigate, clearStorage } from './shared/common'
 
 test.describe('config consistency', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
+    await clearStorage(page)
     await navigate(page,'/')
-    
+
     await handleDialog(page, 'confirm')
     await page.click('#reset-button')
     
