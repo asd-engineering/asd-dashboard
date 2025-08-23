@@ -55,3 +55,11 @@
 .user-notification .close-button , .close-button:focus:not(:focus-visible) {
   outline: none;
 }
+
+@media (max-width: 768px) {
+  .user-notification {
+    right: 10px;
+    max-width: 80vw;
+    font-size: 0.85rem;
+  }
+}
