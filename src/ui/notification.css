@@ -1,70 +1,82 @@
-/* Notification style dialog */
+/* Non-blocking notification/toast — safe for app and tests */
 .user-notification {
-    position: fixed;
-    top: 10px;
-    right: 20px;
-    background-color: #4CAF50; 
-    color: white;
-    padding: 10px 20px; 
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    font-size: 1rem;
-    z-index: 10001;
-    border: none; 
-    width: auto; 
-    max-width: 40vw;
-    text-align: center; 
-    opacity: 0; 
-    transform: translateY(20px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  right: calc(20px + env(safe-area-inset-right, 0px));
+  background-color: var(--toast-bg, #4CAF50);
+  color: var(--toast-fg, #fff);
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,.1);
+  font-size: 1rem;
+  border: none;
+  width: auto;
+  max-width: 40vw;
+  text-align: center;
+  z-index: 9000; /* below modal overlay if you use e.g. 9500+ for modals */
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity .3s ease, transform .3s ease;
 
-    /* This makes clicks pass through */
-    pointer-events: none;
+  /* Let clicks pass through unless explicitly re-enabled inside */
+  pointer-events: none;
 }
 
-/* Show the dialog */
+/* Show the toast */
 .user-notification.show {
-    opacity: 1;
-    transform: translateY(0);
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Interactive children are allowed to receive clicks */
+.user-notification .close-button,
+.user-notification a,
+.user-notification button,
+.user-notification [data-action] {
+  pointer-events: auto;
 }
 
 /* Close button styling */
 .user-notification .close-button {
-    background: transparent;
-    border: none;
-    font-size: 1.2rem;
-    color: white;
-    cursor: pointer;
-    margin-left: 15px;
-
-    /* Re-enable click interaction only here */
-    pointer-events: auto;
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  color: inherit;
+  cursor: pointer;
+  margin-left: 15px;
 }
-
-.user-notification .close-button:hover {
-    color: #ffcccb;
-}
-
-.user-notification.success {
-  background-color: #d4edda;
-  color: #155724;
-  border-left: 5px solid #28a745;
-}
-
-.user-notification.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border-left: 5px solid #dc3545;
-}
-
-.user-notification .close-button , .close-button:focus:not(:focus-visible) {
+.user-notification .close-button,
+.user-notification .close-button:focus:not(:focus-visible) {
   outline: none;
 }
+.user-notification .close-button:hover { opacity: .85; }
 
-@media (max-width: 768px) {
-  .user-notification {
-    right: 10px;
-    max-width: 80vw;
-    font-size: 0.85rem;
-  }
+/* Variants (use vars for themeable contrast) */
+.user-notification.success {
+  --toast-bg: #d4edda; --toast-fg: #155724;
+  border-left: 5px solid #28a745;
+}
+.user-notification.error {
+  --toast-bg: #f8d7da; --toast-fg: #721c24;
+  border-left: 5px solid #dc3545;
+}
+.user-notification.info {
+  --toast-bg: #1e3a8a; --toast-fg: #fff;
+  border-left: 5px solid #3b82f6;
+}
+
+/* Prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .user-notification { transition: none; transform: none; }
+}
+
+/* If you *do* use <dialog>, ensure no modal backdrop */
+.user-notification::backdrop { display: none !important; }
+
+/* TEST MODE: in Playwright, kill animation + intercept completely */
+html[data-test-mode="true"] .user-notification {
+  transition: none !important;
+  transform: none !important;
+  opacity: .001 !important;      /* practically invisible */
+  pointer-events: none !important;
 }

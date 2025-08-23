@@ -7,20 +7,17 @@ import type { Page } from '@playwright/test';
  * - Injects CSS to:
  *   * show flyouts/actions (no hover timing)
  *   * silence transitions/animations
- *   * prevent user-notification dialogs from intercepting pointer events
  *   * keep the config button (#open-config-modal) on top of header toggles
  *
  * Keep this helper idempotent and fast. No waits, no polling.
  */
 export async function enableUITestMode(page: Page, opts?: {
   showFlyouts?: boolean;          // default: true
-  muteNotifications?: boolean;    // default: true
   disableMotion?: boolean;        // default: true
   fixHeaderOverlaps?: boolean;    // default: true
 }): Promise<void> {
   const {
     showFlyouts = true,
-    muteNotifications = true,
     disableMotion = true,
     fixHeaderOverlaps = true,
   } = opts || {};
@@ -53,16 +50,6 @@ export async function enableUITestMode(page: Page, opts?: {
       html[data-test-mode="true"] .panel-item > .panel-item-actions-flyout *,
       html[data-test-mode="true"] .menu-item .panel-item-actions-flyout * {
         transition: none !important;
-      }
-    `);
-  }
-
-  if (muteNotifications) {
-    // Make transient dialogs/toasts non-intercepting.
-    parts.push(`
-      html[data-test-mode="true"] dialog.user-notification,
-      html[data-test-mode="true"] dialog.user-notification * {
-        pointer-events: none !important;
       }
     `);
   }
