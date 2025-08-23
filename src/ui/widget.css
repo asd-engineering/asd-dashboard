@@ -11,6 +11,23 @@
     margin-left: 0.5rem;
 }
 
+@media (max-width: 1250px) {
+    #widget-container {
+        grid-template-columns: repeat(3, 1fr);
+        grid-auto-rows: minmax(150px, auto);
+    }
+}
+@media (max-width: 992px) {
+    #widget-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 600px) {
+    #widget-container {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Wide screen adjustments */
 @media (min-width: 1280px) {
     #widget-container {

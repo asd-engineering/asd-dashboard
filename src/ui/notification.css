@@ -1,7 +1,7 @@
 /* Notification style dialog */
 .user-notification {
     position: fixed;
-    top: 42px;
+    top: 66px;
     right: 20px;
     background-color: #4CAF50; 
     color: white;
@@ -54,4 +54,12 @@
 /* Default: deny outline */
 .user-notification .close-button , .close-button:focus:not(:focus-visible) {
   outline: none;
+}
+
+@media (max-width: 768px) {
+  .user-notification {
+    right: 10px;
+    max-width: 80vw;
+    font-size: 0.85rem;
+  }
 }

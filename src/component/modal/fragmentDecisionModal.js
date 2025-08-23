@@ -59,8 +59,8 @@ export function openFragmentDecisionModal ({ cfgParam, svcParam, nameParam, algo
 
         const switchBtn = document.createElement('button')
         switchBtn.id = 'switch-environment'
-        switchBtn.textContent = '⬇ Switch environment'
-        switchBtn.classList.add('modal__btn', 'modal__btn--danger')
+        switchBtn.textContent = '⬇ Switch and autosave'
+        switchBtn.classList.add('modal__btn', 'modal__btn--save')
         switchBtn.addEventListener('click', async () => {
           await applyFragment(true)
         })
@@ -68,7 +68,7 @@ export function openFragmentDecisionModal ({ cfgParam, svcParam, nameParam, algo
         const mergeBtn = document.createElement('button')
         mergeBtn.id = 'merge-environment'
         mergeBtn.textContent = '➕ Merge into current setup'
-        mergeBtn.classList.add('modal__btn', 'modal__btn--save')
+        mergeBtn.classList.add('modal__btn', 'modal__btn--danger')
         mergeBtn.addEventListener('click', async () => {
           await applyFragment(false)
         })

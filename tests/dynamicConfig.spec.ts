@@ -152,7 +152,7 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
       import("/component/modal/configModal.js").then((m) => m.openConfigModal())
     );
 
-    await page.waitForSelector("#config-json");
+    await page.click('button:has-text("JSON mode")');
     await page.fill("#config-json", JSON.stringify(ciConfig));
     await page.click("#config-modal .modal__btn--save");
 
@@ -177,8 +177,10 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
     await navigate(page, `/?config_base64=${b64(ciConfig)}`);
 
     await page.click("#open-config-modal");
+    await page.click('button:has-text("JSON mode")');
     await page.fill("#config-json", JSON.stringify({ ...ciConfig, boards: [] }));
     await page.click('button:has-text("Services")');
+    await page.click('button:has-text("JSON mode")');
     await page.fill('#config-services', JSON.stringify([{ name: 'svc1', url: 'http://svc1' }]));
     await page.click("#config-modal .modal__btn--save");
     await page.reload();

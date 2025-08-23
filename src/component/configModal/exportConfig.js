@@ -95,7 +95,7 @@ export async function exportConfig () {
     await navigator.clipboard.writeText(url)
 
     const kb = (url.length / 1024).toFixed(1)
-    showNotification(`✅ URL copied to clipboard! (${kb} KB)`, 4000, 'success')
+    showNotification(`✅ URL copied to clipboard! (${kb} KB)`, 2000, 'success')
     logger.info(`Exported config URL (${url.length} chars) named ${name}`)
 
     if (url.length > FRAG_WARN_URL_LEN) {
