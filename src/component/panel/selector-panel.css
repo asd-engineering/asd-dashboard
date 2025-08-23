@@ -29,8 +29,9 @@
     max-width: 90vw;
   }
   .panel-label { max-width: 20ch; }
-  .panel-search { width: 160px; }
+  .panel-search { width: min(220px, 30vw); }
 }
+
 .panel-search { border: none; outline: none; width: 220px; }
 .panel-count { margin-left: auto; font-size: 12px; opacity: 0.75; }
 .dropdown.panel .dropdown-content {

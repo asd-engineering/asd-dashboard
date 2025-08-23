@@ -17,17 +17,6 @@ menu {
   z-index: 1001;
 }
 
-@media (max-width: 1250px) {
-  #controls {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-  .control-group {
-    flex: 1 1 100%;
-    margin-bottom: 0.5rem;
-  }
-}
-
 /* --------------------------------------------------
    Control Groups & Form Elements
    -------------------------------------------------- */
@@ -147,3 +136,30 @@ menu {
   z-index: 10;
 }
 
+@media (max-width: 1250px) {
+  #controls {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .control-group {
+    flex: 1 1 auto;
+    min-width: 260px;   /* allow 2 per row */
+    max-width: 48%;     /* prevents stretching */
+  }
+}
+
+@media (max-width: 900px) {
+  .control-group {
+    /* below ~tablet: single column */
+    flex: 1 1 100%;
+    min-width: 100%;
+    max-width: 100%;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .control-group {
+    flex: 1 1 100%;     /* stack fully on small screens */
+  }
+}
