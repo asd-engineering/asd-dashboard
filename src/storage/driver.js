@@ -13,6 +13,7 @@ import { lsKV } from './adapters/lsKV.js'
  * @property {(store:string,key:string,val:any)=>Promise<void>} set
  * @property {(store:string,key:string)=>Promise<void>} del
  * @property {(store:string)=>Promise<void>} clear
+ * @property {(store:string)=>Promise<Array<any>>} keys
  */
 
 /**
