@@ -17,7 +17,9 @@ test.describe('Saved States tab', () => {
   })
 
   test('restore and delete snapshot', async ({ page }) => {
-    await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()))
+    await page.reload()
+    await page.click('#open-config-modal')
+
     await page.click('.tabs button[data-tab="stateTab"]')
     await expect(page.locator('#stateTab tbody tr')).toHaveCount(2)
 

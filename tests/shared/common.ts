@@ -167,30 +167,64 @@ export async function getLastUsedBoardId(page: Page) {
   return await page.evaluate(() => localStorage.getItem("lastUsedBoardId"));
 }
 
-// Select a view by its visible label and wait until the DOM reflects it.
-export async function selectViewByLabel(page: Page, viewLabel: string) {
-  // Wait until the view dropdown is populated
-  await page.waitForFunction(
-    (sel) => !!document.querySelector(sel) && (document.querySelector(sel) as HTMLSelectElement).options.length > 0,
-    "#view-selector",
-    { timeout: 5000 }
-  );
+/**
+ * Select a view by label.
+ * - Clicks #view-selector if visible (user-like).
+ * - Uses selectOption; falls back to { force: true } if hidden.
+ * - No internal waitForFunction; callers should await app-level readiness
+ *   (e.g., waitForWidgetStoreIdle) after calling this.
+ */
+// export async function selectViewByLabel(
+//   page: Page,
+//   label: string
+// ): Promise<void> {
+//   const sel = page.locator("#view-selector");
+//   // Element may be hidden depending on globalSettings; only require attachment.
+//   await sel.waitFor({ state: "attached" });
 
-  // Change the view
-  await page.evaluate((label) => {
-    const sel = document.querySelector('#view-selector') as HTMLSelectElement | null;
-    if (!sel) return;
-    const opt = Array.from(sel.options).find(o => o.textContent === label);
-    if (opt) {
-      sel.value = opt.value;
-      sel.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-  }, viewLabel);
+//   // If visible, click to focus (keeps "use clicks" semantics).
+//   try {
+//     if (await sel.isVisible().catch(() => false)) {
+//       await sel.click().catch(() => {});
+//     }
+//   } catch {
+//     /* ignore focus races */
+//   }
 
-  // Wait until the <div.board-view> id matches the selected value
-  await page.waitForFunction(() => {
-    const sel = document.querySelector("#view-selector") as HTMLSelectElement | null;
-    const viewEl = document.querySelector(".board-view") as HTMLElement | null;
-    return !!sel && !!viewEl && viewEl.id === sel.value;
-  }, undefined, { timeout: 3000 });
+//   // Try normal selection first, then forced selection if hidden/covered.
+//   try {
+//     await sel.selectOption({ label });
+//   } catch {
+//     await sel.selectOption({ label }, { force: true });
+//   }
+// }
+
+/**
+ * Fast view switch by label.
+ * - Single action: force selectOption({ label }) — no clicks, no waits.
+ * - Rare fallback: tiny evaluate to set value + dispatch events if selectOption fails.
+ * - Callers are responsible for any readiness waits (e.g., waitForWidgetStoreIdle()).
+ */
+export async function selectViewByLabel(page: Page, label: string): Promise<void> {
+  const sel = page.locator("#view-selector");
+
+  try {
+    // Fast path: bypass actionability (visibility/enabled) checks entirely.
+    await sel.selectOption({ label }, { force: true });
+    return;
+  } catch {
+    // Minimal, last-resort fallback (runs only if selectOption throws).
+    await page.evaluate((lbl) => {
+      const select = document.querySelector("#view-selector") as HTMLSelectElement | null;
+      if (!select) throw new Error("#view-selector not found");
+      const wanted = String(lbl).trim();
+      const opt = Array.from(select.options).find(
+        (o) => (o.textContent || "").trim() === wanted
+      );
+      if (!opt) throw new Error(`Option with label "${wanted}" not found`);
+      select.value = opt.value;
+      select.dispatchEvent(new Event("input", { bubbles: true }));
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    }, label);
+  }
 }

@@ -1,6 +1,6 @@
 import { test, expect } from '../fixtures'
 import { getWidgetStoreSize, waitForWidgetStoreIdle } from '../shared/state.js'
-import { navigate } from '../shared/common.js'
+import { navigate, selectViewByLabel } from '../shared/common.js'
 import { ciConfig, ciBoards } from '../data/ciConfig'
 import { ciServices } from '../data/ciServices'
 
@@ -104,31 +104,19 @@ test.describe('WidgetStore UI Tests', () => {
     const initialSize = await getWidgetStoreSize(page)
     expect(initialSize).toBe(1)
     await expect(view1Widget).toBeVisible()
+
     await page.waitForSelector('#view-selector', { state: 'attached' })
-    await page.evaluate((label) => {
-      const sel = /** @type {HTMLSelectElement|null} */(document.querySelector('#view-selector'))
-      if (!sel) return
-      const opt = Array.from(sel.options).find(o => o.textContent === label)
-      if (opt) {
-        sel.value = opt.value
-        sel.dispatchEvent(new Event('change', { bubbles: true }))
-      }
-    }, 'Modified View 2')
+    await selectViewByLabel(page, 'Modified View 2')
+
     await waitForWidgetStoreIdle(page)
     await expect(view1Widget).toBeHidden()
 
     const afterSwitchSize = await getWidgetStoreSize(page)
     expect(afterSwitchSize).toBe(2)
+
     await page.waitForSelector('#view-selector', { state: 'attached' })
-    await page.evaluate((label) => {
-      const sel = /** @type {HTMLSelectElement|null} */(document.querySelector('#view-selector'))
-      if (!sel) return
-      const opt = Array.from(sel.options).find(o => o.textContent === label)
-      if (opt) {
-        sel.value = opt.value
-        sel.dispatchEvent(new Event('change', { bubbles: true }))
-      }
-    }, 'Modified View 1')
+    await selectViewByLabel(page, 'Modified View 1')
+
     await waitForWidgetStoreIdle(page)
     await expect(view1Widget).toBeVisible()
 
