@@ -22,7 +22,7 @@ menu#controls {
   gap: 0.3rem;
   padding: 0.3rem;
   border-radius: var(--radius-3);
-  background: var(--color-soft);
+  /* background: var(--color-soft); */
   min-width: 0;
   max-width: 100%;
   word-break: break-word; /* Restored from old code */
@@ -38,7 +38,7 @@ menu#controls {
   position: absolute;
   inset: 0;
   z-index: 1000;
-  pointer-events: auto;
+  /* pointer-events: auto; */
   background: transparent;
 }
 
