@@ -15,6 +15,20 @@ menu {
   background-color: #fff;
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
   z-index: 1001;
+  overflow: visible;           /* avoid clipping dropdowns */
+}
+
+/* Lift only the group that has an open panel */
+.control-group:has(.dropdown.panel.open) { z-index: 1000; }
+
+/* Create a transparent shield so siblings can't grab hover/focus */
+.control-group:has(.dropdown.panel.open)::after {
+  content: '';
+  position: absolute;
+  inset: 0;               /* cover the whole group */
+  z-index: 1000;          /* under the dropdown (see next section) */
+  pointer-events: auto;   /* intercept stray hovers */
+  background: transparent;
 }
 
 /* --------------------------------------------------
@@ -32,13 +46,16 @@ menu {
   width: auto;
   max-width: 100%;
   word-break: break-word;
+  position: relative;     /* needed */
+  overflow: visible;      /* needed */
+  isolation: isolate;     /* new: give each group its own stacking context */
+  z-index: 0;             /* stable baseline */
 }
 
 #controls select,
-#controls input,
-#controls button {
-  font-size: 0.8rem;
-  box-sizing: border-box;
+#controls input {
+  position: relative;
+  z-index: 0;
 }
 
 /* Inputs & Selects */
