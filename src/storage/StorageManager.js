@@ -9,6 +9,7 @@ import { createDriver } from './driver.js'
 import { sanitizeBoards, sanitizeConfig, sanitizeServices } from './validators.js'
 import { busInit, busPost, busOnMessage } from './bus.js'
 import { idbKV, onVersionChange } from './adapters/idbKV.js'
+import { lsKV } from './adapters/lsKV.js'
 
 /**
  * CURRENT_VERSION for stored data schema.
@@ -22,7 +23,7 @@ export const CURRENT_VERSION = 1
  */
 export const APP_STATE_CHANGED = 'appStateChanged'
 
-let kv
+let kv = lsKV
 const cache = {
   config: {},
   boards: [],
@@ -194,7 +195,6 @@ export const StorageManager = {
       await migrateFromLocalStorageIfNeeded()
       await warmCache()
     } catch (e) {
-      const { lsKV } = await import('./adapters/lsKV.js')
       kv = lsKV
       await warmCache()
       await setMeta('driver', 'localStorage')
@@ -249,8 +249,8 @@ export const StorageManager = {
     cache.config = sanitized
     cache.boards = boards
     cache.config.boards = boards
-    kv.set('config', 'v1', sanitized)
-    kv.set('boards', 'v1', boards)
+    kv.set('config', 'v1', sanitized).catch(() => {})
+    kv.set('boards', 'v1', boards).catch(() => {})
     busPost({ type: 'STORE_UPDATED', store: 'config', at: Date.now() })
     busPost({ type: 'STORE_UPDATED', store: 'boards', at: Date.now() })
     dispatchChange('update:config', { store: 'config' })
@@ -269,7 +269,7 @@ export const StorageManager = {
     const sanitized = sanitizeBoards(boards)
     cache.boards = sanitized
     cache.config.boards = sanitized
-    kv.set('boards', 'v1', sanitized)
+    kv.set('boards', 'v1', sanitized).catch(() => {})
     busPost({ type: 'STORE_UPDATED', store: 'boards', at: Date.now() })
     dispatchChange('update:boards', { store: 'boards' })
   },
@@ -286,7 +286,7 @@ export const StorageManager = {
   setServices (services) {
     const sanitized = sanitizeServices(services)
     cache.services = sanitized
-    kv.set('services', 'v1', sanitized)
+    kv.set('services', 'v1', sanitized).catch(() => {})
     busPost({ type: 'STORE_UPDATED', store: 'services', at: Date.now() })
     dispatchChange('update:services', { store: 'services' })
   },
@@ -310,11 +310,11 @@ export const StorageManager = {
   // ---- Misc ----
   misc: {
     getLastBoardId () { return cache.meta.lastBoardId ?? null },
-    setLastBoardId (id) { cache.meta.lastBoardId = id ?? null; kv.set('meta', 'lastBoardId', id ?? null) },
+    setLastBoardId (id) { cache.meta.lastBoardId = id ?? null; kv.set('meta', 'lastBoardId', id ?? null).catch(() => {}) },
     getLastViewId () { return cache.meta.lastViewId ?? null },
-    setLastViewId (id) { cache.meta.lastViewId = id ?? null; kv.set('meta', 'lastViewId', id ?? null) },
+    setLastViewId (id) { cache.meta.lastViewId = id ?? null; kv.set('meta', 'lastViewId', id ?? null).catch(() => {}) },
     getItem (key) { return cache.meta[key] ?? null },
-    setItem (key, value) { cache.meta[key] = value; kv.set('meta', key, value) }
+    setItem (key, value) { cache.meta[key] = value; kv.set('meta', key, value).catch(() => {}) }
   },
 
   // ---- Utilities ----
