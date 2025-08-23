@@ -164,6 +164,7 @@ test.describe('WidgetStore UI Tests', () => {
     await routeWithLRUConfig(page, widgetState, 2)
     await page.evaluate(() => localStorage.clear())
     await page.reload()
+    await waitForWidgetStoreIdle(page)
 
     const afterHydration = await page.$$eval(
       '.widget-wrapper',
@@ -181,6 +182,7 @@ test.describe('WidgetStore UI Tests', () => {
     await expect(modal).toBeHidden()
 
     await page.reload()
+    await waitForWidgetStoreIdle(page)
     await expect(widgets).toHaveCount(2)
 
     const ids = await page.$$eval('.widget-wrapper', (els) =>
