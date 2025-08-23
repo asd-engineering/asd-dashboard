@@ -25,21 +25,13 @@ export async function selectServiceByName(page: Page, serviceName: string) {
   await page.click(`[data-testid="service-panel"] .panel-item:has-text("${serviceName}")`);
 }
 
-/**
- * Navigates to the specified URL and waits until the dashboard is fully hydrated.
- *
- * This helper observes:
- *  - `main:ready` after core initialization (menu, config, etc)
- *  - `view:ready` after the active board/view is fully rendered
- *
- * It resolves either immediately if <body data-ready="true"> is set, or once one of the events fires.
- */
-// navigate.ts
 export interface NavigateOptions {
   /** Total budget for navigate (goto + readiness), in ms. Default: 1000 */
   totalTimeoutMs?: number;
   /** Additional options forwarded to page.goto (merged, not replaced) */
   gotoOptions?: Parameters<Page['goto']>[1];
+  /** Enable console proxy for debugging, default: false */
+  debugConsole?: boolean;
 }
 
 export async function navigate(
@@ -49,29 +41,31 @@ export async function navigate(
 ): Promise<void> {
   const totalBudget = Math.max(1, options?.totalTimeoutMs ?? 2000);
 
-  // Split the total budget between goto and readiness wait.
-  // Keeping a small buffer for readiness avoids blowing the entire budget on goto.
+  // Optional console proxy
+  if (options?.debugConsole) {
+    const allowedPrefixes = ['[navigate]', '[hydrate]', '[modal]'];
+    page.on('console', msg => {
+      const text = msg.text();
+      if (msg.type() === 'log' && allowedPrefixes.some(p => text.startsWith(p))) {
+        console.log(`[browser] ${text}`);
+      }
+    });
+  }
+
   const gotoBudget = Math.max(1, Math.floor(totalBudget * 0.7));
   const readyBudget = Math.max(0, totalBudget - gotoBudget);
 
-  // Constrain navigation: don't wait for full 'load' (images/ads/etc.),
-  // and hard-cap with our gotoBudget. Merge caller-provided options last,
-  // but keep our timeout as the minimum.
+  const callerGotoTimeout =
+    options?.gotoOptions && typeof options.gotoOptions.timeout === 'number'
+      ? options.gotoOptions.timeout
+      : undefined;
+  const finalGotoTimeout = Math.min(gotoBudget, callerGotoTimeout ?? gotoBudget);
+
   const mergedGotoOptions: Parameters<Page['goto']>[1] = {
     waitUntil: 'domcontentloaded',
-    timeout: gotoBudget,
     ...(options?.gotoOptions ?? {}),
-    // Enforce the cap even if caller passes a larger timeout.
-    timeout: Math.min(gotoBudget, options?.gotoOptions?.timeout ?? gotoBudget),
+    timeout: finalGotoTimeout,
   };
-  // Optional console proxy (kept commented to avoid noisy CI logs)
-  // const allowedPrefixes = ['[navigate]', '[hydrate]', '[modal]']
-  // page.on('console', msg => {
-  //   const text = msg.text()
-  //   if (msg.type() === 'log' && allowedPrefixes.some(p => text.startsWith(p))) {
-  //     console.log(`[browser] ${text}`)
-  //   }
-  // })
 
   await page.goto(destination, mergedGotoOptions);
 
@@ -80,33 +74,26 @@ export async function navigate(
   try {
     await page.waitForFunction(
       () => {
-        // Fast path: view hydration already complete
         if (document.body.getAttribute('data-ready') === 'true') return true;
 
-        // Attach event listeners only once across retries
         if (!(document as any).__NAVIGATE_ATTACHED__) {
           (document as any).__NAVIGATE_ATTACHED__ = true;
-
-          const handler = (e: Event) => {
-            // console.log(`[navigate] resolved via ${e.type}`)
+          const handler = () => {
             (document as any).__NAVIGATE_READY__ = true;
           };
-
           document.addEventListener('main:ready', handler, { once: true });
           document.addEventListener('view:ready', handler, { once: true });
         }
 
         return !!(document as any).__NAVIGATE_READY__;
       },
-      {
-        timeout: readyBudget,
-        // 'raf' is fine; no need to switch polling. Keep CPU minimal.
-      }
+      { timeout: readyBudget }
     );
   } catch {
     // Soft timeout: continue; some tests may rely on explicit waits later
   }
 }
+
 
 // Helper function to handle dialog interactions
 export async function handleDialog(page: Page, type: string, inputText = "") {
