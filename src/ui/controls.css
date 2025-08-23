@@ -17,6 +17,17 @@ menu {
   z-index: 1001;
 }
 
+@media (max-width: 1250px) {
+  #controls {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .control-group {
+    flex: 1 1 100%;
+    margin-bottom: 0.5rem;
+  }
+}
+
 /* --------------------------------------------------
    Control Groups & Form Elements
    -------------------------------------------------- */

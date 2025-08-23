@@ -85,6 +85,18 @@
 }
 .modal .tabs button:first-child { margin-left: 0; }
 
+@media (max-width: 1250px) {
+  .modal .tabs {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .modal .tabs button {
+    margin: 0 6px;
+    font-size: 0.8rem;
+    padding: 10px 2px;
+  }
+}
+
 .modal .modal__btn-group {
   padding: var(--spacing-md);
   border-top: 1px solid var(--border-color);
@@ -149,6 +161,22 @@
   padding-top: 0.3rem;
   text-align: left;
   word-break: break-word;
+}
+
+@media (max-width: 1250px) {
+  .jf-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .jf-row > label {
+    flex: none;
+    margin-bottom: 0.25rem;
+  }
+  .jf-row input[type="text"],
+  .jf-row input[type="number"] {
+    min-width: 100%;
+    flex: 1 1 auto;
+  }
 }
 .jf-row input[type="text"],
 .jf-row input[type="number"] {
