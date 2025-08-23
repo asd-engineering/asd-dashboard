@@ -6,8 +6,7 @@ menu#controls {
   width: 100%;
   padding: 5px;
   background: var(--color-surface);
-  /* Center the whole block on wide screens */
-  max-width: var(--controls-max-width, 1269px);
+  justify-content: center;
   margin: 0 auto;
   align-items: center;
 }
@@ -35,7 +34,7 @@ menu#controls {
   position: absolute;
   inset: 0;
   z-index: 1000;
-  /* pointer-events: auto; */
+  pointer-events: auto;
   background: transparent;
 }
 
@@ -92,7 +91,7 @@ menu#controls {
 
 /* Admin control */
 menu#controls #admin-control.control-group {
-  display: contents;
+  display: flex;
   column-gap: 0.6rem;
   row-gap: 0.6rem;
   overflow: hidden;

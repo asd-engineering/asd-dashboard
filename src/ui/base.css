@@ -8,7 +8,7 @@ html, body {
   font-family: var(--font-sans);
   background: var(--color-bg);
   color: var(--color-text);
-  overflow: hidden; /* stop double scroll */
+  overflow: hidden;
 }
 
 body > main {

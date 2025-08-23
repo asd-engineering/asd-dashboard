@@ -55,9 +55,9 @@ export-css:
 		-not -path './.git/*' \
 		-not -path './local/*' \
 		-not -path './node_modules/*' \
+		-not -path './playwright-report/*' \
 		-print0 \
 	| xargs -0 -I{} realpath -z --relative-to=. "{}" \
 	| sort -z -u \
 	| xargs -0 -I{} sh -c 'printf "\n// --- %s ---\n" "{}"; cat "{}"' \
 	> local/src.txt
-
