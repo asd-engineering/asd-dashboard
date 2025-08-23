@@ -1,14 +1,12 @@
 // @ts-check
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
-import { handleDialog, navigate } from './shared/common'
+import { navigate } from './shared/common'
 
 test.describe('config subtabs', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await navigate(page, '/')
-    await handleDialog(page, 'confirm')
-    await page.click('#reset-button')
   })
 
   test('subtabs render and preserve edits', async ({ page }) => {

@@ -13,6 +13,8 @@ import { decodeConfig } from "../src/utils/compression.js";
 import { restoreDeep } from "../src/utils/minimizer.js";
 import { DEFAULT_CONFIG_TEMPLATE } from "../src/storage/defaultConfig.js";
 import { bootWithDashboardState } from "./shared/bootState.js";
+import { dismissAllNotifications, ensureNoBlockingDialogs } from "./shared/notifications";
+
 
 // Base64 params
 test.describe("Dashboard Config - Base64 via URL Params", () => {
@@ -178,17 +180,39 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
 
     await page.click("#open-config-modal");
     await page.click('button:has-text("JSON mode")');
+
+    // Edit main JSON; transient validation toasts may appear while typing
     await page.fill("#config-json", JSON.stringify({ ...ciConfig, boards: [] }));
-    await page.click('button:has-text("Services")');
+
+    // make sure no notification dialog is intercepting pointer events
+    await ensureNoBlockingDialogs(page);
+
+    // Prefer the data-tab selector, but keep the text selector as a fallback
+    const svcTab = page.locator('button[data-tab="svcTab"]');
+    await svcTab.waitFor({ state: "visible" });
+    // If something pops up between visibility and click, clear it deterministically
+    await dismissAllNotifications(page);
+    await svcTab.click();
+
     await page.click('button:has-text("JSON mode")');
-    await page.fill('#config-services', JSON.stringify([{ name: 'svc1', url: 'http://svc1' }]));
-    await page.click("#config-modal .modal__btn--save");
+    await page.fill('#config-services', JSON.stringify([{ name: "svc1", url: "http://svc1" }]));
+
+    // Clear any final toasts before saving to avoid blocked click
+    await dismissAllNotifications(page);
+
+    const saveBtn = page.locator("#config-modal .modal__btn--save");
+    await saveBtn.waitFor({ state: "visible" });
+    await saveBtn.click();
+
     await page.reload();
 
     const stored = await getUnwrappedConfig(page);
     expect(Array.isArray(stored.boards)).toBeTruthy();
-    const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services') || '[]'));
-    expect(services.some((s) => s.name === 'svc1')).toBeTruthy();
+
+    const services = await page.evaluate(
+      () => JSON.parse(localStorage.getItem("services") || "[]")
+    );
+    expect(services.some((s: any) => s.name === "svc1")).toBeTruthy();
   });
 
   test("removing config from localStorage shows popup again", async ({ page }) => {

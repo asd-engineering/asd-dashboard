@@ -20,14 +20,14 @@ export default defineConfig({
   ],
   // There is no reason to wait so long in a PWA with hardly any content
   // Faster feedback and less spend minutes in Githun Actions
-  timeout: 10000, // Timeout for each test (in milliseconds) default is 30000
+  timeout: 5000, // Timeout for each test (in milliseconds) default is 30000
   expect: {
       timeout: 500, // Timeout for `expect` assertions
   },
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    actionTimeout: 3000, // Default timeout for actions like clicks, waits, etc.
-    navigationTimeout: 6000,
+    actionTimeout: 2000, // Default timeout for actions like clicks, waits, etc.
+    navigationTimeout: 2000,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
     baseURL: process.env.STAGING === '1' ? 'http://localhost:8000' : 'http://localhost:8000',
