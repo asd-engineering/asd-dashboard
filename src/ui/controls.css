@@ -25,9 +25,9 @@ menu {
 .control-group:has(.dropdown.panel.open)::after {
   content: '';
   position: absolute;
-  inset: 0;               /* cover the whole group */
-  z-index: 1000;          /* under the dropdown (see next section) */
-  pointer-events: auto;   /* intercept stray hovers */
+  inset: 0;
+  z-index: 1000;
+  pointer-events: auto;
   background: transparent;
 }
 
@@ -46,10 +46,10 @@ menu {
   width: auto;
   max-width: 100%;
   word-break: break-word;
-  position: relative;     /* needed */
-  overflow: visible;      /* needed */
-  isolation: isolate;     /* new: give each group its own stacking context */
-  z-index: 0;             /* stable baseline */
+  position: relative;
+  overflow: visible;
+  isolation: isolate;
+  z-index: 1; 
 }
 
 #controls select,
@@ -128,6 +128,11 @@ menu {
   cursor: pointer;
   font-size: 1.2rem;
   user-select: none;
+}
+
+/* Prevents scroll bar appearing due to ariaLabel leaking */
+#admin-control{
+  overflow: hidden;
 }
 
 #admin-control label {
