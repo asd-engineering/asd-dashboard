@@ -30,7 +30,6 @@ import {
   refreshRowCounts
 } from './component/menu/widgetSelectorPanel.js'
 
-await StorageManager.init({ persist: true })
 const logger = new Logger('main.js')
 Logger.enableLogs('all')
 
@@ -51,6 +50,8 @@ window.addEventListener('hashchange', () => loadFromFragment(false))
  */
 async function main () {
   logger.log('Application initialization started')
+
+  await StorageManager.init({ persist: true })
 
   // 1. Handle configuration from URL fragment first
   const params = new URLSearchParams(location.search)
@@ -159,5 +160,9 @@ async function main () {
   document.body.dataset.ready = 'true'
 }
 
-// Start the application when the DOM is ready
-document.addEventListener('DOMContentLoaded', main)
+// Start the application once the DOM is ready; ensure the event isn't missed
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', main)
+} else {
+  main().catch(err => logger.error('Failed to initialize application', err))
+}
