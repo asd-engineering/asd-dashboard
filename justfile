@@ -38,7 +38,7 @@ export-all:
     mkdir -p local
     find scripts src tests . \
         -maxdepth 3 \
-        -type f \( -name '*.css' \) \
+        -type f \( -name '*.js' -o -name '*.ts' -o -name '*.css' \) \
         -not -path './.git/*' \
         -not -path './local/*' \
         -not -path './node_modules/*' \
