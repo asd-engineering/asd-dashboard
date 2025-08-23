@@ -60,7 +60,7 @@
   border-bottom: 1px solid var(--border-color);
   background-color: var(--bg-header-footer);
   display: flex;
-  gap: 0;
+  align-items: center;
 }
 .modal .tabs button {
   background: transparent;
@@ -104,7 +104,6 @@
 /* ! 4. REVISED HORIZONTAL TABS & FORM LAYOUT */
 /* -------------------------------------------------------------------------- */
 
-/* Horizontal subtabs with higher specificity */
 #config-form .jf-subtabs {
   display: flex;
   flex-direction: row;
@@ -112,13 +111,11 @@
   border-bottom: 1px solid #e0e0e0;
   margin: 0 -1rem 1rem -1rem;
   padding: 0 1rem;
-
   position: sticky;
   top: -1rem;
   background: white;
   z-index: 10;
 }
-
 .jf-subtabs button {
   padding: 0.75rem 1.25rem;
   border: none;
@@ -129,17 +126,9 @@
   color: #495057;
   transition: all 0.2s ease;
 }
-.jf-subtabs button:hover {
-  color: #0056b3;
-  background-color: #f8f9fa;
-}
-.jf-subtabs button.active {
-  color: #007bff;
-  font-weight: 600;
-  border-bottom-color: #007bff;
-}
+.jf-subtabs button:hover { color: #0056b3; background-color: #f8f9fa; }
+.jf-subtabs button.active { color: #007bff; font-weight: 600; border-bottom-color: #007bff; }
 
-/* Revised form container */
 .modal__jsonform {
   padding: 1rem;
   overflow-y: auto;
@@ -187,12 +176,12 @@
 }
 .jf-array > .jf-row > .jf-object { flex-grow: 1; }
 
+/* Removed border-left for nested objects/arrays */
 .jf-row > .jf-object,
 .jf-row > .jf-array {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  border-left: 2px solid #e9ecef;
   padding-left: 1rem;
 }
 
@@ -211,17 +200,27 @@
   justify-content: center;
   transition: all 0.2s;
 }
-.array__add {
-  background-color: #e7f5ff; color: #1c7ed6; align-self: flex-start;
-}
+.array__add { background-color: #e7f5ff; color: #1c7ed6; align-self: flex-start; }
 .array__add:hover { background-color: #d0ebff; }
-.array__remove {
-  background-color: #fff5f5; color: #c92a2a;
-}
+.array__remove { background-color: #fff5f5; color: #c92a2a; }
 .array__remove:hover { background-color: #ffe3e3; }
 
 /* -------------------------------------------------------------------------- */
-/* ! 5. BUTTONS */
+/* ! 5. FORM MODE TEXTAREA */
+/* -------------------------------------------------------------------------- */
+
+.modal__textarea--grow {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 70vh;
+  font-family: var(--font-mono);
+  white-space: pre;
+  resize: none;
+  box-sizing: border-box;
+}
+
+/* -------------------------------------------------------------------------- */
+/* ! 6. BUTTONS */
 /* -------------------------------------------------------------------------- */
 .modal__btn, .modal .tabs button {
   font-family: var(--font-sans);
@@ -261,7 +260,7 @@ div[style*="display: flex"] > button { background-color: var(--color-danger-bg);
 div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 
 /* -------------------------------------------------------------------------- */
-/* ! 6. SAVED STATES TABLE STYLING */
+/* ! 7. SAVED STATES TABLE STYLING */
 /* -------------------------------------------------------------------------- */
 
 #stateFilter {
@@ -277,6 +276,10 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
   outline: none;
   border-color: var(--text-accent);
   box-shadow: 0 0 0 3px var(--focus-ring-color);
+}
+
+#stateTab {
+  padding: 20px;
 }
 
 #stateTab table {
@@ -361,7 +364,7 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 }
 
 /* -------------------------------------------------------------------------- */
-/* ! 7. CHECKBOX AS TOGGLE SWITCH */
+/* ! 8. CHECKBOX AS TOGGLE SWITCH (FIXED WIDTH) */
 /* -------------------------------------------------------------------------- */
 
 input[type="checkbox"] {
@@ -369,9 +372,9 @@ input[type="checkbox"] {
   -webkit-appearance: none;
   position: relative;
   background-color: var(--border-color);
-  width: 44px;
-  height: 24px;
-  border-radius: 12px;
+  width: 36px; /* narrower */
+  height: 20px;
+  border-radius: 10px;
   cursor: pointer;
   outline: none;
   transition: background-color 0.2s ease-in-out;
@@ -382,8 +385,8 @@ input[type="checkbox"] {
 input[type="checkbox"]::before {
   content: '';
   position: absolute;
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background-color: white;
   top: 3px;
@@ -391,9 +394,41 @@ input[type="checkbox"]::before {
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
   transition: transform 0.2s ease-in-out;
 }
-input[type="checkbox"]:checked {
-  background-color: var(--color-success);
+input[type="checkbox"]:checked { background-color: var(--color-success); }
+input[type="checkbox"]:checked::before { transform: translateX(16px); }
+/* -------------------------------------------------------------------------- */
+/* ! TOGGLE SWITCH ALIGNMENT FIX */
+/* -------------------------------------------------------------------------- */
+
+/* Ensure toggles are centered on the same baseline as text */
+.jf-row input[type="checkbox"] {
+  margin: 0;               /* remove extra offset */
+  align-self: center;      /* vertically center with label/input */
+  justify-self: start;     /* prevent floating too far right */
 }
-input[type="checkbox"]:checked::before {
-  transform: translateX(20px);
+
+/* If inside a flex input row, align tightly */
+.jf-row > input[type="checkbox"] {
+  margin-left: 0.5rem;     /* small gap from label */
+}
+
+.jf-row input[type="number"] {
+  max-width: 80px;         /* keep compact */
+  display: inline-block;
+  margin-left: 0.5rem;
+}
+
+/* Let paired inputs (like min/max) sit next to each other */
+.jf-row input[type="number"] + input[type="number"] {
+  margin-left: 1rem;
+}
+
+.modal__btn--toggle,
+.modal__toggle {
+  align-self: center;      /* back to inline with row */
+  margin: 0;               /* reset margins */
+}
+
+.modal__tab--column > button {
+  margin: 10px;
 }

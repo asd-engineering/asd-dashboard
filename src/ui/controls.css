@@ -77,7 +77,7 @@ menu {
 #view-button-menu button {
   margin: 2px;
   padding: 8px 18px;
-  border: 2px solid #31a840;
+  border: 1px solid rgb(204, 204, 204);
   border-radius: 8px;
   background: #fff;
   color: #333;
