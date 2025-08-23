@@ -1,9 +1,10 @@
 // tests/shared/notifications.ts
 import type { Page } from "@playwright/test";
 
-// Keep this loose to be compatible across PW versions.
+// Cross-version friendly typing (older PW may not export Locator type)
 type LocatorLike = ReturnType<Page["locator"]>;
 
+// The app shows transient error/info dialogs using <dialog class="user-notification ...">
 const SELECTOR = 'dialog.user-notification.show, dialog.user-notification[open]';
 
 /**
@@ -15,9 +16,9 @@ export function notificationDialogs(page: Page): LocatorLike {
 
 /**
  * Dismiss all visible notification dialogs, if any, then wait until none remain.
- * - Prefer clicking a close button if present.
- * - Fallback to pressing Escape.
- * - Final guard: page-level waitForFunction that ensures no dialogs match SELECTOR.
+ *
+ * IMPORTANT: We DO NOT press Escape here because the main config modal also closes on Escape.
+ * We only try clicking "close" affordances and otherwise wait for auto-hide.
  */
 export async function dismissAllNotifications(page: Page, timeoutMs = 2500): Promise<void> {
   const dialogs = notificationDialogs(page);
@@ -37,16 +38,13 @@ export async function dismissAllNotifications(page: Page, timeoutMs = 2500): Pro
     try {
       if (await closeBtn.first().isVisible().catch(() => false)) {
         await closeBtn.first().click({ force: true });
-      } else {
-        await page.keyboard.press("Escape");
       }
     } catch {
-      // Ignore sporadic focus/visibility races; we'll verify below.
+      // Ignore sporadic focus/visibility races; we verify below.
     }
   }
 
-  // Final guard: wait until no matching dialogs are present.
-  // Use page-level predicate to avoid element-handle typing issues across PW versions.
+  // Final guard: wait until no matching dialogs are present (auto-hide).
   await page
     .waitForFunction(
       (sel: string) => !document.querySelector(sel),
@@ -57,7 +55,7 @@ export async function dismissAllNotifications(page: Page, timeoutMs = 2500): Pro
 }
 
 /**
- * Ensure no blocking dialogs before a pointer action.
+ * Ensure there are no blocking dialogs before a pointer action.
  */
 export async function ensureNoBlockingDialogs(page: Page, timeoutMs = 2500): Promise<void> {
   try {
