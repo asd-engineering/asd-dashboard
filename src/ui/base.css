@@ -44,17 +44,4 @@ menu::before {
   padding: 20px;
 }
 
-/* Legacy dropdown */
-.dropdown { position: relative; display: inline-block; }
-.dropdown-content {
-  display: none;
-  position: absolute;
-  background: var(--color-soft);
-  min-width: 160px;
-  box-shadow: var(--shadow-2);
-  z-index: 100;
-}
-.dropdown.open .dropdown-content,
-.dropdown:hover .dropdown-content { display: block; }
-
 main { margin-right: 15px; }

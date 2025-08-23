@@ -7,6 +7,7 @@
   background: var(--color-elevated);
   z-index: 2000;
 }
+
 .panel-arrow { font-size: .8rem; margin-right: -2px; }
 .panel-label {
   font-weight: 400; color: var(--color-text);
@@ -19,8 +20,19 @@
   position: absolute; top: 100%; left: 0;
   min-width: 340px; background: var(--color-surface);
   border: 1px solid var(--color-border); border-radius: var(--radius-1);
-  padding: var(--space-2); display: none; box-shadow: var(--shadow-2); z-index: 1002; overflow: visible;
+  padding: var(--space-2);
+  display: none; 
+  box-shadow: var(--shadow-2); 
+  z-index: 1002; 
+  overflow: visible;
 }
+
+/* Dropdown remains open */
+.dropdown:focus-within,
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
 .dropdown.panel.open { z-index: 1001; }
 .dropdown.panel.open .dropdown-content { display: block; }
 
