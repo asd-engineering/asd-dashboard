@@ -1,0 +1,60 @@
+/* Minimal reset + globals */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text);
+  overflow: hidden; /* stop double scroll */
+}
+
+body > main {
+  height: 100%;
+  /* main scrolbar */
+  overflow: auto;
+  margin: 0; 
+}
+
+body { 
+  overflow: hidden;
+}
+
+menu {
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  background: var(--color-success);
+  color: #fff;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+/* ASD logo */
+menu::before {
+  content: "";
+  display: block;
+  width: 34px;
+  height: 36px;
+  background: url("/assets/asd.png") center/contain no-repeat;
+  padding: 20px;
+}
+
+/* Legacy dropdown */
+.dropdown { position: relative; display: inline-block; }
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background: var(--color-soft);
+  min-width: 160px;
+  box-shadow: var(--shadow-2);
+  z-index: 100;
+}
+.dropdown.open .dropdown-content,
+.dropdown:hover .dropdown-content { display: block; }
+
+main { margin-right: 15px; }
