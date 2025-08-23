@@ -13,8 +13,8 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   
-  /* OPTIMIZATION: Use a more conservative number of workers on CI to prevent resource contention. */
-  workers: process.env.CI ? '50%' : os.cpus().length -1,
+  /* Use a more conservative number of workers on CI to prevent resource contention. */
+  workers: process.env.CI ? '50%' : undefined,
   /* Opt out of parallel tests on CI. */
   // workers: os.cpus().length -1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */

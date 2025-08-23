@@ -39,9 +39,11 @@ test('switch environment flow', async ({ page }) => {
   await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
   await expect(page.locator('#switch-environment')).toContainText('Switch')
   
-  // FIX: Replace unreliable waitForNavigation with a click followed by a robust wait for the app's ready state.
   await page.click('#switch-environment');
   await page.waitForLoadState('domcontentloaded');
+
+  // FIX: Wait for a stable element on the new page to appear.
+  await page.waitForSelector('[data-testid="board-panel"]');
 
   await page.waitForFunction(() => document.body.dataset.ready === 'true')
   const count = await page.evaluate(async () => {

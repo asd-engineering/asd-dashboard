@@ -27,6 +27,11 @@ test.describe('Saved States tab', () => {
     
     await page.click('#switch-environment')
     await page.waitForLoadState('domcontentloaded')
+    
+    // Wait for a stable element on the new page to appear.
+    // This prevents the "Execution context was destroyed" race condition.
+    await page.waitForSelector('[data-testid="board-panel"]');
+    
     await page.waitForFunction(() => document.body.dataset.ready === 'true')
 
     const boards = await getBoardCount(page);

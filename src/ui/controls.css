@@ -133,6 +133,8 @@ menu {
 /* Prevents scroll bar appearing due to ariaLabel leaking */
 #admin-control{
   overflow: hidden;
+  justify-content: flex-start;
+  gap: 0.6rem;
 }
 
 #admin-control label {
