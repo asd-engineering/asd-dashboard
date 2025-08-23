@@ -1,7 +1,7 @@
 /* Notification style dialog */
 .user-notification {
     position: fixed;
-    top: 66px;
+    top: 10px;
     right: 20px;
     background-color: #4CAF50; 
     color: white;
@@ -17,12 +17,15 @@
     opacity: 0; 
     transform: translateY(20px);
     transition: opacity 0.3s ease, transform 0.3s ease;
+
+    /* This makes clicks pass through */
+    pointer-events: none;
 }
 
-/* Show the dialog (after it's shown) */
+/* Show the dialog */
 .user-notification.show {
-    opacity: 1; /* Fully visible */
-    transform: translateY(0); /* Move to its final position */
+    opacity: 1;
+    transform: translateY(0);
 }
 
 /* Close button styling */
@@ -32,11 +35,14 @@
     font-size: 1.2rem;
     color: white;
     cursor: pointer;
-    margin-left: 15px; /* Space between the message and the close button */
+    margin-left: 15px;
+
+    /* Re-enable click interaction only here */
+    pointer-events: auto;
 }
 
 .user-notification .close-button:hover {
-    color: #ffcccb; /* Light red on hover */
+    color: #ffcccb;
 }
 
 .user-notification.success {
@@ -51,7 +57,6 @@
   border-left: 5px solid #dc3545;
 }
 
-/* Default: deny outline */
 .user-notification .close-button , .close-button:focus:not(:focus-visible) {
   outline: none;
 }
