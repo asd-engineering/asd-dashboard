@@ -170,16 +170,6 @@ menu {
   }
 }
 
-@media (max-width: 900px) {
-  .control-group {
-    /* below ~tablet: single column */
-    flex: 1 1 100%;
-    min-width: 100%;
-    max-width: 100%;
-  }
-}
-
-
 @media (max-width: 768px) {
   .control-group {
     flex: 1 1 100%;     /* stack fully on small screens */
