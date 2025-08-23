@@ -4,18 +4,22 @@ import { ciServices } from './data/ciServices'
 import { getBoardCount, navigate } from './shared/common.js'
 import { injectSnapshot } from './shared/state.js'
 
-test.describe.skip('Saved States tab', () => {
+test.describe('Saved States tab', () => {
   test.beforeEach(async ({ page }) => {
     await navigate(page,'/')
-    
+
     const cfg = ciConfig
     const svc = ciServices
     await injectSnapshot(page, cfg, svc, 'one')
-    await injectSnapshot(page, cfg, svc, 'two')
+    const altCfg = { ...ciConfig, globalSettings: { ...ciConfig.globalSettings, theme: 'dark' } }
+    await injectSnapshot(page, altCfg, svc, 'two')
+    await page.waitForSelector('dialog.user-notification', { state: 'detached' }).catch(() => {})
   })
 
   test('restore and delete snapshot', async ({ page }) => {
+    await page.reload()
     await page.click('#open-config-modal')
+
     await page.click('.tabs button[data-tab="stateTab"]')
     await expect(page.locator('#stateTab tbody tr')).toHaveCount(2)
 
