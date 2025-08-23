@@ -27,7 +27,37 @@ const logger = new Logger('exportConfig.js')
 // Populate this map to reduce URL size further.
 /** @type {Record<string,string>} */
 const KEY_MAP = {
-  // e.g. 'serviceId': 'i'
+  v: 'version',
+  n: 'name',
+  i: 'id',
+  t: 'type',
+  u: 'url',
+  c: 'config',
+  S: 'settings',
+  d: 'data',
+  st: 'state',
+  p: 'params',
+  o: 'options',
+  ds: 'description',
+  b: 'board',
+  B: 'boards',
+  vw: 'view',
+  V: 'views',
+  si: 'serviceId',
+  sv: 'service',
+  s: 'services',
+  wi: 'widgetId',
+  wg: 'widget',
+  w: 'widgets',
+  // extra common keys
+  gs: 'globalSettings',
+  ls: 'localStorage',
+  ws: 'widgetState',
+  c2: 'columns',
+  r2: 'rows',
+  mi: 'maxInstances',
+  or: 'order',
+  di: 'dataid'
 }
 
 // Feature flags and defaults are centralized in fragmentConstants.

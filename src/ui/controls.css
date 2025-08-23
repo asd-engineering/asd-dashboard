@@ -15,6 +15,20 @@ menu {
   background-color: #fff;
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
   z-index: 1001;
+  overflow: visible;           /* avoid clipping dropdowns */
+}
+
+/* Lift only the group that has an open panel */
+.control-group:has(.dropdown.panel.open) { z-index: 1000; }
+
+/* Create a transparent shield so siblings can't grab hover/focus */
+.control-group:has(.dropdown.panel.open)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: auto;
+  background: transparent;
 }
 
 /* --------------------------------------------------
@@ -32,13 +46,16 @@ menu {
   width: auto;
   max-width: 100%;
   word-break: break-word;
+  position: relative;
+  overflow: visible;
+  isolation: isolate;
+  z-index: 1; 
 }
 
 #controls select,
-#controls input,
-#controls button {
-  font-size: 0.8rem;
-  box-sizing: border-box;
+#controls input {
+  position: relative;
+  z-index: 0;
 }
 
 /* Inputs & Selects */
@@ -113,6 +130,13 @@ menu {
   user-select: none;
 }
 
+/* Prevents scroll bar appearing due to ariaLabel leaking */
+#admin-control{
+  overflow: hidden;
+  justify-content: flex-start;
+  gap: 0.6rem;
+}
+
 #admin-control label {
   position: relative;
   cursor: pointer;
@@ -147,16 +171,6 @@ menu {
     max-width: 48%;     /* prevents stretching */
   }
 }
-
-@media (max-width: 900px) {
-  .control-group {
-    /* below ~tablet: single column */
-    flex: 1 1 100%;
-    min-width: 100%;
-    max-width: 100%;
-  }
-}
-
 
 @media (max-width: 768px) {
   .control-group {

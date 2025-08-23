@@ -13,8 +13,9 @@ import { decodeConfig } from "../src/utils/compression.js";
 import { restoreDeep } from "../src/utils/minimizer.js";
 import { DEFAULT_CONFIG_TEMPLATE } from "../src/storage/defaultConfig.js";
 import { bootWithDashboardState } from "./shared/bootState.js";
+import { enableUITestMode } from './shared/uiHelpers';
 
-// Base64 params
+
 test.describe("Dashboard Config - Base64 via URL Params", () => {
   test("loads dashboard from valid config_base64 and services_base64", async ({ page }) => {
     const cfg = { ...ciConfig, boards: ciBoards };
@@ -23,19 +24,16 @@ test.describe("Dashboard Config - Base64 via URL Params", () => {
 
     await navigate(page, `/?config_base64=${config}&services_base64=${services}`);
 
-    // Service panel should render with all services
     await ensurePanelOpen(page, 'service-panel');
     await expect(page.locator('[data-testid="service-panel"] .panel-item')).toHaveCount(
       ciServices.length
     );
 
-    // Boards are available in the UI
     const names = await page.$$eval("#board-selector option", (opts) =>
       opts.map((o) => o.textContent)
     );
     expect(names).toContain(ciBoards[0].name);
 
-    // Underlying storage should match provided boards
     const boards = await getConfigBoards(page);
     expect(boards.length).toBe(ciBoards.length);
   });
@@ -52,7 +50,6 @@ test.describe("Dashboard Config - Base64 via URL Params", () => {
   });
 });
 
-// Remote params
 test.describe("Dashboard Config - Remote via URL Params", () => {
   test("loads dashboard from valid config_url and services_url", async ({ page }) => {
     await page.route("**/remote-config.json", (route) =>
@@ -97,7 +94,6 @@ test.describe("Dashboard Config - Remote via URL Params", () => {
   });
 });
 
-// Fallback modal
 test.describe("Dashboard Config - Fallback Config Popup", () => {
   test("popup appears when no config available via url, storage, or local file", async ({ page }) => {
     await bootWithDashboardState(page, {}, [], { board: "", view: "" });
@@ -110,17 +106,13 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
   });
 
   test("export button copies encoded URL", async ({ page }) => {
-    await bootWithDashboardState(page, ciConfig, ciServices, {
-      board: "",
-      view: "",
-    });
+    await bootWithDashboardState(page, ciConfig, ciServices, { board: "", view: "" });
 
     await page.evaluate(() =>
       import("/component/modal/configModal.js").then((m) => m.openConfigModal())
     );
     await page.waitForSelector("#config-modal .modal__btn--export");
 
-    // Stub clipboard
     await page.evaluate(() => {
       (window as any).__copied = "";
       navigator.clipboard.writeText = async (text) => {
@@ -156,7 +148,6 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
     await page.fill("#config-json", JSON.stringify(ciConfig));
     await page.click("#config-modal .modal__btn--save");
 
-    // Panel present after config applied
     await page.waitForSelector('[data-testid="service-panel"]');
 
     const stored = await getUnwrappedConfig(page);
@@ -164,31 +155,61 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
   });
 });
 
-// LocalStorage behavior
 test.describe("Dashboard Config - LocalStorage Behavior", () => {
   test("after first load, config is used from localStorage", async ({ page }) => {
     const config = b64(ciConfig);
     await navigate(page, `/?config_base64=${config}`);
     await page.reload();
     await expect(page.locator('[data-testid="service-panel"]')).toBeVisible();
+
+    await enableUITestMode(page);
   });
 
   test("changes via modal are saved and persist", async ({ page }) => {
     await navigate(page, `/?config_base64=${b64(ciConfig)}`);
 
+    // Open and verify modal is visible
     await page.click("#open-config-modal");
+    await expect(page.locator("#config-modal")).toBeVisible();
+
     await page.click('button:has-text("JSON mode")');
     await page.fill("#config-json", JSON.stringify({ ...ciConfig, boards: [] }));
-    await page.click('button:has-text("Services")');
+
+    // Clear any transient notifications *without* sending Escape
+    // await ensureNoBlockingDialogs(page);
+
+    // Ensure the modal is still open (Escape on CI used to close it)
+    if (!(await page.locator("#config-modal").isVisible())) {
+      await page.evaluate(() =>
+        import("/component/modal/configModal.js").then((m) => m.openConfigModal())
+      );
+      await expect(page.locator("#config-modal")).toBeVisible();
+    }
+
+    // Prefer a modal-scoped Services tab locator
+    const svcTab = page.locator('#config-modal button[data-tab="svcTab"]');
+    await svcTab.waitFor({ state: "visible" });
+    // await dismissAllNotifications(page); // guard against last-second toast
+    await svcTab.click();
+
     await page.click('button:has-text("JSON mode")');
-    await page.fill('#config-services', JSON.stringify([{ name: 'svc1', url: 'http://svc1' }]));
-    await page.click("#config-modal .modal__btn--save");
+    await page.fill('#config-services', JSON.stringify([{ name: "svc1", url: "http://svc1" }]));
+
+    // await dismissAllNotifications(page);
+
+    const saveBtn = page.locator("#config-modal .modal__btn--save");
+    await saveBtn.waitFor({ state: "visible" });
+    await saveBtn.click();
+
     await page.reload();
 
     const stored = await getUnwrappedConfig(page);
     expect(Array.isArray(stored.boards)).toBeTruthy();
-    const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services') || '[]'));
-    expect(services.some((s) => s.name === 'svc1')).toBeTruthy();
+
+    const services = await page.evaluate(
+      () => JSON.parse(localStorage.getItem("services") || "[]")
+    );
+    expect(services.some((s: any) => s.name === "svc1")).toBeTruthy();
   });
 
   test("removing config from localStorage shows popup again", async ({ page }) => {
@@ -199,7 +220,6 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
   });
 });
 
-// Building from services
 test.describe("Dashboard Functionality - Building from Services", () => {
   test("user can add board, view, and widget from services", async ({ page }) => {
     const cfg = {
@@ -220,18 +240,15 @@ test.describe("Dashboard Functionality - Building from Services", () => {
     );
 
     await ensurePanelOpen(page, 'service-panel');
-    // Click first available service option (index 1 skips the placeholder/search row if present)
     await page.locator('[data-testid="service-panel"] .panel-item').nth(1).click();
 
     await expect(page.locator(".widget-wrapper")).toHaveCount(1);
 
-    // Verify boards persisted through StorageManager (helper unwraps it)
     const storedBoards = await getConfigBoards(page);
     expect(storedBoards.length).toBeGreaterThan(0);
   });
 });
 
-// Priority
 test.describe("Dashboard Config - Priority and Overwriting", () => {
   test("base64 param overrides existing localStorage config", async ({ page }) => {
     await navigate(

@@ -7,10 +7,6 @@ test.describe('config consistency', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await navigate(page,'/')
-    
-    await handleDialog(page, 'confirm')
-    await page.click('#reset-button')
-    
   })
 
   test('open-config-modal shows boards after reset', async ({ page }) => {

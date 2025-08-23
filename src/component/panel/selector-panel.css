@@ -8,7 +8,7 @@
   /* border: 1px solid #ddd; */
   border-radius: 4px;
   background: #fff;
-  z-index: 100;
+  z-index: 2000;               /* ↑ ensure panel sits above sibling groups */
 }
 .panel-arrow { 
   font-size: 0.8rem;
@@ -21,15 +21,6 @@
   text-overflow: ellipsis;
   overflow: hidden;
   max-width: 32ch;
-}
-
-@media (max-width: 1250px) {
-  .dropdown.panel .dropdown-content {
-    min-width: 240px;
-    max-width: 90vw;
-  }
-  .panel-label { max-width: 20ch; }
-  .panel-search { width: min(220px, 30vw); }
 }
 
 .panel-search { border: none; outline: none; width: 220px; }
@@ -45,10 +36,12 @@
   padding: 8px;
   display: none;
   box-shadow: 0 6px 24px rgba(0,0,0,.12);
-  z-index: 20;
+  z-index: 1002;
   overflow: visible;
 }
-.dropdown.panel.open .dropdown-content { display: block; }
+
+.dropdown.panel.open { z-index: 1001; }
+.dropdown.panel.open .dropdown-content { display: block; z-index: 1002; }
 
 /* Menu wrapper */
 .menu { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
@@ -96,6 +89,7 @@
 .panel-item-actions-flyout {
   display: none;              /* IMPORTANT: no reserved space at rest */
   opacity: 0;
+  font-size: 20px;
 }
 
 /* Position them into a new grid row when shown (panel-item context only) */
@@ -191,4 +185,13 @@
   .panel-item > .panel-item-actions-flyout button,
   .panel-item > .panel-item-actions-flyout .panel-item-icon,
   .menu-item .panel-item-actions-flyout .panel-action { transition: none; }
+}
+
+@media (max-width: 1250px) {
+  .dropdown.panel .dropdown-content {
+    min-width: 240px;
+    max-width: 90vw;
+  }
+  .panel-label { max-width: 20ch; }
+  .panel-search { width: min(158px, 30vw); }
 }

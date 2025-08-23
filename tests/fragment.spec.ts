@@ -32,10 +32,11 @@ test.describe("Secure fragments loading configuration", () => {
     // This click will trigger a page reload
     await page.locator('#switch-environment').click() 
     await page.waitForLoadState('domcontentloaded');
+    
+    // Wait for a stable element on the new page to appear.
     await page.waitForSelector('[data-testid="board-panel"]');
 
     // Now re-import StorageManager in a fresh JS context
-    // ToDo: refactor logic below
     const result = await page.evaluate(async () => {
       const sm = (await import("/storage/StorageManager.js")).default;
       const snapshot = (await sm.loadStateStore()).states.find(

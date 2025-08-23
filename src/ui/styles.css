@@ -23,7 +23,7 @@ menu::before {
     display: block;
     width: 34px;
     height: 36px;
-    background-image: url("/asd.png");
+    background-image: url("/assets/asd.png");
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;

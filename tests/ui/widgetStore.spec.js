@@ -98,21 +98,27 @@ test.describe('WidgetStore UI Tests', () => {
     await page.locator('.widget-wrapper').first().waitFor()
   })
 
-  test.skip('Caching Widgets on View Switching', async ({ page }) => {
+  test('Caching Widgets on View Switching', async ({ page }) => {
     const view1Widget = page.locator('.widget-wrapper').first()
 
     const initialSize = await getWidgetStoreSize(page)
     expect(initialSize).toBe(1)
     await expect(view1Widget).toBeVisible()
 
+    await page.waitForSelector('#view-selector', { state: 'attached' })
     await selectViewByLabel(page, 'Modified View 2')
+
+    await waitForWidgetStoreIdle(page)
     await expect(view1Widget).toBeHidden()
 
     const afterSwitchSize = await getWidgetStoreSize(page)
     expect(afterSwitchSize).toBe(2)
 
+    await page.waitForSelector('#view-selector', { state: 'attached' })
     await selectViewByLabel(page, 'Modified View 1')
-    await expect(view1Widget).not.toBeVisible
+
+    await waitForWidgetStoreIdle(page)
+    await expect(view1Widget).toBeVisible()
 
     const finalSize = await getWidgetStoreSize(page)
     expect(finalSize).toBe(2)
@@ -158,6 +164,7 @@ test.describe('WidgetStore UI Tests', () => {
     await routeWithLRUConfig(page, widgetState, 2)
     await page.evaluate(() => localStorage.clear())
     await page.reload()
+    await waitForWidgetStoreIdle(page)
 
     const afterHydration = await page.$$eval(
       '.widget-wrapper',
@@ -165,9 +172,8 @@ test.describe('WidgetStore UI Tests', () => {
     )
     console.log('Widget count after hydration:', afterHydration)
 
-    await page.waitForFunction(
-      () => document.querySelectorAll('.widget-wrapper').length === 2
-    )
+    const widgets = page.locator('.widget-wrapper')
+    await expect(widgets).toHaveCount(2)
 
     const modal = page.locator('#eviction-modal')
     await modal.waitFor({ state: 'visible' })
@@ -176,10 +182,8 @@ test.describe('WidgetStore UI Tests', () => {
     await expect(modal).toBeHidden()
 
     await page.reload()
-
-    await page.waitForFunction(
-      () => document.querySelectorAll('.widget-wrapper').length === 2
-    )
+    await waitForWidgetStoreIdle(page)
+    await expect(widgets).toHaveCount(2)
 
     const ids = await page.$$eval('.widget-wrapper', (els) =>
       els.map((e) => e.getAttribute('data-dataid'))

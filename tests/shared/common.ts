@@ -1,13 +1,6 @@
 import { type Page, expect } from "@playwright/test";
 import { ensurePanelOpen } from './panels'
 
-// export async function ensurePanelOpen(page: Page) {
-//   // Triggers a test-only hook in the app (if present) to open the panel,
-//   // then waits for the CSS "open" state to be applied.
-//   await page.evaluate(() => (window as any).__openWidgetPanel?.());
-//   await page.waitForSelector('[data-testid="service-panel"].open');
-// }
-
 // Helper function to add services via the widget selector panel
 /**
  * Add the first `count` services by clicking options in the widget selector panel.
@@ -32,57 +25,75 @@ export async function selectServiceByName(page: Page, serviceName: string) {
   await page.click(`[data-testid="service-panel"] .panel-item:has-text("${serviceName}")`);
 }
 
-/**
- * Navigates to the specified URL and waits until the dashboard is fully hydrated.
- *
- * This helper observes:
- *  - `main:ready` after core initialization (menu, config, etc)
- *  - `view:ready` after the active board/view is fully rendered
- *
- * It resolves either immediately if <body data-ready="true"> is set, or once one of the events fires.
- */
+export interface NavigateOptions {
+  /** Total budget for navigate (goto + readiness), in ms. Default: 1000 */
+  totalTimeoutMs?: number;
+  /** Additional options forwarded to page.goto (merged, not replaced) */
+  gotoOptions?: Parameters<Page['goto']>[1];
+  /** Enable console proxy for debugging, default: false */
+  debugConsole?: boolean;
+}
+
 export async function navigate(
   page: Page,
   destination: string,
-  gotoOptions?: Parameters<Page["goto"]>[1]
+  options?: NavigateOptions
 ): Promise<void> {
-  // Optional console proxy (kept commented to avoid noisy CI logs)
-  // const allowedPrefixes = ['[navigate]', '[hydrate]', '[modal]']
-  // page.on('console', msg => {
-  //   const text = msg.text()
-  //   if (msg.type() === 'log' && allowedPrefixes.some(p => text.startsWith(p))) {
-  //     console.log(`[browser] ${text}`)
-  //   }
-  // })
+  const totalBudget = Math.max(1, options?.totalTimeoutMs ?? 2000);
 
-  await page.goto(destination, gotoOptions);
+  // Optional console proxy
+  if (options?.debugConsole) {
+    const allowedPrefixes = ['[navigate]', '[hydrate]', '[modal]'];
+    page.on('console', msg => {
+      const text = msg.text();
+      if (msg.type() === 'log' && allowedPrefixes.some(p => text.startsWith(p))) {
+        console.log(`[browser] ${text}`);
+      }
+    });
+  }
+
+  const gotoBudget = Math.max(1, Math.floor(totalBudget * 0.7));
+  const readyBudget = Math.max(0, totalBudget - gotoBudget);
+
+  const callerGotoTimeout =
+    options?.gotoOptions && typeof options.gotoOptions.timeout === 'number'
+      ? options.gotoOptions.timeout
+      : undefined;
+  const finalGotoTimeout = Math.min(gotoBudget, callerGotoTimeout ?? gotoBudget);
+
+  const mergedGotoOptions: Parameters<Page['goto']>[1] = {
+    waitUntil: 'domcontentloaded',
+    ...(options?.gotoOptions ?? {}),
+    timeout: finalGotoTimeout,
+  };
+
+  await page.goto(destination, mergedGotoOptions);
+
+  if (readyBudget === 0) return;
 
   try {
-    await page.waitForFunction(() => {
-      // Fast path: view hydration already complete
-      if (document.body.getAttribute("data-ready") === "true") {
-        return true;
-      }
+    await page.waitForFunction(
+      () => {
+        if (document.body.getAttribute('data-ready') === 'true') return true;
 
-      // Attach event listeners only once across retries
-      if (!(document as any).__NAVIGATE_ATTACHED__) {
-        (document as any).__NAVIGATE_ATTACHED__ = true;
+        if (!(document as any).__NAVIGATE_ATTACHED__) {
+          (document as any).__NAVIGATE_ATTACHED__ = true;
+          const handler = () => {
+            (document as any).__NAVIGATE_READY__ = true;
+          };
+          document.addEventListener('main:ready', handler, { once: true });
+          document.addEventListener('view:ready', handler, { once: true });
+        }
 
-        const handler = (e: Event) => {
-          // console.log(`[navigate] resolved via ${e.type}`)
-          (document as any).__NAVIGATE_READY__ = true;
-        };
-
-        document.addEventListener("main:ready", handler, { once: true });
-        document.addEventListener("view:ready", handler, { once: true });
-      }
-
-      return !!(document as any).__NAVIGATE_READY__;
-    }, { timeout: 100 });
+        return !!(document as any).__NAVIGATE_READY__;
+      },
+      { timeout: readyBudget }
+    );
   } catch {
     // Soft timeout: continue; some tests may rely on explicit waits later
   }
 }
+
 
 // Helper function to handle dialog interactions
 export async function handleDialog(page: Page, type: string, inputText = "") {
@@ -167,30 +178,64 @@ export async function getLastUsedBoardId(page: Page) {
   return await page.evaluate(() => localStorage.getItem("lastUsedBoardId"));
 }
 
-// Select a view by its visible label and wait until the DOM reflects it.
-export async function selectViewByLabel(page: Page, viewLabel: string) {
-  // Wait until the view dropdown is populated
-  await page.waitForFunction(
-    (sel) => !!document.querySelector(sel) && (document.querySelector(sel) as HTMLSelectElement).options.length > 0,
-    "#view-selector",
-    { timeout: 5000 }
-  );
+/**
+ * Select a view by label.
+ * - Clicks #view-selector if visible (user-like).
+ * - Uses selectOption; falls back to { force: true } if hidden.
+ * - No internal waitForFunction; callers should await app-level readiness
+ *   (e.g., waitForWidgetStoreIdle) after calling this.
+ */
+// export async function selectViewByLabel(
+//   page: Page,
+//   label: string
+// ): Promise<void> {
+//   const sel = page.locator("#view-selector");
+//   // Element may be hidden depending on globalSettings; only require attachment.
+//   await sel.waitFor({ state: "attached" });
 
-  // Change the view
-  await page.evaluate((label) => {
-    const sel = document.querySelector('#view-selector') as HTMLSelectElement | null;
-    if (!sel) return;
-    const opt = Array.from(sel.options).find(o => o.textContent === label);
-    if (opt) {
-      sel.value = opt.value;
-      sel.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-  }, viewLabel);
+//   // If visible, click to focus (keeps "use clicks" semantics).
+//   try {
+//     if (await sel.isVisible().catch(() => false)) {
+//       await sel.click().catch(() => {});
+//     }
+//   } catch {
+//     /* ignore focus races */
+//   }
 
-  // Wait until the <div.board-view> id matches the selected value
-  await page.waitForFunction(() => {
-    const sel = document.querySelector("#view-selector") as HTMLSelectElement | null;
-    const viewEl = document.querySelector(".board-view") as HTMLElement | null;
-    return !!sel && !!viewEl && viewEl.id === sel.value;
-  }, undefined, { timeout: 3000 });
+//   // Try normal selection first, then forced selection if hidden/covered.
+//   try {
+//     await sel.selectOption({ label });
+//   } catch {
+//     await sel.selectOption({ label }, { force: true });
+//   }
+// }
+
+/**
+ * Fast view switch by label.
+ * - Single action: force selectOption({ label }) — no clicks, no waits.
+ * - Rare fallback: tiny evaluate to set value + dispatch events if selectOption fails.
+ * - Callers are responsible for any readiness waits (e.g., waitForWidgetStoreIdle()).
+ */
+export async function selectViewByLabel(page: Page, label: string): Promise<void> {
+  const sel = page.locator("#view-selector");
+
+  try {
+    // Fast path: bypass actionability (visibility/enabled) checks entirely.
+    await sel.selectOption({ label }, { force: true });
+    return;
+  } catch {
+    // Minimal, last-resort fallback (runs only if selectOption throws).
+    await page.evaluate((lbl) => {
+      const select = document.querySelector("#view-selector") as HTMLSelectElement | null;
+      if (!select) throw new Error("#view-selector not found");
+      const wanted = String(lbl).trim();
+      const opt = Array.from(select.options).find(
+        (o) => (o.textContent || "").trim() === wanted
+      );
+      if (!opt) throw new Error(`Option with label "${wanted}" not found`);
+      select.value = opt.value;
+      select.dispatchEvent(new Event("input", { bubbles: true }));
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    }, label);
+  }
 }

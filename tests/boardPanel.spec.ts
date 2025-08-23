@@ -2,14 +2,14 @@ import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
 import { navigate, addServices } from './shared/common'
 import { openCreateFromTopMenu, ensurePanelOpen } from './shared/panels'
-import { enableHoverTestMode } from './shared/uiHelpers';
+import { enableUITestMode } from './shared/uiHelpers';
 
 test.describe('Board panel', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await navigate(page, '/')
     await addServices(page, 1)
-    await enableHoverTestMode(page);
+    await enableUITestMode(page);
   })
 
   test('renders header label and hides count', async ({ page }) => {
