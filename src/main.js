@@ -51,7 +51,12 @@ window.addEventListener('hashchange', () => loadFromFragment(false))
 async function main () {
   logger.log('Application initialization started')
 
-  await StorageManager.init({ persist: true })
+  try {
+    await StorageManager.init({ persist: true })
+  } catch (err) {
+    console.error('Failed to initialize StorageManager', err)
+    throw err
+  }
 
   // 1. Handle configuration from URL fragment first
   const params = new URLSearchParams(location.search)
