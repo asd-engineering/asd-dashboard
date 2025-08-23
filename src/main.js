@@ -22,7 +22,6 @@ import { debounce, debounceLeading } from './utils/utils.js'
 import StorageManager, { APP_STATE_CHANGED } from './storage/StorageManager.js'
 import { runSilentImportFlowIfRequested } from './flows/silentImportFlow.js'
 
-// NEW: widget selector panel (replaces populateServiceDropdown())
 import { mountServiceControl } from './component/service/ServiceControl.js'
 
 const logger = new Logger('main.js')
@@ -79,7 +78,7 @@ async function main () {
   applyControlVisibility()
   applyWidgetMenuVisibility()
 
-  // 5. Migrate legacy boards key and load from config (remove before merging to main)
+  // 5. Migrate legacy boards stored under the "boards" key into config if none exist
   const oldBoards = JSON.parse(localStorage.getItem('boards') || '[]')
   if (oldBoards.length > 0 && (!config.boards || config.boards.length === 0)) {
     logger.log('Migrating old boards key into config')

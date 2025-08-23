@@ -2,7 +2,7 @@ alias symbols := symbols-resolve
 
 # Extract symbol index
 symbols-extract:
-    node scripts/extract-symbol-index.mjs
+    cd ../.. && node scripts/extract-symbol-index.mjs
 
 # Resolve symbols by keywords
 symbols-resolve query:

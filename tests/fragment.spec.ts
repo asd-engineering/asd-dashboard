@@ -35,7 +35,7 @@ test.describe("Secure fragments loading configuration", () => {
     await page.waitForSelector('[data-testid="board-panel"]');
 
     // Now re-import StorageManager in a fresh JS context
-    // ToDo: refactor logic below
+    // TODO: refactor snapshot lookup into a shared helper
     const result = await page.evaluate(async () => {
       const sm = (await import("/storage/StorageManager.js")).default;
       const snapshot = (await sm.loadStateStore()).states.find(
