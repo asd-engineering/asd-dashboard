@@ -13,7 +13,8 @@ import { decodeConfig } from "../src/utils/compression.js";
 import { restoreDeep } from "../src/utils/minimizer.js";
 import { DEFAULT_CONFIG_TEMPLATE } from "../src/storage/defaultConfig.js";
 import { bootWithDashboardState } from "./shared/bootState.js";
-import { dismissAllNotifications, ensureNoBlockingDialogs } from "./shared/notifications";
+import { enableUITestMode } from './shared/uiHelpers';
+
 
 test.describe("Dashboard Config - Base64 via URL Params", () => {
   test("loads dashboard from valid config_base64 and services_base64", async ({ page }) => {
@@ -160,6 +161,8 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
     await navigate(page, `/?config_base64=${config}`);
     await page.reload();
     await expect(page.locator('[data-testid="service-panel"]')).toBeVisible();
+
+    await enableUITestMode(page);
   });
 
   test("changes via modal are saved and persist", async ({ page }) => {
@@ -173,7 +176,7 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
     await page.fill("#config-json", JSON.stringify({ ...ciConfig, boards: [] }));
 
     // Clear any transient notifications *without* sending Escape
-    await ensureNoBlockingDialogs(page);
+    // await ensureNoBlockingDialogs(page);
 
     // Ensure the modal is still open (Escape on CI used to close it)
     if (!(await page.locator("#config-modal").isVisible())) {
@@ -186,13 +189,13 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
     // Prefer a modal-scoped Services tab locator
     const svcTab = page.locator('#config-modal button[data-tab="svcTab"]');
     await svcTab.waitFor({ state: "visible" });
-    await dismissAllNotifications(page); // guard against last-second toast
+    // await dismissAllNotifications(page); // guard against last-second toast
     await svcTab.click();
 
     await page.click('button:has-text("JSON mode")');
     await page.fill('#config-services', JSON.stringify([{ name: "svc1", url: "http://svc1" }]));
 
-    await dismissAllNotifications(page);
+    // await dismissAllNotifications(page);
 
     const saveBtn = page.locator("#config-modal .modal__btn--save");
     await saveBtn.waitFor({ state: "visible" });
