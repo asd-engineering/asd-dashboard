@@ -62,7 +62,7 @@
     display: none;
 }
 .widget-button:hover { opacity: 1; font-size:1.5rem; }
-.widget-icon-fullscreen { font-size: 1.6rem; order: 0; color: white; font-weight: bold;}
+.widget-icon-fullscreen { font-size: 1.6rem; order: 0; color: var(--color-action-widget); font-weight: bold;}
 .widget-icon-drag { cursor: grab; order: -1; }
 .widget-icon-drag:active { cursor: grabbing; }
 .widget-icon-resize { order: 1; }
