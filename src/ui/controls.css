@@ -1,29 +1,35 @@
-/* Reset */
-menu {
-  margin: 0;
-  padding: 0;
-}
-
-/* --------------------------------------------------
-   Global Controls Wrapper
-   -------------------------------------------------- */
-#controls {
+/* Controls Bar */
+menu#controls {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--controls-gap-row) var(--controls-gap-col);
+  width: 100%;
+  padding: 5px;
+  background: var(--color-surface);
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  background-color: #fff;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 1001;
-  overflow: visible;           /* avoid clipping dropdowns */
+  margin: 0 auto;
+  align-items: center;
 }
 
-/* Lift only the group that has an open panel */
-.control-group:has(.dropdown.panel.open) { z-index: 1000; }
+/* Group */
+.control-group {
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0.3rem;
+  border-radius: var(--radius-3);
+  background: var(--color-soft);
+  min-width: 0;
+  max-width: 100%;
+  word-break: break-word;
+  position: relative;
+  isolation: isolate;
+  z-index: 1;
+}
 
-/* Create a transparent shield so siblings can't grab hover/focus */
+/* Lift open panels */
+.control-group:has(.dropdown.panel.open) { z-index: 1000; }
 .control-group:has(.dropdown.panel.open)::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   z-index: 1000;
@@ -31,149 +37,115 @@ menu {
   background: transparent;
 }
 
-/* --------------------------------------------------
-   Control Groups & Form Elements
-   -------------------------------------------------- */
-.control-group {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  padding: 0.3rem;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-  width: auto;
-  max-width: 100%;
-  word-break: break-word;
-  position: relative;
-  overflow: visible;
-  isolation: isolate;
-  z-index: 1; 
-}
-
-#controls select,
-#controls input {
-  position: relative;
-  z-index: 0;
-}
-
-/* Inputs & Selects */
+/* Inputs */
 #controls select,
 #controls input {
   padding: 0.3rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-1);
+  background: var(--color-elevated);
+  color: var(--color-text);
   max-width: 100%;
   min-width: 0;
   flex-shrink: 1;
+  position: relative;
+  z-index: 0;
 }
+#controls select { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-#controls select {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-/* Standard Buttons */
+/* Buttons */
 #controls button {
   padding: 0.3rem 0.6rem;
-  color: grey;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-1);
+  background: transparent;
+  color: var(--color-text-weak);
   cursor: pointer;
-  transition: background-color 0.3s ease;
   font-size: 1rem;
+  transition: background-color .15s ease;
 }
+#controls button:hover { background: var(--color-surface); }
 
-#controls button:hover {
-  background-color: white;
-}
-
-/* View-Button-Menu Overrides */
+/* View buttons */
 #view-button-menu button {
   margin: 2px;
   padding: 8px 18px;
-  border: 1px solid rgb(204, 204, 204);
-  border-radius: 8px;
-  background: #fff;
-  color: #333;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-3);
+  background: var(--color-elevated);
+  color: var(--color-text);
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background .15s, color .15s, border-color .15s;
 }
+#view-button-menu button.active { background: var(--color-success); color: #fff; }
 
-#view-button-menu button.active {
-  background: #31a840;
-  color: #fff;
-}
-
-/* Dropdown Links */
+/* Dropdown links */
 .dropdown-content a {
   display: block;
-  font-size: 0.8rem;
+  font-size: .8rem;
   padding: 6px 10px;
+  color: var(--color-text);
 }
 
-/* --------------------------------------------------
-   Icon Toggles & Admin Labels
-   -------------------------------------------------- */
-#sw-toggle {
-  display: none;
+/* Admin control */
+menu#controls #admin-control.control-group {
+  display: flex;
+  column-gap: 0.6rem;
+  row-gap: 0.6rem;
+  overflow: hidden;
+  justify-content: start;
+  align-content: start;
+  max-height: calc(2 * var(--admin-icon-box) + 0.6rem);
 }
+
+/* GRID buttons on small screens */
+@media (max-width: 535px) {
+  menu#controls #admin-control.control-group {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    grid-template-rows: repeat(2, max-content);
+  }
+}
+
+#admin-control label {
+  display: inline-grid;
+  place-items: center;
+  width: var(--admin-icon-box);
+  height: var(--admin-icon-box);
+  font-size: var(--admin-icon-size);
+  cursor: pointer;
+  line-height: 1;
+  transition: transform .15s ease;
+}
+#admin-control label:hover { transform: scale(1.15); }
+#admin-control label:hover::after {
+  content: attr(aria-label);
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  font-size: .8rem;
+  padding: 2px 6px;
+  border-radius: var(--radius-1);
+  white-space: nowrap;
+  z-index: 10;
+}
+
+/* Responsive */
+@media (max-width: 520px) {
+  menu#controls { grid-template-columns: 1fr; }
+}
+
+#sw-toggle { display: none; }
 
 #toggle-widget-menu,
 .icon-checkbox {
   display: inline-block;
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: var(--admin-icon-size);
   user-select: none;
-}
-
-/* Prevents scroll bar appearing due to ariaLabel leaking */
-#admin-control{
-  overflow: hidden;
-  justify-content: flex-start;
-  gap: 0.6rem;
-}
-
-#admin-control label {
-  position: relative;
-  cursor: pointer;
-  transition: font-size 0.2s;
-}
-#admin-control label:hover {
-  font-size: 1.4rem;
-}
-#admin-control label:hover::after {
-  content: attr(aria-label);
-  position: absolute;
-  top: 2.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,0.8);
-  color: #fff;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  white-space: nowrap;
-  z-index: 10;
-}
-
-@media (max-width: 1250px) {
-  #controls {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-  .control-group {
-    flex: 1 1 auto;
-    min-width: 260px;   /* allow 2 per row */
-    max-width: 48%;     /* prevents stretching */
-  }
-}
-
-@media (max-width: 768px) {
-  .control-group {
-    flex: 1 1 100%;     /* stack fully on small screens */
-  }
 }

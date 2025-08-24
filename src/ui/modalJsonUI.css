@@ -1,64 +1,35 @@
 /* -------------------------------------------------------------------------- */
-/* ! 1. VARIABLES & DESIGN TOKENS */
+/* ! MODAL SHELL & LAYOUT                                                     */
 /* -------------------------------------------------------------------------- */
-:root {
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  --bg-modal: #f8f9fa;
-  --bg-header-footer: #ffffff;
-  --bg-content: #ffffff;
-  --bg-item-card: #f8f9fa;
-  --text-primary: #212529;
-  --text-secondary: #495057;
-  --text-label: #343a40;
-  --text-accent: #0d6efd;
-  --border-color: #dee2e6;
-  --focus-ring-color: rgba(13, 110, 253, 0.25);
-  --color-success: #198754;
-  --color-danger: #dc3545;
-  --color-success-bg: #d1e7dd;
-  --color-danger-bg: #f8d7da;
-  --border-radius: 8px;
-  --spacing-md: 16px;
-  --label-width: 220px;
-}
-
-/* -------------------------------------------------------------------------- */
-/* ! 2. MODAL SHELL (GRID LAYOUT & SCROLL FIX) */
-/* -------------------------------------------------------------------------- */
-
 .modal {
   position: fixed;
   inset: 50% auto auto 50%;
   transform: translate(-50%, -50%);
-  z-index: 1000;
+  /* Raise far above any other UI (dropdowns @ 2000, notifications @ 9000) */
+  z-index: 10000;
   width: 70vw;
   height: 85vh;
-  border-radius: var(--border-radius);
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-
+  border-radius: var(--radius-3);
+  box-shadow: var(--shadow-3);
   display: grid;
   grid-template-rows: auto 1fr auto;
   overflow: hidden;
-  background-color: var(--bg-modal);
-  border: 1px solid var(--border-color);
+  background: var(--color-soft);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
 }
-
 .modal--lg { width: 70vw; height: 85vh; }
 .modal--md { width: 50vw; height: auto; max-height: 85vh; }
 .modal--sm { width: 40vw; height: auto; max-height: 85vh; }
-
-@media (max-width: 768px) {
-  .modal { width: 95vw; height: 90vh; max-height: 90vh; }
-}
+@media (max-width: 768px) { .modal { width: 95vw; height: 90vh; max-height: 90vh; } }
 
 /* -------------------------------------------------------------------------- */
-/* ! 3. MODAL COMPONENTS (HEADER, CONTENT, FOOTER) */
+/* ! MODAL COMPONENTS (HEADER, CONTENT, FOOTER)                               */
 /* -------------------------------------------------------------------------- */
-
 .modal .tabs {
-  padding: 0 var(--spacing-md);
-  border-bottom: 1px solid var(--border-color);
-  background-color: var(--bg-header-footer);
+  padding: 0 var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-elevated);
   display: flex;
   align-items: center;
 }
@@ -69,163 +40,91 @@
   border-radius: 0;
   padding: 14px 4px;
   margin: 0 12px;
-  font-size: 0.9rem;
+  font-size: .9rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--color-text-weak);
   transition: all 150ms ease;
+  cursor: pointer;
 }
-.modal .tabs button:hover {
-  color: var(--text-primary);
-  border-bottom-color: var(--border-color);
-}
-.modal .tabs button.active {
-  font-weight: 600;
-  color: var(--text-accent);
-  border-bottom-color: var(--text-accent);
-}
+.modal .tabs button:hover { color: var(--color-text); border-bottom-color: var(--color-border); }
+.modal .tabs button.active { font-weight: 600; color: var(--color-accent); border-bottom-color: var(--color-accent); }
 .modal .tabs button:first-child { margin-left: 0; }
 
 @media (max-width: 1250px) {
-  .modal .tabs {
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-  .modal .tabs button {
-    margin: 0 6px;
-    font-size: 0.8rem;
-    padding: 10px 2px;
-  }
+  .modal .tabs { flex-wrap: wrap; gap: 4px; }
+  .modal .tabs button { margin: 0 6px; font-size: 1rem; padding: 10px 2px; }
 }
 
 .modal .modal__btn-group {
-  padding: var(--spacing-md);
-  border-top: 1px solid var(--border-color);
-  background-color: var(--bg-header-footer);
+  padding: var(--space-6);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-elevated);
   display: flex;
   justify-content: flex-end;
   gap: 12px;
 }
 
-#cfgTab, #svcTab, #stateTab {
-  overflow: scroll;
-  display: flex;
-  flex-direction: column;
-}
+#cfgTab, #svcTab, #stateTab { overflow: auto; display: flex; flex-direction: column; }
 
 /* -------------------------------------------------------------------------- */
-/* ! 4. REVISED HORIZONTAL TABS & FORM LAYOUT */
+/* ! FORM & SUB-TABS                                                          */
 /* -------------------------------------------------------------------------- */
-
 #config-form .jf-subtabs {
   display: flex;
-  flex-direction: row;
   flex-wrap: wrap;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--color-border);
   margin: 0 -1rem 1rem -1rem;
   padding: 0 1rem;
   position: sticky;
   top: -1rem;
-  background: white;
+  background: var(--color-surface);
   z-index: 10;
 }
 .jf-subtabs button {
-  padding: 0.75rem 1.25rem;
+  padding: .75rem 1.25rem;
   border: none;
   border-bottom: 3px solid transparent;
   background: none;
   cursor: pointer;
-  font-size: 0.9rem;
-  color: #495057;
-  transition: all 0.2s ease;
+  font-size: .9rem;
+  color: var(--color-text-weak);
+  transition: all .2s ease;
 }
-.jf-subtabs button:hover { color: #0056b3; background-color: #f8f9fa; }
-.jf-subtabs button.active { color: #007bff; font-weight: 600; border-bottom-color: #007bff; }
+.jf-subtabs button:hover { color: #0056b3; background: var(--color-soft); } /* Retaining specific hover color */
+.jf-subtabs button.active { color: var(--color-accent); font-weight: 600; border-bottom-color: var(--color-accent); }
 
-.modal__jsonform {
-  padding: 1rem;
-  overflow-y: auto;
-}
+.modal__jsonform { padding: 1rem; overflow-y: auto; }
 
-/* Row layout */
-.jf-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: start;
-  gap: 1rem;
-  padding: 0.5rem 0;
-}
-.jf-row > label {
-  flex: 0 0 200px;
-  font-weight: 500;
-  color: #343a40;
-  padding-top: 0.3rem;
-  text-align: left;
-  word-break: break-word;
+/* Rows & Inputs */
+.jf-row { display: flex; flex-wrap: wrap; align-items: start; gap: 1rem; padding: .5rem 0; }
+.jf-row > label { flex: 0 0 200px; font-weight: 500; color: #343a40; padding-top: .3rem; text-align: left; word-break: break-word; }
+.jf-row input[type="text"], .jf-row input[type="number"] {
+  flex: 1 1 300px; min-width: 200px; padding: .5rem;
+  border: 1px solid #ced4da; border-radius: var(--radius-1);
 }
 
 @media (max-width: 1250px) {
-  .jf-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .jf-row > label {
-    flex: none;
-    margin-bottom: 0.25rem;
-  }
-  .jf-row input[type="text"],
-  .jf-row input[type="number"] {
-    min-width: 100%;
-    flex: 1 1 auto;
-  }
-}
-.jf-row input[type="text"],
-.jf-row input[type="number"] {
-  flex: 1 1 300px;
-  min-width: 200px;
-  padding: 0.5rem;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
+  .jf-row { flex-direction: column; align-items: stretch; }
+  .jf-row > label { flex: none; margin-bottom: .25rem; }
+  .jf-row input[type="text"], .jf-row input[type="number"] { min-width: 100%; flex: 1 1 auto; }
 }
 
 /* Arrays as cards */
-.jf-array {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  width: 100%;
-}
+.jf-array { display: flex; flex-direction: column; gap: 1.5rem; width: 100%; }
 .jf-array > .jf-row {
-  flex-direction: row;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  flex-direction: row; border: 1px solid var(--color-border); border-radius: var(--radius-3);
+  padding: 1rem; background: var(--color-soft); box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 .jf-array > .jf-row > .jf-object { flex-grow: 1; }
+.jf-row > .jf-object, .jf-row > .jf-array { flex-grow: 1; display: flex; flex-direction: column; padding-left: 1rem; }
 
-/* Removed border-left for nested objects/arrays */
-.jf-row > .jf-object,
-.jf-row > .jf-array {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  padding-left: 1rem;
-}
-
+/* -------------------------------------------------------------------------- */
+/* ! FORM CONTROLS (BUTTONS, TOGGLES)                                         */
+/* -------------------------------------------------------------------------- */
 .array__add, .array__remove {
-  padding: 0;
-  font-family: monospace;
-  font-size: 1.2rem;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  border: 1px solid #ced4da;
-  cursor: pointer;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0; font-family: var(--font-mono); font-size: 1.2rem;
+  border-radius: 50%; width: 28px; height: 28px; border: 1px solid var(--color-border);
+  cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
   transition: all 0.2s;
 }
 .array__add { background-color: #e7f5ff; color: #1c7ed6; align-self: flex-start; }
@@ -233,34 +132,9 @@
 .array__remove { background-color: #fff5f5; color: #c92a2a; }
 .array__remove:hover { background-color: #ffe3e3; }
 
-/* -------------------------------------------------------------------------- */
-/* ! 5. FORM MODE TEXTAREA */
-/* -------------------------------------------------------------------------- */
-
-.modal__textarea--grow {
-  flex: 1 1 auto;
-  width: 100%;
-  min-height: 70vh;
-  font-family: var(--font-mono);
-  white-space: pre;
-  resize: none;
-  box-sizing: border-box;
-}
-
-/* -------------------------------------------------------------------------- */
-/* ! 6. BUTTONS */
-/* -------------------------------------------------------------------------- */
-.modal__btn, .modal .tabs button {
-  font-family: var(--font-sans);
-  cursor: pointer;
-}
 .modal__btn {
-  padding: 10px 15px;
-  font-size: 14px;
-  font-weight: 600;
-  border: 1px solid transparent;
-  border-radius: var(--border-radius);
-  transition: all 150ms ease;
+  padding: 10px 15px; font-size: 14px; font-weight: 600; border: 1px solid transparent;
+  border-radius: var(--radius-3); transition: all 150ms ease; cursor: pointer;
 }
 .modal__btn--save { background-color: var(--color-success); border-color: var(--color-success); color: #fff; }
 .modal__btn--save:hover { background-color: #157347; border-color: #146c43;}
@@ -271,192 +145,98 @@
 .modal__btn--toggle { align-self: flex-end; margin: 0 0 12px 0; }
 
 .modal__label + div > button:last-of-type, div[style*="display: flex"] > button {
-  flex-shrink: 0;
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  font-size: 1.5rem;
-  font-weight: 300;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
+  flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+  font-size: 1.5rem; font-weight: 300; line-height: 1; display: flex;
+  align-items: center; justify-content: center; border: none; cursor: pointer;
 }
 .modal__label + div > button:last-of-type { background-color: var(--color-success-bg); color: var(--color-success); }
 .modal__label + div > button:last-of-type:hover { background-color: #b6dcc2; }
 div[style*="display: flex"] > button { background-color: var(--color-danger-bg); color: var(--color-danger); }
 div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 
-/* -------------------------------------------------------------------------- */
-/* ! 7. SAVED STATES TABLE STYLING */
-/* -------------------------------------------------------------------------- */
-
-#stateFilter {
-  font-size: 0.9rem;
-  padding: 8px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  margin-bottom: var(--spacing-md);
-  width: 100%;
-  box-sizing: border-box;
-}
-#stateFilter:focus {
-  outline: none;
-  border-color: var(--text-accent);
-  box-shadow: 0 0 0 3px var(--focus-ring-color);
+.modal__textarea--grow {
+  flex: 1 1 auto; width: 100%; min-height: 70vh; font-family: var(--font-mono);
+  white-space: pre; resize: none; box-sizing: border-box;
+  margin-top: 15px;
 }
 
-#stateTab {
-  padding: 20px;
-}
-
-#stateTab table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-#stateTab th,
-#stateTab td {
-  padding: 12px var(--spacing-md);
-  text-align: left;
-  vertical-align: middle;
-  border-bottom: 1px solid var(--border-color);
-}
-#stateTab th {
-  font-weight: 600;
-  color: var(--text-secondary);
-  background-color: var(--bg-modal);
-}
-#stateTab td { color: var(--text-primary); }
-#stateTab td:last-child {
-  font-family: var(--font-mono);
-  max-width: 200px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 0.8rem;
-}
-#stateTab td button {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-color);
-  background-color: #fff;
-  cursor: pointer;
-  margin-right: 8px;
-  transition: all 150ms ease;
-}
-#stateTab td button.state-switch:hover {
-  background-color: var(--color-success-bg);
-  border-color: var(--color-success);
-  color: var(--color-success);
-}
-#stateTab td button:not(.state-switch):hover {
-  background-color: var(--color-danger-bg);
-  border-color: var(--color-danger);
-  color: var(--color-danger);
-}
-#stateTab > button {
-  display: block;
-  margin: var(--spacing-md) auto 0 auto;
-  width: fit-content;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-danger);
-  background-color: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--border-radius);
-  padding: 8px 16px;
-  cursor: pointer;
-  transition: all 150ms ease;
-  white-space: nowrap;
-}
-#stateTab > button:hover {
-  background-color: var(--color-danger-bg);
-  border-color: var(--color-danger);
-}
-
-#fragment-decision-modal {
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-}
-#fragment-decision-modal > #importName {
-  display: block;
-  margin: 10px 0;
-  max-width: 40%;
-}
-#fragment-decision-modal > .modal__btn-group {
-  justify-content: flex-start
-}
-
-/* -------------------------------------------------------------------------- */
-/* ! 8. CHECKBOX AS TOGGLE SWITCH (FIXED WIDTH) */
-/* -------------------------------------------------------------------------- */
-
-input[type="checkbox"] {
+/* Only style toggles inside config form */
+#config-form input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
   position: relative;
-  background-color: var(--border-color);
-  width: 36px; /* narrower */
+  background: var(--color-border);
+  width: 36px;
   height: 20px;
   border-radius: 10px;
   cursor: pointer;
   outline: none;
-  transition: background-color 0.2s ease-in-out;
-  justify-self: end;
-  margin-left: auto;
-  align-self: center;
+  transition: background-color .2s ease-in-out;
 }
-input[type="checkbox"]::before {
-  content: '';
+#config-form input[type="checkbox"]::before {
+  content: "";
   position: absolute;
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background-color: white;
+  background: #fff;
   top: 3px;
   left: 3px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  transition: transform 0.2s ease-in-out;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  transition: transform .2s ease-in-out;
 }
-input[type="checkbox"]:checked { background-color: var(--color-success); }
-input[type="checkbox"]:checked::before { transform: translateX(16px); }
+#config-form input[type="checkbox"]:checked { background: var(--color-success); }
+#config-form input[type="checkbox"]:checked::before { transform: translateX(16px); }
+
+/* Alignment fixes for toggles and numbers */
+.jf-row input[type="checkbox"] { margin: 0; align-self: center; justify-self: start; }
+.jf-row > input[type="checkbox"] { margin-left: .5rem; }
+.jf-row input[type="number"] { max-width: 80px; display: inline-block; margin-left: .5rem; }
+.jf-row input[type="number"] + input[type="number"] { margin-left: 1rem; }
+
 /* -------------------------------------------------------------------------- */
-/* ! TOGGLE SWITCH ALIGNMENT FIX */
+/* ! SAVED STATES TAB                                                         */
 /* -------------------------------------------------------------------------- */
-
-/* Ensure toggles are centered on the same baseline as text */
-.jf-row input[type="checkbox"] {
-  margin: 0;               /* remove extra offset */
-  align-self: center;      /* vertically center with label/input */
-  justify-self: start;     /* prevent floating too far right */
+#stateTab { padding: 20px; }
+#stateFilter {
+  font-size: 0.9rem; padding: 8px 12px; border: 1px solid var(--color-border);
+  border-radius: var(--radius-3); margin-bottom: var(--space-6); width: 100%; box-sizing: border-box;
 }
+#stateFilter:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--focus-ring); }
 
-/* If inside a flex input row, align tightly */
-.jf-row > input[type="checkbox"] {
-  margin-left: 0.5rem;     /* small gap from label */
+#stateTab table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+#stateTab th, #stateTab td {
+  padding: 12px var(--space-6); text-align: left; vertical-align: middle; border-bottom: 1px solid var(--color-border);
 }
-
-.jf-row input[type="number"] {
-  max-width: 80px;         /* keep compact */
-  display: inline-block;
-  margin-left: 0.5rem;
+#stateTab th { font-weight: 600; color: var(--color-text-weak); background-color: var(--color-soft); }
+#stateTab td { color: var(--color-text); }
+#stateTab td:last-child {
+  font-family: var(--font-mono); max-width: 200px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem;
 }
-
-/* Let paired inputs (like min/max) sit next to each other */
-.jf-row input[type="number"] + input[type="number"] {
-  margin-left: 1rem;
+#stateTab td button {
+  font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: var(--radius-3);
+  border: 1px solid var(--color-border); background-color: var(--color-surface); cursor: pointer;
+  margin-right: 8px; transition: all 150ms ease; color: var(--color-text);
 }
-
-.modal__btn--toggle,
-.modal__toggle {
-  align-self: center;      /* back to inline with row */
-  margin: 0;               /* reset margins */
+#stateTab td button.state-switch:hover {
+  background-color: var(--color-success-bg); border-color: var(--color-success); color: var(--color-success);
 }
+#stateTab td button:not(.state-switch):hover {
+  background-color: var(--color-danger-bg); border-color: var(--color-danger); color: var(--color-danger);
+}
+#stateTab > button {
+  display: block; margin: var(--space-6) auto 0 auto; width: fit-content; font-size: 14px;
+  font-weight: 600; color: var(--color-danger); background-color: transparent;
+  border: 1px solid transparent; border-radius: var(--radius-3); padding: 8px 16px;
+  cursor: pointer; transition: all 150ms ease; white-space: nowrap;
+}
+#stateTab > button:hover { background-color: var(--color-danger-bg); border-color: var(--color-danger); }
 
-.modal__tab--column > button {
-  margin: 10px;
+#fragment-decision-modal { display: flex; flex-direction: column; padding: 10px; }
+#fragment-decision-modal > #importName { display: block; margin: 10px 0; max-width: 40%; }
+#fragment-decision-modal > .modal__btn-group { justify-content: flex-start; }
+
+.modal__btn.modal__btn--toggle.modal__toggle{
+  margin: 15px 0px 0px 15px
 }
