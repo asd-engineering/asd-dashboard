@@ -178,6 +178,20 @@
     "returns": "any"
   },
   {
+    "name": "applyTheme",
+    "kind": "function",
+    "file": "src/ui/theme.js",
+    "description": "Apply the given theme by setting a data attribute on <html>. Falls back to 'light' when an unknown value is provided.",
+    "params": [
+      {
+        "name": "theme",
+        "type": "string|undefined|null",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "applyWidgetMenuVisibility",
     "kind": "function",
     "file": "src/component/menu/dashboardMenu.js",
@@ -1264,6 +1278,20 @@
     "file": "src/component/menu/menu.js",
     "description": "Initialize service worker controls in the menu.",
     "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "initThemeFromConfig",
+    "kind": "function",
+    "file": "src/ui/theme.js",
+    "description": "Initialize the theme from a configuration object.",
+    "params": [
+      {
+        "name": "cfg",
+        "type": "DashboardConfig|undefined|null",
+        "desc": ""
+      }
+    ],
     "returns": "void"
   },
   {

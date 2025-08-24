@@ -1,18 +1,21 @@
 /* Design Tokens (Light + Dark) */
 :root {
-  /* Color palette */
+  /* Logo (swaps in dark mode) */
+  --logo-url: url("/assets/asd.png");
+
+  /* Color palette (LIGHT) */
   --color-bg: #ffffff;
   --color-surface: #ffffff;
   --color-elevated: #ffffff;
   --color-soft: #f8f9fa;
   --color-border: #dee2e6;
-  --color-text: #212529;
-  --color-text-weak: #495057;
+  --color-text: #212529;       /* body text */
+  --color-text-weak: #495057;  /* labels, placeholders */
   --color-accent: #0d6efd;
   --color-success: #198754;
   --color-danger: #dc3545;
-  --color-success-bg: #d1e7dd; /* Added from old code */
-  --color-danger-bg: #f8d7da;  /* Added from old code */
+  --color-success-bg: #d1e7dd;
+  --color-danger-bg: #f8d7da;
 
   /* Shadows */
   --shadow-1: 0 -2px 4px rgba(0,0,0,0.10);
@@ -34,30 +37,46 @@
   --font-sans: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
-  /* Controls */
+  /* Control aliases */
+  --control-bg: var(--color-surface);
+  --control-fg: var(--color-text);
+  --control-border: var(--color-border);
+  --control-placeholder: var(--color-text-weak);
+  --control-focus-ring: var(--focus-ring);
+
+  /* Controls layout */
   --controls-gap-row: 0.4rem;
   --controls-gap-col: 0.4rem;
   --controls-min-col: 280px;
 
   /* Admin icons */
-  --admin-icon-size: 1.2rem;   /* glyph size */
+  --admin-icon-size: 1.2rem;
   --admin-icon-box: calc(var(--admin-icon-size) + 0.6rem);
 
   /* Toast */
   --toast-bg: #4CAF50;
   --toast-fg: #ffffff;
   --focus-ring: rgba(13,110,253,0.25);
+
+  /* Base */
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 
 /* Dark theme */
 :root[data-theme="dark"] {
+  --logo-url: url("/assets/asd-light.png");
+
   --color-bg: #0f1115;
   --color-surface: #12151b;
   --color-elevated: #141823;
   --color-soft: #1a1f2b;
   --color-border: #2a3140;
-  --color-text: #e6e9ef;
-  --color-text-weak: #b8c0cc;
+
+  /* Lighter, higher-contrast text for dark mode */
+  --color-text: #f1f3f5;       /* ≈ rgb(241,243,245) */
+  --color-text-weak: #cfd6e4;  /* softer but still readable */
+
   --color-accent: #4d8dff;
   --color-success: #3ac67c;
   --color-danger: #ff6b6b;

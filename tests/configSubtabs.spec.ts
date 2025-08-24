@@ -15,12 +15,12 @@ test.describe('config subtabs', () => {
     await page.locator('#config-modal').waitFor({ state: 'visible' })
     await expect(page.locator('#config-form .jf-subtabs button:has-text("globalSettings")')).toBeVisible()
     await expect(page.locator('#config-form .jf-subtabs button:has-text("boards")')).toBeVisible()
-    const themeInput = page.locator('#config-form label:has-text("theme") + input')
-    await themeInput.fill('dark')
+    const themeInput = page.locator('#theme-select')
+    await themeInput.selectOption('dark')
     await page.click('#config-form .jf-subtabs button:has-text("boards")')
     await expect(themeInput).toBeHidden()
     await page.click('#config-form .jf-subtabs button:has-text("globalSettings")')
-    await expect(themeInput).toHaveValue('dark')
+    await expect(page.locator('#theme-select')).toHaveValue('dark')
   })
 
   test('add creates empty widget with placeholders', async ({ page }) => {

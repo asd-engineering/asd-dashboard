@@ -97,7 +97,7 @@
 
 /* Rows & Inputs */
 .jf-row { display: flex; flex-wrap: wrap; align-items: start; gap: 1rem; padding: .5rem 0; }
-.jf-row > label { flex: 0 0 200px; font-weight: 500; color: #343a40; padding-top: .3rem; text-align: left; word-break: break-word; }
+.jf-row > label { flex: 0 0 200px; font-weight: 500; color: var(--color-text-weak); padding-top: .3rem; text-align: left; word-break: break-word; }
 .jf-row input[type="text"], .jf-row input[type="number"] {
   flex: 1 1 300px; min-width: 200px; padding: .5rem;
   border: 1px solid #ced4da; border-radius: var(--radius-1);
