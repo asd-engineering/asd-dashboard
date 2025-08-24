@@ -14,6 +14,7 @@ import { exportConfig } from '../configModal/exportConfig.js'
 import { openFragmentDecisionModal } from './fragmentDecisionModal.js'
 import { JsonForm } from '../utils/json-form.js'
 import { DEFAULT_TEMPLATES, DEFAULT_PLACEHOLDERS } from '../utils/json-form-defaults.js'
+import { isAdvancedMode, setAdvancedMode } from '../../state/uiState.js'
 
 /** @typedef {import('../../types.js').DashboardConfig} DashboardConfig */
 
@@ -27,14 +28,22 @@ const logger = new Logger('configModal.js')
  */
 export async function openConfigModal () {
   const storedConfig = StorageManager.getConfig()
-  const configData = storedConfig || { ...DEFAULT_CONFIG_TEMPLATE }
+  let configData = storedConfig || { ...DEFAULT_CONFIG_TEMPLATE }
   const last = StorageManager.misc.getItem('configModalTab') || 'cfgTab'
   let cfgForm, svcForm
+  const advancedMode = isAdvancedMode()
 
   openModal({
     id: 'config-modal',
     onCloseCallback: () => logger.log('Config modal closed'),
     buildContent: async (modal, closeModal) => {
+      const getVisibleConfig = () => advancedMode
+        ? structuredClone(configData)
+        : {
+            globalSettings: structuredClone(configData.globalSettings),
+            serviceTemplates: structuredClone(configData.serviceTemplates)
+          }
+
       const tabsMeta = [
         {
           id: 'cfgTab',
@@ -47,11 +56,32 @@ export async function openConfigModal () {
             toggle.textContent = 'JSON mode'
             toggle.classList.add('modal__btn', 'modal__btn--toggle', 'modal__toggle')
 
+            const advLabel = document.createElement('label')
+            advLabel.classList.add('modal__toggle')
+            Object.assign(advLabel.style, { margin: '15px 0 0 15px', display: 'flex', alignItems: 'center', gap: '4px' })
+            const advInput = document.createElement('input')
+            advInput.type = 'checkbox'
+            advInput.role = 'switch'
+            advInput.ariaLabel = 'Advanced mode'
+            advInput.dataset.testid = 'advanced-mode-toggle'
+            advInput.checked = advancedMode
+            advInput.addEventListener('change', () => {
+              setAdvancedMode(advInput.checked)
+              closeModal()
+              openConfigModal().catch(() => {})
+            })
+            advLabel.append(advInput, document.createTextNode('Advanced mode'))
+
             const formDiv = document.createElement('div')
             formDiv.id = 'config-form'
             formDiv.classList.add('modal__jsonform')
-            cfgForm = new JsonForm(formDiv, configData, {
-              topLevelTabs: { enabled: true, order: ['globalSettings', 'boards', 'serviceTemplates', 'styling'] },
+            cfgForm = new JsonForm(formDiv, getVisibleConfig(), {
+              topLevelTabs: {
+                enabled: true,
+                order: advancedMode
+                  ? ['globalSettings', 'boards', 'serviceTemplates', 'styling']
+                  : ['globalSettings', 'serviceTemplates']
+              },
               templates: DEFAULT_TEMPLATES,
               placeholders: DEFAULT_PLACEHOLDERS
             })
@@ -65,13 +95,20 @@ export async function openConfigModal () {
             toggle.addEventListener('click', () => {
               if (formDiv.style.display !== 'none') {
                 const val = cfgForm.getValue()
-                textarea.value = JSON.stringify(val, null, 2)
+                if (advancedMode) {
+                  configData = val
+                } else {
+                  configData = { ...configData, ...val }
+                }
+                textarea.value = JSON.stringify(configData, null, 2)
                 formDiv.style.display = 'none'
                 textarea.style.display = 'block'
                 toggle.textContent = 'Form mode'
               } else {
                 try {
-                  cfgForm.setValue(JSON.parse(textarea.value))
+                  const parsed = JSON.parse(textarea.value)
+                  configData = parsed
+                  cfgForm.setValue(getVisibleConfig())
                   textarea.style.display = 'none'
                   formDiv.style.display = 'block'
                   toggle.textContent = 'JSON mode'
@@ -81,59 +118,61 @@ export async function openConfigModal () {
               }
             })
 
-            wrap.append(toggle, formDiv, textarea)
+            wrap.append(toggle, advLabel, formDiv, textarea)
             return wrap
           }
         },
-        {
-          id: 'svcTab',
-          label: 'Services',
-          contentFn: () => {
-            const wrap = document.createElement('div')
-            wrap.classList.add('modal__tab--column')
+        ...(advancedMode
+          ? [{
+              id: 'svcTab',
+              label: 'Services',
+              contentFn: () => {
+                const wrap = document.createElement('div')
+                wrap.classList.add('modal__tab--column')
 
-            const toggle = document.createElement('button')
-            toggle.textContent = 'JSON mode'
-            toggle.classList.add('modal__btn', 'modal__btn--toggle', 'modal__toggle')
+                const toggle = document.createElement('button')
+                toggle.textContent = 'JSON mode'
+                toggle.classList.add('modal__btn', 'modal__btn--toggle', 'modal__toggle')
 
-            const formDiv = document.createElement('div')
-            formDiv.id = 'services-form'
-            formDiv.classList.add('modal__jsonform', 'modal__textarea--grow')
-            svcForm = new JsonForm(formDiv, StorageManager.getServices(), {
-              templates: DEFAULT_TEMPLATES,
-              placeholders: DEFAULT_PLACEHOLDERS,
-              rootPath: 'services'
-            })
+                const formDiv = document.createElement('div')
+                formDiv.id = 'services-form'
+                formDiv.classList.add('modal__jsonform', 'modal__textarea--grow')
+                svcForm = new JsonForm(formDiv, StorageManager.getServices(), {
+                  templates: DEFAULT_TEMPLATES,
+                  placeholders: DEFAULT_PLACEHOLDERS,
+                  rootPath: 'services'
+                })
 
-            const textarea = document.createElement('textarea')
-            textarea.id = 'config-services'
-            textarea.classList.add('modal__textarea--grow')
-            textarea.style.display = 'none'
-            textarea.value = JSON.stringify(StorageManager.getServices(), null, 2)
+                const textarea = document.createElement('textarea')
+                textarea.id = 'config-services'
+                textarea.classList.add('modal__textarea--grow')
+                textarea.style.display = 'none'
+                textarea.value = JSON.stringify(StorageManager.getServices(), null, 2)
 
-            toggle.addEventListener('click', () => {
-              if (formDiv.style.display !== 'none') {
-                const val = svcForm.getValue()
-                textarea.value = JSON.stringify(val, null, 2)
-                formDiv.style.display = 'none'
-                textarea.style.display = 'block'
-                toggle.textContent = 'Form mode'
-              } else {
-                try {
-                  svcForm.setValue(JSON.parse(textarea.value))
-                  textarea.style.display = 'none'
-                  formDiv.style.display = 'block'
-                  toggle.textContent = 'JSON mode'
-                } catch (e) {
-                  showNotification('Invalid JSON format', 3000, 'error')
-                }
+                toggle.addEventListener('click', () => {
+                  if (formDiv.style.display !== 'none') {
+                    const val = svcForm.getValue()
+                    textarea.value = JSON.stringify(val, null, 2)
+                    formDiv.style.display = 'none'
+                    textarea.style.display = 'block'
+                    toggle.textContent = 'Form mode'
+                  } else {
+                    try {
+                      svcForm.setValue(JSON.parse(textarea.value))
+                      textarea.style.display = 'none'
+                      formDiv.style.display = 'block'
+                      toggle.textContent = 'JSON mode'
+                    } catch (e) {
+                      showNotification('Invalid JSON format', 3000, 'error')
+                    }
+                  }
+                })
+
+                wrap.append(toggle, formDiv, textarea)
+                return wrap
               }
-            })
-
-            wrap.append(toggle, formDiv, textarea)
-            return wrap
-          }
-        },
+            }]
+          : []),
         {
           id: 'stateTab',
           label: 'Saved States',
@@ -200,25 +239,37 @@ export async function openConfigModal () {
         const svcFormDiv = modal.querySelector('#services-form')
         let cfg, svc
         try {
-          cfg = cfgFormDiv && cfgFormDiv.style.display !== 'none'
-            ? cfgForm.getValue()
-            : cfgEl ? JSON.parse(cfgEl.value) : {}
+          if (cfgFormDiv && cfgFormDiv.style.display !== 'none') {
+            const val = cfgForm.getValue()
+            if (advancedMode) {
+              configData = val
+            } else {
+              configData = { ...configData, ...val }
+            }
+            cfg = configData
+          } else {
+            cfg = cfgEl ? JSON.parse(cfgEl.value) : {}
+          }
         } catch (e) {
           logger.error('Invalid config JSON:', e)
           showNotification('Invalid config JSON format', 3000, 'error')
           return
         }
         try {
-          svc = svcFormDiv && svcFormDiv.style.display !== 'none'
-            ? svcForm.getValue()
-            : svcEl ? JSON.parse(svcEl.value) : []
+          if (svcFormDiv || svcEl) {
+            svc = svcFormDiv && svcFormDiv.style.display !== 'none'
+              ? svcForm.getValue()
+              : svcEl ? JSON.parse(svcEl.value) : []
+          } else {
+            svc = StorageManager.getServices()
+          }
         } catch (e) {
           logger.error('Invalid services JSON:', e)
           showNotification('Invalid services JSON format', 3000, 'error')
           return
         }
         StorageManager.setConfig(cfg)
-        StorageManager.setServices(Array.isArray(svc) ? svc : [])
+        StorageManager.setServices(Array.isArray(svc) ? svc : StorageManager.getServices())
         showNotification('Config saved to localStorage')
         closeModal()
         clearConfigFragment()

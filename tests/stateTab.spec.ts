@@ -3,6 +3,7 @@ import { ciConfig } from './data/ciConfig'
 import { ciServices } from './data/ciServices'
 import { getBoardCount, navigate } from './shared/common.js'
 import { injectSnapshot } from './shared/state.js'
+import { openConfigModalSafe } from './shared/uiHelpers'
 
 test.describe('Saved States tab', () => {
   test.beforeEach(async ({ page }) => {
@@ -18,7 +19,7 @@ test.describe('Saved States tab', () => {
 
   test('restore and delete snapshot', async ({ page }) => {
     await page.reload()
-    await page.click('#open-config-modal')
+    await openConfigModalSafe(page)
 
     await page.click('.tabs button[data-tab="stateTab"]')
     await expect(page.locator('#stateTab tbody tr')).toHaveCount(2)
@@ -37,15 +38,15 @@ test.describe('Saved States tab', () => {
     const boards = await getBoardCount(page);
     expect(boards).toBeGreaterThan(0)
 
-    await page.click('#open-config-modal')
+      await openConfigModalSafe(page)
     await page.click('.tabs button[data-tab="stateTab"]')
     page.on('dialog', d => d.accept())
-    await page.locator('#stateTab tbody tr:nth-child(2) button:has-text("Delete")').click()
+    await page.locator('#stateTab tbody tr button:has-text("Delete")').last().click()
     await expect(page.locator('#stateTab tbody tr')).toHaveCount(1)
 
-    await page.reload()
-    
-    await page.click('#open-config-modal')
+    await navigate(page, '/')
+    await page.waitForSelector('#open-config-modal')
+    await openConfigModalSafe(page)
     await page.click('.tabs button[data-tab="stateTab"]')
     await expect(page.locator('#stateTab tbody tr')).toHaveCount(1)
   })

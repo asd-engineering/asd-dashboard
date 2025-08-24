@@ -170,6 +170,8 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
 
     // Open and verify modal is visible
     await page.click("#open-config-modal");
+    await page.locator('[data-testid="advanced-mode-toggle"]').check();
+    await page.locator('#config-modal').waitFor({ state: 'visible' });
     await expect(page.locator("#config-modal")).toBeVisible();
 
     await page.click('button:has-text("JSON mode")');

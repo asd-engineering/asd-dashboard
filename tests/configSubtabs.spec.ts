@@ -11,6 +11,8 @@ test.describe('config subtabs', () => {
 
   test('subtabs render and preserve edits', async ({ page }) => {
     await page.click('#open-config-modal')
+    await page.locator('[data-testid="advanced-mode-toggle"]').check()
+    await page.locator('#config-modal').waitFor({ state: 'visible' })
     await expect(page.locator('#config-form .jf-subtabs button:has-text("globalSettings")')).toBeVisible()
     await expect(page.locator('#config-form .jf-subtabs button:has-text("boards")')).toBeVisible()
     const themeInput = page.locator('#config-form label:has-text("theme") + input')
@@ -23,6 +25,8 @@ test.describe('config subtabs', () => {
 
   test('add creates empty widget with placeholders', async ({ page }) => {
     await page.click('#open-config-modal')
+    await page.locator('[data-testid="advanced-mode-toggle"]').check()
+    await page.locator('#config-modal').waitFor({ state: 'visible' })
     await page.click('#config-form .jf-subtabs button:has-text("boards")')
     await page.click('#config-form .jf-array > button:has-text("+")')
     await page.click('#config-form label:has-text("views") + .jf-array > button:has-text("+")')
