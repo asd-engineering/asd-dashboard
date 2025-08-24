@@ -99,16 +99,6 @@ menu#controls #admin-control.control-group {
   max-height: calc(2 * var(--admin-icon-box) + 0.6rem);
 }
 
-/* GRID buttons on small screens */
-@media (max-width: 535px) {
-  menu#controls #admin-control.control-group {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: max-content;
-    grid-template-rows: repeat(2, max-content);
-  }
-}
-
 #admin-control label {
   display: inline-grid;
   place-items: center;
@@ -148,7 +138,4 @@ menu#controls #admin-control.control-group {
   cursor: pointer;
   font-size: var(--admin-icon-size);
   user-select: none;
-}
-.hide-widget-menu .widget-button {
-    display: none;
 }
