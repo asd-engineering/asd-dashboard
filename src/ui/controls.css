@@ -1,17 +1,18 @@
 /* --- src/ui/controls.css --- */
-/* Controls Bar */
+/* Controls Bar (Stage A: WIDE default) */
 menu#controls {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: min-content 1fr 1fr 1fr min-content; /* logo | board | view | service | admin */
+  grid-auto-rows: max-content;
+  grid-auto-flow: row dense;
   gap: var(--controls-gap-row) var(--controls-gap-col);
   width: 100%;
   padding: 5px;
   background: var(--color-surface);
-  justify-content: center;      /* wide: center the groups row */
-  align-items: center;
+  align-items: start;
   align-content: start;
   margin: 0 auto;
-  container-type: inline-size;  /* enables container queries */
+  container-type: inline-size; /* enable container queries */
 }
 
 /* Group */
@@ -91,18 +92,33 @@ menu#controls {
   color: var(--color-text);
 }
 
-/* Admin control (desktop defaults: horizontal on the RIGHT) */
+/* Logo placement (all stages) */
+menu#controls::before {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  align-self: start;
+}
+
+/* Stage A (WIDE): 1 row main controls; admin = HORIZONTAL (right) */
+#board-control   { grid-column: 2; grid-row: 1; justify-self: stretch; }
+#view-control    { grid-column: 3; grid-row: 1; justify-self: stretch; }
+#service-control { grid-column: 4; grid-row: 1; justify-self: stretch; }
+
 menu#controls #admin-control.control-group {
-  display: flex;
-  flex-wrap: wrap;
+  grid-column: 5;
+  grid-row: 1;
+  display: flex;                /* horizontal row */
+  flex-direction: row;
+  align-items: center;
   gap: 0.6rem;
-  justify-content: flex-start;
-  margin-left: auto;            /* push admin block to the right */
-  align-self: flex-start;
-  order: 100;                   /* keep it last in flex order */
+  margin-left: 0;
+  order: 0;
+  position: static;
   overflow: visible;
 }
 
+/* Admin icon hitbox */
 #admin-control label {
   display: inline-grid;
   place-items: center;
@@ -130,118 +146,115 @@ menu#controls #admin-control.control-group {
 }
 
 #sw-toggle { display: none; }
-
 #toggle-widget-menu,
-.icon-checkbox {
-  display: inline-block;
-  cursor: pointer;
-  font-size: var(--admin-icon-size);
-  user-select: none;
-}
+.icon-checkbox { display: inline-block; cursor: pointer; font-size: var(--admin-icon-size); user-select: none; }
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/* Responsive layout: RIGHT-SIDE admin in all stages                          */
+/* Stage B (MID ≤900px): 2 rows; admin = 2×2 SQUARE (right)                   */
+/* Row 1: Board + View | Row 2: Service (spans both)                          */
 /* ────────────────────────────────────────────────────────────────────────── */
-
-/* Stage 1 (mid): ~≤860/820px — 3 cols: [logo] [main] [admin 2×2 right]      */
-@container (max-width: 860px) {
+@container (max-width: 900px) {
   menu#controls {
-    display: grid;
-    grid-template-columns: min-content 1fr min-content; /* logo | main | admin */
-    grid-auto-rows: max-content;
-    align-items: start;
-    align-content: start;
-    column-gap: var(--controls-gap-col);
-    row-gap: var(--controls-gap-row);
+    grid-template-columns: min-content 1fr 1fr min-content; /* logo | board | view | admin */
   }
 
-  /* Logo, pinned left */
-  menu#controls::before {
-    grid-column: 1; grid-row: 1;
-    justify-self: start; align-self: start;
-  }
+  #board-control   { grid-column: 2; grid-row: 1; }
+  #view-control    { grid-column: 3; grid-row: 1; }
+  #service-control { grid-column: 2 / span 2; grid-row: 2; }
 
-  /* Admin stays on the RIGHT and becomes a 2×2 grid taking ~2 rows */
-  #admin-control.control-group {
-    order: 0;                /* cancel 'last' */
-    margin-left: 0;
-    position: static;
-    grid-column: 3;
+  menu#controls #admin-control.control-group {
+    grid-column: 4;
     grid-row: 1 / span 2;
-    display: grid;
+    display: grid;                                /* 2×2 square */
     grid-template-columns: repeat(2, var(--admin-icon-box));
     grid-auto-rows: var(--admin-icon-box);
     align-content: start;
     justify-content: start;
     gap: 0.4rem;
   }
-
-  /* Main column stretches and minimizes rows: board, view, service */
-  #board-control   { grid-column: 2; grid-row: 1; justify-self: stretch; }
-  #view-control    { grid-column: 2; grid-row: 2; justify-self: stretch; }
-  #service-control { grid-column: 2; grid-row: 3; justify-self: stretch; }
 }
 
-/* Stage 2 (narrow): ~≤640px — 3 cols: [logo] [main] [admin vertical right]  */
+/* --- FORCE WIDE STAGE (admin horizontal, right) -------------------------- */
+@container (min-width: 901px) {
+  /* 1) Ensure the admin column can fit a row of icons */
+  menu#controls {
+    /* logo | board | view | service | admin */
+    grid-template-columns: min-content 1fr 1fr 1fr max-content;
+  }
+
+  /* 2) Admin bar: horizontal row, no wrapping */
+  menu#controls #admin-control.control-group {
+    grid-column: 5;            /* right column */
+    grid-row: 1;
+    display: flex;
+    flex-direction: row;       /* <- horizontal */
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.6rem;
+    position: static;
+    margin-left: 0;
+    order: 0;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Stage C (SMALL ≤640px): 3 rows; admin = VERTICAL rail (right)              */
+/* Row 1: Board | Row 2: View | Row 3: Service                                */
+/* ────────────────────────────────────────────────────────────────────────── */
 @container (max-width: 640px) {
   menu#controls {
-    grid-template-columns: min-content 1fr min-content; /* keep right rail */
+    grid-template-columns: min-content 1fr min-content; /* logo | main | admin */
   }
 
-  menu#controls::before {
-    grid-column: 1; grid-row: 1;
-    justify-self: start; align-self: start;
-  }
+  #board-control   { grid-column: 2; grid-row: 1; }
+  #view-control    { grid-column: 2; grid-row: 2; }
+  #service-control { grid-column: 2; grid-row: 3; }
 
-  /* RIGHT rail, vertical */
-  #admin-control.control-group {
-    grid-column: 3; grid-row: 1 / span 4;
-    display: flex;
+  menu#controls #admin-control.control-group {
+    grid-column: 3;
+    grid-row: 1 / span 3;
+    display: flex;              /* vertical rail */
     flex-direction: column;
     align-items: center;
     gap: 0.6rem;
   }
-
-  #board-control   { grid-column: 2; grid-row: 1; justify-self: stretch; }
-  #view-control    { grid-column: 2; grid-row: 2; justify-self: stretch; }
-  #service-control { grid-column: 2; grid-row: 3; justify-self: stretch; }
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/* Fallback for browsers without container queries                            */
+/* Fallback media queries (for browsers w/o container queries)                */
 /* ────────────────────────────────────────────────────────────────────────── */
-@media (max-width: 860px) {
-  menu#controls {
-    display: grid;
-    grid-template-columns: min-content 1fr min-content;
-    grid-auto-rows: max-content;
-    align-items: start;
-    align-content: start;
-    column-gap: var(--controls-gap-col);
-    row-gap: var(--controls-gap-row);
-  }
-  menu#controls::before { grid-column: 1; grid-row: 1; }
-  #admin-control.control-group {
-    order: 0; margin-left: 0; position: static;
-    grid-column: 3; grid-row: 1 / span 2;
+@media (max-width: 900px) {
+  menu#controls { grid-template-columns: min-content 1fr 1fr min-content; }
+  #board-control { grid-column: 2; grid-row: 1; }
+  #view-control { grid-column: 3; grid-row: 1; }
+  #service-control { grid-column: 2 / span 2; grid-row: 2; }
+  menu#controls #admin-control.control-group {
+    grid-column: 4; grid-row: 1 / span 2;
     display: grid;
     grid-template-columns: repeat(2, var(--admin-icon-box));
     grid-auto-rows: var(--admin-icon-box);
-    align-content: start; justify-content: start; gap: 0.4rem;
+    gap: 0.4rem;
   }
-  #board-control   { grid-column: 2; grid-row: 1; justify-self: stretch; }
-  #view-control    { grid-column: 2; grid-row: 2; justify-self: stretch; }
-  #service-control { grid-column: 2; grid-row: 3; justify-self: stretch; }
 }
 
 @media (max-width: 640px) {
   menu#controls { grid-template-columns: min-content 1fr min-content; }
-  menu#controls::before { grid-column: 1; grid-row: 1; }
-  #admin-control.control-group {
-    grid-column: 3; grid-row: 1 / span 4;
+  #board-control { grid-column: 2; grid-row: 1; }
+  #view-control { grid-column: 2; grid-row: 2; }
+  #service-control { grid-column: 2; grid-row: 3; }
+  menu#controls #admin-control.control-group {
+    grid-column: 3; grid-row: 1 / span 3;
     display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
   }
-  #board-control   { grid-column: 2; grid-row: 1; justify-self: stretch; }
-  #view-control    { grid-column: 2; grid-row: 2; justify-self: stretch; }
-  #service-control { grid-column: 2; grid-row: 3; justify-self: stretch; }
+}
+
+/* Fallback for browsers without container queries */
+@media (min-width: 901px) {
+  menu#controls {
+    grid-template-columns: min-content 1fr 1fr 1fr max-content;
+  }
+  menu#controls #admin-control.control-group {
+    grid-column: 5; grid-row: 1;
+    display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 0.6rem;
+  }
 }
