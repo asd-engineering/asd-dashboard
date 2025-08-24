@@ -2,11 +2,21 @@
 /* ! MODAL SHELL & LAYOUT                                                     */
 /* -------------------------------------------------------------------------- */
 .modal {
-  position: fixed; inset: 50% auto auto 50%; transform: translate(-50%, -50%);
-  z-index: 1000; width: 70vw; height: 85vh;
-  border-radius: var(--radius-3); box-shadow: var(--shadow-3);
-  display: grid; grid-template-rows: auto 1fr auto; overflow: hidden;
-  background: var(--color-soft); border: 1px solid var(--color-border); color: var(--color-text);
+  position: fixed;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  /* Raise far above any other UI (dropdowns @ 2000, notifications @ 9000) */
+  z-index: 10000;
+  width: 70vw;
+  height: 85vh;
+  border-radius: var(--radius-3);
+  box-shadow: var(--shadow-3);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+  background: var(--color-soft);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
 }
 .modal--lg { width: 70vw; height: 85vh; }
 .modal--md { width: 50vw; height: auto; max-height: 85vh; }
@@ -17,12 +27,22 @@
 /* ! MODAL COMPONENTS (HEADER, CONTENT, FOOTER)                               */
 /* -------------------------------------------------------------------------- */
 .modal .tabs {
-  padding: 0 var(--space-6); border-bottom: 1px solid var(--color-border);
-  background: var(--color-elevated); display: flex; align-items: center;
+  padding: 0 var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-elevated);
+  display: flex;
+  align-items: center;
 }
 .modal .tabs button {
-  background: transparent; border: none; border-bottom: 3px solid transparent; border-radius: 0;
-  padding: 14px 4px; margin: 0 12px; font-size: .9rem; font-weight: 500; color: var(--color-text-weak);
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  padding: 14px 4px;
+  margin: 0 12px;
+  font-size: .9rem;
+  font-weight: 500;
+  color: var(--color-text-weak);
   transition: all 150ms ease;
   cursor: pointer;
 }
@@ -36,8 +56,12 @@
 }
 
 .modal .modal__btn-group {
-  padding: var(--space-6); border-top: 1px solid var(--color-border);
-  background: var(--color-elevated); display: flex; justify-content: flex-end; gap: 12px;
+  padding: var(--space-6);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-elevated);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 #cfgTab, #svcTab, #stateTab { overflow: auto; display: flex; flex-direction: column; }
@@ -46,12 +70,25 @@
 /* ! FORM & SUB-TABS                                                          */
 /* -------------------------------------------------------------------------- */
 #config-form .jf-subtabs {
-  display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--color-border);
-  margin: 0 -1rem 1rem -1rem; padding: 0 1rem; position: sticky; top: -1rem; background: var(--color-surface); z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--color-border);
+  margin: 0 -1rem 1rem -1rem;
+  padding: 0 1rem;
+  position: sticky;
+  top: -1rem;
+  background: var(--color-surface);
+  z-index: 10;
 }
 .jf-subtabs button {
-  padding: .75rem 1.25rem; border: none; border-bottom: 3px solid transparent;
-  background: none; cursor: pointer; font-size: .9rem; color: var(--color-text-weak); transition: all .2s ease;
+  padding: .75rem 1.25rem;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: none;
+  cursor: pointer;
+  font-size: .9rem;
+  color: var(--color-text-weak);
+  transition: all .2s ease;
 }
 .jf-subtabs button:hover { color: #0056b3; background: var(--color-soft); } /* Retaining specific hover color */
 .jf-subtabs button.active { color: var(--color-accent); font-weight: 600; border-bottom-color: var(--color-accent); }
@@ -148,12 +185,8 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
   box-shadow: 0 1px 3px rgba(0,0,0,.2);
   transition: transform .2s ease-in-out;
 }
-#config-form input[type="checkbox"]:checked {
-  background: var(--color-success);
-}
-#config-form input[type="checkbox"]:checked::before {
-  transform: translateX(16px);
-}
+#config-form input[type="checkbox"]:checked { background: var(--color-success); }
+#config-form input[type="checkbox"]:checked::before { transform: translateX(16px); }
 
 /* Alignment fixes for toggles and numbers */
 .jf-row input[type="checkbox"] { margin: 0; align-self: center; justify-self: start; }
