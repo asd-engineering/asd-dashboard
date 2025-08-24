@@ -15,6 +15,7 @@ import { openFragmentDecisionModal } from './fragmentDecisionModal.js'
 import { JsonForm } from '../utils/json-form.js'
 import { DEFAULT_TEMPLATES, DEFAULT_PLACEHOLDERS } from '../utils/json-form-defaults.js'
 import { isAdvancedMode, setAdvancedMode } from '../../state/uiState.js'
+import { applyTheme, THEME } from '../../ui/theme.js'
 
 /** @typedef {import('../../types.js').DashboardConfig} DashboardConfig */
 
@@ -86,6 +87,34 @@ export async function openConfigModal () {
               placeholders: DEFAULT_PLACEHOLDERS
             })
 
+            const setupThemeSelect = () => {
+              const input = formDiv.querySelector('input[data-path="globalSettings.theme"]')
+              if (!input) return
+              const select = document.createElement('select')
+              select.id = 'theme-select'
+              ;[THEME.LIGHT, THEME.DARK].forEach(t => {
+                const opt = document.createElement('option')
+                opt.value = t
+                opt.textContent = t.charAt(0).toUpperCase() + t.slice(1)
+                select.appendChild(opt)
+              })
+              select.value = cfgForm.data.globalSettings?.theme || THEME.LIGHT
+              select.addEventListener('change', () => {
+                if (!cfgForm.data.globalSettings) cfgForm.data.globalSettings = {}
+                cfgForm.data.globalSettings.theme = select.value
+                applyTheme(select.value)
+              })
+              input.replaceWith(select)
+            }
+
+            setupThemeSelect()
+
+            formDiv.addEventListener('click', e => {
+              const target = /** @type {HTMLElement} */(e.target)
+              const btn = target.closest('.jf-subtabs button')
+              if (btn) setTimeout(setupThemeSelect)
+            })
+
             const textarea = document.createElement('textarea')
             textarea.id = 'config-json'
             textarea.classList.add('modal__textarea--grow')
@@ -109,6 +138,7 @@ export async function openConfigModal () {
                   const parsed = JSON.parse(textarea.value)
                   configData = parsed
                   cfgForm.setValue(getVisibleConfig())
+                  setupThemeSelect()
                   textarea.style.display = 'none'
                   formDiv.style.display = 'block'
                   toggle.textContent = 'JSON mode'
@@ -313,6 +343,7 @@ async function populateStateTab (tab) {
 
   const filter = document.createElement('input')
   filter.id = 'stateFilter'
+  filter.type = 'text'
   filter.placeholder = 'Filter snapshots...'
   filter.style.marginBottom = '0.5rem'
   filter.style.display = 'block'

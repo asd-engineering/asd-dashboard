@@ -67,19 +67,29 @@
  */
 
 /**
+ * Allowed theme names.
+ * @typedef {'light'|'dark'} ThemeName
+ */
+
+/**
+ * Global dashboard settings.
+ * @typedef {Object} GlobalSettings
+ * @property {ThemeName} [theme]
+ * @property {Array<string>} [widgetStoreUrl]
+ * @property {string} [database]
+ * @property {boolean|string} [hideBoardControl]
+ * @property {boolean|string} [hideViewControl]
+ * @property {boolean|string} [hideServiceControl]
+ * @property {boolean|string} [showMenuWidget]
+ * @property {{showViewOptionsAsButtons:boolean|string, viewToShow:string}} [views]
+ * @property {{enabled:string, loadDashboardFromConfig:string, defaultBoard?:string, defaultView?:string}} [localStorage]
+ * @property {number} [maxTotalInstances]
+ */
+
+/**
  * Dashboard configuration loaded from storage or URL.
  * @typedef {Object} DashboardConfig
- * @property {object} [globalSettings]
- * @property {string} [globalSettings.theme]
- * @property {Array<string>} [globalSettings.widgetStoreUrl]
- * @property {string} [globalSettings.database]
- * @property {boolean|string} [globalSettings.hideBoardControl]
- * @property {boolean|string} [globalSettings.hideViewControl]
- * @property {boolean|string} [globalSettings.hideServiceControl]
- * @property {boolean|string} [globalSettings.showMenuWidget]
- * @property {{showViewOptionsAsButtons:boolean|string, viewToShow:string}} [globalSettings.views]
- * @property {{enabled:string, loadDashboardFromConfig:string, defaultBoard?:string, defaultView?:string}} [globalSettings.localStorage]
- * @property {number} [globalSettings.maxTotalInstances]
+ * @property {GlobalSettings} [globalSettings]
  * @property {Array<Board>} [boards]
  * @property {Object.<string, ServiceTemplate>} [serviceTemplates]
  * @property {{widget: {minColumns:number, maxColumns:number, minRows:number, maxRows:number}}} [styling]

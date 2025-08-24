@@ -42,7 +42,8 @@ export-all:
         -not -path './.git/*' \
         -not -path './local/*' \
         -not -path './node_modules/*' \
-    -print0 \
+        -print0 \
+    | xargs -0 -I{} realpath -z --relative-to=. "{}" \
     | sort -z \
     | xargs -0 -I{} sh -c 'printf "\n// --- %s ---\n" "{}"; cat "{}"' \
     > local/src.txt
@@ -61,3 +62,7 @@ export-css:
 	| sort -z -u \
 	| xargs -0 -I{} sh -c 'printf "\n// --- %s ---\n" "{}"; cat "{}"' \
 	> local/src.txt
+
+# Git origin checkout
+gitoc ARG:
+    git fetch origin && git checkout {{ARG}}

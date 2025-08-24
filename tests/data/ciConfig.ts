@@ -1,4 +1,6 @@
-export const ciConfig = {
+import type { DashboardConfig } from '../../src/types.js';
+
+export const ciConfig: DashboardConfig = {
     "globalSettings": {
       "theme": "light",
       "widgetStoreUrl": ["*/services.json"],
