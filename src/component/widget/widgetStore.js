@@ -6,6 +6,7 @@
  */
 import { Logger } from '../../utils/Logger.js'
 import StorageManager from '../../storage/StorageManager.js'
+import emojiList from '../../ui/unicodeEmoji.js'
 
 /**
  * Lightweight LRU cache storing widget elements by id.
@@ -217,13 +218,56 @@ export class WidgetStore {
     const overBy = this.widgets.size + needed - allowedMax
 
     if (overBy > 0) {
-      const { openEvictionModal } = await import('../modal/evictionModal.js')
-      const result = await openEvictionModal(this.widgets, overBy)
-      if (!result) return false
-      for (const info of result) {
-        await this.requestRemoval(info.id)
+      const items = []
+      let idx = 0
+      const boards = StorageManager.getBoards() || []
+      /** @type {Record<string,{boardIndex:number,viewIndex:number}>} */
+      const locCache = {}
+      const getIdx = (id) => {
+        if (locCache[id]) return locCache[id]
+        for (let b = 0; b < boards.length; b++) {
+          const views = boards[b].views || []
+          for (let v = 0; v < views.length; v++) {
+            const ws = views[v].widgetState || []
+            if (ws.some(w => w.dataid === id)) {
+              locCache[id] = { boardIndex: b, viewIndex: v }
+              return locCache[id]
+            }
+          }
+        }
+        locCache[id] = { boardIndex: 0, viewIndex: 0 }
+        return locCache[id]
       }
-      this._ensureLimit()
+      for (const [id, el] of this.widgets.entries()) {
+        let title = id
+        if (el.dataset.metadata) {
+          try { title = JSON.parse(el.dataset.metadata).title || id } catch {}
+        }
+        const service = el.dataset.service || ''
+        const key = service.toLowerCase().split('asd-')[1] || service.toLowerCase()
+        const icon = emojiList[key]?.unicode || '🧱'
+        const { boardIndex, viewIndex } = getIdx(id)
+        items.push({ id, title, icon, boardIndex, viewIndex, lruRank: idx++ })
+      }
+
+      const gs = StorageManager.getConfig()?.globalSettings
+      const maxPerService = (gs && typeof gs === 'object' && 'maxPerService' in gs && typeof gs.maxPerService === 'number')
+        ? gs.maxPerService
+        : 0
+      const { openEvictionModal } = await import('../modal/evictionModal.js')
+      const proceed = await openEvictionModal({
+        reason: 'capacity',
+        maxPerService,
+        requiredCount: overBy,
+        items,
+        onEvict: async ids => {
+          for (const id of ids) {
+            await this.requestRemoval(id)
+          }
+          this._ensureLimit()
+        }
+      })
+      if (!proceed) return false
     }
 
     return true
