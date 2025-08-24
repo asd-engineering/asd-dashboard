@@ -1592,25 +1592,6 @@
     "returns": "void"
   },
   {
-    "name": "openEvictionModal",
-    "kind": "function",
-    "file": "src/component/modal/evictionModal.js",
-    "description": "Display a modal to choose widgets for removal.",
-    "params": [
-      {
-        "name": "widgets",
-        "type": "Map<string, HTMLElement>",
-        "desc": "- Current widget map."
-      },
-      {
-        "name": "count",
-        "type": "number",
-        "desc": "- Number of widgets that must be removed."
-      }
-    ],
-    "returns": "Promise<Array<{id:string, title:string}>|null>"
-  },
-  {
     "name": "openFragmentDecisionModal",
     "kind": "function",
     "file": "src/component/modal/fragmentDecisionModal.js",

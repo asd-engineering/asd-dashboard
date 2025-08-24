@@ -239,15 +239,15 @@ export class WidgetStore {
         return locCache[id]
       }
       for (const [id, el] of this.widgets.entries()) {
-        let title = id
+        let title = null
         if (el.dataset.metadata) {
-          try { title = JSON.parse(el.dataset.metadata).title || id } catch {}
+          try { title = JSON.parse(el.dataset.metadata).title || null } catch {}
         }
-        const service = el.dataset.service || ''
-        const key = service.toLowerCase().split('asd-')[1] || service.toLowerCase()
+        const serviceName = el.dataset.service || ''
+        const key = serviceName.toLowerCase().split('asd-')[1] || serviceName.toLowerCase()
         const icon = emojiList[key]?.unicode || '🧱'
         const { boardIndex, viewIndex } = getIdx(id)
-        items.push({ id, title, icon, boardIndex, viewIndex, lruRank: idx++ })
+        items.push({ id, title, serviceName, icon, boardIndex, viewIndex, lruRank: idx++ })
       }
 
       const gs = StorageManager.getConfig()?.globalSettings

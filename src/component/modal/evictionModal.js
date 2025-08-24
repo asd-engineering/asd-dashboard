@@ -4,7 +4,7 @@
  * @module evictionModal
  */
 import { openModal } from './modalFactory.js'
-import { header, subtext, disclaimer } from './evictionCopy.js'
+import { evictionMessages } from './eviction-messages.js'
 import { createEvictionViewModel } from './evictionModalViewModel.js'
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
@@ -15,9 +15,9 @@ const logger = new Logger('evictionModal.js')
  * Open the eviction modal.
  * @param {{
  *  reason:string,
- *  maxPerService:number,
+ *  maxPerService:number|null,
  *  requiredCount:number|null,
- *  items:Array<{id:string,title:string,icon:string,boardIndex:number,viewIndex:number,lruRank:number}>,
+ *  items:Array<{id:string,title:string|null,serviceName:string,icon:string,boardIndex:number,viewIndex:number,lruRank:number}>,
  *  onEvict:(ids:string[])=>Promise<void>
  * }} opts
  * @returns {Promise<boolean>}
@@ -36,35 +36,42 @@ export function openEvictionModal (opts) {
       showCloseIcon: false,
       onCloseCallback: () => finalize(false),
       buildContent: (modal, closeModal) => {
-        const headerEl = document.createElement('h2')
+        const headerEl = document.createElement('h1')
         headerEl.id = 'eviction-header'
-        headerEl.textContent = header(vm.selectionLimit)
+        headerEl.textContent = evictionMessages.header(vm.selectionLimit)
 
         const subEl = document.createElement('p')
         subEl.id = 'eviction-subtext'
-        subEl.textContent = subtext(vm.maxPerService)
+        subEl.textContent = evictionMessages.subtextMax(vm.maxPerService || 0)
 
         const discEl = document.createElement('p')
         discEl.id = 'eviction-disclaimer'
-        discEl.textContent = disclaimer
+        discEl.textContent = evictionMessages.disclaimer()
+        discEl.classList.add('small', 'muted')
 
         modal.setAttribute('aria-labelledby', headerEl.id)
         modal.setAttribute('aria-describedby', `${subEl.id} ${discEl.id}`)
 
         const list = document.createElement('div')
         list.id = 'eviction-list'
-        list.style.maxHeight = '200px'
-        list.style.overflowY = 'auto'
+        Object.assign(list.style, {
+          maxHeight: '200px',
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.25rem'
+        })
 
         /** @type {Map<string,HTMLInputElement>} */
         const cbMap = new Map()
         for (const item of vm.items) {
           const label = document.createElement('label')
+          label.style.display = 'block'
           const cb = document.createElement('input')
           cb.type = 'checkbox'
           cb.value = item.id
           const text = document.createElement('span')
-          text.textContent = `${item.icon} ${item.title} — Board ${item.boardIndex + 1}, View ${item.viewIndex + 1}`
+          text.textContent = `${item.icon} ${vm.displayName(item)}`
           label.append(cb, text)
           list.appendChild(label)
           cbMap.set(item.id, cb)
@@ -90,7 +97,7 @@ export function openEvictionModal (opts) {
         autoBtn.addEventListener('click', async () => {
           const picked = vm.autoSelectLru()
           for (const [id, cb] of cbMap) {
-            cb.checked = vm.state.selected.has(id)
+            cb.checked = vm.state.selectedIds.has(id)
           }
           update()
           await pipeline(picked, 'lru')
@@ -105,7 +112,7 @@ export function openEvictionModal (opts) {
           continueBtn.disabled = true
         }
         continueBtn.addEventListener('click', async () => {
-          const ids = Array.from(vm.state.selected)
+          const ids = Array.from(vm.state.selectedIds)
           await pipeline(ids, 'manual')
         })
 
@@ -124,7 +131,7 @@ export function openEvictionModal (opts) {
         modal.append(headerEl, subEl, discEl, list, counter, btnGroup)
 
         const update = () => {
-          counter.textContent = `${vm.state.selected.size} of ${vm.selectionLimit} widgets selected`
+          counter.textContent = `${vm.state.selectedIds.size} of ${vm.selectionLimit} widgets selected`
           if (vm.items.length > 0) continueBtn.disabled = !vm.state.canProceed
           for (const cb of cbMap.values()) {
             const disable = vm.state.canProceed && !cb.checked
