@@ -177,7 +177,8 @@ test.describe('WidgetStore UI Tests', () => {
 
     const modal = page.locator('#eviction-modal')
     await modal.waitFor({ state: 'visible' })
-    await modal.locator('button:has-text("Remove")').click()
+    await modal.locator('#eviction-list input[type="checkbox"]').first().check()
+    await modal.locator('button:has-text("Continue")').click()
     await waitForWidgetStoreIdle(page)
     await expect(modal).toBeHidden()
 
