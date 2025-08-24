@@ -28,7 +28,6 @@
 }
 
 /* Dropdown remains open */
-.dropdown:focus-within,
 .dropdown:hover .dropdown-content {
   display: block;
 }
