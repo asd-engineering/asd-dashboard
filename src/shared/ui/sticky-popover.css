@@ -1,0 +1,21 @@
+[data-sticky-popover] {
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: inline-flex;
+  z-index: var(--z-popover, 1000);
+  background: white;
+  border: 1px solid #ccc;
+  padding: 4px;
+  gap: 4px;
+}
+
+[data-sticky-popover] button {
+  min-width: 24px;
+  min-height: 24px;
+  outline: auto;
+}
+
+[data-sticky-popover-pinned="true"] {
+  /* anchor attribute hooks for existing CSS */
+}
