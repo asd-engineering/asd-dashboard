@@ -47,7 +47,7 @@
   flex-direction: column; 
   row-gap: 4px;
   max-height: 65vh; /* A viewport-relative height is robust */
-  overflow-y: auto;
+  overflow-y: auto; /* Show scrollbar only when needed */
 }
 
 .panel-item {
