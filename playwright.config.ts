@@ -19,8 +19,7 @@ export default defineConfig({
   // workers: os.cpus().length -1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ['json', { outputFile: 'playwright-report.json' }],
-    ['html']
+    ['json', { outputFile: 'playwright-report.json' }]
   ],
 
   timeout: 8000, 

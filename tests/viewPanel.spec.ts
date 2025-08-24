@@ -60,6 +60,7 @@ test.describe('View panel', () => {
     page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(renamed) })
     await renameBtn.click()
     const rowRenamed = panel.locator('.panel-item', { hasText: renamed })
+    await expect(rowRenamed).toBeVisible()
     await rowRenamed.hover()
     const deleteBtn = rowRenamed.locator('[data-item-action="delete"]').first()
     page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
