@@ -149,3 +149,6 @@ menu#controls #admin-control.control-group {
   font-size: var(--admin-icon-size);
   user-select: none;
 }
+.hide-widget-menu .widget-button {
+    display: none;
+}
