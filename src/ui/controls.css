@@ -1,15 +1,21 @@
 /* Controls Bar */
+/* Controls Bar */
 menu#controls {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--controls-gap-row) var(--controls-gap-col);
+  gap: var(--controls-gap-row) var(--controls-gap-col); /* safe again */
   width: 100%;
   padding: 5px;
   background: var(--color-surface);
-  justify-content: center;
+  justify-content: center;      /* center groups on wide screens */
+  align-items: center;          /* single-row alignment */
+  align-content: start;         /* when wrapping */
   margin: 0 auto;
-  align-items: center;
+
+  /* Enable container queries so layout reacts to the bar's width */
+  container-type: inline-size;
 }
+
 
 /* Group */
 .control-group {
@@ -91,12 +97,13 @@ menu#controls {
 /* Admin control */
 menu#controls #admin-control.control-group {
   display: flex;
-  column-gap: 0.6rem;
-  row-gap: 0.6rem;
-  overflow: hidden;
-  justify-content: start;
-  align-content: start;
-  max-height: calc(2 * var(--admin-icon-box) + 0.6rem);
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: flex-start;
+  margin-left: auto;            /* desktop: push admin block to the right */
+  align-self: flex-start;       /* keep it top-aligned when wrapping */
+  order: 100;                   /* ensure it stays last in flex order */
+  overflow: visible;            /* don't clip tooltips */
 }
 
 #admin-control label {
@@ -125,11 +132,6 @@ menu#controls #admin-control.control-group {
   z-index: 10;
 }
 
-/* Responsive */
-@media (max-width: 520px) {
-  menu#controls { grid-template-columns: 1fr; }
-}
-
 #sw-toggle { display: none; }
 
 #toggle-widget-menu,
@@ -138,4 +140,83 @@ menu#controls #admin-control.control-group {
   cursor: pointer;
   font-size: var(--admin-icon-size);
   user-select: none;
+}
+/* Narrow widths: header = [logo][main stack] + absolute admin rail on right */
+@container (max-width: calc(2 * var(--controls-min-col) + 160px)) {
+  menu#controls {
+    position: relative;                          /* anchor abs admin rail */
+    display: grid;
+    grid-template-columns: min-content 1fr;      /* logo | main stack */
+    grid-auto-rows: max-content;
+    align-items: start;
+    align-content: start;
+    justify-content: start;
+    column-gap: var(--controls-gap-col);
+    row-gap: var(--controls-gap-row);
+
+    /* reserve space so the rail doesn't overlap the middle column */
+    padding-right: calc(var(--admin-icon-box) + 16px);
+  }
+
+  /* Logo (left col, first row) */
+  menu#controls::before {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    align-self: start;
+  }
+
+  /* Main groups stacked tightly in the middle column */
+  #board-control   { grid-column: 2; grid-row: 1; justify-self: start; align-self: start; }
+  #view-control    { grid-column: 2; grid-row: 2; justify-self: start; align-self: start; }
+  #service-control { grid-column: 2; grid-row: 3; justify-self: start; align-self: start; }
+
+  /* Admin rail: remove from flow so it can't inflate row heights */
+  #admin-control {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    margin-left: 0;                 /* cancel desktop push */
+    display: flex;
+    flex-direction: column;         /* vertical icons */
+    align-items: center;
+    gap: 0.6rem;
+    z-index: 2;
+  }
+}
+
+/* Fallback for browsers without container queries */
+@media (max-width: 700px) {
+  menu#controls {
+    position: relative;
+    display: grid;
+    grid-template-columns: min-content 1fr;
+    grid-auto-rows: max-content;
+    align-items: start;
+    align-content: start;
+    justify-content: start;
+    column-gap: var(--controls-gap-col);
+    row-gap: var(--controls-gap-row);
+    padding-right: calc(var(--admin-icon-box) + 16px);
+  }
+
+  menu#controls::before {
+    grid-column: 1; grid-row: 1;
+    justify-self: start; align-self: start;
+  }
+
+  #board-control   { grid-column: 2; grid-row: 1; justify-self: start; align-self: start; }
+  #view-control    { grid-column: 2; grid-row: 2; justify-self: start; align-self: start; }
+  #service-control { grid-column: 2; grid-row: 3; justify-self: start; align-self: start; }
+
+  #admin-control {
+    position: absolute;
+    top: 5px; right: 5px;
+    margin-left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    z-index: 2;
+  }
 }
