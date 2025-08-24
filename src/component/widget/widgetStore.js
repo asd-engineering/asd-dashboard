@@ -208,17 +208,21 @@ export class WidgetStore {
    * Ensure capacity before adding a widget. Prompts for eviction when full.
    *
    * @function confirmCapacity
+   * @param {number} [needed=1] - Number of widgets that will be added.
    * @returns {Promise<boolean>} Resolves true when space is available.
    */
-  async confirmCapacity () {
+  async confirmCapacity (needed = 1) {
     const maxTotal = StorageManager.getConfig()?.globalSettings?.maxTotalInstances
-    const overTotal = typeof maxTotal === 'number' && this.widgets.size >= maxTotal
+    const allowedMax = typeof maxTotal === 'number' ? Math.min(this.maxSize, maxTotal) : this.maxSize
+    const overBy = this.widgets.size + needed - allowedMax
 
-    if (this.widgets.size >= this.maxSize || overTotal) {
+    if (overBy > 0) {
       const { openEvictionModal } = await import('../modal/evictionModal.js')
-      const result = await openEvictionModal(this.widgets)
+      const result = await openEvictionModal(this.widgets, overBy)
       if (!result) return false
-      await this.requestRemoval(result.id)
+      for (const info of result) {
+        await this.requestRemoval(info.id)
+      }
       this._ensureLimit()
     }
 

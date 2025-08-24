@@ -332,7 +332,13 @@
     "kind": "function",
     "file": "src/component/widget/widgetStore.js",
     "description": "Ensure capacity before adding a widget. Prompts for eviction when full.",
-    "params": [],
+    "params": [
+      {
+        "name": "needed",
+        "type": "number",
+        "desc": "- Number of widgets that will be added."
+      }
+    ],
     "returns": "Promise<boolean>"
   },
   {
@@ -1589,15 +1595,20 @@
     "name": "openEvictionModal",
     "kind": "function",
     "file": "src/component/modal/evictionModal.js",
-    "description": "Display a modal to choose a widget for removal.",
+    "description": "Display a modal to choose widgets for removal.",
     "params": [
       {
         "name": "widgets",
         "type": "Map<string, HTMLElement>",
         "desc": "- Current widget map."
+      },
+      {
+        "name": "count",
+        "type": "number",
+        "desc": "- Number of widgets that must be removed."
       }
     ],
-    "returns": "Promise<{id:string, title:string}|null>"
+    "returns": "Promise<Array<{id:string, title:string}>|null>"
   },
   {
     "name": "openFragmentDecisionModal",
