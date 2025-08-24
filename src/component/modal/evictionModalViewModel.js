@@ -7,7 +7,8 @@
 /**
  * @typedef {Object} EvictionItem
  * @property {string} id
- * @property {string} title
+ * @property {string|null} title
+ * @property {string} serviceName
  * @property {string} icon
  * @property {number} boardIndex
  * @property {number} viewIndex
@@ -17,30 +18,49 @@
 /**
  * Create a view-model for the eviction modal.
  *
- * @param {{reason:string, maxPerService:number, requiredCount:number|null, items:EvictionItem[]}} opts
+ * @param {{reason:string, maxPerService:number|null, requiredCount:number|null, items:EvictionItem[]}} opts
  * @returns {{
  *  reason:string,
- *  maxPerService:number,
+ *  maxPerService:number|null,
  *  requiredCount:number|null,
  *  items:EvictionItem[],
  *  selectionLimit:number,
- *  state:{selected:Set<string>, canProceed:boolean},
+ *  state:{selectedIds:Set<string>,selectedOrder:string[],canProceed:boolean},
+ *  displayName:(item:EvictionItem)=>string,
+ *  lruPick:(n:number)=>EvictionItem[],
  *  toggle:(id:string)=>string|undefined,
  *  autoSelectLru:()=>string[]
  * }}
- */
+*/
 export function createEvictionViewModel (opts) {
   const selectionLimit = (opts.requiredCount && opts.requiredCount > 0) ? opts.requiredCount : 1
-  /** @type {string[]} */
-  const order = []
+
   const state = {
-    selected: new Set(),
+    selectedIds: new Set(),
+    selectedOrder: [],
     canProceed: false
   }
 
   const update = () => {
-    state.canProceed = state.selected.size === selectionLimit
+    state.canProceed = state.selectedIds.size === selectionLimit
   }
+
+  /**
+   * Build display name for an item.
+   * @param {EvictionItem} item
+   * @returns {string}
+   */
+  const displayName = (item) => {
+    const base = item.title ?? item.serviceName
+    return `${base} — Board ${item.boardIndex + 1}, View ${item.viewIndex + 1}`
+  }
+
+  /**
+   * Returns the first n items by lru rank.
+   * @param {number} n
+   * @returns {EvictionItem[]}
+   */
+  const lruPick = (n) => [...opts.items].sort((a, b) => a.lruRank - b.lruRank).slice(0, n)
 
   /**
    * Toggle selection of an id. Returns id removed due to overflow, if any.
@@ -49,17 +69,17 @@ export function createEvictionViewModel (opts) {
    */
   const toggle = (id) => {
     let removed
-    if (state.selected.has(id)) {
-      state.selected.delete(id)
-      const idx = order.indexOf(id)
-      if (idx >= 0) order.splice(idx, 1)
+    if (state.selectedIds.has(id)) {
+      state.selectedIds.delete(id)
+      const idx = state.selectedOrder.indexOf(id)
+      if (idx >= 0) state.selectedOrder.splice(idx, 1)
     } else {
-      if (state.selected.size === selectionLimit) {
-        removed = order.shift()
-        if (removed) state.selected.delete(removed)
+      if (state.selectedIds.size === selectionLimit) {
+        removed = state.selectedOrder.shift()
+        if (removed) state.selectedIds.delete(removed)
       }
-      state.selected.add(id)
-      order.push(id)
+      state.selectedIds.add(id)
+      state.selectedOrder.push(id)
     }
     update()
     return removed
@@ -70,20 +90,18 @@ export function createEvictionViewModel (opts) {
    * @returns {string[]}
    */
   const autoSelectLru = () => {
-    state.selected.clear()
-    order.length = 0
-    const pick = [...opts.items]
-      .sort((a, b) => a.lruRank - b.lruRank)
-      .slice(0, selectionLimit)
+    state.selectedIds.clear()
+    state.selectedOrder.length = 0
+    const pick = lruPick(selectionLimit)
     for (const item of pick) {
-      state.selected.add(item.id)
-      order.push(item.id)
+      state.selectedIds.add(item.id)
+      state.selectedOrder.push(item.id)
     }
     update()
-    return [...state.selected]
+    return [...state.selectedIds]
   }
 
-  return { ...opts, selectionLimit, state, toggle, autoSelectLru }
+  return { ...opts, selectionLimit, state, displayName, lruPick, toggle, autoSelectLru }
 }
 
 export default createEvictionViewModel

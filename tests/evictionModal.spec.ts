@@ -15,8 +15,8 @@ test.describe('Eviction Modal v2', () => {
     await page.evaluate(async () => {
       const { openEvictionModal } = await import('/component/modal/evictionModal.js')
       const items = [
-        { id: 'a', title: 'A', icon: '🧱', boardIndex: 0, viewIndex: 0, lruRank: 0 },
-        { id: 'b', title: 'B', icon: '🧱', boardIndex: 0, viewIndex: 1, lruRank: 1 }
+        { id: 'a', title: 'A', serviceName: 'SvcA', icon: '🧱', boardIndex: 0, viewIndex: 0, lruRank: 0 },
+        { id: 'b', title: 'B', serviceName: 'SvcB', icon: '🧱', boardIndex: 0, viewIndex: 1, lruRank: 1 }
       ]
       window.evicted = []
       openEvictionModal({
@@ -40,8 +40,12 @@ test.describe('Eviction Modal v2', () => {
   test('defined-requiredCount: manual selection up to N enables Continue and evicts', async ({ page }) => {
     await page.evaluate(async () => {
       const { openEvictionModal } = await import('/component/modal/evictionModal.js')
-      const mk = (id, title, boardIndex, viewIndex, lruRank) => ({ id, title, icon: '🧱', boardIndex, viewIndex, lruRank })
-      const items = [mk('a', 'A', 0, 0, 0), mk('b', 'B', 0, 1, 1), mk('c', 'C', 1, 0, 2)]
+      const mk = (id, title, serviceName, boardIndex, viewIndex, lruRank) => ({ id, title, serviceName, icon: '🧱', boardIndex, viewIndex, lruRank })
+      const items = [
+        mk('a', null, 'Alpha', 0, 0, 0),
+        mk('b', 'Bravo', 'Beta', 0, 1, 1),
+        mk('c', 'Charlie', 'Gamma', 1, 0, 2)
+      ]
       window.evicted = []
       openEvictionModal({
         reason: 'test',
@@ -54,12 +58,18 @@ test.describe('Eviction Modal v2', () => {
     const modal = page.locator('#eviction-modal')
     await expect(modal).toBeVisible()
     await expect(modal.locator('#eviction-header')).toHaveText('2 widgets must be removed to continue navigation.')
-    const listItems = modal.locator('#eviction-list label')
+    const list = modal.locator('#eviction-list')
+    await expect(list).toHaveCSS('flex-direction', 'column')
+    const listItems = list.locator('label')
     await expect(listItems).toHaveCount(3)
-    await expect(listItems.nth(1)).toContainText('Board 1, View 2')
+    await expect(listItems.nth(0)).toContainText('Alpha — Board 1, View 1')
+    await expect(listItems.nth(1)).toContainText('Bravo — Board 1, View 2')
+    await expect(modal.locator('#eviction-disclaimer')).toBeVisible()
+    await expect(modal.locator('input[type="checkbox"][role="switch"]')).toHaveCount(0)
     const counter = modal.locator('#eviction-counter')
     await expect(counter).toHaveText('0 of 2 widgets selected')
     const boxes = modal.locator('#eviction-list input[type="checkbox"]')
+    await expect(boxes).toHaveCount(3)
     await boxes.nth(0).check()
     await expect(counter).toHaveText('1 of 2 widgets selected')
     const continueBtn = modal.locator('button:has-text("Continue")')
@@ -77,9 +87,9 @@ test.describe('Eviction Modal v2', () => {
     await page.evaluate(async () => {
       const { openEvictionModal } = await import('/component/modal/evictionModal.js')
       const items = [
-        { id: 'a', title: 'A', icon: '🧱', boardIndex: 0, viewIndex: 0, lruRank: 0 },
-        { id: 'b', title: 'B', icon: '🧱', boardIndex: 0, viewIndex: 1, lruRank: 1 },
-        { id: 'c', title: 'C', icon: '🧱', boardIndex: 1, viewIndex: 0, lruRank: 2 }
+        { id: 'a', title: 'A', serviceName: 'SvcA', icon: '🧱', boardIndex: 0, viewIndex: 0, lruRank: 0 },
+        { id: 'b', title: 'B', serviceName: 'SvcB', icon: '🧱', boardIndex: 0, viewIndex: 1, lruRank: 1 },
+        { id: 'c', title: 'C', serviceName: 'SvcC', icon: '🧱', boardIndex: 1, viewIndex: 0, lruRank: 2 }
       ]
       window.evicted = []
       openEvictionModal({
@@ -102,7 +112,7 @@ test.describe('Eviction Modal v2', () => {
     await page.evaluate(async () => {
       const { openEvictionModal } = await import('/component/modal/evictionModal.js')
       const items = [
-        { id: 'a', title: 'A', icon: '🧱', boardIndex: 0, viewIndex: 0, lruRank: 0 }
+        { id: 'a', title: 'A', serviceName: 'SvcA', icon: '🧱', boardIndex: 0, viewIndex: 0, lruRank: 0 }
       ]
       window.evicted = []
       openEvictionModal({
