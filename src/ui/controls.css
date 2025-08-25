@@ -1,7 +1,9 @@
+/* --- src/ui/controls.css --- */
 /* Controls Bar (Stage A: WIDE default) */
 menu#controls {
   display: grid;
-  grid-template-columns: min-content 1fr 1fr 1fr min-content; /* logo | board | view | service | admin */
+  /* logo | board | view | service | admin */
+  grid-template-columns: min-content minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) max-content;
   grid-auto-rows: max-content;
   grid-auto-flow: row dense;
   gap: var(--controls-gap-row) var(--controls-gap-col);
@@ -11,33 +13,32 @@ menu#controls {
   align-items: start;
   align-content: start;
   margin: 0 auto;
-  container-type: inline-size; /* enable container queries */
+  container-type: inline-size;
 }
 
-/* Group */
+/* Groups are actual flex rows that can wrap safely */
 .control-group {
+  display: flex;              /* <-- was missing; flex-wrap had no effect */
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.3rem;
   padding: 0.3rem;
   border-radius: var(--radius-3);
   background: var(--color-soft);
-  min-width: 0;
+  min-width: 0;               /* allow shrinking in grid cells */
   max-width: 100%;
   word-break: break-word;
   position: relative;
   isolation: isolate;
   z-index: 1;
 }
+/* any direct child should be allowed to shrink */
+.control-group > * { min-width: 0; max-width: 100%; }
 
 /* Lift open panels */
 .control-group:has(.dropdown.panel.open) { z-index: 1000; }
 .control-group:has(.dropdown.panel.open)::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1000;
-  pointer-events: auto;
-  background: transparent;
+  content: ""; position: absolute; inset: 0; z-index: 1000; pointer-events: auto; background: transparent;
 }
 
 /* Inputs */
@@ -50,210 +51,143 @@ menu#controls {
   color: var(--color-text);
   max-width: 100%;
   min-width: 0;
-  flex-shrink: 1;
-  position: relative;
-  z-index: 0;
+  flex: 1 1 auto;                     /* participate in wrapping */
+  position: relative; z-index: 0;
+}
+/* allow search boxes to scale nicely across widths */
+#controls input[type="search"],
+#controls .panel-search {
+  width: clamp(140px, 22vw, 340px);
 }
 #controls select { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Buttons */
 #controls button {
   padding: 0.3rem 0.6rem;
-  border: none;
-  border-radius: var(--radius-1);
-  background: transparent;
-  color: var(--color-text-weak);
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color .15s ease;
+  border: none; border-radius: var(--radius-1);
+  background: transparent; color: var(--color-text-weak);
+  cursor: pointer; font-size: 1rem; transition: background-color .15s ease;
 }
 #controls button:hover { background: var(--color-surface); }
 
 /* View buttons */
 #view-button-menu button {
-  margin: 2px;
-  padding: 8px 18px;
+  margin: 2px; padding: 8px 18px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-3);
-  background: var(--color-elevated);
-  color: var(--color-text);
-  font-weight: 500;
-  cursor: pointer;
-  transition: background .15s, color .15s, border-color .15s;
+  background: var(--color-elevated); color: var(--color-text);
+  font-weight: 500; cursor: pointer; transition: background .15s, color .15s, border-color .15s;
 }
 #view-button-menu button.active { background: var(--color-success); color: #fff; }
 
 /* Dropdown links */
-.dropdown-content a {
-  display: block;
-  font-size: .8rem;
-  padding: 6px 10px;
-  color: var(--color-text);
-}
+.dropdown-content a { display: block; font-size: .8rem; padding: 6px 10px; color: var(--color-text); }
 
 /* Logo placement (all stages) */
 menu#controls::before {
-  grid-column: 1;
-  grid-row: 1;
-  justify-self: start;
-  align-self: start;
+  grid-column: 1; grid-row: 1;
+  justify-self: start; align-self: start;
 }
 
 /* Stage A (WIDE): 1 row main controls; admin = HORIZONTAL (right) */
-#board-control   { grid-column: 2; grid-row: 1; justify-self: stretch; }
-#view-control    { grid-column: 3; grid-row: 1; justify-self: stretch; }
-#service-control { grid-column: 4; grid-row: 1; justify-self: stretch; }
+#board-control   { grid-column: 2; grid-row: 1; justify-self: stretch; min-width: 0; }
+#view-control    { grid-column: 3; grid-row: 1; justify-self: stretch; min-width: 0; }
+#service-control { grid-column: 4; grid-row: 1; justify-self: stretch; min-width: 0; }
 
 menu#controls #admin-control.control-group {
-  grid-column: 5;
-  grid-row: 1;
-  display: flex;                /* horizontal row */
-  flex-direction: row;
-  align-items: center;
-  gap: 0.6rem;
-  margin-left: 0;
-  order: 0;
-  position: static;
-  overflow: visible;
+  grid-column: 5; grid-row: 1;
+  display: flex; flex-direction: row; flex-wrap: nowrap;
+  align-items: center; gap: 0.6rem;
+  margin-left: 0; order: 0; position: static; overflow: visible;
 }
 
 /* Admin icon hitbox */
 #admin-control label {
-  display: inline-grid;
-  place-items: center;
-  width: var(--admin-icon-box);
-  height: var(--admin-icon-box);
-  font-size: var(--admin-icon-size);
-  cursor: pointer;
-  line-height: 1;
+  display: inline-grid; place-items: center;
+  width: var(--admin-icon-box); height: var(--admin-icon-box);
+  font-size: var(--admin-icon-size); cursor: pointer; line-height: 1;
   transition: transform .15s ease;
 }
 #admin-control label:hover { transform: scale(1.15); }
 #admin-control label:hover::after {
   content: attr(aria-label);
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,0.8);
-  color: #fff;
-  font-size: .8rem;
-  padding: 2px 6px;
-  border-radius: var(--radius-1);
-  white-space: nowrap;
-  z-index: 10;
+  position: absolute; top: calc(100% + 0.5rem); left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.8); color: #fff; font-size: .8rem; padding: 2px 6px;
+  border-radius: var(--radius-1); white-space: nowrap; z-index: 10;
 }
 
 #sw-toggle { display: none; }
-#toggle-widget-menu,
-.icon-checkbox { display: inline-block; cursor: pointer; font-size: var(--admin-icon-size); user-select: none; }
+#toggle-widget-menu, .icon-checkbox { display: inline-block; cursor: pointer; font-size: var(--admin-icon-size); user-select: none; }
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/* Stage B (MID ≤900px): 2 rows; admin = 2×2 SQUARE (right)                   */
-/* Row 1: Board + View | Row 2: Service (spans both)                          */
+/* Stage B (MID ≤900px): 2 rows; admin = 2×2 square on right                  */
+/* Row 1: Board + View | Row 2: Service (spans both)                           */
 /* ────────────────────────────────────────────────────────────────────────── */
 @container (max-width: 900px) {
   menu#controls {
-    grid-template-columns: min-content 1fr 1fr min-content; /* logo | board | view | admin */
+    /* logo | board | view | admin */
+    grid-template-columns: min-content minmax(0,1fr) minmax(0,1fr) max-content;
   }
-
   #board-control   { grid-column: 2; grid-row: 1; }
   #view-control    { grid-column: 3; grid-row: 1; }
   #service-control { grid-column: 2 / span 2; grid-row: 2; }
 
   menu#controls #admin-control.control-group {
-    grid-column: 4;
-    grid-row: 1 / span 2;
-    display: grid;                                /* 2×2 square */
-    grid-template-columns: repeat(2, var(--admin-icon-box));
-    grid-auto-rows: var(--admin-icon-box);
-    align-content: start;
-    justify-content: start;
-    gap: 0.4rem;
-  }
-}
-
-/* --- FORCE WIDE STAGE (admin horizontal, right) -------------------------- */
-@container (min-width: 901px) {
-  /* 1) Ensure the admin column can fit a row of icons */
-  menu#controls {
-    /* logo | board | view | service | admin */
-    grid-template-columns: min-content 1fr 1fr 1fr max-content;
-  }
-
-  /* 2) Admin bar: horizontal row, no wrapping */
-  menu#controls #admin-control.control-group {
-    grid-column: 5;            /* right column */
-    grid-row: 1;
-    display: flex;
-    flex-direction: row;       /* <- horizontal */
-    flex-wrap: nowrap;
-    align-items: center;
-    gap: 0.6rem;
-    position: static;
-    margin-left: 0;
-    order: 0;
-  }
-}
-
-/* ────────────────────────────────────────────────────────────────────────── */
-/* Stage C (SMALL ≤640px): 3 rows; admin = VERTICAL rail (right)              */
-/* Row 1: Board | Row 2: View | Row 3: Service                                */
-/* ────────────────────────────────────────────────────────────────────────── */
-@container (max-width: 640px) {
-  menu#controls {
-    grid-template-columns: min-content 1fr min-content; /* logo | main | admin */
-  }
-
-  #board-control   { grid-column: 2; grid-row: 1; }
-  #view-control    { grid-column: 2; grid-row: 2; }
-  #service-control { grid-column: 2; grid-row: 3; }
-
-  menu#controls #admin-control.control-group {
-    grid-column: 3;
-    grid-row: 1 / span 3;
-    display: flex;              /* vertical rail */
-    flex-direction: column;
-    align-items: center;
-    gap: 0.6rem;
-  }
-}
-
-/* ────────────────────────────────────────────────────────────────────────── */
-/* Fallback media queries (for browsers w/o container queries)                */
-/* ────────────────────────────────────────────────────────────────────────── */
-@media (max-width: 900px) {
-  menu#controls { grid-template-columns: min-content 1fr 1fr min-content; }
-  #board-control { grid-column: 2; grid-row: 1; }
-  #view-control { grid-column: 3; grid-row: 1; }
-  #service-control { grid-column: 2 / span 2; grid-row: 2; }
-  menu#controls #admin-control.control-group {
     grid-column: 4; grid-row: 1 / span 2;
     display: grid;
     grid-template-columns: repeat(2, var(--admin-icon-box));
     grid-auto-rows: var(--admin-icon-box);
-    gap: 0.4rem;
+    align-content: start; justify-content: start; gap: 0.4rem;
   }
 }
 
-@media (max-width: 640px) {
-  menu#controls { grid-template-columns: min-content 1fr min-content; }
-  #board-control { grid-column: 2; grid-row: 1; }
-  #view-control { grid-column: 2; grid-row: 2; }
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Stage C (SMALL ≤640px): 3 rows; admin = vertical rail on right             */
+/* ────────────────────────────────────────────────────────────────────────── */
+@container (max-width: 640px) {
+  menu#controls {
+    /* logo | main | admin */
+    grid-template-columns: min-content minmax(0,1fr) max-content;
+  }
+  #board-control   { grid-column: 2; grid-row: 1; }
+  #view-control    { grid-column: 2; grid-row: 2; }
   #service-control { grid-column: 2; grid-row: 3; }
+
   menu#controls #admin-control.control-group {
     grid-column: 3; grid-row: 1 / span 3;
     display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
   }
 }
 
-/* Fallback for browsers without container queries */
-@media (min-width: 901px) {
-  menu#controls {
-    grid-template-columns: min-content 1fr 1fr 1fr max-content;
-  }
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Media-query fallbacks (no container queries)                                */
+/* ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  menu#controls { grid-template-columns: min-content minmax(0,1fr) minmax(0,1fr) max-content; }
+  #board-control { grid-column: 2; grid-row: 1; }
+  #view-control { grid-column: 3; grid-row: 1; }
+  #service-control { grid-column: 2 / span 2; grid-row: 2; }
   menu#controls #admin-control.control-group {
-    grid-column: 5; grid-row: 1;
-    display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 0.6rem;
+    grid-column: 4; grid-row: 1 / span 2;
+    display: grid; grid-template-columns: repeat(2, var(--admin-icon-box)); grid-auto-rows: var(--admin-icon-box); gap: 0.4rem;
   }
+}
+@media (max-width: 640px) {
+  menu#controls { grid-template-columns: min-content minmax(0,1fr) max-content; }
+  #board-control { grid-column: 2; grid-row: 1; }
+  #view-control  { grid-column: 2; grid-row: 2; }
+  #service-control { grid-column: 2; grid-row: 3; }
+  menu#controls #admin-control.control-group {
+    grid-column: 3; grid-row: 1 / span 3;
+    display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+  }
+}
+/* Force wide stage; keep admin horizontal */
+@container (min-width: 901px) {
+  menu#controls { grid-template-columns: min-content minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) max-content; }
+  menu#controls #admin-control.control-group { display:flex; flex-direction:row; flex-wrap:nowrap; }
+}
+@media (min-width: 901px) {
+  menu#controls { grid-template-columns: min-content minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) max-content; }
+  menu#controls #admin-control.control-group { display:flex; flex-direction:row; flex-wrap:nowrap; }
 }
