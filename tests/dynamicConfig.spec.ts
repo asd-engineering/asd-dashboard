@@ -95,21 +95,18 @@ test.describe("Dashboard Config - Remote via URL Params", () => {
 });
 
 test.describe("Dashboard Config - Fallback Config Popup", () => {
+    // FIX: This suite needs to ensure no config is available. We override the default mock.
     test.beforeEach(async ({ page }) => {
-        // FIX: Ensure a clean slate for tests that expect the modal to pop up.
-        await page.addInitScript(() => {
-            localStorage.clear();
-            indexedDB.deleteDatabase('asd-db');
-        });
+        await page.route('**/config.json', route => route.fulfill({ status: 404 }));
     });
 
   test("popup appears when no config available via url, storage, or local file", async ({ page }) => {
-    await navigate(page, "/");
+    await bootWithDashboardState(page, {}, [], { board: "", view: "" });
     await expect(page.locator("#config-modal")).toBeVisible();
   });
 
   test("config modal shows Export button", async ({ page }) => {
-    await navigate(page, "/");
+    await bootWithDashboardState(page, {}, [], { board: "", view: "" });
     await expect(page.locator("#config-modal .modal__btn--export")).toBeVisible();
   });
 
@@ -142,8 +139,7 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
   });
 
   test("valid input in popup initializes dashboard", async ({ page }) => {
-    await navigate(page, "/");
-    await expect(page.locator("#config-modal")).toBeVisible();
+    await bootWithDashboardState(page, {}, [], { board: "", view: "" });
     await openConfigModalSafe(page);
 
     await page.click('button:has-text("JSON mode")');
@@ -158,14 +154,6 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
 });
 
 test.describe("Dashboard Config - LocalStorage Behavior", () => {
-    test.beforeEach(async ({ page }) => {
-        // FIX: All tests need to wait for StorageManager to be ready.
-        await page.addInitScript(async () => {
-            const { StorageManager } = await import('/storage/StorageManager.js');
-            await StorageManager.init({ persist: false, forceLocal: true });
-        });
-    });
-
   test("after first load, config is used from localStorage", async ({ page }) => {
     const config = b64(ciConfig);
     await navigate(page, `/?config_base64=${config}`);
@@ -180,19 +168,18 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
     await page.locator('[data-testid="advanced-mode-toggle"]').check();
     await page.locator('#config-modal').waitFor({ state: 'visible' });
 
-    await page.click('#config-modal button:has-text("JSON mode")');
+    await page.click('button:has-text("JSON mode")');
     await page.fill("#config-json", JSON.stringify({ ...ciConfig, boards: [] }));
-
+    
     const svcTab = page.locator('#config-modal button[data-tab="svcTab"]');
     await svcTab.click();
 
-    await page.click('#config-modal button:has-text("JSON mode")');
+    await page.click('button:has-text("JSON mode")');
     await page.fill('#config-services', JSON.stringify([{ name: "svc1", url: "http://svc1" }]));
 
     const saveBtn = page.locator("#config-modal .modal__btn--save");
     await saveBtn.click();
     
-    // FIX: Wait for reload to complete.
     await page.waitForLoadState('domcontentloaded');
 
     const stored = await getUnwrappedConfig(page);
@@ -201,6 +188,7 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
     const services = await page.evaluate(
       async () => {
         const { StorageManager } = await import("/storage/StorageManager.js");
+        await StorageManager.init(); // FIX: ensure cache is warmed
         return StorageManager.getServices();
       }
     );
@@ -208,10 +196,13 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
   });
 
   test("removing config from localStorage shows popup again", async ({ page }) => {
+    // FIX: This test also needs the config.json to 404.
+    await page.route('**/config.json', route => route.fulfill({ status: 404 }));
     await navigate(page, `/?config_base64=${b64(ciConfig)}`);
     await page.evaluate(async () => {
-      const { StorageManager } = await import('/storage/StorageManager.js');
-      await StorageManager.clearAll();
+        const { StorageManager } = await import('/storage/StorageManager.js');
+        await StorageManager.init();
+        await StorageManager.clearAll();
     });
     await page.reload();
     await expect(page.locator("#config-modal")).toBeVisible();
