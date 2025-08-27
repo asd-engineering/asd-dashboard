@@ -19,14 +19,9 @@ import { computeCRC32Hex } from './checksum.js'
 import { applyKeyMap } from './keymap.js'
 import { DEFAULT_CONFIG_TEMPLATE } from '../storage/defaultConfig.js'
 import { FRAG_MINIMIZE_ENABLED } from './fragmentConstants.js'
+import { KEY_MAP } from './fragmentKeyMap.js'
 
 const logger = new Logger('fragmentLoader.js')
-
-// Mirror the key map used during export. Keep this in sync.
-/** @type {Record<string,string>} */
-const KEY_MAP = {
-  // e.g. 'serviceId': 'i'
-}
 
 /**
  * Parse the URL fragment and store config/services with the StorageManager

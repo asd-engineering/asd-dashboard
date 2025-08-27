@@ -32,11 +32,11 @@ import { navigate, getConfigBoards } from './shared/common'
     expect(services.some(s => s.name === 'svc1')).toBeFalsy()
 
     await page.click('#open-config-modal')
-    await page.click('button:has-text("Saved States")')
+    await page.click('button:has-text("Snapshots & Share")')
     await expect(page.locator('#stateTab tbody tr')).toHaveCount(1)
 
     page.once('dialog', dialog => {
-      expect(dialog.message()).toContain('Delete all saved states')
+      expect(dialog.message()).toContain('Delete all saved snapshots')
       dialog.accept()
     })
     await page.click('text=Delete all snapshots')

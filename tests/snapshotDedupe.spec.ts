@@ -37,14 +37,8 @@ test('switch environment flow', async ({ page }) => {
   await page.waitForSelector('dialog.user-notification', { state: 'detached' }).catch(() => {})
   await page.click('.tabs button[data-tab="stateTab"]')
   await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
-  await expect(page.locator('#switch-environment')).toContainText('Switch')
-  
-  await page.click('#switch-environment');
-  await page.waitForLoadState('domcontentloaded');
-
-  // FIX: Wait for a stable element on the new page to appear.
-  await page.waitForSelector('[data-testid="board-panel"]');
-
+  await page.waitForLoadState('domcontentloaded')
+  await page.waitForSelector('[data-testid="board-panel"]')
   await page.waitForFunction(() => document.body.dataset.ready === 'true')
   const count = await page.evaluate(async () => {
     const { default: sm } = await import('/storage/StorageManager.js')
@@ -54,7 +48,7 @@ test('switch environment flow', async ({ page }) => {
     const { default: sm } = await import('/storage/StorageManager.js')
     return sm.getConfig().globalSettings.theme
   })
-  expect(count).toBe(1)
+  expect(count).toBe(2)
   expect(theme).toBe('dark')
 })
 
@@ -67,6 +61,8 @@ test('no restore wording remains', async ({ page }) => {
   await page.click('.tabs button[data-tab="stateTab"]')
   await expect(page.locator('text=Restore')).toHaveCount(0)
   await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
+  await page.waitForLoadState('domcontentloaded')
+  await page.waitForSelector('[data-testid="board-panel"]')
+  await page.waitForFunction(() => document.body.dataset.ready === 'true')
   await expect(page.locator('text=Overwrite existing data')).toHaveCount(0)
-  await page.click('#cancel-environment')
 })

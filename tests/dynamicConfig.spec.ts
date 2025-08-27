@@ -128,8 +128,10 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
     const cc = params.get("cc")?.split(",") || [];
     const cfgChecksum = cc[0] || null;
     const svcChecksum = cc[1] || null;
-    const cfgMin = await decodeConfig(params.get("cfg")!, { algo, expectChecksum: cfgChecksum });
-    const svcMin = await decodeConfig(params.get("svc")!, { algo, expectChecksum: svcChecksum });
+    const cfgParam = params.get("cfg") || params.get("cfg0") || "";
+    const svcParam = params.get("svc") || params.get("svc0") || "";
+    const cfgMin = await decodeConfig(cfgParam, { algo, expectChecksum: cfgChecksum });
+    const svcMin = await decodeConfig(svcParam, { algo, expectChecksum: svcChecksum });
     const cfg = restoreDeep(cfgMin, DEFAULT_CONFIG_TEMPLATE);
     const svc = restoreDeep(svcMin, []);
     expect(cfg.globalSettings.theme).toBe(ciConfig.globalSettings.theme);

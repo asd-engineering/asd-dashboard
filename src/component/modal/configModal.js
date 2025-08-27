@@ -11,11 +11,15 @@ import { clearConfigFragment } from '../../utils/fragmentGuard.js'
 import StorageManager from '../../storage/StorageManager.js'
 import { DEFAULT_CONFIG_TEMPLATE } from '../../storage/defaultConfig.js'
 import { exportConfig } from '../configModal/exportConfig.js'
-import { openFragmentDecisionModal } from './fragmentDecisionModal.js'
 import { JsonForm } from '../utils/json-form.js'
 import { DEFAULT_TEMPLATES, DEFAULT_PLACEHOLDERS } from '../utils/json-form-defaults.js'
 import { isAdvancedMode, setAdvancedMode } from '../../state/uiState.js'
 import { applyTheme, THEME } from '../../ui/theme.js'
+import { autosaveIfPresent } from '../../storage/snapshots.js'
+import { decodeConfig } from '../../utils/compression.js'
+import { KEY_MAP } from '../../utils/fragmentKeyMap.js'
+import { mergeBoards, mergeServices } from '../../utils/merge.js'
+import { FRAG_DEFAULT_ALGO } from '../../utils/fragmentConstants.js'
 
 /** @typedef {import('../../types.js').DashboardConfig} DashboardConfig */
 
@@ -205,7 +209,7 @@ export async function openConfigModal () {
           : []),
         {
           id: 'stateTab',
-          label: 'Saved States',
+          label: 'Snapshots & Share',
           populate: populateStateTab
         }
       ]
@@ -338,118 +342,213 @@ export async function openConfigModal () {
  * @returns {Promise<void>}
  */
 async function populateStateTab (tab) {
-  const store = await StorageManager.loadStateStore()
-  const list = Array.isArray(store.states) ? store.states : []
-
-  const filter = document.createElement('input')
-  filter.id = 'stateFilter'
-  filter.type = 'text'
-  filter.placeholder = 'Filter snapshots...'
-  filter.style.marginBottom = '0.5rem'
-  filter.style.display = 'block'
-  filter.style.width = '100%'
-  tab.appendChild(filter)
+  tab.innerHTML = ''
   tab.classList.add('modal__tab--column')
 
   const table = document.createElement('table')
-  const thead = document.createElement('thead')
-  const tbody = document.createElement('tbody')
-
-  const headers = ['Environment', '', 'Name', 'Type', 'Date', 'MD5']
-  const headerRow = document.createElement('tr')
-  headers.forEach(h => {
-    const th = document.createElement('th')
-    th.textContent = h
-    headerRow.appendChild(th)
-  })
-  thead.appendChild(headerRow)
-  table.append(thead, tbody)
+  table.classList.add('table')
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Name</th><th>Type</th><th>Date</th><th>MD5</th>
+        <th>Size</th><th>Unique domains</th><th>Health</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  `
   tab.appendChild(table)
 
-  const wipeBtn = document.createElement('button')
-  wipeBtn.textContent = 'Delete all snapshots'
-  wipeBtn.ariaLabel = 'Delete all saved states'
-  wipeBtn.title = 'Delete all saved states'
-  wipeBtn.addEventListener('click', async () => {
-    if (confirm('Delete all saved states? This cannot be undone.')) {
-      await StorageManager.clearStateStore()
-      list.splice(0, list.length)
-      render()
-    }
-  })
-  tab.appendChild(wipeBtn)
+  const actionsDiv = document.createElement('div')
+  actionsDiv.classList.add('actions')
+  const delAll = document.createElement('button')
+  delAll.id = 'delete-all-snapshots'
+  delAll.textContent = 'Delete all snapshots'
+  actionsDiv.appendChild(delAll)
+  tab.appendChild(actionsDiv)
 
-  /**
-   * Render all saved state entries as table rows inside the tab's <tbody>.
-   *
-   * This function clears the existing table body and repopulates it using
-   * the `list` of saved state snapshots. Each row includes buttons to:
-   * - Switch to a snapshot via `openFragmentDecisionModal()`
-   * - Delete the snapshot and persist the new list
-   *
-   * Table rows are tagged with `data-name` for filtering via the search input.
-   *
-   * Side effects:
-   * - Updates DOM inside <tbody>
-   * - Binds event handlers to buttons in each row
-   */
-  function render () {
-    tbody.innerHTML = ''
-    list.forEach(row => {
-      const tr = document.createElement('tr')
-      tr.dataset.name = row.name
+  const tbody = table.querySelector('tbody')
+  const store = await StorageManager.loadStateStore()
+  const rows = Array.isArray(store.states) ? store.states : []
 
-      const switchBtn = document.createElement('button')
-      switchBtn.textContent = 'Switch'
-      switchBtn.dataset.action = 'switch'
-      switchBtn.classList.add('state-switch')
-      switchBtn.addEventListener('click', async () => {
-        try {
-          await openFragmentDecisionModal({ cfgParam: row.cfg, svcParam: row.svc, nameParam: row.name })
-        } catch (error) {
-          logger.error('Error opening fragment decision modal:', error)
-        }
-      })
+  for (const row of rows) {
+    const tr = document.createElement('tr')
+    const size = (row.cfg?.length || 0) + (row.svc?.length || 0)
+    const uniqueDomains = await computeUniqueDomains(row.svc)
+    tr.innerHTML = `
+      <td>${escapeHtml(row.name || '')}</td>
+      <td>${escapeHtml(row.type || '')}</td>
+      <td>${new Date(row.ts || Date.now()).toLocaleString()}</td>
+      <td><code>${row.md5 || ''}</code></td>
+      <td>${size} bytes</td>
+      <td>${uniqueDomains.size}</td>
+      <td><button data-action="health" data-id="${row.md5}">Healthcheck</button></td>
+      <td>
+        <button data-action="switch" data-id="${row.md5}">Switch</button>
+        <button data-action="merge" data-id="${row.md5}">Merge into current</button>
+        <button data-action="delete" data-id="${row.md5}">Delete</button>
+      </td>
+    `
+    tbody.appendChild(tr)
 
-      const del = document.createElement('button')
-      del.textContent = 'Delete'
-      del.addEventListener('click', async () => {
-        if (confirm('Delete snapshot?')) {
-          const idx = list.indexOf(row)
-          if (idx !== -1) list.splice(idx, 1)
-          await StorageManager.saveStateStore({ version: store.version, states: list })
-          tr.remove()
-        }
-      })
-
-      const cells = [
-        switchBtn,
-        del,
-        row.name,
-        row.type,
-        new Date(row.ts).toLocaleString(),
-        row.md5
-      ]
-
-      cells.forEach(c => {
-        const td = document.createElement('td')
-        if (c instanceof HTMLElement) td.appendChild(c)
-        else td.textContent = String(c)
-        tr.appendChild(td)
-      })
-
-      tbody.appendChild(tr)
+    tr.querySelector('[data-action="switch"]')?.addEventListener('click', async () => {
+      await applySnapshotSwitch(row)
+    })
+    tr.querySelector('[data-action="merge"]')?.addEventListener('click', async () => {
+      await applySnapshotMerge(row)
+    })
+    tr.querySelector('[data-action="delete"]')?.addEventListener('click', async () => {
+      if (!confirm(`Delete snapshot "${row.name}"?`)) return
+      const idx = rows.indexOf(row)
+      if (idx !== -1) rows.splice(idx, 1)
+      await StorageManager.saveStateStore({ version: store.version, states: rows })
+      await populateStateTab(tab)
+    })
+    tr.querySelector('[data-action="health"]')?.addEventListener('click', async () => {
+      const res = await healthcheckEncodedServices(row.svc)
+      alert(`Healthcheck:\n${res.ok} OK, ${res.fail} FAIL, ${res.unknown} UNKNOWN`)
     })
   }
 
-  filter.addEventListener('input', () => {
-    const q = filter.value.toLowerCase()
-    Array.from(tbody.children).forEach(el => {
-      const row = /** @type {HTMLElement} */(el)
-      const t = row.dataset.name || ''
-      row.hidden = !t.toLowerCase().includes(q)
-    })
+  delAll.addEventListener('click', async () => {
+    if (!confirm('Delete all saved snapshots?')) return
+    await StorageManager.clearStateStore()
+    await populateStateTab(tab)
   })
+}
 
-  render()
+/**
+ * Switch to the provided snapshot.
+ * Autosaves current state before applying and reloading.
+ * @param {{cfg?:string,svc?:string}} row
+ * @returns {Promise<void>}
+ */
+async function applySnapshotSwitch (row) {
+  try {
+    await autosaveIfPresent()
+    StorageManager.misc.setLastBoardId(null)
+    StorageManager.misc.setLastViewId(null)
+
+    const cfg = row.cfg ? await decodeSnapshot(row.cfg) : null
+    const svc = row.svc ? await decodeSnapshot(row.svc) : null
+
+    const nextCfg = cfg || { boards: [] }
+    const nextSvc = Array.isArray(svc) ? svc : []
+
+    StorageManager.setConfig(nextCfg)
+    StorageManager.setServices(nextSvc)
+
+    const firstBoardId = nextCfg?.boards?.[0]?.id || null
+    const firstViewId = nextCfg?.boards?.[0]?.views?.[0]?.id || null
+    StorageManager.misc.setLastBoardId(firstBoardId)
+    StorageManager.misc.setLastViewId(firstViewId)
+
+    window.location.reload()
+  } catch (e) {
+    logger.error('snapshot.switch.failed', e)
+    alert('Failed to switch snapshot')
+  }
+}
+
+/**
+ * Merge snapshot payloads into current live state.
+ * @param {{cfg?:string,svc?:string}} row
+ * @returns {Promise<void>}
+ */
+async function applySnapshotMerge (row) {
+  try {
+    const incomingCfg = row.cfg ? await decodeSnapshot(row.cfg) : null
+    const incomingSvc = row.svc ? await decodeSnapshot(row.svc) : null
+    const currentCfg = StorageManager.getConfig() || { boards: [] }
+    const currentSvc = StorageManager.getServices() || []
+
+    const mergedCfg = incomingCfg ? { ...currentCfg, boards: mergeBoards(currentCfg.boards || [], incomingCfg.boards || []) } : currentCfg
+    const mergedSvc = incomingSvc ? mergeServices(currentSvc, incomingSvc) : currentSvc
+
+    StorageManager.setConfig(mergedCfg)
+    StorageManager.setServices(mergedSvc)
+
+    const firstBoardId = mergedCfg?.boards?.[0]?.id || null
+    const firstViewId = mergedCfg?.boards?.[0]?.views?.[0]?.id || null
+    StorageManager.misc.setLastBoardId(firstBoardId)
+    StorageManager.misc.setLastViewId(firstViewId)
+
+    window.location.reload()
+  } catch (e) {
+    logger.error('snapshot.merge.failed', e)
+    alert('Failed to merge snapshot')
+  }
+}
+
+/**
+ * Decode an encoded snapshot string using supported algorithms.
+ * @param {string} str
+ * @returns {Promise<any>}
+ */
+async function decodeSnapshot (str) {
+  try {
+    return await decodeConfig(str, { algo: FRAG_DEFAULT_ALGO, keyMap: KEY_MAP, expectChecksum: null })
+  } catch {
+    try {
+      return await decodeConfig(str, { algo: 'gzip', keyMap: KEY_MAP, expectChecksum: null })
+    } catch {
+      return null
+    }
+  }
+}
+
+/**
+ * Compute unique service hostnames from encoded services payload.
+ * @param {string} svcEnc
+ * @returns {Promise<Set<string>>}
+ */
+async function computeUniqueDomains (svcEnc) {
+  const set = new Set()
+  if (!svcEnc) return set
+  try {
+    const svc = await decodeSnapshot(svcEnc)
+    if (Array.isArray(svc)) {
+      svc.forEach(s => {
+        try {
+          if (s && s.url) set.add(new URL(s.url).hostname)
+        } catch {}
+      })
+    }
+  } catch {}
+  return set
+}
+
+/**
+ * Decode and perform healthcheck requests for services.
+ * Tolerant to CORS; opaque responses count as unknown.
+ * @param {string} svcEnc
+ * @returns {Promise<{ok:number,fail:number,unknown:number}>}
+ */
+async function healthcheckEncodedServices (svcEnc) {
+  const res = { ok: 0, fail: 0, unknown: 0 }
+  if (!svcEnc) return res
+  try {
+    const svc = await decodeSnapshot(svcEnc)
+    const urls = (Array.isArray(svc) ? svc : []).map(s => (s && typeof s.url === 'string') ? s.url : '').filter(Boolean)
+    const unique = Array.from(new Set(urls))
+    await Promise.all(unique.map(async u => {
+      try {
+        const r = await fetch(u, { method: 'HEAD', mode: 'no-cors' })
+        if (r.type === 'opaque') res.unknown++
+        else if (r.ok) res.ok++
+        else res.fail++
+      } catch {
+        res.fail++
+      }
+    }))
+  } catch {}
+  return res
+}
+
+/**
+ * Escape HTML entities in a string.
+ * @param {string} s
+ * @returns {string}
+ */
+function escapeHtml (s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 }

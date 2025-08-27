@@ -14,7 +14,7 @@ test.describe('advanced mode toggle', () => {
     await openConfigModalSafe(page)
 
     const tabs = page.locator('#config-modal .tabs button')
-    await expect(tabs).toHaveText(['Configuration', 'Saved States'])
+    await expect(tabs).toHaveText(['Configuration', 'Snapshots & Share'])
 
     await page.locator('#config-modal button[data-tab="cfgTab"]').click()
     let subtabs = page.locator('#config-form .jf-subtabs button')
@@ -24,7 +24,7 @@ test.describe('advanced mode toggle', () => {
     await page.locator('#config-modal').waitFor({ state: 'visible' })
 
     const tabsAdv = page.locator('#config-modal .tabs button')
-    await expect(tabsAdv).toHaveText(['Configuration', 'Services', 'Saved States'])
+    await expect(tabsAdv).toHaveText(['Configuration', 'Services', 'Snapshots & Share'])
 
     await page.locator('#config-modal button[data-tab="cfgTab"]').click()
     subtabs = page.locator('#config-form .jf-subtabs button')
@@ -34,7 +34,7 @@ test.describe('advanced mode toggle', () => {
     await page.locator('#config-modal').waitFor({ state: 'visible' })
 
     const tabsBack = page.locator('#config-modal .tabs button')
-    await expect(tabsBack).toHaveText(['Configuration', 'Saved States'])
+    await expect(tabsBack).toHaveText(['Configuration', 'Snapshots & Share'])
 
     await page.locator('#config-modal button[data-tab="cfgTab"]').click()
     subtabs = page.locator('#config-form .jf-subtabs button')
