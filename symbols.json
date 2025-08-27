@@ -2217,6 +2217,30 @@
     "returns": "Promise<void>"
   },
   {
+    "name": "snapshotDedup",
+    "kind": "function",
+    "file": "src/utils/snapshotDedup.js",
+    "description": "Deduplicate items keeping first occurrence.",
+    "params": [
+      {
+        "name": "items",
+        "type": "Array<T>",
+        "desc": ""
+      },
+      {
+        "name": "getId",
+        "type": "(item:T)=>string|undefined",
+        "desc": ""
+      },
+      {
+        "name": "getName",
+        "type": "(item:T)=>string|undefined",
+        "desc": ""
+      }
+    ],
+    "returns": "Array<T>"
+  },
+  {
     "name": "splitIntoParams",
     "kind": "function",
     "file": "src/utils/chunker.js",
