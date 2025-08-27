@@ -6,6 +6,7 @@ import { injectSnapshot } from './shared/state.js'
 import { openConfigModalSafe } from './shared/uiHelpers'
 
 test.describe('Snapshots & Share tab', () => {
+  test.setTimeout(20000)
   test.beforeEach(async ({ page }) => {
     await clearStorage(page)
     await navigate(page,'/')

@@ -121,7 +121,7 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
     });
 
     await page.click("#config-modal .modal__btn--export");
-    const url = await page.evaluate(() => (window as any).__copied);
+    const url = await page.waitForFunction(() => (window as any).__copied || null).then(r => r.jsonValue());
     const hash = url.split("#")[1] || "";
     const params = new URLSearchParams(hash);
     const algo = (params.get("algo") || "gzip") as "gzip" | "deflate";

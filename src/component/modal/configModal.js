@@ -374,13 +374,14 @@ async function populateStateTab (tab) {
     const tr = document.createElement('tr')
     const size = (row.cfg?.length || 0) + (row.svc?.length || 0)
     const uniqueDomains = await computeUniqueDomains(row.svc)
+    const domainsTooltip = escapeHtml(Array.from(uniqueDomains).join(', '))
     tr.innerHTML = `
       <td>${escapeHtml(row.name || '')}</td>
       <td>${escapeHtml(row.type || '')}</td>
       <td>${new Date(row.ts || Date.now()).toLocaleString()}</td>
       <td><code>${row.md5 || ''}</code></td>
       <td>${size} bytes</td>
-      <td>${uniqueDomains.size}</td>
+      <td title="${domainsTooltip}">${uniqueDomains.size}</td>
       <td><button data-action="health" data-id="${row.md5}">Healthcheck</button></td>
       <td>
         <button data-action="switch" data-id="${row.md5}">Switch</button>
@@ -404,8 +405,7 @@ async function populateStateTab (tab) {
       await populateStateTab(tab)
     })
     tr.querySelector('[data-action="health"]')?.addEventListener('click', async () => {
-      const res = await healthcheckEncodedServices(row.svc)
-      alert(`Healthcheck:\n${res.ok} OK, ${res.fail} FAIL, ${res.unknown} UNKNOWN`)
+      await runHealthcheck(row.svc)
     })
   }
 
@@ -456,6 +456,7 @@ async function applySnapshotSwitch (row) {
  */
 async function applySnapshotMerge (row) {
   try {
+    await autosaveIfPresent()
     const incomingCfg = row.cfg ? await decodeSnapshot(row.cfg) : null
     const incomingSvc = row.svc ? await decodeSnapshot(row.svc) : null
     const currentCfg = StorageManager.getConfig() || { boards: [] }
@@ -518,29 +519,40 @@ async function computeUniqueDomains (svcEnc) {
 }
 
 /**
- * Decode and perform healthcheck requests for services.
- * Tolerant to CORS; opaque responses count as unknown.
+ * Run HEAD requests against encoded service URLs and display a summary.
+ * Caps concurrency and ignores CORS errors.
  * @param {string} svcEnc
  * @returns {Promise<{ok:number,fail:number,unknown:number}>}
  */
-async function healthcheckEncodedServices (svcEnc) {
+async function runHealthcheck (svcEnc) {
   const res = { ok: 0, fail: 0, unknown: 0 }
   if (!svcEnc) return res
   try {
     const svc = await decodeSnapshot(svcEnc)
     const urls = (Array.isArray(svc) ? svc : []).map(s => (s && typeof s.url === 'string') ? s.url : '').filter(Boolean)
     const unique = Array.from(new Set(urls))
-    await Promise.all(unique.map(async u => {
-      try {
-        const r = await fetch(u, { method: 'HEAD', mode: 'no-cors' })
-        if (r.type === 'opaque') res.unknown++
-        else if (r.ok) res.ok++
-        else res.fail++
-      } catch {
-        res.fail++
+    const concurrency = 4
+    const queue = unique.slice()
+    const worker = async () => {
+      while (queue.length) {
+        const u = queue.shift()
+        if (!u) break
+        try {
+          const ctrl = new AbortController()
+          const to = setTimeout(() => ctrl.abort(), 2000)
+          const r = await fetch(u, { method: 'HEAD', mode: 'no-cors', signal: ctrl.signal })
+          clearTimeout(to)
+          if (r.type === 'opaque') res.unknown++
+          else if (r.ok) res.ok++
+          else res.fail++
+        } catch {
+          res.fail++
+        }
       }
-    }))
+    }
+    await Promise.all(Array.from({ length: Math.min(concurrency, queue.length) }, worker))
   } catch {}
+  showNotification(`Healthcheck: ${res.ok} OK, ${res.fail} FAIL, ${res.unknown} UNKNOWN`)
   return res
 }
 
