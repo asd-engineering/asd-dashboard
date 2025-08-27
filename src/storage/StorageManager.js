@@ -301,6 +301,7 @@ export const StorageManager = {
   getServices () {
     return cache.services
   },
+
   setServices (services) {
     const config = this.getConfig()
     const templates = config.serviceTemplates || {}
@@ -308,6 +309,7 @@ export const StorageManager = {
     const resolvedAndNormalizedServices = services.map(rawService => {
       const templateName = rawService.template || 'default'
       const baseTemplate = templates[templateName] || templates.default || {}
+
       const mergedService = deepMerge(baseTemplate, rawService)
 
       return {
@@ -316,11 +318,13 @@ export const StorageManager = {
         name: mergedService.name || 'Unnamed Service',
         url: mergedService.url || '',
         type: mergedService.type || 'iframe',
+        template: templateName,
         category: mergedService.category || '',
         subcategory: mergedService.subcategory || '',
         tags: Array.isArray(mergedService.tags) ? mergedService.tags : [],
-        config: mergedService.config || {},
-        maxInstances: mergedService.maxInstances !== undefined ? mergedService.maxInstances : null
+        config: typeof mergedService.config === 'object' && mergedService.config ? mergedService.config : {},
+        // THIS IS THE FIX: Properly fall back to null if not defined anywhere.
+        maxInstances: typeof mergedService.maxInstances === 'number' ? mergedService.maxInstances : null
       }
     })
 

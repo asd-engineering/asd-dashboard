@@ -9,15 +9,15 @@ import { type Page } from "@playwright/test";
  */
 export async function bootWithDashboardState(
   page: Page,
-  cfg: object,
-  services: object[],
+  cfg: any,
+  services: any[],
   last: { board: string; view: string },
   url = "/",
+  options: { waitForReady?: boolean } = { waitForReady: true } // Add options parameter
 ): Promise<void> {
   await page.addInitScript(
     async ({ cfg, services, last }) => {
-      // This script runs in the browser before the app starts.
-      // We are directly populating the IndexedDB database.
+      // This script runs in the browser's context before the app starts.
       await new Promise<void>((resolve, reject) => {
         const openRequest = indexedDB.open('asd-db', 1);
 
@@ -35,11 +35,16 @@ export async function bootWithDashboardState(
         openRequest.onsuccess = () => {
           const db = openRequest.result;
           const tx = db.transaction(['config', 'boards', 'services', 'meta'], 'readwrite');
+          
+          // CRITICAL FIX: The new StorageManager expects boards to be separate from the main config.
+          const boards = (cfg as any).boards || [];
+          const configOnly = { ...cfg };
+          delete (configOnly as any).boards;
 
-          tx.objectStore('config').put(cfg, 'v1');
+          tx.objectStore('config').put(configOnly, 'v1');
+          tx.objectStore('boards').put(boards, 'v1');
           tx.objectStore('services').put(services, 'v1');
-          tx.objectStore('boards').put((cfg as any).boards || [], 'v1');
-          tx.objectStore('meta').put(true, 'migrated'); // Mark as migrated to skip legacy logic
+          tx.objectStore('meta').put(true, 'migrated'); 
           tx.objectStore('meta').put(last.board, 'lastUsedBoardId');
           tx.objectStore('meta').put(last.view, 'lastUsedViewId');
 
@@ -57,6 +62,8 @@ export async function bootWithDashboardState(
     { cfg, services, last },
   );
 
-  // Cold-boot the real app.
   await page.goto(url, { waitUntil: "domcontentloaded" });
+  if (options.waitForReady) {
+    await page.waitForFunction(() => document.body.dataset.ready === 'true');
+  }
 }

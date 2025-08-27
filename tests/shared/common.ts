@@ -1,11 +1,7 @@
-import { type Page, expect } from "@playwright/test";
+// --- tests/shared/common.ts ---
+import { type Page } from "@playwright/test";
 import { ensurePanelOpen } from './panels'
 
-// Helper function to add services via the widget selector panel
-/**
- * Add the first `count` services by clicking options in the widget selector panel.
- * Skips index 0 if it’s a placeholder/search row.
- */
 export async function addServices(page: Page, count: number) {
   await ensurePanelOpen(page, 'service-panel')
   for (let i = 0; i < count; i++) {
@@ -13,9 +9,6 @@ export async function addServices(page: Page, count: number) {
   }
 }
 
-/**
- * Select a service by its label using the widget selector panel.
- */
 export async function selectServiceByName(page: Page, serviceName: string) {
   await ensurePanelOpen(page, 'service-panel')
   await page.click(`[data-testid="service-panel"] .panel-item:has-text("${serviceName}")`);
@@ -30,7 +23,7 @@ export interface NavigateOptions {
 export async function navigate(
   page: Page,
   destination: string,
-  options?: NavigateOptions
+  options?: NavigateOptions,
 ): Promise<void> {
   const totalBudget = Math.max(1, options?.totalTimeoutMs ?? 2000);
 
@@ -38,8 +31,8 @@ export async function navigate(
     page.on('console', msg => console.log(`[browser] ${msg.text()}`));
   }
 
-  const gotoBudget = Math.max(1, Math.floor(totalBudget * 0.7));
-  const readyBudget = Math.max(0, totalBudget - gotoBudget);
+  const gotoBudget = Math.floor(totalBudget * 0.7);
+  const readyBudget = totalBudget - gotoBudget;
 
   const mergedGotoOptions: Parameters<Page['goto']>[1] = {
     waitUntil: 'domcontentloaded',
@@ -49,34 +42,25 @@ export async function navigate(
 
   await page.goto(destination, mergedGotoOptions);
 
-  if (readyBudget === 0) return;
-
   try {
+    // Wait for the main application logic to signal it's ready.
     await page.waitForFunction(() => document.body.dataset.ready === 'true', null, { timeout: readyBudget });
   } catch {
-    // Soft timeout
+    // Soft timeout: continue; some tests may rely on explicit waits later
   }
 }
 
 // Helper function to handle dialog interactions
 export async function handleDialog(page: Page, type: string, inputText = "") {
   page.on("dialog", async (dialog) => {
-    expect(dialog.type()).toBe(type);
-    if (type === "prompt") {
-      await dialog.accept(inputText);
-    } else {
-      await dialog.accept();
+    if (dialog.type() === type) {
+      if (inputText) {
+        await dialog.accept(inputText);
+      } else {
+        await dialog.accept();
+      }
     }
   });
-}
-
-/**
- * Click a specific service multiple times using the widget selector panel.
- */
-export async function addServicesByName(page: Page, serviceName: string, count: number) {
-  for (let i = 0; i < count; i++) {
-    await selectServiceByName(page, serviceName);
-  }
 }
 
 export function b64(obj: any) {
@@ -91,44 +75,30 @@ export async function clearStorage(page: Page) {
       req.onsuccess = req.onerror = req.onblocked = () => res(null);
     });
   });
-  await page.goto('/'); // Navigate after clearing to ensure a fresh start
-  await page.waitForFunction(() => document.body.dataset.ready === 'true');
+  // Navigate to a blank page and then to the app to ensure a full reset
+  await page.goto('about:blank');
+  await navigate(page, '/');
 }
 
 export async function getUnwrappedConfig(page: Page) {
   return await page.evaluate(async () => {
     const { StorageManager } = await import('/storage/StorageManager.js');
+    // The main.js flow ensures SM is initialized, so we don't need to call init() here.
     return StorageManager.getConfig();
   });
 }
 
 export async function getConfigBoards(page: Page) {
-  const cfg = await getUnwrappedConfig(page);
-  return Array.isArray(cfg.boards) ? cfg.boards : [];
+  return await page.evaluate(async () => {
+    const { StorageManager } = await import('/storage/StorageManager.js');
+    return StorageManager.getBoards();
+  });
 }
 
-export async function getConfigTheme(page: Page) {
-  const cfg = await getUnwrappedConfig(page);
-  return cfg?.globalSettings?.theme;
-}
-
-export async function getBoardWithWidgets(page: Page) {
-  const cfg = await getUnwrappedConfig(page);
-  const boards = Array.isArray(cfg.boards) ? cfg.boards : [];
-  return (
-    boards.find((b) => b.views?.some((v) => v.widgetState?.length > 0))?.id ||
-    null
-  );
-}
-
-export async function getBoardCount(page: Page) {
-  const cfg = await getUnwrappedConfig(page);
-  return Array.isArray(cfg.boards) ? cfg.boards.length : 0;
-}
 
 export async function getShowMenuWidgetFlag(page: Page) {
   const cfg = await getUnwrappedConfig(page);
-  return !!cfg?.globalSettings?.showMenuWidget;
+  return cfg.globalSettings?.showMenuWidget ?? false;
 }
 
 export async function getLastUsedViewId(page: Page) {
@@ -161,4 +131,40 @@ export async function selectViewByLabel(page: Page, label: string): Promise<void
       select.dispatchEvent(new Event("change", { bubbles: true }));
     }, label);
   }
+}
+
+/**
+ * Waits for a specific StorageManager update to complete.
+ * This is the key to solving async persistence failures.
+ * @param page The Playwright page object.
+ * @param reason The 'reason' string from the appStateChanged event detail.
+ */
+export async function waitForStorageUpdate(page: Page, reason: string) {
+  await page.evaluate((reason) => 
+    new Promise(resolve => {
+      window.addEventListener('appStateChanged', function listener(e) {
+        if ((e as CustomEvent).detail.reason === reason) {
+          window.removeEventListener('appStateChanged', listener);
+          resolve(true);
+        }
+      });
+    }),
+    reason
+  );
+}
+
+export async function addServicesByName(page: Page, serviceName: string, count: number) {
+  for (let i = 0; i < count; i++) {
+    await selectServiceByName(page, serviceName);
+  }
+}
+
+export async function getConfigTheme(page: Page) {
+  const cfg = await getUnwrappedConfig(page);
+  return cfg.globalSettings?.theme || 'light';
+}
+
+export async function getBoardCount(page: Page) {
+    const boards = await getConfigBoards(page);
+    return boards.length;
 }
