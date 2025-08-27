@@ -1,234 +1,151 @@
-/* Reset */
-menu {
-  margin: 0;
-  padding: 0;
-}
-
-/* --------------------------------------------------
-   Global Controls Wrapper
-   -------------------------------------------------- */
-#controls {
+/* Controls Bar */
+menu#controls {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--controls-gap-row) var(--controls-gap-col);
+  width: 100%;
+  padding: 5px;
+  background: var(--color-surface);
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  background-color: #fff;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 1001;
+  margin: 0 auto;
+  align-items: center;
 }
 
-/* --------------------------------------------------
-   Control Groups & Form Elements
-   -------------------------------------------------- */
+/* Group */
 .control-group {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.3rem;
   padding: 0.3rem;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-  width: auto;
+  border-radius: var(--radius-3);
+  background: var(--color-soft);
+  min-width: 0;
   max-width: 100%;
   word-break: break-word;
+  position: relative;
+  isolation: isolate;
+  z-index: 1;
 }
 
-#controls select,
-#controls input,
-#controls button {
-  font-size: 0.8rem;
-  box-sizing: border-box;
+/* Lift open panels */
+.control-group:has(.dropdown.panel.open) { z-index: 1000; }
+.control-group:has(.dropdown.panel.open)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: auto;
+  background: transparent;
 }
 
-/* Inputs & Selects */
+/* Inputs */
 #controls select,
 #controls input {
   padding: 0.3rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-1);
+  background: var(--color-elevated);
+  color: var(--color-text);
   max-width: 100%;
   min-width: 0;
   flex-shrink: 1;
+  position: relative;
+  z-index: 0;
 }
+#controls select { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-#controls select {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-/* Standard Buttons */
+/* Buttons */
 #controls button {
   padding: 0.3rem 0.6rem;
-  background-color: #4caf50;
-  color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-1);
+  background: transparent;
+  color: var(--color-text-weak);
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  font-size: 1rem;
+  transition: background-color .15s ease;
 }
+#controls button:hover { background: var(--color-surface); }
 
-#controls button:hover {
-  background-color: #45a049;
-}
-
-/* View-Button-Menu Overrides */
+/* View buttons */
 #view-button-menu button {
   margin: 2px;
   padding: 8px 18px;
-  border: 2px solid #31a840;
-  border-radius: 8px;
-  background: #fff;
-  color: #333;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-3);
+  background: var(--color-elevated);
+  color: var(--color-text);
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background .15s, color .15s, border-color .15s;
 }
+#view-button-menu button.active { background: var(--color-success); color: #fff; }
 
-#view-button-menu button.active {
-  background: #31a840;
-  color: #fff;
-}
-
-/* Dropdown Links */
+/* Dropdown links */
 .dropdown-content a {
   display: block;
-  font-size: 0.8rem;
+  font-size: .8rem;
   padding: 6px 10px;
+  color: var(--color-text);
 }
 
-/* --------------------------------------------------
-   Icon Toggles & Admin Labels
-   -------------------------------------------------- */
-#sw-toggle {
-  display: none;
+/* Admin control */
+menu#controls #admin-control.control-group {
+  display: flex;
+  column-gap: 0.6rem;
+  row-gap: 0.6rem;
+  overflow: hidden;
+  justify-content: start;
+  align-content: start;
+  max-height: calc(2 * var(--admin-icon-box) + 0.6rem);
 }
+
+/* GRID buttons on small screens */
+@media (max-width: 535px) {
+  menu#controls #admin-control.control-group {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    grid-template-rows: repeat(2, max-content);
+  }
+}
+
+#admin-control label {
+  display: inline-grid;
+  place-items: center;
+  width: var(--admin-icon-box);
+  height: var(--admin-icon-box);
+  font-size: var(--admin-icon-size);
+  cursor: pointer;
+  line-height: 1;
+  transition: transform .15s ease;
+}
+#admin-control label:hover { transform: scale(1.15); }
+#admin-control label:hover::after {
+  content: attr(aria-label);
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  font-size: .8rem;
+  padding: 2px 6px;
+  border-radius: var(--radius-1);
+  white-space: nowrap;
+  z-index: 10;
+}
+
+/* Responsive */
+@media (max-width: 520px) {
+  menu#controls { grid-template-columns: 1fr; }
+}
+
+#sw-toggle { display: none; }
 
 #toggle-widget-menu,
 .icon-checkbox {
   display: inline-block;
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: var(--admin-icon-size);
   user-select: none;
-}
-
-#admin-control label {
-  position: relative;
-  cursor: pointer;
-  transition: font-size 0.2s;
-}
-#admin-control label:hover {
-  font-size: 1.4rem;
-}
-#admin-control label:hover::after {
-  content: attr(aria-label);
-  position: absolute;
-  top: 2.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,0.8);
-  color: #fff;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  white-space: nowrap;
-  z-index: 10;
-}
-
-/* --------------------------------------------------
-   Widget-Selector Panel
-   -------------------------------------------------- */
-#widget-selector-panel {
-  align-items: center;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-}
-
-#widget-search {
-  flex: 1 1 auto;
-}
-
-#widget-count {
-  margin-left: auto;
-  font-size: 0.8rem;
-  white-space: nowrap;
-}
-
-#widget-dropdown-toggle {
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.2s ease;
-}
-#widget-selector-panel.open #widget-dropdown-toggle {
-  transform: rotate(180deg);
-}
-
-/* --------------------------------------------------
-   Widget Options (hover, select, actions)
-   -------------------------------------------------- */
-#widget-selector-panel .widget-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 0.4rem 0.6rem;
-  border-radius: 6px;
-  transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-}
-
-#widget-selector-panel .widget-option > span:first-child {
-  flex: 1 1 auto;
-  margin-right: 0.5rem;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-#widget-selector-panel .widget-option:hover {
-  background-color: #eef7ff;
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-#widget-selector-panel .widget-option.selected {
-  background-color: #e0f7fa;
-  outline: 2px solid #31a840;
-  transform: scale(1.01);
-}
-
-/* Actions (🔍 ✏️ ❌) */
-#widget-selector-panel .widget-option-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  opacity: 0;
-  pointer-events: none;
-  position: relative;
-  z-index: 1;
-  transition: opacity 0.15s ease;
-}
-#widget-selector-panel .widget-option:hover .widget-option-actions,
-#widget-selector-panel .widget-option.selected .widget-option-actions {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-#widget-selector-panel .widget-option-actions button {
-  background: none;
-  border: none;
-  padding: 0.2rem;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: transform 0.2s ease, background-color 0.2s ease;
-}
-#widget-selector-panel .widget-option-actions button:hover {
-  transform: scale(1.2);
-  background-color: rgba(0,0,0,0.05);
-}
-#widget-selector-panel .widget-option-actions button[data-action="navigate"]:hover {
-  transform: scale(1.2) rotate(10deg);
 }

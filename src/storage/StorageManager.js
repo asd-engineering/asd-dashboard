@@ -10,6 +10,9 @@ import { sanitizeBoards, sanitizeConfig, sanitizeServices } from './validators.j
 import { busInit, busPost, busOnMessage } from './bus.js'
 import { idbKV, onVersionChange } from './adapters/idbKV.js'
 import { lsKV } from './adapters/lsKV.js'
+import { DEFAULT_CONFIG_TEMPLATE } from './defaultConfig.js'
+import { deepMerge } from '../utils/objectUtils.js'
+import { serviceGetUUID } from '../utils/id.js'
 
 /**
  * CURRENT_VERSION for stored data schema.
@@ -120,6 +123,20 @@ async function migrateFromLocalStorageIfNeeded () {
 
   await setMeta('migrated', true)
   await setMeta('migrationAt', new Date().toISOString())
+}
+
+/**
+ * Merge user-supplied config with defaults.
+ * Ensures globalSettings, boards, and other top-level keys always exist.
+ *
+ * @param {object} userConfig - The config object loaded from storage or URL
+ * @returns {object} - Fully shaped config matching DEFAULT_CONFIG_TEMPLATE
+ */
+function mergeWithDefaults (userConfig = {}) {
+  const merged = deepMerge(DEFAULT_CONFIG_TEMPLATE, userConfig)
+  if (!merged.globalSettings) merged.globalSettings = {}
+  merged.globalSettings.theme = merged.globalSettings.theme === 'dark' ? 'dark' : 'light'
+  return merged
 }
 
 /**
@@ -243,7 +260,8 @@ export const StorageManager = {
     return cache.config
   },
   setConfig (cfg) {
-    const sanitized = sanitizeConfig(cfg)
+    const merged = mergeWithDefaults(cfg)
+    const sanitized = sanitizeConfig(merged)
     const boards = sanitizeBoards(sanitized.boards || [])
     delete sanitized.boards
     cache.config = sanitized
@@ -284,7 +302,29 @@ export const StorageManager = {
     return cache.services
   },
   setServices (services) {
-    const sanitized = sanitizeServices(services)
+    const config = this.getConfig()
+    const templates = config.serviceTemplates || {}
+
+    const resolvedAndNormalizedServices = services.map(rawService => {
+      const templateName = rawService.template || 'default'
+      const baseTemplate = templates[templateName] || templates.default || {}
+      const mergedService = deepMerge(baseTemplate, rawService)
+
+      return {
+        ...mergedService,
+        id: mergedService.id || serviceGetUUID(),
+        name: mergedService.name || 'Unnamed Service',
+        url: mergedService.url || '',
+        type: mergedService.type || 'iframe',
+        category: mergedService.category || '',
+        subcategory: mergedService.subcategory || '',
+        tags: Array.isArray(mergedService.tags) ? mergedService.tags : [],
+        config: mergedService.config || {},
+        maxInstances: mergedService.maxInstances !== undefined ? mergedService.maxInstances : null
+      }
+    })
+
+    const sanitized = sanitizeServices(resolvedAndNormalizedServices)
     cache.services = sanitized
     kv.set('services', 'v1', sanitized).catch(() => {})
     busPost({ type: 'STORE_UPDATED', store: 'services', at: Date.now() })

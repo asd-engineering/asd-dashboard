@@ -7,11 +7,7 @@
  * @module dashboardMenu
  */
 
-import {
-  populateWidgetSelectorPanel,
-  initializeWidgetSelectorPanel,
-  updateWidgetCounter
-} from './widgetSelectorPanel.js'
+// ServiceControl now mounted separately; widget selector helpers removed
 
 import {
   switchBoard,
@@ -44,13 +40,7 @@ function initializeDashboardMenu () {
 
   logger.log('Dashboard menu initialized')
 
-  // New searchable widget selector panel
-  populateWidgetSelectorPanel()
-  initializeWidgetSelectorPanel()
-  document.addEventListener('services-updated', () => {
-    populateWidgetSelectorPanel()
-    updateWidgetCounter()
-  })
+  // Service panel is mounted in main.js; no extra wiring needed here
 
   applyWidgetMenuVisibility()
 

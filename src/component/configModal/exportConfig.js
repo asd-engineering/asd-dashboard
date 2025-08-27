@@ -8,6 +8,7 @@ import { showNotification } from '../dialog/notification.js'
 import { encodeConfig } from '../../utils/compression.js'
 import { Logger } from '../../utils/Logger.js'
 import { StorageManager } from '../../storage/StorageManager.js'
+import emojiList from '../../ui/unicodeEmoji.js'
 import { minimizeDeep } from '../../utils/minimizer.js'
 import { splitIntoParams, formatChunksManifest } from '../../utils/chunker.js'
 import { computeCRC32Hex } from '../../utils/checksum.js'
@@ -26,7 +27,37 @@ const logger = new Logger('exportConfig.js')
 // Populate this map to reduce URL size further.
 /** @type {Record<string,string>} */
 const KEY_MAP = {
-  // e.g. 'serviceId': 'i'
+  v: 'version',
+  n: 'name',
+  i: 'id',
+  t: 'type',
+  u: 'url',
+  c: 'config',
+  S: 'settings',
+  d: 'data',
+  st: 'state',
+  p: 'params',
+  o: 'options',
+  ds: 'description',
+  b: 'board',
+  B: 'boards',
+  vw: 'view',
+  V: 'views',
+  si: 'serviceId',
+  sv: 'service',
+  s: 'services',
+  wi: 'widgetId',
+  wg: 'widget',
+  w: 'widgets',
+  // extra common keys
+  gs: 'globalSettings',
+  ls: 'localStorage',
+  ws: 'widgetState',
+  c2: 'columns',
+  r2: 'rows',
+  mi: 'maxInstances',
+  or: 'order',
+  di: 'dataid'
 }
 
 // Feature flags and defaults are centralized in fragmentConstants.
@@ -45,7 +76,7 @@ export async function exportConfig () {
 
     if (!cfg || !svc) {
       logger.warn('Export aborted: missing config or services')
-      showNotification('❌ Cannot export: config or services are missing', 4000, 'error')
+      showNotification(`${emojiList.cross.icon} Cannot export: config or services are missing`, 4000, 'error')
       return
     }
 
@@ -94,7 +125,7 @@ export async function exportConfig () {
     await navigator.clipboard.writeText(url)
 
     const kb = (url.length / 1024).toFixed(1)
-    showNotification(`✅ URL copied to clipboard! (${kb} KB)`, 4000, 'success')
+    showNotification(`✅ URL copied to clipboard! (${kb} KB)`, 2000, 'success')
     logger.info(`Exported config URL (${url.length} chars) named ${name}`)
 
     if (url.length > FRAG_WARN_URL_LEN) {
@@ -104,7 +135,7 @@ export async function exportConfig () {
 
     await StorageManager.saveStateSnapshot({ name, type: 'exported', cfg: cfgEnc, svc: svcEnc })
   } catch (e) {
-    showNotification('❌ Failed to export config', 4000, 'error')
+    showNotification(`${emojiList.cross.icon} Failed to export config`, 4000, 'error')
     logger.error('Export failed', e)
   }
 }

@@ -9,102 +9,103 @@ test.describe('StorageManager', () => {
     await navigate(page, '/')
   })
 
-test('named export only', async ({ page }) => {
+  test('named export only', async ({ page }) => {
     const result = await page.evaluate(async () => {
       const mod = await import('/storage/StorageManager.js')
       return { hasNamed: 'StorageManager' in mod, hasDefault: 'default' in mod }
-  })
-  expect(result.hasNamed).toBe(true)
-  expect(result.hasDefault).toBe(false)
-})
-
-test('setBoards emits update event', async ({ page }) => {
-  const detail = await page.evaluate(async () => {
-    const { StorageManager: sm, APP_STATE_CHANGED } = await import('/storage/StorageManager.js')
-    await sm.init({ persist: false, forceLocal: true })
-    return await new Promise(resolve => {
-      window.addEventListener(APP_STATE_CHANGED, e => resolve((e as CustomEvent).detail))
-      sm.setBoards([])
     })
+    expect(result.hasNamed).toBe(true)
+    expect(result.hasDefault).toBe(false)
   })
-  expect(detail).toEqual({ reason: 'update:boards', store: 'boards' })
-})
 
-test('forceLocal sets driver meta', async ({ page }) => {
+  test('setBoards emits update event', async ({ page }) => {
+    const detail = await page.evaluate(async () => {
+      const { StorageManager: sm, APP_STATE_CHANGED } = await import('/storage/StorageManager.js')
+      await sm.init({ persist: false, forceLocal: true })
+      return await new Promise(resolve => {
+        window.addEventListener(APP_STATE_CHANGED, e => resolve((e as CustomEvent).detail))
+        sm.setBoards([])
+      })
+    })
+    expect(detail).toEqual({ reason: 'update:boards', store: 'boards' })
+  })
+
+  test('forceLocal sets driver meta', async ({ page }) => {
     const driver = await page.evaluate(async () => {
       const { StorageManager: sm } = await import('/storage/StorageManager.js')
       await sm.init({ persist: false, forceLocal: true })
       return sm.misc.getItem('driver')
-  })
-  expect(driver).toBe('localStorage')
-})
-
-test('remote bus fan-in emits remote-update', async ({ page }) => {
-  const detail = await page.evaluate(async () => {
-    const { StorageManager: sm, APP_STATE_CHANGED } = await import('/storage/StorageManager.js')
-    await sm.init({ persist: false, forceLocal: true })
-    return await new Promise(resolve => {
-      window.addEventListener(APP_STATE_CHANGED, e => resolve((e as CustomEvent).detail))
-      const ch = new BroadcastChannel('asd-storage')
-      ch.postMessage({ type: 'STORE_UPDATED', store: 'boards', at: Date.now() })
     })
+    expect(driver).toBe('localStorage')
   })
-  expect(detail).toEqual({ reason: 'remote-update:boards', store: 'boards' })
-})
 
-test('sanitizeBoards filters invalid entries', async ({ page }) => {
-  const len = await page.evaluate(async () => {
-    const { sanitizeBoards } = await import('/storage/validators.js')
-    return sanitizeBoards([{}, null, { id: 'a', name: 'A', views: [] }]).length
+  test('remote bus fan-in emits remote-update', async ({ page }) => {
+    const detail = await page.evaluate(async () => {
+      const { StorageManager: sm, APP_STATE_CHANGED } = await import('/storage/StorageManager.js')
+      await sm.init({ persist: false, forceLocal: true })
+      return await new Promise(resolve => {
+        window.addEventListener(APP_STATE_CHANGED, e => resolve((e as CustomEvent).detail))
+        const ch = new BroadcastChannel('asd-storage')
+        ch.postMessage({ type: 'STORE_UPDATED', store: 'boards', at: Date.now() })
+      })
+    })
+    expect(detail).toEqual({ reason: 'remote-update:boards', store: 'boards' })
   })
-  expect(len).toBe(1)
-})
 
-test('setBoards applies sanitization and persists', async ({ page }) => {
-  const result = await page.evaluate(async () => {
-    const { StorageManager: sm } = await import('/storage/StorageManager.js')
-    await sm.init({ persist: false, forceLocal: true })
-    sm.setBoards([{}, { id: 'a', name: 'A', views: [] }])
-    await new Promise(r => setTimeout(r, 0))
-    const cached = sm.getBoards()
-    const persisted = JSON.parse(localStorage.getItem('asd.boards.v1') || 'null') || []
-    return { cached: cached.length, persisted: persisted.length }
+  test('sanitizeBoards filters invalid entries', async ({ page }) => {
+    const len = await page.evaluate(async () => {
+      const { sanitizeBoards } = await import('/storage/validators.js')
+      return sanitizeBoards([{}, null, { id: 'a', name: 'A', views: [] }]).length
+    })
+    expect(len).toBe(1)
   })
-  expect(result).toEqual({ cached: 1, persisted: 1 })
-})
 
-test('migration runs once and cleans legacy keys', async ({ page }) => {
-  const result = await page.evaluate(async () => {
-    localStorage.setItem('config', JSON.stringify({}))
-    localStorage.setItem('boards', JSON.stringify([{ id: 'b1', name: 'B1', views: [] }]))
-    const { StorageManager: sm } = await import('/storage/StorageManager.js')
-    await sm.init({ persist: false, forceLocal: true })
-    await sm.init({ persist: false, forceLocal: true })
-    return { ls: localStorage.getItem('boards'), migrated: sm.misc.getItem('migrated') }
+  test('setBoards applies sanitization and persists', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const { StorageManager: sm } = await import('/storage/StorageManager.js')
+      await sm.init({ persist: false, forceLocal: true })
+      sm.setBoards([{}, { id: 'a', name: 'A', views: [] }])
+      await new Promise(r => setTimeout(r, 0))
+      const cached = sm.getBoards()
+      const persisted = JSON.parse(localStorage.getItem('asd.boards.v1') || 'null') || []
+      return { cached: cached.length, persisted: persisted.length }
+    })
+    expect(result).toEqual({ cached: 1, persisted: 1 })
   })
-  expect(result.ls).toBeNull()
-  expect(result.migrated).toBe(true)
-})
 
-test('meta contains storeSizes and quota after init', async ({ page }) => {
-  const meta = await page.evaluate(async () => {
-    const { StorageManager: sm } = await import('/storage/StorageManager.js')
-    await sm.init({ persist: false, forceLocal: true })
-    return { storeSizes: sm.misc.getItem('storeSizes'), quota: sm.misc.getItem('quota') }
+  test('migration runs once and cleans legacy keys', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      localStorage.setItem('config', JSON.stringify({}))
+      localStorage.setItem('boards', JSON.stringify([{ id: 'b1', name: 'B1', views: [] }]))
+      const { StorageManager: sm } = await import('/storage/StorageManager.js')
+      await sm.init({ persist: false, forceLocal: true })
+      await sm.init({ persist: false, forceLocal: true })
+      return { ls: localStorage.getItem('boards'), migrated: sm.misc.getItem('migrated') }
+    })
+    expect(result.ls).toBeNull()
+    expect(result.migrated).toBe(true)
   })
-  expect(meta.storeSizes).toBeTruthy()
-  expect(meta.quota).toBeTruthy()
-})
+
+  test('meta contains storeSizes and quota after init', async ({ page }) => {
+    const meta = await page.evaluate(async () => {
+      const { StorageManager: sm } = await import('/storage/StorageManager.js')
+      await sm.init({ persist: false, forceLocal: true })
+      return { storeSizes: sm.misc.getItem('storeSizes'), quota: sm.misc.getItem('quota') }
+    })
+    expect(meta.storeSizes).toBeTruthy()
+    expect(meta.quota).toBeTruthy()
+  })
 
   test('setConfig stores config only', async ({ page }) => {
     const result = await page.evaluate(async () => {
       const { StorageManager: sm } = await import('/storage/StorageManager.js')
+      await sm.init({ persist: false, forceLocal: true })
       const cfg = { boards: [{ id: 'b1', name: 'B1', views: [] }] }
       sm.setConfig(cfg)
       return { cfg: sm.getConfig(), boards: sm.getBoards() }
-  })
-  expect(result.boards).toHaveLength(1)
-  expect(result.cfg.boards).toEqual(result.boards)
+    })
+    expect(result.boards).toHaveLength(1)
+    expect(result.cfg.boards).toEqual(result.boards)
   })
 
   test('IDB open blocked falls back to localStorage', async ({ page }) => {
@@ -131,6 +132,7 @@ test('meta contains storeSizes and quota after init', async ({ page }) => {
   test('saveStateSnapshot persists and hashes', async ({ page }) => {
     const { hash, store } = await page.evaluate(async () => {
       const { StorageManager: sm } = await import('/storage/StorageManager.js')
+      await sm.init({ persist: false, forceLocal: true })
       const hash = await sm.saveStateSnapshot({ name: 'one', type: 'manual', cfg: 'a', svc: 'b' })
       const store = await sm.loadStateStore()
       return { hash, store }
@@ -182,6 +184,7 @@ test('meta contains storeSizes and quota after init', async ({ page }) => {
   test('saveStateSnapshot updates name on duplicate md5 and keeps md5 stable', async ({ page }) => {
     const result = await page.evaluate(async () => {
       const { StorageManager: sm } = await import('/storage/StorageManager.js')
+      await sm.init({ persist: false, forceLocal: true })
       const orig = Date.now
       let t = 1
       Date.now = () => t++
@@ -205,6 +208,7 @@ test('meta contains storeSizes and quota after init', async ({ page }) => {
   test('clearAll removes stored keys', async ({ page }) => {
     const result = await page.evaluate(async () => {
       const { StorageManager: sm } = await import('/storage/StorageManager.js')
+      await sm.init({ persist: false, forceLocal: true })
       sm.setConfig({ foo: 'bar' })
       sm.setBoards([{ id: 'b1', name: 'B1', views: [] }])
       sm.setServices([{ name: 'svc', url: '' }])
@@ -223,9 +227,10 @@ test('meta contains storeSizes and quota after init', async ({ page }) => {
     expect(result.store.states).toHaveLength(0)
   })
 
-  test('setServices sanitizes service data', async ({ page }) => {
+  test('setServices normalizes and resolves service data', async ({ page }) => {
     const services = await page.evaluate(async () => {
       const { StorageManager: sm } = await import('/storage/StorageManager.js')
+      await sm.init({ persist: false, forceLocal: true })
       const raw = [
         { name: 'A', url: 'https://a.example' },
         { id: 'srv-fixed', name: 'B', url: '', type: 'custom', category: 'c', subcategory: 'sc', tags: ['t'], config: { x: 1 }, maxInstances: 5 }
@@ -234,14 +239,35 @@ test('meta contains storeSizes and quota after init', async ({ page }) => {
       return sm.getServices()
     })
     expect(services).toHaveLength(2)
-    expect(services[0]).toMatchObject({ name: 'A', url: 'https://a.example' })
-    expect(services[0].id).toBeUndefined()
-    expect(services[1]).toMatchObject({ id: 'srv-fixed', name: 'B', url: '' })
+    expect(services[0].id).toMatch(/^srv-/)
+    expect(services[0]).toMatchObject({
+      name: 'A',
+      url: 'https://a.example',
+      type: 'iframe',
+      category: '',
+      subcategory: '',
+      tags: [],
+      config: { minColumns: 1, maxColumns: 8, minRows: 1, maxRows: 6 },
+      maxInstances: 10
+    })
+    expect(services[1]).toEqual({
+      id: 'srv-fixed',
+      name: 'B',
+      url: '',
+      type: 'custom',
+      template: 'default',
+      category: 'c',
+      subcategory: 'sc',
+      tags: ['t'],
+      config: { minColumns: 1, maxColumns: 8, minRows: 1, maxRows: 6, x: 1 },
+      maxInstances: 5
+    })
   })
 
   test('clearAllExceptState preserves state store', async ({ page }) => {
     const result = await page.evaluate(async () => {
       const { StorageManager: sm } = await import('/storage/StorageManager.js')
+      await sm.init({ persist: false, forceLocal: true })
       sm.setConfig({ foo: 'bar' })
       sm.setBoards([{ id: 'b1', name: 'B1', views: [] }])
       sm.setServices([{ name: 'svc', url: '' }])
@@ -269,6 +295,7 @@ test('meta contains storeSizes and quota after init', async ({ page }) => {
   test('clearStateStore empties saved states', async ({ page }) => {
     const store = await page.evaluate(async () => {
       const { StorageManager: sm } = await import('/storage/StorageManager.js')
+      await sm.init({ persist: false, forceLocal: true })
       await sm.saveStateStore({ version: 1, states: [{ name: 'one' }] })
       await sm.clearStateStore()
       return await sm.loadStateStore()

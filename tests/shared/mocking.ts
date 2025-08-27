@@ -43,5 +43,12 @@ export async function routeServicesConfig(page: Page) {
         body: JSON.stringify({ "name": "ASD-containers" })
     });
     });
+
+    await page.route('**/asd/templated', route => {
+    route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ "name": "ASD-templated" })
+    });
+    });
 }
 

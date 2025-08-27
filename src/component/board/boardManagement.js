@@ -11,7 +11,6 @@ import { boardGetUUID, viewGetUUID } from '../../utils/id.js'
 import { StorageManager } from '../../storage/StorageManager.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { saveWidgetState } from '../../storage/widgetStatePersister.js'
-import { updateWidgetCounter } from '../../component/menu/widgetSelectorPanel.js'
 
 /** @typedef {import('../../types.js').Board} Board */
 /** @typedef {import('../../types.js').View} View */
@@ -259,7 +258,7 @@ export async function switchBoard (boardId, viewId = null) {
     // Persist and sync UI/counters using main's model + feature counter
     StorageManager.misc.setLastBoardId(boardId)
     updateViewSelector(boardId)
-    updateWidgetCounter()
+    document.dispatchEvent(new CustomEvent('state-change', { detail: { reason: 'services' } }))
     document.dispatchEvent(new Event('view:ready'))
   } else {
     logger.error(`Board with ID ${boardId} not found`)
@@ -512,6 +511,22 @@ export async function resetView (boardId, viewId) {
   }
 
   logger.log(`Reset view ${viewId} and evicted its widgets.`)
+}
+
+/**
+ * Reset all views within a board by clearing their widget state.
+ *
+ * @param {string} boardId - Identifier of the board to reset.
+ * @function resetBoard
+ * @returns {Promise<void>}
+ */
+export async function resetBoard (boardId) {
+  const board = StorageManager.getBoards().find(b => b.id === boardId)
+  if (!board) return logger.error(`Board with ID ${boardId} not found`)
+  for (const v of board.views) {
+    await resetView(boardId, v.id)
+  }
+  logger.log(`Reset board ${boardId}`)
 }
 
 /**

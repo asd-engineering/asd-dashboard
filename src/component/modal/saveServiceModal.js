@@ -8,7 +8,6 @@
 import { openModal } from './modalFactory.js'
 import { StorageManager } from '../../storage/StorageManager.js'
 import { addWidget } from '../widget/widgetManagement.js'
-import { refreshRowCounts, updateWidgetCounter } from '../menu/widgetSelectorPanel.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { serviceGetUUID } from '../../utils/id.js'
 
@@ -164,13 +163,12 @@ export function openSaveServiceModal (options, onCloseDeprecated) {
 
           services.push(newService)
           StorageManager.setServices(services)
-          document.dispatchEvent(new CustomEvent('services-updated'))
+          document.dispatchEvent(new CustomEvent('state-change', { detail: { reason: 'services' } }))
 
           // Optionally create a widget immediately
           if (startCheck.checked) {
             await addWidget(urlVal, 1, 1, 'iframe', getCurrentBoardId(), getCurrentViewId())
-            refreshRowCounts()
-            updateWidgetCounter()
+            document.dispatchEvent(new CustomEvent('state-change', { detail: { reason: 'services' } }))
           }
         }
 

@@ -186,6 +186,20 @@
     "returns": "any"
   },
   {
+    "name": "applyTheme",
+    "kind": "function",
+    "file": "src/ui/theme.js",
+    "description": "Apply the given theme by setting a data attribute on <html>. Falls back to 'light' when an unknown value is provided.",
+    "params": [
+      {
+        "name": "theme",
+        "type": "string|undefined|null",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "applyWidgetMenuVisibility",
     "kind": "function",
     "file": "src/component/menu/dashboardMenu.js",
@@ -246,12 +260,36 @@
     "returns": "boolean"
   },
   {
+    "name": "clearAll",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Remove all persisted data.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "clearAllExceptState",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Remove persisted config, boards, services and last used ids while keeping saved states.",
+    "params": [],
+    "returns": "void"
+  },
+  {
     "name": "clearConfigFragment",
     "kind": "function",
     "file": "src/utils/fragmentGuard.js",
     "description": "Remove any `#cfg` or `#svc` fragment from the current URL without triggering a reload.",
     "params": [],
     "returns": "void"
+  },
+  {
+    "name": "clearStateStore",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Reset the state store to an empty list.",
+    "params": [],
+    "returns": "Promise<void>"
   },
   {
     "name": "clearWidgetContainer",
@@ -729,6 +767,14 @@
     "returns": "HTMLElement|undefined"
   },
   {
+    "name": "getAllJson",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Get all JSON-parsable items from localStorage.",
+    "params": [],
+    "returns": "Record<string, any>"
+  },
+  {
     "name": "getAuthToken",
     "kind": "function",
     "file": "src/component/widget/utils/fetchData.js",
@@ -737,12 +783,28 @@
     "returns": "string"
   },
   {
+    "name": "getBoards",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Retrieve stored boards array.",
+    "params": [],
+    "returns": "Array<Board>"
+  },
+  {
     "name": "getCallingFunctionName",
     "kind": "function",
     "file": "src/utils/Logger.js",
     "description": "Extracts the function name of the caller (if available) from the stack trace.",
     "params": [],
     "returns": "string"
+  },
+  {
+    "name": "getConfig",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Get the persisted dashboard configuration.",
+    "params": [],
+    "returns": "DashboardConfig|null"
   },
   {
     "name": "getConfig",
@@ -785,6 +847,36 @@
     "returns": "{isImport:boolean, importName:string}"
   },
   {
+    "name": "getItem",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Retrieve a raw string value from localStorage.",
+    "params": [
+      {
+        "name": "key",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "returns": "string|null"
+  },
+  {
+    "name": "getLastBoardId",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Retrieve the last used board id.",
+    "params": [],
+    "returns": "string|null"
+  },
+  {
+    "name": "getLastViewId",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Retrieve the last used view id.",
+    "params": [],
+    "returns": "string|null"
+  },
+  {
     "name": "getSelectedBoardId",
     "kind": "function",
     "file": "src/component/board/boardDropdown.js",
@@ -805,6 +897,14 @@
       }
     ],
     "returns": "Promise<string>"
+  },
+  {
+    "name": "getServices",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Retrieve stored services array.",
+    "params": [],
+    "returns": "Array<Service>"
   },
   {
     "name": "getUUID",
@@ -1225,6 +1325,54 @@
     "returns": "void"
   },
   {
+    "name": "initThemeFromConfig",
+    "kind": "function",
+    "file": "src/ui/theme.js",
+    "description": "Initialize the theme from a configuration object.",
+    "params": [
+      {
+        "name": "cfg",
+        "type": "DashboardConfig|undefined|null",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "installHoverIntent",
+    "kind": "function",
+    "file": "src/component/panel/selector-hover-intent.js",
+    "description": "Install hover intent listeners on a root element to toggle an active class after a delay only when the pointer rests over a target item.",
+    "params": [
+      {
+        "name": "cfg",
+        "type": "object",
+        "desc": ""
+      },
+      {
+        "name": "cfg.root",
+        "type": "Element",
+        "desc": "- Root element hosting the items."
+      },
+      {
+        "name": "cfg.selector",
+        "type": "string",
+        "desc": "- CSS selector to match actionable rows."
+      },
+      {
+        "name": "cfg.delay",
+        "type": "number",
+        "desc": "- Milliseconds before the active class is applied."
+      },
+      {
+        "name": "cfg.activeClass",
+        "type": "string",
+        "desc": "- Class toggled to reveal actions in CSS."
+      }
+    ],
+    "returns": "{dispose: () => void, rescan: () => void}"
+  },
+  {
     "name": "isAdding",
     "kind": "function",
     "file": "src/component/widget/widgetStore.js",
@@ -1258,6 +1406,14 @@
     "returns": "string|null"
   },
   {
+    "name": "JsonForm",
+    "kind": "class",
+    "file": "src/component/utils/json-form.js",
+    "description": "Lightweight renderer to edit plain objects as HTML inputs. Supports nested objects and arrays with add/remove controls.",
+    "params": [],
+    "returns": ""
+  },
+  {
     "name": "listLoggedFiles",
     "kind": "function",
     "file": "src/utils/Logger.js",
@@ -1269,8 +1425,14 @@
     "name": "loadFromFragment",
     "kind": "function",
     "file": "src/utils/fragmentLoader.js",
-    "description": "Parse the URL fragment and store config/services in localStorage. Logs info on success and alerts on failure.",
-    "params": [],
+    "description": "Parse the URL fragment and store config/services with the StorageManager",
+    "params": [
+      {
+        "name": "wasExplicitLoad",
+        "type": "boolean",
+        "desc": "- Skip guard when true."
+      }
+    ],
     "returns": "Promise<{cfg:string|null,svc:string|null,name:string}>"
   },
   {
@@ -1280,6 +1442,14 @@
     "description": "Loads configuration from various sources in a specific order: URL params, localStorage, then a default file.",
     "params": [],
     "returns": "Promise<object|null>"
+  },
+  {
+    "name": "loadStateStore",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Load and return the entire state store.",
+    "params": [],
+    "returns": "Promise<{version:number,states:Array}>"
   },
   {
     "name": "lock",
@@ -1402,7 +1572,15 @@
     "name": "mountBoardControl",
     "kind": "function",
     "file": "src/component/board/BoardControl.js",
-    "description": "Mount board control into #board-control.",
+    "description": "Mount the board control panel into #board-control.",
+    "params": [],
+    "returns": "SelectorPanel|null"
+  },
+  {
+    "name": "mountServiceControl",
+    "kind": "function",
+    "file": "src/component/service/ServiceControl.js",
+    "description": "Mount the service control panel into #widget-selector-panel.",
     "params": [],
     "returns": "SelectorPanel|null"
   },
@@ -1410,7 +1588,7 @@
     "name": "mountViewControl",
     "kind": "function",
     "file": "src/component/view/ViewControl.js",
-    "description": "Mount view control into #view-control.",
+    "description": "Mount the view control panel into #view-control.",
     "params": [],
     "returns": "SelectorPanel|null"
   },
@@ -1696,6 +1874,20 @@
     "returns": "Promise<void>"
   },
   {
+    "name": "resetBoard",
+    "kind": "function",
+    "file": "src/component/board/boardManagement.js",
+    "description": "Reset all views within a board by clearing their widget state.",
+    "params": [
+      {
+        "name": "boardId",
+        "type": "string",
+        "desc": "- Identifier of the board to reset."
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
     "name": "resetView",
     "kind": "function",
     "file": "src/component/board/boardManagement.js",
@@ -1865,12 +2057,143 @@
     "returns": "Promise<string>"
   },
   {
+    "name": "saveStateSnapshot",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Save the current state snapshot.",
+    "params": [
+      {
+        "name": "snapshot",
+        "type": "{name:string,type:string,cfg:string,svc:string}",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<string>"
+  },
+  {
+    "name": "saveStateStore",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist the entire state store object.",
+    "params": [
+      {
+        "name": "store",
+        "type": "{version:number,states:Array}",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
     "name": "serviceGetUUID",
     "kind": "function",
     "file": "src/utils/id.js",
     "description": "Generate a unique service id.",
     "params": [],
     "returns": "string"
+  },
+  {
+    "name": "setBoards",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist the provided boards array.",
+    "params": [
+      {
+        "name": "boards",
+        "type": "Array<Board>",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "setConfig",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist the dashboard configuration.",
+    "params": [
+      {
+        "name": "cfg",
+        "type": "DashboardConfig",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "setItem",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist a raw string value under a custom key.",
+    "params": [
+      {
+        "name": "key",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "value",
+        "type": "string|null",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "setJsonRecord",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist an object of key/value pairs as JSON strings.",
+    "params": [
+      {
+        "name": "record",
+        "type": "Record<string, any>",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "setLastBoardId",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist the last used board id.",
+    "params": [
+      {
+        "name": "id",
+        "type": "string|null",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "setLastViewId",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist the last used view id.",
+    "params": [
+      {
+        "name": "id",
+        "type": "string|null",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
+    "name": "setServices",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Persist the provided services array after resolving templates and normalizing.",
+    "params": [
+      {
+        "name": "services",
+        "type": "Array<Service>",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
   },
   {
     "name": "show",
@@ -2097,11 +2420,39 @@
     "returns": "void"
   },
   {
+    "name": "updateBoards",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Atomically update boards via callback.",
+    "params": [
+      {
+        "name": "updater",
+        "type": "(boards: Array<Board>) => Array<Board>|void",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "updateBoardSelector",
     "kind": "function",
     "file": "src/component/board/boardManagement.js",
     "description": "Rebuilds the board selector dropdown from the in-memory `boards` array.",
     "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "updateConfig",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Atomically update the dashboard configuration.",
+    "params": [
+      {
+        "name": "updater",
+        "type": "(cfg: DashboardConfig) => void",
+        "desc": ""
+      }
+    ],
     "returns": "void"
   },
   {

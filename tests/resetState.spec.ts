@@ -22,8 +22,8 @@ import { navigate, getConfigBoards } from './shared/common'
       dialog.accept()
     })
     await Promise.all([
-      page.waitForNavigation(),
-      page.click('#reset-button')
+      page.click('#reset-button'),
+      page.waitForLoadState('networkidle')
     ])
 
     const boards = await getConfigBoards(page)

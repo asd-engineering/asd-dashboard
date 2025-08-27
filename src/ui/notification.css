@@ -1,57 +1,33 @@
-/* Notification style dialog */
 .user-notification {
-    position: fixed;
-    top: 42px;
-    right: 20px;
-    background-color: #4CAF50; 
-    color: white;
-    padding: 10px 20px; 
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    font-size: 1rem;
-    z-index: 10001;
-    border: none; 
-    width: auto; 
-    max-width: 40vw;
-    text-align: center; 
-    opacity: 0; 
-    transform: translateY(20px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  right: calc(20px + env(safe-area-inset-right, 0px));
+  background: var(--toast-bg); color: var(--toast-fg);
+  padding: 10px 20px; border-radius: var(--radius-3);
+  box-shadow: 0 4px 8px rgba(0,0,0,.1);
+  font-size: 1rem; border: none; width: auto; max-width: 40vw; text-align: center;
+  z-index: 9000; opacity: 0; transform: translateY(20px);
+  transition: opacity .3s ease, transform .3s ease;
+  pointer-events: none;
 }
-
-/* Show the dialog (after it's shown) */
-.user-notification.show {
-    opacity: 1; /* Fully visible */
-    transform: translateY(0); /* Move to its final position */
-}
-
-/* Close button styling */
+.user-notification.show { opacity: 1; transform: translateY(0); }
+.user-notification .close-button, .user-notification a, .user-notification button, .user-notification [data-action] { pointer-events: auto; }
 .user-notification .close-button {
-    background: transparent;
-    border: none;
-    font-size: 1.2rem;
-    color: white;
-    cursor: pointer;
-    margin-left: 15px; /* Space between the message and the close button */
+  background: transparent; border: none; font-size: 1.2rem; color: inherit; cursor: pointer; margin-left: 15px;
 }
-
-.user-notification .close-button:hover {
-    color: #ffcccb; /* Light red on hover */
-}
-
-.user-notification.success {
-  background-color: #d4edda;
-  color: #155724;
-  border-left: 5px solid #28a745;
-}
-
-.user-notification.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border-left: 5px solid #dc3545;
-}
-
-/* Default: deny outline */
-.user-notification .close-button , .close-button:focus:not(:focus-visible) {
+/* Restored */
+.user-notification .close-button,
+.user-notification .close-button:focus:not(:focus-visible) {
   outline: none;
+}
+.user-notification .close-button:hover { opacity: .85; }
+
+.user-notification.success { --toast-bg: #d4edda; --toast-fg: #155724; border-left: 5px solid #28a745; }
+.user-notification.error   { --toast-bg: #f8d7da; --toast-fg: #721c24; border-left: 5px solid #dc3545; }
+.user-notification.info    { --toast-bg: #1e3a8a; --toast-fg: #fff;     border-left: 5px solid #3b82f6; }
+
+@media (prefers-reduced-motion: reduce) { .user-notification { transition: none; transform: none; } }
+.user-notification::backdrop { display: none !important; }
+html[data-test-mode="true"] .user-notification {
+  transition: none !important; transform: none !important; opacity: .001 !important; pointer-events: none !important;
 }

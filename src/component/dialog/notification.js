@@ -18,7 +18,7 @@ const logger = new Logger('notification.js')
  * @function showNotification
  * @returns {void}
  */
-export function showNotification (message, duration = 3000, type = 'success') {
+export function showNotification (message, duration = 1000, type = 'success') {
   const dialogId = getUUID()
 
   const dialog = document.createElement('dialog')

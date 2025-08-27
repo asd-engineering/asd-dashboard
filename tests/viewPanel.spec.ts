@@ -1,42 +1,82 @@
 import { test, expect } from './fixtures'
-import { handleDialog, getConfigBoards, getLastUsedViewId, addServices, navigate } from './shared/common'
 import { routeServicesConfig } from './shared/mocking'
-import { waitForWidgetStoreIdle } from './shared/state.js'
+import { navigate, addServices } from './shared/common'
+import { openCreateFromTopMenu, ensurePanelOpen } from './shared/panels'
+import { enableUITestMode } from './shared/uiHelpers';
 
-const newViewName = 'New View'
-
-// tests for view panel actions
-
-test.describe('View Panel', () => {
+test.describe('View panel', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await navigate(page, '/')
     await addServices(page, 1)
+    await enableUITestMode(page);
   })
 
-  test('create view via side action', async ({ page }) => {
-    await handleDialog(page, 'prompt', newViewName)
-    await page.locator('[data-testid="view-panel"]').hover()
-    await page.locator('[data-testid="view-panel"] [data-testid="panel-actions-trigger"]').hover()
-    await page.locator('[data-testid="view-panel"] .side-content button', { hasText: 'Create View' }).click()
-    const boards = await getConfigBoards(page)
-    const boardId = await page.locator('.board').getAttribute('id')
-    const board = boards.find(b => b.id === boardId)
-    const created = board.views.find(v => v.name === newViewName)
-    expect(created).toBeDefined()
-    const lastId = await getLastUsedViewId(page)
-    expect(lastId).toBe(created.id)
+  test('renders header label and hides count', async ({ page }) => {
+    const panel = page.locator('[data-testid="view-panel"]')
+    await expect(panel.locator('.panel-arrow')).toHaveText('▼')
+    await expect(panel.locator('.panel-label')).toHaveText(/View:\s+/)
+    await expect(panel.locator('.panel-count')).toHaveCount(0)
   })
 
-  test('reset view', async ({ page }) => {
-    await handleDialog(page, 'confirm')
-    await page.locator('[data-testid="view-panel"]').hover()
-    await page.locator('[data-testid="view-panel"] [data-testid="panel-actions-trigger"]').hover()
-    await page.locator('[data-testid="view-panel"] .side-content button', { hasText: 'Reset View' }).click()
-    await page.waitForFunction(() => {
-      const container = document.getElementById('widget-container')
-      return container && container.querySelectorAll('.widget-wrapper').length === 0
-    })
-    await waitForWidgetStoreIdle(page)
+  test('shows widget counts and flyout on hover', async ({ page }) => {
+    const panel = page.locator('[data-testid="view-panel"]')
+    await ensurePanelOpen(page, 'view-panel')
+    const first = panel.locator('.panel-item').first()
+    await expect(first.locator('.panel-item-meta')).toContainText('widgets')
+    await first.hover()
+    await expect(first.locator('.panel-item-actions-flyout')).toBeVisible()
+    await expect(first.locator('[data-item-action="delete"]')).toHaveText('❌')
+  })
+
+  test('label hint and aria for switch', async ({ page }) => {
+    const panel = page.locator('[data-testid="view-panel"]')
+    await ensurePanelOpen(page, 'view-panel')
+    const first = panel.locator('.panel-item').first()
+    await expect(first).toHaveAttribute('aria-label', /^Switch:/)
+    await first.hover()
+    await expect(first.locator('.panel-item-hint')).toHaveText('Click to switch')
+  })
+
+  test('top-menu create view', async ({ page }) => {
+    const name = 'Playwright View'
+    page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(name) })
+    await openCreateFromTopMenu(page, 'view-panel', 'New View')
+    await ensurePanelOpen(page, 'view-panel')
+    await expect(page.locator('[data-testid="view-panel"] .panel-item', { hasText: name })).toBeVisible()
+  })
+
+  test('per-item rename and delete', async ({ page }) => {
+    const panel = page.locator('[data-testid="view-panel"]')
+    const initial = 'Temp View'
+    page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(initial) })
+    await openCreateFromTopMenu(page, 'view-panel', 'New View')
+    await ensurePanelOpen(page, 'view-panel')
+    const row = panel.locator('.panel-item', { hasText: initial })
+    await row.hover()
+    const renameBtn = row.locator('[data-item-action="rename"]').first()
+    await expect(renameBtn).toHaveText('✏️')
+    const renamed = 'Renamed View'
+    page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(renamed) })
+    await renameBtn.click()
+    const rowRenamed = panel.locator('.panel-item', { hasText: renamed })
+    await expect(rowRenamed).toBeVisible()
+    await rowRenamed.hover()
+    const deleteBtn = rowRenamed.locator('[data-item-action="delete"]').first()
+    page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
+    await deleteBtn.click()
+    await expect(panel.locator('.panel-item', { hasText: renamed })).toHaveCount(0)
+  })
+
+  test('keyboard focus reveals flyout', async ({ page }) => {
+    const panel = page.locator('[data-testid="view-panel"]')
+    await panel.focus()
+    await page.keyboard.press('Enter') // Open panel
+    const firstItem = panel.locator('.panel-item').first()
+    await firstItem.focus() // Focus the first row
+    const fly = panel.locator('.panel-item').first().locator('.panel-item-actions-flyout')
+    await expect(fly).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(fly).toBeHidden()
   })
 })

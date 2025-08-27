@@ -1,61 +1,86 @@
 // @ts-check
 /**
- * Board control panel using SelectorPanel.
+ * Board control panel wiring using SelectorPanel.
  * @module BoardControl
  */
 import { SelectorPanel } from '../panel/SelectorPanel.js'
-import * as adapter from '../panel/adapter.js'
+import { StorageManager } from '../../storage/StorageManager.js'
+import { createBoard, renameBoard, deleteBoard, switchBoard, resetBoard, updateBoardSelector } from './boardManagement.js'
+import emojiList from '../../ui/unicodeEmoji.js'
 
 /**
- * Mount board control into #board-control.
+ * Mount the board control panel into #board-control.
  * @function mountBoardControl
  * @returns {SelectorPanel|null}
  */
 export function mountBoardControl () {
-  const container = document.getElementById('board-control')
-  if (!container) return null
-  const select = container.querySelector('#board-selector')
-  container.innerHTML = ''
+  const root = /** @type {HTMLElement} */(document.getElementById('board-control'))
+  if (!root) return null
+
+  const select = root.querySelector('#board-selector')
+  root.innerHTML = ''
   if (select instanceof HTMLElement) {
     select.style.display = 'none'
-    container.appendChild(select)
+    root.appendChild(select)
   }
   const host = document.createElement('div')
-  container.appendChild(host)
+  root.appendChild(host)
 
   const panel = new SelectorPanel({
     root: host,
     testid: 'board-panel',
     placeholder: 'Search Boards',
-    countText: () => {
-      const boards = adapter.getBoards()
-      const current = boards.find(b => b.id === adapter.getCurrentBoardId())
-      return `Boards: ${boards.length}${current ? ` • Current: ${current.name}` : ''}`
+    showCount: false,
+    labelText: () => {
+      const id = StorageManager.misc.getLastBoardId()
+      const b = (StorageManager.getBoards() || []).find(x => x.id === id)
+      return 'Board: ' + (b?.name ?? '—')
     },
     getItems: () => {
-      return adapter.getBoards().map(b => ({ id: b.id, label: b.name, meta: `${b.views?.length || 0} views` }))
+      const boards = StorageManager.getBoards() || []
+      return boards.map(b => ({ id: b.id, label: b.name, meta: `${b.views.length} views` }))
     },
-    onSelect: async id => {
-      await adapter.switchBoard(id)
-      panel.refresh()
-      // @ts-ignore
-      if (window.__viewPanel) window.__viewPanel.refresh()
+    onSelect: async (boardId) => {
+      await switchBoard(boardId)
+      refresh()
+      updateBoardSelector()
     },
-    onAction: async (action, ctx) => {
-      await adapter.handleBoardAction(action, ctx)
-      panel.refresh()
-      // @ts-ignore
-      if (window.__viewPanel) window.__viewPanel.refresh()
+    onAction: async (action) => {
+      const currentId = StorageManager.misc.getLastBoardId()
+      if (action === 'create') {
+        const name = prompt('Enter new board name:')
+        if (name) await createBoard(name)
+      } else if (action === 'reset' && currentId) {
+        if (typeof resetBoard === 'function') {
+          if (confirm('Reset this board?')) await resetBoard(currentId)
+        }
+      }
+      refresh()
+      updateBoardSelector()
     },
-    context: () => ({ boardId: adapter.getCurrentBoardId() }),
+    onItemAction: async (action, id) => {
+      if (action === 'rename') {
+        const name = prompt('Enter new board name:')
+        if (name) await renameBoard(id, name)
+      } else if (action === 'delete') {
+        if (confirm('Delete this board?')) await deleteBoard(id)
+      }
+      refresh()
+      updateBoardSelector()
+    },
     actions: [
-      { label: 'Create Board', action: 'create' },
-      { label: 'Rename Board', action: 'rename' },
-      { label: 'Delete Board', action: 'delete' }
+      { key: 'create', label: 'New Board' },
+      { key: 'reset', label: 'Reset Board' }
+    ],
+    selectVerb: () => 'Switch',
+    itemActionsFor: () => [
+      { action: 'rename', title: 'Rename board', icon: emojiList.edit.unicode },
+      { action: 'delete', title: 'Delete board', icon: emojiList.cross.unicode }
     ]
   })
 
-  // @ts-ignore
-  window.__boardPanel = panel
+  /** Refresh panel items */
+  function refresh () { panel.refresh() }
+  refresh()
   return panel
 }

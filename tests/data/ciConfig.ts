@@ -1,4 +1,6 @@
-export const ciConfig = {
+import type { DashboardConfig } from '../../src/types.js';
+
+export const ciConfig: DashboardConfig = {
     "globalSettings": {
       "theme": "light",
       "widgetStoreUrl": ["*/services.json"],
@@ -21,6 +23,17 @@ export const ciConfig = {
             "maxColumns": 4,
             "minRows": 1,
             "maxRows": 4
+        }
+    },
+    "serviceTemplates": {
+        "default": {
+            "type": "iframe",
+            "maxInstances": 1,
+            "config": {}
+        },
+        "twoByTwo": {
+            "type": "iframe",
+            "config": { "columns": 2, "rows": 2 }
         }
     }
 }

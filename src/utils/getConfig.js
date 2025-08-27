@@ -135,6 +135,11 @@ export async function getConfig () {
   }
 
   StorageManager.setConfig(config)
+  // Re-resolve services against the newly loaded templates
+  const existingServices = StorageManager.getServices()
+  if (Array.isArray(existingServices) && existingServices.length) {
+    StorageManager.setServices(existingServices)
+  }
   logger.log('Config loaded successfully')
   return config
 }
