@@ -1,6 +1,7 @@
 /* Minimal reset + globals */
 *, *::before, *::after { box-sizing: border-box; }
 
+
 html, body {
   margin: 0;
   padding: 0;
@@ -15,7 +16,10 @@ body > main {
   height: 100%;
   /* main scrolbar */
   overflow: auto;
-  margin: 0; 
+}
+main { 
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
 body { 
@@ -43,5 +47,3 @@ menu::before {
   background: url("/assets/asd.png") center/contain no-repeat;
   padding: 20px;
 }
-
-main { margin-right: 15px; }

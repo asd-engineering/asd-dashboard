@@ -23,6 +23,23 @@ menu#controls {
   word-break: break-word;
   isolation: isolate;
   z-index: 1;
+  position: relative;
+}
+
+/* Raise the whole group above neighbors when a panel is HOVERED or OPEN */
+.control-group:has(.dropdown.panel:hover),
+.control-group:has(.dropdown.panel.open) {
+  z-index: 1000;
+}
+
+/* When open, keep the group on top so siblings don't intercept events */
+.control-group:has(.dropdown.panel.open)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: auto;
+  background: transparent;
 }
 
 /* Lift open panels */
