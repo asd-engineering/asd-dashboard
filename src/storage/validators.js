@@ -5,22 +5,26 @@
  */
 
 /**
+ * Checks if a value is a non-empty string.
  * @param {any} x
  * @returns {boolean}
  */
 function isStr (x) { return typeof x === 'string' && x.length >= 0 }
 /**
+ * Checks if a value is a finite number.
  * @param {any} x
  * @returns {boolean}
  */
 function isNum (x) { return typeof x === 'number' && Number.isFinite(x) }
 /**
+ * Coerces a value to a string, with a default fallback.
  * @param {any} x
  * @param {string} [d]
  * @returns {string}
  */
 function asStr (x, d = '') { return isStr(x) ? x : d }
 /**
+ * Coerces a value to a number, with a default fallback.
  * @param {any} x
  * @param {number} [d]
  * @returns {number}
@@ -46,6 +50,7 @@ export function sanitizeServices (svcs) {
 }
 
 /**
+ * Sanitizes an array of widget states.
  * @param {any} ws
  * @returns {Array<object>}
  */
@@ -67,6 +72,7 @@ function sanitizeWidgetState (ws) {
 }
 
 /**
+ * Sanitizes an array of views.
  * @param {any} views
  * @returns {Array<object>}
  */
