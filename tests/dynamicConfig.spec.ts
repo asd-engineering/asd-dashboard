@@ -12,7 +12,7 @@ import { ensurePanelOpen } from './shared/panels'
 import { decodeConfig } from "../src/utils/compression.js";
 import { restoreDeep } from "../src/utils/minimizer.js";
 import { DEFAULT_CONFIG_TEMPLATE } from "../src/storage/defaultConfig.js";
-import { bootWithDashboardState } from "./shared/bootState.js";
+import { bootWithDashboardState, bootWithEmptyState } from "./shared/bootState.js";
 import { enableUITestMode, openConfigModalSafe } from './shared/uiHelpers';
 
 
@@ -95,13 +95,12 @@ test.describe("Dashboard Config - Remote via URL Params", () => {
 });
 
 test.describe("Dashboard Config - Fallback Config Popup", () => {
-    // FIX: This suite needs to ensure no config is available. We override the default mock.
-    test.beforeEach(async ({ page }) => {
-        await page.route('**/config.json', route => route.fulfill({ status: 404 }));
-    });
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/config.json', r => r.fulfill({ status: 404 }));
+  });
 
   test("popup appears when no config available via url, storage, or local file", async ({ page }) => {
-    await bootWithDashboardState(page, {}, [], { board: "", view: "" });
+    await bootWithEmptyState(page, "/");
     await expect(page.locator("#config-modal")).toBeVisible();
   });
 
