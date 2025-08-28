@@ -6,7 +6,7 @@
   padding: 10px 20px; border-radius: var(--radius-3);
   box-shadow: 0 4px 8px rgba(0,0,0,.1);
   font-size: 1rem; border: none; width: auto; max-width: 40vw; text-align: center;
-  z-index: 9000; opacity: 0; transform: translateY(20px);
+  z-index: 10000; opacity: 0; transform: translateY(20px);
   transition: opacity .3s ease, transform .3s ease;
   pointer-events: none;
 }

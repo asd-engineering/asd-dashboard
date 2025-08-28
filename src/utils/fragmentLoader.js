@@ -44,7 +44,7 @@ export async function loadFromFragment (wasExplicitLoad = false) {
 
   const hash = location.hash.startsWith('#') ? location.hash.slice(1) : ''
   const params = new URLSearchParams(hash)
-  let nameParam = params.get('name') || 'Imported'
+  let nameParam = params.get('name') || 'imported'
   const algoParam = params.get('algo') || 'gzip'
   const ccParam = params.get('cc')
   const checks = ccParam ? ccParam.split(',') : []

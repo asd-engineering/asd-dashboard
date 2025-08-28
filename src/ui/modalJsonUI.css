@@ -103,12 +103,6 @@
   border: 1px solid #ced4da; border-radius: var(--radius-1);
 }
 
-@media (max-width: 1250px) {
-  .jf-row { flex-direction: column; align-items: stretch; }
-  .jf-row > label { flex: none; margin-bottom: .25rem; }
-  .jf-row input[type="text"], .jf-row input[type="number"] { min-width: 100%; flex: 1 1 auto; }
-}
-
 /* Arrays as cards */
 .jf-array { display: flex; flex-direction: column; gap: 1.5rem; width: 100%; }
 .jf-array > .jf-row {
@@ -210,15 +204,66 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 }
 #stateTab th { font-weight: 600; color: var(--color-text-weak); background-color: var(--color-soft); }
 #stateTab td { color: var(--color-text); }
-#stateTab td:last-child {
-  font-family: var(--font-mono); max-width: 200px; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem;
+#stateTab td:first-child {
+  font-family: var(--font-mono);
+  /* max-width: 200px; */
+  font-size: 0.8rem;
+
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+
+  display: flex;
+  gap: 4px;
 }
+#stateTab td:first-child button {
+    flex: 1 1 auto;
+    height: 30px;
+    width: max-content;
+}
+
+/* Snapshot actions: Switch (green), Merge (blue), Delete (red) */
+#stateTab td:first-child button[data-action="switch"] {
+  background-color: var(--color-success);
+  color: #fff;
+  border: none;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-1);
+}
+
+#stateTab td:first-child button[data-action="merge"] {
+  background-color: var(--color-accent);
+  color: #fff;
+  border: none;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-1);
+}
+
+#stateTab td:first-child button[data-action="delete"] {
+  background-color: var(--color-danger);
+  color: #fff;
+  border: none;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-1);
+}
+
+/* Hover states for better affordance */
+#stateTab td:first-child button[data-action="switch"]:hover {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+#stateTab td:first-child button[data-action="merge"]:hover {
+  background-color: rgba(13,110,253,0.15); /* light accent bg */
+  color: var(--color-accent);
+}
+
 #stateTab td button {
-  font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: var(--radius-3);
+  font-size: 12px; font-weight: 400; padding: 4px 10px; border-radius: var(--radius-3);
   border: 1px solid var(--color-border); background-color: var(--color-surface); cursor: pointer;
   margin-right: 8px; transition: all 150ms ease; color: var(--color-text);
 }
+
 #stateTab td button.state-switch:hover {
   background-color: var(--color-success-bg); border-color: var(--color-success); color: var(--color-success);
 }

@@ -51,6 +51,11 @@ export async function openConfigModal () {
 
       const tabsMeta = [
         {
+          id: 'stateTab',
+          label: 'Snapshots & Share',
+          populate: populateStateTab
+        },
+        {
           id: 'cfgTab',
           label: 'Configuration',
           contentFn: () => {
@@ -206,12 +211,7 @@ export async function openConfigModal () {
                 return wrap
               }
             }]
-          : []),
-        {
-          id: 'stateTab',
-          label: 'Snapshots & Share',
-          populate: populateStateTab
-        }
+          : [])
       ]
 
       const tabButtons = {}
@@ -336,11 +336,6 @@ export async function openConfigModal () {
  * @param {HTMLElement} tab
  * @returns {Promise<void>}
  */
-/**
- * Populate the saved states tab with stored snapshots.
- * @param {HTMLElement} tab
- * @returns {Promise<void>}
- */
 async function populateStateTab (tab) {
   tab.innerHTML = ''
   tab.classList.add('modal__tab--column')
@@ -350,8 +345,9 @@ async function populateStateTab (tab) {
   table.innerHTML = `
     <thead>
       <tr>
+        <th>Actions</th>
         <th>Name</th><th>Type</th><th>Date</th><th>MD5</th>
-        <th>Size</th><th>Unique domains</th><th>Health</th><th>Actions</th>
+        <th>Size</th><th>Unique domains</th><th>Health</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -375,7 +371,13 @@ async function populateStateTab (tab) {
     const size = (row.cfg?.length || 0) + (row.svc?.length || 0)
     const uniqueDomains = await computeUniqueDomains(row.svc)
     const domainsTooltip = escapeHtml(Array.from(uniqueDomains).join(', '))
+
     tr.innerHTML = `
+      <td>
+        <button data-action="switch" data-id="${row.md5}">Switch</button>
+        <button data-action="merge" data-id="${row.md5}">Merge into current</button>
+        <button data-action="delete" data-id="${row.md5}">Delete</button>
+      </td>
       <td>${escapeHtml(row.name || '')}</td>
       <td>${escapeHtml(row.type || '')}</td>
       <td>${new Date(row.ts || Date.now()).toLocaleString()}</td>
@@ -383,11 +385,6 @@ async function populateStateTab (tab) {
       <td>${size} bytes</td>
       <td title="${domainsTooltip}">${uniqueDomains.size}</td>
       <td><button data-action="health" data-id="${row.md5}">Healthcheck</button></td>
-      <td>
-        <button data-action="switch" data-id="${row.md5}">Switch</button>
-        <button data-action="merge" data-id="${row.md5}">Merge into current</button>
-        <button data-action="delete" data-id="${row.md5}">Delete</button>
-      </td>
     `
     tbody.appendChild(tr)
 
