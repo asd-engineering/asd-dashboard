@@ -1,15 +1,23 @@
+// common.ts
 import { type Page, expect } from "@playwright/test";
 import { ensurePanelOpen } from './panels'
 
-// Helper function to add services via the widget selector panel
+/**
+ * Wait until the app signals readiness.
+ * Uses DOMContentLoaded + body[data-ready="true"].
+ * No waitForFunction.
+ */
+export async function waitForAppReady(page: import('@playwright/test').Page) {
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForSelector('body[data-ready="true"]');
+}
+
 /**
  * Add the first `count` services by clicking options in the widget selector panel.
  * Skips index 0 if it’s a placeholder/search row.
  */
 export async function addServices(page: Page, count: number) {
   await ensurePanelOpen(page, 'service-panel')
-  // If your panel requires an explicit toggle click to render items, uncomment:
-  // await page.click("#widget-dropdown-toggle");
   for (let i = 0; i < count; i++) {
     await page.locator('[data-testid="service-panel"] .panel-item').nth(i).click();
   }
@@ -20,20 +28,25 @@ export async function addServices(page: Page, count: number) {
  */
 export async function selectServiceByName(page: Page, serviceName: string) {
   await ensurePanelOpen(page, 'service-panel')
-  // If a toggle is needed in your build, uncomment:
-  // await page.click("#widget-dropdown-toggle");
   await page.click(`[data-testid="service-panel"] .panel-item:has-text("${serviceName}")`);
 }
 
 export interface NavigateOptions {
-  /** Total budget for navigate (goto + readiness), in ms. Default: 1000 */
+  /** Total budget for navigate (goto + readiness), in ms. Default: 2000 */
   totalTimeoutMs?: number;
   /** Additional options forwarded to page.goto (merged, not replaced) */
   gotoOptions?: Parameters<Page['goto']>[1];
   /** Enable console proxy for debugging, default: false */
   debugConsole?: boolean;
+  /** Disable readiness wait (skip app-ready selector), default: false */
+  disableReadyWait?: boolean;
 }
 
+/**
+ * Navigate and optionally wait for app readiness without waitForFunction.
+ * - goto waits for 'domcontentloaded'
+ * - readiness waits for 'body[data-ready="true"]' unless disabled
+ */
 export async function navigate(
   page: Page,
   destination: string,
@@ -69,31 +82,16 @@ export async function navigate(
 
   await page.goto(destination, mergedGotoOptions);
 
-  if (readyBudget === 0) return;
+  // Early exit if no budget or readiness wait disabled
+  if (readyBudget === 0 || options?.disableReadyWait) return;
 
+  // Soft wait for app readiness using selector (no waitForFunction)
   try {
-    await page.waitForFunction(
-      () => {
-        if (document.body.getAttribute('data-ready') === 'true') return true;
-
-        if (!(document as any).__NAVIGATE_ATTACHED__) {
-          (document as any).__NAVIGATE_ATTACHED__ = true;
-          const handler = () => {
-            (document as any).__NAVIGATE_READY__ = true;
-          };
-          document.addEventListener('main:ready', handler, { once: true });
-          document.addEventListener('view:ready', handler, { once: true });
-        }
-
-        return !!(document as any).__NAVIGATE_READY__;
-      },
-      { timeout: readyBudget }
-    );
+    await page.waitForSelector('body[data-ready="true"]', { timeout: readyBudget });
   } catch {
-    // Soft timeout: continue; some tests may rely on explicit waits later
+    // Soft timeout: continue; tests may rely on explicit waits later
   }
 }
-
 
 // Helper function to handle dialog interactions
 export async function handleDialog(page: Page, type: string, inputText = "") {
@@ -120,25 +118,76 @@ export function b64(obj: any) {
   return Buffer.from(JSON.stringify(obj)).toString("base64");
 }
 
+/**
+ * Clear persisted dashboard data via StorageManager (not localStorage.clear()).
+ * Leaves UI in a clean state for subsequent actions.
+ */
 export async function clearStorage(page: Page) {
   await navigate(page, "/");
-  await page.evaluate(() => localStorage.clear());
-  // wait for any startup notifications to disappear to avoid intercepting clicks
+  await page.evaluate(async () => {
+    const { default: sm } = await import('/storage/StorageManager.js');
+    sm.clearAll();
+  });
+  // Wait for any startup notifications to disappear to avoid intercepting clicks
   await page.waitForSelector('dialog.user-notification', { state: 'detached' }).catch(() => {});
 }
 
-export async function getUnwrappedConfig(page: Page) {
-  return await page.evaluate(() => {
-    const raw = localStorage.getItem("config");
-    const parsed = raw ? JSON.parse(raw) : null;
+/**
+ * Read the dashboard config using StorageManager.
+ * - No waitForFunction
+ * - Supports optional waitForReady gate
+ */
+export async function getUnwrappedConfig(
+  page: import('@playwright/test').Page,
+  opts?: { waitForReady?: boolean; timeoutMs?: number }
+) {
+  const timeoutMs = opts?.timeoutMs ?? 5000;
 
-    const cfg = (parsed as any)?.data || parsed;
+  if (opts?.waitForReady !== false) {
+    await waitForAppReady(page);
+  } else {
+    await page.waitForLoadState('domcontentloaded');
+  }
 
-    if (!cfg || typeof cfg !== "object") return { boards: [] };
-    if (!Array.isArray(cfg.boards)) cfg.boards = [];
-
-    return cfg;
+  const evalPromise = page.evaluate(async () => {
+    const { default: sm } = await import('/storage/StorageManager.js');
+    return sm.getConfig();
   });
+
+  return await Promise.race([
+    evalPromise,
+    new Promise<never>((_, rej) =>
+      setTimeout(() => rej(new Error(`getUnwrappedConfig: timed out after ${timeoutMs}ms`)), timeoutMs)
+    ),
+  ]);
+}
+
+/**
+ * Read services via StorageManager.
+ */
+export async function getServices(
+  page: import('@playwright/test').Page,
+  opts?: { waitForReady?: boolean; timeoutMs?: number }
+) {
+  const timeoutMs = opts?.timeoutMs ?? 5000;
+
+  if (opts?.waitForReady !== false) {
+    await waitForAppReady(page);
+  } else {
+    await page.waitForLoadState('domcontentloaded');
+  }
+
+  const evalPromise = page.evaluate(async () => {
+    const { default: sm } = await import('/storage/StorageManager.js');
+    return sm.getServices();
+  });
+
+  return await Promise.race([
+    evalPromise,
+    new Promise<never>((_, rej) =>
+      setTimeout(() => rej(new Error(`getServices: timed out after ${timeoutMs}ms`)), timeoutMs)
+    ),
+  ]);
 }
 
 export async function getConfigBoards(page: Page) {
@@ -170,61 +219,36 @@ export async function getShowMenuWidgetFlag(page: Page) {
   return !!cfg?.globalSettings?.showMenuWidget;
 }
 
+/**
+ * Read last used IDs via StorageManager.misc, not localStorage.
+ */
 export async function getLastUsedViewId(page: Page) {
-  return await page.evaluate(() => localStorage.getItem("lastUsedViewId"));
+  return await page.evaluate(async () => {
+    const { default: sm } = await import('/storage/StorageManager.js');
+    return sm.misc.getLastViewId();
+  });
 }
 
 export async function getLastUsedBoardId(page: Page) {
-  return await page.evaluate(() => localStorage.getItem("lastUsedBoardId"));
+  return await page.evaluate(async () => {
+    const { default: sm } = await import('/storage/StorageManager.js');
+    return sm.misc.getLastBoardId();
+  });
 }
-
-/**
- * Select a view by label.
- * - Clicks #view-selector if visible (user-like).
- * - Uses selectOption; falls back to { force: true } if hidden.
- * - No internal waitForFunction; callers should await app-level readiness
- *   (e.g., waitForWidgetStoreIdle) after calling this.
- */
-// export async function selectViewByLabel(
-//   page: Page,
-//   label: string
-// ): Promise<void> {
-//   const sel = page.locator("#view-selector");
-//   // Element may be hidden depending on globalSettings; only require attachment.
-//   await sel.waitFor({ state: "attached" });
-
-//   // If visible, click to focus (keeps "use clicks" semantics).
-//   try {
-//     if (await sel.isVisible().catch(() => false)) {
-//       await sel.click().catch(() => {});
-//     }
-//   } catch {
-//     /* ignore focus races */
-//   }
-
-//   // Try normal selection first, then forced selection if hidden/covered.
-//   try {
-//     await sel.selectOption({ label });
-//   } catch {
-//     await sel.selectOption({ label }, { force: true });
-//   }
-// }
 
 /**
  * Fast view switch by label.
  * - Single action: force selectOption({ label }) — no clicks, no waits.
  * - Rare fallback: tiny evaluate to set value + dispatch events if selectOption fails.
- * - Callers are responsible for any readiness waits (e.g., waitForWidgetStoreIdle()).
+ * - Callers are responsible for any readiness waits.
  */
 export async function selectViewByLabel(page: Page, label: string): Promise<void> {
   const sel = page.locator("#view-selector");
 
   try {
-    // Fast path: bypass actionability (visibility/enabled) checks entirely.
     await sel.selectOption({ label }, { force: true });
     return;
   } catch {
-    // Minimal, last-resort fallback (runs only if selectOption throws).
     await page.evaluate((lbl) => {
       const select = document.querySelector("#view-selector") as HTMLSelectElement | null;
       if (!select) throw new Error("#view-selector not found");
