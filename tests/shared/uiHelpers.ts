@@ -87,13 +87,9 @@ export async function enableUITestMode(page: Page, opts?: {
  * - Fallback to programmatic open if something still covers the button.
  */
 export async function openConfigModalSafe(page: Page): Promise<void> {
-  const btn = page.locator('#open-config-modal');
-  try {
-    await btn.click({ timeout: 250 });
-  } catch {
-    await page.evaluate(() =>
-      import('/component/modal/configModal.js').then(m => m.openConfigModal())
-    );
+  await page.waitForLoadState('domcontentloaded')
+  if (!(await page.locator('#config-modal').isVisible())) {
+    await page.click('#open-config-modal')
   }
-  await page.locator('#config-modal').waitFor({ state: 'visible', timeout: 1000 });
+  await page.locator('#config-modal').waitFor({ state: 'visible' })
 }
