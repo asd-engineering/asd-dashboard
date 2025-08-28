@@ -87,28 +87,74 @@ export async function enableUITestMode(page: Page, opts?: {
  * - Fallback to programmatic open if something still covers the button.
  */
 // replace openConfigModalSafe with a sturdier version
-export async function openConfigModalSafe(page: Page, tab?: 'stateTab'|'cfgTab'|'svcTab'): Promise<void> {
-  await page.waitForLoadState('domcontentloaded')
+// export async function openConfigModalSafe(page: Page, tab?: 'stateTab'|'cfgTab'|'svcTab'): Promise<void> {
+//   await page.waitForLoadState('domcontentloaded')
 
-  // Try twice in case something closes it immediately
-  for (let i = 0; i < 2; i++) {
-    if (!(await page.locator('#config-modal').isVisible())) {
-      await page.click('#open-config-modal', { force: true }).catch(() => {})
+//   // Try twice in case something closes it immediately
+//   for (let i = 0; i < 2; i++) {
+//     if (!(await page.locator('#config-modal').isVisible())) {
+//       await page.click('#open-config-modal', { force: true }).catch(() => {})
+//     }
+
+//     // Attached is enough; don’t require "visible"
+//     await page.locator('#config-modal .tabs').waitFor({ state: 'attached', timeout: 1500 }).catch(() => {})
+
+//     if (tab) {
+//       const btn = page.locator(`#config-modal .tabs button[data-tab="${tab}"]`)
+//       if (await btn.count()) await btn.click().catch(() => {})
+//       await page.locator(`#${tab}`).waitFor({ state: 'attached', timeout: 1500 }).catch(() => {})
+//     }
+
+//     if (await page.locator('#config-modal').isVisible()) break
+//   }
+// }
+/**
+ * Safe modal opener that is reload-tolerant.
+ * - Prefer programmatic open (import + call) to avoid header overlap.
+ * - All locator checks are wrapped so nav/context-loss doesn't explode the test.
+ */
+export async function openConfigModalSafe(
+  page: Page,
+  tab?: 'stateTab'|'cfgTab'|'svcTab'
+): Promise<void> {
+  await page.waitForLoadState('domcontentloaded').catch(() => {});
+
+  const isVisible = async (sel: string) => {
+    try {
+      return await page.locator(sel).isVisible();
+    } catch {
+      return false;
+    }
+  };
+
+  // Try up to 3 cycles to cross any navigation boundary safely.
+  for (let i = 0; i < 3; i++) {
+    // Programmatic open is the most reliable
+    try {
+      await page.evaluate(() =>
+        import('/component/modal/configModal.js').then((m) => m.openConfigModal())
+      );
+    } catch {
+      // fallback to click
+      await page.click('#open-config-modal', { force: true }).catch(() => {});
     }
 
-    // Attached is enough; don’t require "visible"
-    await page.locator('#config-modal .tabs').waitFor({ state: 'attached', timeout: 1500 }).catch(() => {})
+    // Tabs attached = modal is present in DOM
+    await page.locator('#config-modal .tabs').waitFor({ state: 'attached', timeout: 1500 }).catch(() => {});
 
     if (tab) {
-      const btn = page.locator(`#config-modal .tabs button[data-tab="${tab}"]`)
-      if (await btn.count()) await btn.click().catch(() => {})
-      await page.locator(`#${tab}`).waitFor({ state: 'attached', timeout: 1500 }).catch(() => {})
+      const btn = page.locator(`#config-modal .tabs button[data-tab="${tab}"]`);
+      try {
+        if (await btn.count()) await btn.click({ force: true }).catch(() => {});
+        await page.locator(`#${tab}`).waitFor({ state: 'attached', timeout: 1500 }).catch(() => {});
+      } catch { /* retry next loop */ }
     }
 
-    if (await page.locator('#config-modal').isVisible()) break
+    if (await isVisible('#config-modal')) return;
   }
-}
 
+  throw new Error('openConfigModalSafe: could not open #config-modal after 3 attempts');
+}
 
 /**
  * Dismiss any stack of user notifications (toasts).
