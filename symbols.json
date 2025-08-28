@@ -103,6 +103,11 @@
         "name": "dataid",
         "type": "string|null",
         "desc": "- An optional persistent identifier for the widget."
+      },
+      {
+        "name": "opts",
+        "type": "{skipCapacity?:boolean}",
+        "desc": "- Optional flags."
       }
     ],
     "returns": "Promise<void>"

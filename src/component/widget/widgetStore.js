@@ -6,7 +6,6 @@
  */
 import { Logger } from '../../utils/Logger.js'
 import StorageManager from '../../storage/StorageManager.js'
-import emojiList from '../../ui/unicodeEmoji.js'
 
 /**
  * Lightweight LRU cache storing widget elements by id.
@@ -159,6 +158,22 @@ export class WidgetStore {
   }
 
   /**
+   * Remove a widget instance from the live store/DOM only.
+   * This NEVER mutates boards/views in StorageManager.
+   * @param {string} id
+   */
+  async evictRuntimeOnly (id) {
+    const el = this.widgets.get(id)
+    if (!el) return
+    try {
+      el.remove()
+    } catch {}
+    this.widgets.delete(id)
+    // If you track LRU or observers, notify them here (no StorageManager updates)
+    // e.g., this._touchLRUOnEvict?.(id)
+  }
+
+  /**
    * Remove a widget from the DOM and store if it exists.
    * This is the sole method performing element.remove().
    *
@@ -206,20 +221,23 @@ export class WidgetStore {
   }
 
   /**
-   * Ensure capacity before adding a widget. Prompts for eviction when full.
-   *
-   * @function confirmCapacity
-   * @param {number} [needed=1] - Number of widgets that will be added.
-   * @returns {Promise<boolean>} Resolves true when space is available.
+   * Ensure capacity before adding widgets. Prompts for eviction when full.
+   * Evictions are RUNTIME-ONLY: persistent StorageManager is never modified.
+   * @param {number} [needed=1] Number of widgets that will be added.
+   * @returns {Promise<boolean>} true if we can proceed, false if user cancelled.
    */
   async confirmCapacity (needed = 1) {
     const maxTotal = StorageManager.getConfig()?.globalSettings?.maxTotalInstances
-    const allowedMax = typeof maxTotal === 'number' ? Math.min(this.maxSize, maxTotal) : this.maxSize
-    const overBy = this.widgets.size + needed - allowedMax
+    const allowedMax = typeof maxTotal === 'number'
+      ? Math.min(this.maxSize, maxTotal)
+      : this.maxSize
 
+    const overBy = this.widgets.size + needed - allowedMax
     if (overBy > 0) {
+      // Build selection items from CURRENTLY ACTIVE widgets only (runtime, not storage).
       const items = []
       let idx = 0
+
       const boards = StorageManager.getBoards() || []
       /** @type {Record<string,{boardIndex:number,viewIndex:number}>} */
       const locCache = {}
@@ -238,6 +256,7 @@ export class WidgetStore {
         locCache[id] = { boardIndex: 0, viewIndex: 0 }
         return locCache[id]
       }
+
       for (const [id, el] of this.widgets.entries()) {
         let title = null
         if (el.dataset.metadata) {
@@ -245,7 +264,7 @@ export class WidgetStore {
         }
         const serviceName = el.dataset.service || ''
         const key = serviceName.toLowerCase().split('asd-')[1] || serviceName.toLowerCase()
-        const icon = emojiList[key]?.unicode || '🧱'
+        const icon = (await import('../../ui/unicodeEmoji.js')).default[key]?.unicode || '🧱'
         const { boardIndex, viewIndex } = getIdx(id)
         items.push({ id, title, serviceName, icon, boardIndex, viewIndex, lruRank: idx++ })
       }
@@ -254,19 +273,23 @@ export class WidgetStore {
       const maxPerService = (gs && typeof gs === 'object' && 'maxPerService' in gs && typeof gs.maxPerService === 'number')
         ? gs.maxPerService
         : 0
+
       const { openEvictionModal } = await import('../modal/evictionModal.js')
       const proceed = await openEvictionModal({
         reason: 'capacity',
         maxPerService,
         requiredCount: overBy,
         items,
-        onEvict: async ids => {
-          for (const id of ids) {
-            await this.requestRemoval(id)
+        onEvict: async (ids) => {
+          // IMPORTANT: runtime-only eviction; do NOT touch StorageManager
+          for (const id of new Set(ids)) {
+            await this.evictRuntimeOnly(id)
           }
-          this._ensureLimit()
+          this._ensureLimit() // keep internal invariants
         }
       })
+
+      // If user cancelled, DO NOT navigate or mutate anything.
       if (!proceed) return false
     }
 
