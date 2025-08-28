@@ -38,7 +38,8 @@ export const emojiList = {
   speaker: { icon: '🔊', unicode: '\u{1F50A}', description: 'Speaker' },
   shield: { icon: '🛡️', unicode: '\u{1F6E1}', description: 'Shield (protection, security)' },
   launch: { icon: '🚀', unicode: '\u{1F680}', description: 'Start a service' },
-  edit: { icon: '✏️', unicode: '\u{270F}\u{FE0F}', description: 'Edit or write' }
+  edit: { icon: '✏️', unicode: '\u{270F}\u{FE0F}', description: 'Edit or write' },
+  checkGreen: { icon: '✅', unicode: '\u{2705}', description: 'Checkbox (green)' }
 }
 
 export default emojiList

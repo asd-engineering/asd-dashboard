@@ -24,6 +24,7 @@ test('exported snapshot remains switchable after reset', async ({ page }) => {
 
   await openConfigModalSafe(page)
   await page.click('.tabs button[data-tab="stateTab"]')
+  await page.locator('#stateTab').waitFor();
   await page.locator('#stateTab tbody tr:has-text("export/switchable") button[data-action="switch"]').click()
 
   await page.waitForLoadState('domcontentloaded')

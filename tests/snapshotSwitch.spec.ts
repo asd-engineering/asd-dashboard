@@ -15,7 +15,8 @@ test('switch restores board and view ids with widgets', async ({ page }) => {
     localStorage.setItem('services', JSON.stringify([]))
   })
   await openConfigModalSafe(page)
-  await page.click('.tabs button[data-tab="stateTab"]')
+  await page.locator('#stateTab').waitFor();
+
   await page.locator('#stateTab tbody tr:has-text("export/base") button[data-action="switch"]').click()
   await page.waitForLoadState('domcontentloaded')
   await page.waitForFunction(() => document.body.dataset.ready === 'true')

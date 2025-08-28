@@ -36,6 +36,7 @@ test('switch environment flow', async ({ page }) => {
   await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()))
   await page.waitForSelector('dialog.user-notification', { state: 'detached' }).catch(() => {})
   await page.click('.tabs button[data-tab="stateTab"]')
+  await page.locator('#stateTab').waitFor();
   await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
   await page.waitForLoadState('domcontentloaded')
   await page.waitForSelector('[data-testid="board-panel"]')
@@ -59,6 +60,7 @@ test('no restore wording remains', async ({ page }) => {
   await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()))
   await page.waitForSelector('dialog.user-notification', { state: 'detached' }).catch(() => {})
   await page.click('.tabs button[data-tab="stateTab"]')
+  await page.locator('#stateTab').waitFor();
   await expect(page.locator('text=Restore')).toHaveCount(0)
   await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
   await page.waitForLoadState('domcontentloaded')

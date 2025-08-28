@@ -6,7 +6,6 @@ import { injectSnapshot } from './shared/state.js'
 import { openConfigModalSafe } from './shared/uiHelpers'
 
 test.describe('Snapshots & Share tab', () => {
-  test.setTimeout(20000)
   test.beforeEach(async ({ page }) => {
     await clearStorage(page)
     await navigate(page,'/')
@@ -23,6 +22,7 @@ test.describe('Snapshots & Share tab', () => {
     await openConfigModalSafe(page)
 
     await page.click('.tabs button[data-tab="stateTab"]')
+    await page.locator('#stateTab').waitFor();
     await expect(page.locator('#stateTab tbody tr:visible')).toHaveCount(2)
 
     await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
@@ -36,6 +36,7 @@ test.describe('Snapshots & Share tab', () => {
 
     await openConfigModalSafe(page)
     await page.click('.tabs button[data-tab="stateTab"]')
+    await page.locator('#stateTab').waitFor();
     page.on('dialog', d => d.accept())
     await page.locator('#stateTab tbody tr button:has-text("Delete")').last().click({ force: true })
     await expect(page.locator('#stateTab tbody tr:visible')).toHaveCount(2, { timeout: 2000 })
@@ -44,6 +45,7 @@ test.describe('Snapshots & Share tab', () => {
     await page.waitForSelector('#open-config-modal')
     await openConfigModalSafe(page)
     await page.click('.tabs button[data-tab="stateTab"]')
+    await page.locator('#stateTab').waitFor();
     await expect(page.locator('#stateTab tbody tr:visible')).toHaveCount(2)
   })
 })

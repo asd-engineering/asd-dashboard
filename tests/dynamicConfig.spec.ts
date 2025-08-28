@@ -146,6 +146,8 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
       import("/component/modal/configModal.js").then((m) => m.openConfigModal())
     );
 
+    await page.locator('button[data-tab="cfgTab"]').click();
+
     await page.click('button:has-text("JSON mode")');
     await page.fill("#config-json", JSON.stringify(ciConfig));
     await page.click("#config-modal .modal__btn--save");
@@ -172,6 +174,8 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
 
     // Open and verify modal is visible
     await page.click("#open-config-modal");
+    await page.locator('button[data-tab="cfgTab"]').click();
+    
     await page.locator('[data-testid="advanced-mode-toggle"]').check();
     await page.locator('#config-modal').waitFor({ state: 'visible' });
     await expect(page.locator("#config-modal")).toBeVisible();
@@ -189,6 +193,8 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
       );
       await expect(page.locator("#config-modal")).toBeVisible();
     }
+
+    await page.locator('button[data-tab="cfgTab"]').click();
 
     // Prefer a modal-scoped Services tab locator
     const svcTab = page.locator('#config-modal button[data-tab="svcTab"]');

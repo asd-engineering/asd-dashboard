@@ -20,6 +20,7 @@ import { decodeConfig } from '../../utils/compression.js'
 import { KEY_MAP } from '../../utils/fragmentKeyMap.js'
 import { mergeBoards, mergeServices } from '../../utils/merge.js'
 import { FRAG_DEFAULT_ALGO } from '../../utils/fragmentConstants.js'
+import emojiList from '../../ui/unicodeEmoji.js'
 
 /** @typedef {import('../../types.js').DashboardConfig} DashboardConfig */
 
@@ -34,7 +35,7 @@ const logger = new Logger('configModal.js')
 export async function openConfigModal () {
   const storedConfig = StorageManager.getConfig()
   let configData = storedConfig || { ...DEFAULT_CONFIG_TEMPLATE }
-  const last = StorageManager.misc.getItem('configModalTab') || 'cfgTab'
+  const last = StorageManager.misc.getItem('configModalTab') || 'stateTab'
   let cfgForm, svcForm
   const advancedMode = isAdvancedMode()
 
@@ -348,7 +349,9 @@ export async function openConfigModal () {
 }
 /**
  * Populate the saved states tab with stored snapshots.
- * Health is 2nd column; all cells are named with data-col for stable selectors.
+ * Columns: Name, Unique domains, Size, Actions, Health, Type, Date, MD5.
+ * - Current snapshot (by misc.currentSnapshotMd5) is highlighted, sorted first,
+ *   and hides Switch/Merge buttons.
  * @param {HTMLElement} tab
  * @returns {Promise<void>}
  */
@@ -361,14 +364,14 @@ async function populateStateTab (tab) {
   table.innerHTML = `
     <thead>
       <tr>
+        <th data-col="name">Name</th>
+        <th data-col="domains">Unique domains</th>
+        <th data-col="size">Size</th>
         <th data-col="actions">Actions</th>
         <th data-col="health">Health</th>
-        <th data-col="name">Name</th>
         <th data-col="type">Type</th>
         <th data-col="date">Date</th>
         <th data-col="md5">MD5</th>
-        <th data-col="size">Size</th>
-        <th data-col="domains">Unique domains</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -380,17 +383,44 @@ async function populateStateTab (tab) {
   const rows = Array.isArray(store.states) ? store.states : []
   const colCount = table.querySelectorAll('thead th').length || 8
 
-  for (const row of rows) {
+  // Identify current snapshot and sort it to the top, then by recency (desc)
+  const currentMd5 = StorageManager.misc.getItem('currentSnapshotMd5') || ''
+  const sorted = rows.slice().sort((a, b) => {
+    if (a.md5 === currentMd5 && b.md5 !== currentMd5) return -1
+    if (b.md5 === currentMd5 && a.md5 !== currentMd5) return 1
+    return (b.ts || 0) - (a.ts || 0)
+  })
+
+  for (const row of sorted) {
     const tr = document.createElement('tr')
+    const isCurrent = row.md5 === currentMd5
+
     const size = (row.cfg?.length || 0) + (row.svc?.length || 0)
     const uniqueDomains = await computeUniqueDomains(row.svc)
     const domainsTooltip = escapeHtml(Array.from(uniqueDomains).join(', '))
 
+    // name cell: prepend a green check icon when current (fallback ✓)
+    const checkIcon = (typeof emojiList !== 'undefined' && emojiList?.checkGreen?.icon) ? emojiList.checkGreen.icon : '✓'
+    const currentBadge = isCurrent ? `<span class="hc-current-badge" title="Currently in use"> (current)</span>` : ''
+
+    // actions: hide Switch/Merge when current
+    const actionsHtml = isCurrent
+      ? `<button data-action="delete" data-id="${row.md5}">Delete</button>`
+      : `<button data-action="switch" data-id="${row.md5}">Switch</button>
+         <button data-action="merge" data-id="${row.md5}">Merge into current</button>
+         <button data-action="delete" data-id="${row.md5}">Delete</button>`
+
     tr.innerHTML = `
+      <td data-col="name">
+        ${isCurrent ? `<span class="hc-current-flag" aria-hidden="true">${checkIcon}</span>` : ''}
+        <span class="hc-name">${escapeHtml(row.name || '')}</span>${currentBadge}
+      </td>
+      <td class="hc-domains" data-col="domains" title="${domainsTooltip}">
+        <span class="hc-domains-count">${uniqueDomains.size}</span>
+      </td>
+      <td data-col="size">${size} bytes</td>
       <td class="hc-actions" data-col="actions">
-        <button data-action="switch" data-id="${row.md5}">Switch</button>
-        <button data-action="merge" data-id="${row.md5}">Merge into current</button>
-        <button data-action="delete" data-id="${row.md5}">Delete</button>
+        ${actionsHtml}
       </td>
       <td class="hc-health" data-col="health">
         <span class="hc-summary" aria-live="polite" aria-atomic="true">
@@ -400,15 +430,12 @@ async function populateStateTab (tab) {
         <button class="hc-btn" data-action="health" data-id="${row.md5}">Healthcheck</button>
         <button class="hc-btn" data-action="toggle" data-id="${row.md5}" disabled>Details</button>
       </td>
-      <td data-col="name">${escapeHtml(row.name || '')}</td>
       <td data-col="type">${escapeHtml(row.type || '')}</td>
       <td data-col="date">${new Date(row.ts || Date.now()).toLocaleString()}</td>
       <td data-col="md5"><code>${row.md5 || ''}</code></td>
-      <td data-col="size">${size} bytes</td>
-      <td class="hc-domains" data-col="domains" title="${domainsTooltip}">
-        <span class="hc-domains-count">${uniqueDomains.size}</span>
-      </td>
     `
+
+    if (isCurrent) tr.classList.add('hc-current-row') // styling via CSS, no inline styles
     tbody.appendChild(tr)
 
     // Collapsible details row
@@ -433,8 +460,10 @@ async function populateStateTab (tab) {
     const healthBtn = /** @type {HTMLButtonElement} */ (tr.querySelector('[data-action="health"]'))
 
     // actions
-    tr.querySelector('[data-action="switch"]')?.addEventListener('click', async () => { await applySnapshotSwitch(row) })
-    tr.querySelector('[data-action="merge"]')?.addEventListener('click', async () => { await applySnapshotMerge(row) })
+    if (!isCurrent) {
+      tr.querySelector('[data-action="switch"]')?.addEventListener('click', async () => { await applySnapshotSwitch(row) })
+      tr.querySelector('[data-action="merge"]')?.addEventListener('click', async () => { await applySnapshotMerge(row) })
+    }
     tr.querySelector('[data-action="delete"]')?.addEventListener('click', async () => {
       if (!confirm(`Delete snapshot "${row.name}"?`)) return
       const idx = rows.indexOf(row)
@@ -480,8 +509,8 @@ async function populateStateTab (tab) {
 
 /**
  * Switch to the provided snapshot.
- * Autosaves current state before applying and reloading.
- * @param {{cfg?:string,svc?:string}} row
+ * Marks the snapshot as current, autosaves previous state, then reloads.
+ * @param {{cfg?:string,svc?:string,md5?:string,name?:string}} row
  * @returns {Promise<void>}
  */
 async function applySnapshotSwitch (row) {
@@ -499,6 +528,9 @@ async function applySnapshotSwitch (row) {
     StorageManager.setConfig(nextCfg)
     StorageManager.setServices(nextSvc)
 
+    // Remember which snapshot is currently in use (used for highlight/sorting)
+    if (row.md5) StorageManager.misc.setItem('currentSnapshotMd5', row.md5)
+
     const firstBoardId = nextCfg?.boards?.[0]?.id || null
     const firstViewId = nextCfg?.boards?.[0]?.views?.[0]?.id || null
     StorageManager.misc.setLastBoardId(firstBoardId)
@@ -510,6 +542,7 @@ async function applySnapshotSwitch (row) {
     alert('Failed to switch snapshot')
   }
 }
+
 
 /**
  * Merge snapshot payloads into current live state.

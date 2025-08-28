@@ -18,6 +18,7 @@ test('merge snapshot unions boards and services without duplicates', async ({ pa
   await injectSnapshot(page, { ...ciConfig, boards: stateBBoards }, stateBServices, 'export/stateB')
   await openConfigModalSafe(page)
   await page.click('.tabs button[data-tab="stateTab"]')
+  await page.locator('#stateTab').waitFor();
   await page.locator('#stateTab tbody tr:has-text("export/stateB") button[data-action="merge"]').click({ force: true })
   await page.waitForLoadState('domcontentloaded')
   await page.waitForFunction(() => document.body.dataset.ready === 'true')

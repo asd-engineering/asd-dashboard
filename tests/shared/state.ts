@@ -77,4 +77,6 @@ export async function injectSnapshot(
     },
     { cfg, svc, name },
   );
+  // We must reload or we witness an empty state table
+  await page.reload()
 }

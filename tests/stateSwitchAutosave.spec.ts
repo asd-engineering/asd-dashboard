@@ -15,14 +15,13 @@ test('switching creates autosave when existing state is present', async ({ page 
   const altCfg = { ...ciConfig, globalSettings: { ...ciConfig.globalSettings, theme: 'dark' } }
   await injectSnapshot(page, altCfg, ciServices, 'export/test')
 
+
   await openConfigModalSafe(page)
-  await page.click('.tabs button[data-tab="stateTab"]')
   await page.locator('#stateTab tbody tr:has-text("export/test") button[data-action="switch"]').click()
   await page.waitForLoadState('domcontentloaded')
   await page.waitForFunction(() => document.body.dataset.ready === 'true')
 
   await openConfigModalSafe(page)
-  await page.click('.tabs button[data-tab="stateTab"]')
   const rows = await page.locator('#stateTab tbody tr').allInnerTexts()
   expect(rows.join('\n')).toContain('autosave/')
 })

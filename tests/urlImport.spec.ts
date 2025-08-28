@@ -27,6 +27,7 @@ test('URL import stores snapshot and remains switchable', async ({ page }) => {
 
   await openConfigModalSafe(page)
   await page.click('.tabs button[data-tab="stateTab"]')
+  await page.locator('#stateTab').waitFor();
 
   await expect(
     page.locator('#stateTab tbody tr:not(.hc-details-row)').first().locator('td[data-col="type"]')
@@ -45,6 +46,7 @@ test('URL import stores snapshot and remains switchable', async ({ page }) => {
 
   await openConfigModalSafe(page)
   await page.click('.tabs button[data-tab="stateTab"]')
+  await page.locator('#stateTab').waitFor();
 
   await page
     .locator('#stateTab tbody tr:not(.hc-details-row):has-text("Imported")')
