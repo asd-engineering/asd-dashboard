@@ -80,3 +80,42 @@ export async function injectSnapshot(
   // We must reload or we witness an empty state table
   await page.reload()
 }
+
+/**
+ * Load raw snapshot store via StorageManager.
+ */
+export async function loadStateStore(page: Page): Promise<{ version: number; states: any[] }> {
+  return await page.evaluate(async () => {
+    const { default: sm } = await import('/storage/StorageManager.js');
+    return sm.loadStateStore();
+  });
+}
+
+/**
+ * Switch to a snapshot by exact name through the State tab UI.
+ * (Keeps UI-path parity with real users; avoids LS mutations.)
+ */
+export async function switchSnapshotByName(page: Page, name: string): Promise<void> {
+  await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()));
+  await page.locator('.tabs button[data-tab="stateTab"]').click();
+  await page.locator('#stateTab').waitFor();
+  const row = page.locator(`#stateTab tbody tr:has-text("${name}")`).first();
+  await row.locator('button[data-action="switch"]').click();
+
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForSelector('body[data-ready="true"]');
+}
+
+/**
+ * Merge a snapshot by name via UI (idempotent).
+ */
+export async function mergeSnapshotByName(page: Page, name: string): Promise<void> {
+  await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()));
+  await page.locator('.tabs button[data-tab="stateTab"]').click();
+  await page.locator('#stateTab').waitFor();
+  const row = page.locator(`#stateTab tbody tr:has-text("${name}")`).first();
+  await row.locator('button[data-action="merge"]').click({ force: true });
+
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForSelector('body[data-ready="true"]');
+}

@@ -16,6 +16,7 @@ import { restoreDeep } from "../src/utils/minimizer.js";
 import { DEFAULT_CONFIG_TEMPLATE } from "../src/storage/defaultConfig.js";
 import { bootWithDashboardState } from "./shared/bootState.js";
 import { enableUITestMode } from './shared/uiHelpers';
+import { ensureNoBlockingDialogs, waitForNotificationsToClear } from './shared/uiHelpers'
 
 
 test.describe("Dashboard Config - Base64 via URL Params", () => {
@@ -152,8 +153,11 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
 
     await page.click('button:has-text("JSON mode")');
     await page.fill("#config-json", JSON.stringify(ciConfig));
-    await page.click("#config-modal .modal__btn--save");
 
+    await ensureNoBlockingDialogs(page)
+    await page.click("#config-modal .modal__btn--save");
+    await waitForNotificationsToClear(page)
+    
     await page.waitForSelector('[data-testid="service-panel"]');
 
     const stored = await getUnwrappedConfig(page);

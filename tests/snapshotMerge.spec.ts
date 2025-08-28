@@ -3,7 +3,7 @@ import { ciConfig, ciBoards } from './data/ciConfig'
 import { ciServices } from './data/ciServices'
 import { navigate, setConfigAndServices } from './shared/common.js'
 import { openConfigModalSafe } from './shared/uiHelpers'
-import { injectSnapshot } from './shared/state.js'
+import { injectSnapshot, mergeSnapshotByName } from './shared/state.js'
 
 test('merge snapshot unions boards and services without duplicates', async ({ page }) => {
   await navigate(page,'/')
@@ -16,14 +16,7 @@ test('merge snapshot unions boards and services without duplicates', async ({ pa
   const stateBServices = [ciServices[1], serviceDup]
 
   await injectSnapshot(page, { ...ciConfig, boards: stateBBoards }, stateBServices, 'export/stateB')
-  await openConfigModalSafe(page)
-  
-  await page.click('.tabs button[data-tab="stateTab"]')
-  await page.locator('#stateTab').waitFor();
-  await page.locator('#stateTab tbody tr:has-text("export/stateB") button[data-action="merge"]').click({ force: true })
-  await page.waitForLoadState('domcontentloaded')
-  await page.waitForFunction(() => document.body.dataset.ready === 'true')
-  await page.waitForSelector('#open-config-modal')
+  await mergeSnapshotByName(page, 'export/stateB')
   
   const final = await page.evaluate(async () => {
     const { default: sm } = await import('/storage/StorageManager.js')

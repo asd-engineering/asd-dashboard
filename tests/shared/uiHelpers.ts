@@ -93,3 +93,38 @@ export async function openConfigModalSafe(page: Page): Promise<void> {
   }
   await page.locator('#config-modal').waitFor({ state: 'visible' })
 }
+
+/**
+ * Dismiss any stack of user notifications (toasts).
+ * Best-effort: ignores if buttons aren’t present.
+ */
+export async function dismissAllNotifications(page: Page): Promise<void> {
+  const toasts = page.locator('dialog.user-notification');
+  const count = await toasts.count().catch(() => 0);
+  for (let i = 0; i < count; i++) {
+    const toast = toasts.nth(i);
+    const btn = toast.locator('button, [role="button"]').first();
+    if (await btn.isVisible().catch(() => false)) {
+      await btn.click({ trial: false }).catch(() => {});
+    }
+  }
+}
+
+/**
+ * Ensure no blocking overlays remain before a critical click sequence.
+ */
+export async function ensureNoBlockingDialogs(page: Page): Promise<void> {
+  await dismissAllNotifications(page);
+  await page.locator('dialog.user-notification').waitFor({ state: 'detached' }).catch(() => {});
+}
+
+/**
+ * Wait until any transient toast/dialog overlays are gone.
+ * Safe no-op if none are present.
+ */
+export async function waitForNotificationsToClear(page: Page, timeout = 3000): Promise<void> {
+  await page
+    .locator('dialog.user-notification')
+    .waitFor({ state: 'detached', timeout })
+    .catch(() => {});
+}

@@ -2,8 +2,8 @@ import { test, expect } from './fixtures'
 import { ciConfig, ciBoards } from './data/ciConfig'
 import { ciServices } from './data/ciServices'
 import { navigate, clearStorage, wipeConfigPreserveSnapshots } from './shared/common.js'
-import { openConfigModalSafe } from './shared/uiHelpers'
-import { injectSnapshot } from './shared/state.js'
+import { injectSnapshot, switchSnapshotByName } from './shared/state.js'
+
 
 test('switch restores board and view ids with widgets', async ({ page }) => {
   await clearStorage(page)
@@ -12,14 +12,7 @@ test('switch restores board and view ids with widgets', async ({ page }) => {
   
   await injectSnapshot(page, baselineCfg, ciServices, 'export/base')
   await wipeConfigPreserveSnapshots(page);
-  await openConfigModalSafe(page)
-
-  await page.locator('#stateTab').waitFor();
-
-  await page.locator('#stateTab tbody tr:has-text("export/base") button[data-action="switch"]').click()
-  await page.waitForLoadState('domcontentloaded')
-
-  await page.waitForSelector('body[data-ready="true"]');
+  await switchSnapshotByName(page, 'export/base');
 
   const result = await page.evaluate(async () => {
     const { default: sm } = await import('/storage/StorageManager.js');

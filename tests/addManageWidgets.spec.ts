@@ -6,24 +6,22 @@ import {
   selectServiceByName,
   addServicesByName,
   navigate,
+  handleDialog,
+  dragAndDropWidgetByIndex
 } from './shared/common.js';
-// import { widgetUrlOne, widgetUrlTwo, widgetUrlThree, widgetUrlFour } from './shared/constant.js';
+import { setLocalItem } from './shared/state'
 
 
 test.describe('Widgets', () => {
-  test.setTimeout(30000)
-
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await navigate(page,'/');
     
-    await page.evaluate(() => {
-      localStorage.setItem('log', 'widgetManagement');
-    });
+    await setLocalItem(page, 'log', 'widgetManagement')
   });
 
   test(`should be able to add 4 services and drag and drop ${emojiList.pinching.unicode}`, async ({ page }) => {
-    const logs: string[] = [];
+    // const logs: string[] = [];
 
     // Listen for console events // Does not work in Firefox
     // page.on('console', msg => {
@@ -42,7 +40,7 @@ test.describe('Widgets', () => {
 
     // Store data-order and url attributes in a dictionary
     const orderBeforeDragDrop = {};
-    // console.log('Before Drag-and-Drop:');
+
     for (let i = 0; i < widgetCount; i++) {
       const widget = widgets.nth(i);
       const order = await widget.getAttribute('data-order');
@@ -53,17 +51,14 @@ test.describe('Widgets', () => {
       } else {
         console.error(`Widget ${i} has a null url attribute`);
       }
-
-      // console.log(`Widget ${i} data-order: ${order}, url: ${url}`);
     }
 
-    // Test drag and drop using dragAndDrop method with string selectors
-    await page.dragAndDrop('.widget-wrapper:nth-child(1) .widget-icon-drag', '.widget-wrapper:nth-child(2) .widget-icon-drag');
-    await page.dragAndDrop('.widget-wrapper:nth-child(3) .widget-icon-drag', '.widget-wrapper:nth-child(4) .widget-icon-drag');
+    await dragAndDropWidgetByIndex(page, 0, 1)
+    await dragAndDropWidgetByIndex(page, 2, 3)
 
     // Log data-order attributes after drag and drop
     const orderAfterDragDrop = {};
-    // console.log('After Drag-and-Drop:');
+
     for (let i = 0; i < widgetCount; i++) {
       const widget = widgets.nth(i);
       const order = await widget.getAttribute('data-order');
@@ -74,14 +69,10 @@ test.describe('Widgets', () => {
       } else {
         console.error(`Widget ${i} has a null url attribute`);
       }
-
-      // console.log(`Widget ${i} data-order: ${order}, url: ${url}`);
     }
 
     // Compare initial and final order by url
-    // console.log('Order comparison:');
     for (const url in orderBeforeDragDrop) {
-      // console.log(`Widget url: ${url}, initial: ${orderBeforeDragDrop[url]}, final: ${orderAfterDragDrop[url]}`);
       expect(orderBeforeDragDrop[url]).not.toBe(orderAfterDragDrop[url]);
     }
 
@@ -144,10 +135,7 @@ test.describe('Widgets', () => {
     await addServices(page, 2);
 
     // Listen for the dialog event
-    page.on('dialog', async dialog => {
-      // console.log(dialog.message());
-      await dialog.accept('https://new.url'); // Provide the URL directly in the dialog
-    });
+    await handleDialog(page, 'prompt', 'https://new.url')
 
     const widgets = page.locator('.widget-wrapper');
     const firstWidget = widgets.nth(0);

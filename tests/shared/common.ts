@@ -290,3 +290,102 @@ export async function wipeConfigPreserveSnapshots(page: Page): Promise<void> {
     sm.clearAllExceptState();
   });
 }
+
+/**
+ * Open config modal, switch to JSON mode, inject cfg JSON, Save, wait for SPA ready.
+ */
+export async function saveConfigJson(page: Page, cfg: any): Promise<void> {
+  // Open (safely) + go JSON mode
+  if (!(await page.locator('#config-modal').isVisible())) {
+    await page.click('#open-config-modal');
+  }
+  await page.locator('#config-modal').waitFor({ state: 'visible' });
+  await page.locator('button[data-tab="cfgTab"]').click();
+  await page.locator('button:has-text("JSON mode")').click();
+
+  // Fill + save
+  const area = page.locator('#config-json');
+  await area.waitFor();
+  await area.fill(JSON.stringify(cfg));
+  await page.locator('#config-modal .modal__btn--save').click();
+
+  // App-ready (selector gate only, no waitForFunction)
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForSelector('body[data-ready="true"]');
+}
+
+/**
+ * Poll persisted config (via StorageManager) until boards.length >= min.
+ */
+export async function waitForStoredBoardsCount(page: Page, min = 1, timeout = 5000): Promise<void> {
+  const start = Date.now();
+  for (;;) {
+    const cfg = await getUnwrappedConfig(page, { waitForReady: true, timeoutMs: Math.max(1, timeout - (Date.now() - start)) });
+    const len = Array.isArray(cfg?.boards) ? cfg.boards.length : 0;
+    if (len >= min) return;
+    if (Date.now() - start > timeout) throw new Error(`waitForStoredBoardsCount: timed out waiting for >= ${min} (got ${len})`);
+  }
+}
+
+/**
+ * Switch board by label (fast select), no “click” races.
+ */
+export async function selectBoardByLabel(page: Page, label: string): Promise<void> {
+  const sel = page.locator('#board-selector');
+  await sel.selectOption({ label }, { force: true }).catch(async () => {
+    await page.evaluate((lbl) => {
+      const select = document.querySelector('#board-selector') as HTMLSelectElement | null;
+      if (!select) throw new Error('#board-selector not found');
+      const wanted = String(lbl).trim();
+      const opt = Array.from(select.options).find(o => (o.textContent || '').trim() === wanted);
+      if (!opt) throw new Error(`Board option "${wanted}" not found`);
+      select.value = opt.value;
+      select.dispatchEvent(new Event('input', { bubbles: true }));
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }, label);
+  });
+}
+
+/**
+ * Hover a panel row and click a flyout action ('rename' | 'delete' | 'navigate').
+ */
+export async function clickFlyoutAction(
+  page: Page,
+  panelTestId: 'service-panel' | 'board-panel' | 'view-panel',
+  rowText: string,
+  action: 'rename' | 'delete' | 'navigate'
+): Promise<void> {
+  await ensurePanelOpen(page, panelTestId);
+  const row = page.locator(`[data-testid="${panelTestId}"] .panel-item`, { hasText: rowText }).first();
+  await row.hover();
+  const btn = row.locator(`[data-item-action="${action}"]`).first();
+  await expect(btn).toBeVisible();
+  await btn.click();
+}
+
+/**
+ * Drag-and-drop between widget indices, using handle icons (stable selectors).
+ */
+export async function dragAndDropWidgetByIndex(page: Page, fromIndex: number, toIndex: number): Promise<void> {
+  const src = `.widget-wrapper:nth-child(${fromIndex + 1}) .widget-icon-drag`;
+  const dst = `.widget-wrapper:nth-child(${toIndex + 1}) .widget-icon-drag`;
+  await page.dragAndDrop(src, dst);
+}
+
+/**
+ * Assert visible widget count quickly (no extra waits).
+ */
+export async function expectWidgetCount(page: Page, n: number): Promise<void> {
+  await expect(page.locator('.widget-wrapper:visible')).toHaveCount(n);
+}
+
+/**
+ * Resize a widget to an exact grid via the block menu (deterministic).
+ */
+export async function resizeWidgetTo(page: Page, index: number, columns: number, rows: number): Promise<void> {
+  const widget = page.locator('.widget-wrapper').nth(index);
+  await widget.locator('.widget-icon-resize-block').hover();
+  await page.click(`text=${columns} columns, ${rows} rows`);
+  await expect(widget).toHaveAttribute('data-columns', String(columns));
+  await expect(widget).toHaveAttribute('data-rows', String(rows));
+}

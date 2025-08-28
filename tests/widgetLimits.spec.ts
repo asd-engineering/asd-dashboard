@@ -1,29 +1,10 @@
-// tests/widgetLimits.spec.ts
 import { test, expect } from "./fixtures";
-import { ciConfig } from "./data/ciConfig";
 import { ciServices } from "./data/ciServices";
 import { getUnwrappedConfig, navigate } from "./shared/common";
 import { waitForWidgetStoreIdle } from "./shared/state.js";
 import { ensurePanelOpen } from "./shared/panels";
+import { routeWithWidgetStoreSize } from './shared/mocking'
 
-async function routeLimits(page, boards, services, maxSize = 2, configOverrides = {}) {
-  await page.route("**/services.json", (route) =>
-    route.fulfill({ json: services }),
-  );
-  await page.route("**/config.json", (route) =>
-    route.fulfill({ json: { ...ciConfig, ...configOverrides, boards } }),
-  );
-  await page.addInitScript((size) => {
-    const apply = () => {
-      if (window.asd?.widgetStore) {
-        window.asd.widgetStore.maxSize = size;
-      } else {
-        setTimeout(apply, 0);
-      }
-    };
-    apply();
-  }, maxSize);
-}
 
 test.describe("Widget limits", () => {
   test("per service maxInstances navigates to existing widget", async ({ page }) => {
@@ -55,7 +36,7 @@ test.describe("Widget limits", () => {
       s.name === "ASD-toolbox" ? { ...s, maxInstances: 1 } : s,
     );
 
-    await routeLimits(page, boards, services, 5);
+    await routeWithWidgetStoreSize(page, boards, services, 5);
     await navigate(page, "/");
     await page.locator(".widget-wrapper").first().waitFor();
 
@@ -99,7 +80,7 @@ test.describe("Widget limits", () => {
       },
     ];
 
-    await routeLimits(page, boards, ciServices, 1);
+    await routeWithWidgetStoreSize(page, boards, ciServices, 1);
     await navigate(page, "/");
 
     await page.locator(".widget-wrapper").first().waitFor();
@@ -130,7 +111,7 @@ test.describe("Widget limits", () => {
       s.name === "ASD-toolbox" ? { ...s, maxInstances: 1 } : s
     );
 
-    await routeLimits(page, boards, services, 5);
+    await routeWithWidgetStoreSize(page, boards, services, 5);
     await navigate(page, "/");
     await page.waitForSelector('[data-testid="service-panel"]');
     await ensurePanelOpen(page, 'service-panel')
@@ -185,7 +166,7 @@ test.describe("Widget limits", () => {
       },
     ];
 
-    await routeLimits(page, boards, services, 5);
+    await routeWithWidgetStoreSize(page, boards, services, 5);
     await navigate(page, "/");
     await ensurePanelOpen(page, 'service-panel')
 

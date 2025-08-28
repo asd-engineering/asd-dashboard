@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
 import { ensurePanelOpen } from './shared/panels'
-import { getServices, navigate } from './shared/common'
+import { getServices, navigate, clickFlyoutAction } from './shared/common'
 
 test.describe('Service Edit/Delete', () => {
   test.beforeEach(async ({ page }) => {
@@ -39,12 +39,10 @@ test.describe('Service Edit/Delete', () => {
 
     page.on('dialog', d => d.accept())
 
-    // Reveal action buttons before attempting to delete
-    await terminalRow.hover()
-    await terminalRow.locator('[data-item-action="delete"]').click()
-    await page.waitForSelector('.widget-wrapper', { state: 'detached' })
+    await clickFlyoutAction(page, 'service-panel', 'ASD-terminal', 'delete')
+    // await page.waitForSelector('.widget-wrapper', { state: 'detached' })
 
-    const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services')))
+    const services = await getServices(page);
     expect(services.find(s => s.name === 'ASD-terminal')).toBeUndefined()
   })
 })
