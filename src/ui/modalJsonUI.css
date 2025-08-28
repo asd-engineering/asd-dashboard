@@ -206,16 +206,19 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 #stateTab td { color: var(--color-text); }
 #stateTab td:first-child {
   font-family: var(--font-mono);
-  /* max-width: 200px; */
   font-size: 0.8rem;
 
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
 
-  display: flex;
-  gap: 4px;
+  display: inline-flex;
+  /* flex-flow: row; */
+  padding: 4px;
+  min-height: 82px;
+  align-items: center;
 }
+
 #stateTab td:first-child button {
     flex: 1 1 auto;
     height: 30px;
@@ -227,7 +230,6 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
   background-color: var(--color-success);
   color: #fff;
   border: none;
-  padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-1);
 }
 
@@ -235,7 +237,6 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
   background-color: var(--color-accent);
   color: #fff;
   border: none;
-  padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-1);
 }
 
@@ -243,7 +244,6 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
   background-color: var(--color-danger);
   color: #fff;
   border: none;
-  padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-1);
 }
 
@@ -270,13 +270,24 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 #stateTab td button:not(.state-switch):hover {
   background-color: var(--color-danger-bg); border-color: var(--color-danger); color: var(--color-danger);
 }
-#stateTab > button {
-  display: block; margin: var(--space-6) auto 0 auto; width: fit-content; font-size: 14px;
-  font-weight: 600; color: var(--color-danger); background-color: transparent;
-  border: 1px solid transparent; border-radius: var(--radius-3); padding: 8px 16px;
-  cursor: pointer; transition: all 150ms ease; white-space: nowrap;
+#delete-all-snapshots {
+    /* margin: var(--space-6) auto 0 auto; */
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-danger);
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-3);
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 150ms ease;
+    white-space: nowrap;
 }
-#stateTab > button:hover { background-color: var(--color-danger-bg); border-color: var(--color-danger); }
+
+#delete-all-snapshots:hover {
+    background-color: var(--color-danger-bg);
+    border-color: var(--color-danger);
+}
 
 #fragment-decision-modal { display: flex; flex-direction: column; padding: 10px; }
 #fragment-decision-modal > #importName { display: block; margin: 10px 0; max-width: 40%; }

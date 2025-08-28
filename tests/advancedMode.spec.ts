@@ -41,4 +41,3 @@ test.describe('advanced mode toggle', () => {
     await expect(subtabs).toHaveText(['globalSettings', 'serviceTemplates'])
   })
 })
-

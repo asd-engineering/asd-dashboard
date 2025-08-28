@@ -316,6 +316,29 @@ export async function openConfigModal () {
       exportButton.classList.add('modal__btn', 'modal__btn--export')
       exportButton.addEventListener('click', exportConfig)
 
+      // New "Delete all snapshots" button
+      const delAll = document.createElement('button')
+      delAll.id = 'delete-all-snapshots'
+      delAll.textContent = 'Delete all snapshots'
+      delAll.setAttribute('aria-label', 'Delete all saved snapshots')
+      delAll.classList.add('modal__btn', 'modal__btn--danger')
+      delAll.addEventListener('click', async () => {
+        if (!confirm('Delete all saved snapshots?')) return
+        await StorageManager.clearStateStore()
+        showNotification('All snapshots deleted')
+      })
+
+      // const delAll = document.createElement('button')
+      // delAll.id = 'delete-all-snapshots'
+      // delAll.textContent = 'Delete all snapshots'
+      // delAll.setAttribute('aria-label', 'Delete all saved snapshots')
+      // tab.appendChild(delAll)
+      delAll.addEventListener('click', async () => {
+        if (!confirm('Delete all saved snapshots?')) return
+        await StorageManager.clearStateStore()
+      // await populateStateTab(tab)
+      })
+
       const closeButton = document.createElement('button')
       closeButton.textContent = 'Close'
       closeButton.classList.add('modal__btn', 'modal__btn--cancel')
@@ -323,7 +346,8 @@ export async function openConfigModal () {
 
       const buttonContainer = document.createElement('div')
       buttonContainer.classList.add('modal__btn-group')
-      buttonContainer.append(saveButton, exportButton, closeButton)
+      // Order: Save, Export, Delete all snapshots, Close
+      buttonContainer.append(saveButton, exportButton, delAll, closeButton)
       modal.appendChild(buttonContainer)
 
       await switchTab(last)
@@ -353,14 +377,6 @@ async function populateStateTab (tab) {
     <tbody></tbody>
   `
   tab.appendChild(table)
-
-  const actionsDiv = document.createElement('div')
-  actionsDiv.classList.add('actions')
-  const delAll = document.createElement('button')
-  delAll.id = 'delete-all-snapshots'
-  delAll.textContent = 'Delete all snapshots'
-  actionsDiv.appendChild(delAll)
-  tab.appendChild(actionsDiv)
 
   const tbody = table.querySelector('tbody')
   const store = await StorageManager.loadStateStore()
@@ -405,12 +421,6 @@ async function populateStateTab (tab) {
       await runHealthcheck(row.svc)
     })
   }
-
-  delAll.addEventListener('click', async () => {
-    if (!confirm('Delete all saved snapshots?')) return
-    await StorageManager.clearStateStore()
-    await populateStateTab(tab)
-  })
 }
 
 /**
