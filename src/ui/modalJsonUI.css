@@ -290,3 +290,41 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 .modal__btn.modal__btn--toggle.modal__toggle{
   margin: 15px 0px 0px 15px
 }
+
+/* --- Healthcheck: compact cell + expandable details row ------------------- */
+#stateTab td.hc-domains,
+#stateTab td.hc-health { white-space: nowrap; width: 1%; }
+
+.hc-summary { display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; }
+.hc-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.hc-dot.up { background: var(--color-success); }
+.hc-dot.down { background: var(--color-danger); }
+.hc-dot.partial { background: #f2c037; }
+.hc-dot.muted { background: var(--color-border); }
+
+.hc-btn {
+  font-size: 12px; font-weight: 400; padding: 4px 10px; border-radius: var(--radius-3);
+  border: 1px solid var(--color-border); background-color: var(--color-surface);
+  cursor: pointer; margin-left: 6px; transition: all 150ms ease; color: var(--color-text);
+}
+.hc-btn:hover { background-color: var(--color-soft); }
+
+.hc-details-row td { padding: 0 var(--space-6) var(--space-6); }
+.hc-panel {
+  margin-top: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2);
+  background: var(--color-soft);
+  padding: var(--space-4);
+  max-height: 180px;           /* keeps modal tidy */
+  overflow: auto;              /* chips scroll, table stays stable */
+}
+.hc-list { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.hc-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 2px 8px; border: 1px solid var(--color-border);
+  border-radius: 999px; font-size: 12px; line-height: 1.3;
+  background: var(--color-surface);
+}
+.hc-chip .hc-dot { width: 7px; height: 7px; }
+.hc-meta-line { width: 100%; font-size: 11px; color: var(--color-text-weak); margin-bottom: 6px; }
