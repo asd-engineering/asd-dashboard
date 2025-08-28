@@ -352,9 +352,33 @@ export async function openConfigModal () {
  * @param {HTMLElement} tab
  * @returns {Promise<void>}
  */
+/**
+ * Populate the saved states tab with stored snapshots.
+ * Renders per-row domain counts and wires a live-updating healthcheck UI.
+ * @param {HTMLElement} tab
+ * @returns {Promise<void>}
+ */
 async function populateStateTab (tab) {
   tab.innerHTML = ''
   tab.classList.add('modal__tab--column')
+
+  // Inject minimal styles once for health dots (no external CSS required)
+  if (!document.getElementById('healthcheck-inline-styles')) {
+    const style = document.createElement('style')
+    style.id = 'healthcheck-inline-styles'
+    style.textContent = `
+      .hc-list { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+      .hc-item { display: inline-flex; align-items: center; gap: 6px; padding: 2px 6px; border-radius: 10px; font-size: 12px; line-height: 1.3; border: 1px solid #ddd; }
+      .hc-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+      .hc-up   { background: #219653; }     /* green */
+      .hc-down { background: #d32f2f; }     /* red */
+      .hc-partial { background: #f2c037; } /* amber */
+      .hc-muted { opacity: 0.65; }
+      .hc-meta { font-size: 11px; color: #666; margin-top: 6px; }
+      .hc-actions { display: flex; gap: 8px; align-items: center; }
+    `
+    document.head.appendChild(style)
+  }
 
   const table = document.createElement('table')
   table.classList.add('table')
@@ -381,7 +405,7 @@ async function populateStateTab (tab) {
     const domainsTooltip = escapeHtml(Array.from(uniqueDomains).join(', '))
 
     tr.innerHTML = `
-      <td>
+      <td class="hc-actions">
         <button data-action="switch" data-id="${row.md5}">Switch</button>
         <button data-action="merge" data-id="${row.md5}">Merge into current</button>
         <button data-action="delete" data-id="${row.md5}">Delete</button>
@@ -391,10 +415,25 @@ async function populateStateTab (tab) {
       <td>${new Date(row.ts || Date.now()).toLocaleString()}</td>
       <td><code>${row.md5 || ''}</code></td>
       <td>${size} bytes</td>
-      <td title="${domainsTooltip}">${uniqueDomains.size}</td>
-      <td><button data-action="health" data-id="${row.md5}">Healthcheck</button></td>
+      <td class="hc-domains" title="${domainsTooltip}">
+        <span class="hc-domains-count">${uniqueDomains.size}</span>
+        <span class="hc-muted">(run healthcheck)</span>
+      </td>
+      <td class="hc-health">
+        <div class="hc-actions">
+          <button data-action="health" data-id="${row.md5}">Healthcheck</button>
+          <span class="hc-meta hc-muted">Not checked</span>
+        </div>
+        <div class="hc-list"></div>
+      </td>
     `
     tbody.appendChild(tr)
+
+    const domainsCell = /** @type {HTMLTableCellElement} */ (tr.querySelector('.hc-domains'))
+    const domainsCountEl = /** @type {HTMLElement} */ (tr.querySelector('.hc-domains-count'))
+    const healthCell = /** @type {HTMLTableCellElement} */ (tr.querySelector('.hc-health'))
+    const listEl = /** @type {HTMLDivElement} */ (tr.querySelector('.hc-list'))
+    const metaEl = /** @type {HTMLSpanElement} */ (tr.querySelector('.hc-meta'))
 
     tr.querySelector('[data-action="switch"]')?.addEventListener('click', async () => {
       await applySnapshotSwitch(row)
@@ -409,10 +448,87 @@ async function populateStateTab (tab) {
       await StorageManager.saveStateStore({ version: store.version, states: rows })
       await populateStateTab(tab)
     })
-    tr.querySelector('[data-action="health"]')?.addEventListener('click', async () => {
-      await runHealthcheck(row.svc)
+
+    tr.querySelector('[data-action="health"]')?.addEventListener('click', async (ev) => {
+      const btn = /** @type {HTMLButtonElement} */ (ev.currentTarget)
+      btn.disabled = true
+      btn.textContent = 'Checking...'
+      listEl.innerHTML = ''
+      metaEl.textContent = 'Running…'
+      metaEl.classList.remove('hc-muted')
+
+      try {
+        const result = await runHealthcheck(row.svc, {
+          notify: false,
+          onProgress: (p) => {
+            // Live updates while scanning
+            renderHealthCells(listEl, metaEl, domainsCell, p.byDomain, p.totals.checkedAt || Date.now())
+          }
+        })
+        renderHealthCells(listEl, metaEl, domainsCell, result.byDomain, result.checkedAt)
+        btn.textContent = 'Re-run'
+      } catch {
+        metaEl.textContent = 'Healthcheck failed'
+      } finally {
+        btn.disabled = false
+      }
     })
+
+    // Initial render (no results yet)
+    renderHealthCells(listEl, metaEl, domainsCell, {}, undefined, uniqueDomains)
   }
+}
+
+/**
+ * Render per-domain health results into the table cells.
+ * @param {HTMLDivElement} listEl Container for the badges (inside "Health" column).
+ * @param {HTMLSpanElement} metaEl Small meta line (inside "Health" column).
+ * @param {HTMLTableCellElement} domainsCell "Unique domains" cell to update counts/tooltip.
+ * @param {Record<string, import('./configModal.js').DomainInfo>} byDomain Map domain -> stats.
+ * @param {number} [checkedAt] Epoch ms when last update happened.
+ * @param {Set<string>} [initialUnique] Optional precomputed unique domains for initial render.
+ */
+function renderHealthCells (listEl, metaEl, domainsCell, byDomain, checkedAt, initialUnique) {
+  // Compute aggregates
+  const domains = initialUnique ? Array.from(initialUnique) : Object.keys(byDomain || {})
+  const up = domains.filter(d => (byDomain?.[d]?.status || 'down') === 'up').length
+  const down = domains.filter(d => (byDomain?.[d]?.status || 'down') === 'down').length
+  const partial = domains.filter(d => (byDomain?.[d]?.status || 'down') === 'partial').length
+
+  // Update "Unique domains" cell
+  const countEl = domainsCell.querySelector('.hc-domains-count')
+  if (countEl) countEl.textContent = String(domains.length || 0)
+  const tooltip = domains.map(d => `${d} : ${byDomain?.[d]?.status || 'unknown'}`).join(', ')
+  domainsCell.title = tooltip || 'No domains'
+  // Show small summary next to count
+  const summary = domainsCell.querySelector('.hc-muted')
+  if (summary) {
+    summary.textContent = domains.length
+      ? `(${up} up / ${down} down${partial ? ` / ${partial} partial` : ''})`
+      : '(no domains)'
+  }
+
+  // Render the badge list inside "Health" column
+  listEl.innerHTML = ''
+  if (domains.length) {
+    for (const d of domains) {
+      const info = byDomain?.[d]
+      const st = info?.status || 'down'
+      const badge = document.createElement('span')
+      badge.className = 'hc-item'
+      const dot = document.createElement('span')
+      dot.className = `hc-dot ${st === 'up' ? 'hc-up' : st === 'partial' ? 'hc-partial' : 'hc-down'}`
+      const text = document.createElement('span')
+      text.textContent = info ? `${d} (${info.up}/${info.total})` : `${d} (0/0)`
+      badge.append(dot, text)
+      listEl.appendChild(badge)
+    }
+  }
+
+  // Meta line
+  metaEl.textContent = domains.length
+    ? `Last checked ${checkedAt ? new Date(checkedAt).toLocaleString() : ''}`
+    : 'No domains'
 }
 
 /**
@@ -516,13 +632,39 @@ async function computeUniqueDomains (svcEnc) {
   } catch {}
   return set
 }
+/**
+ * @typedef {'up'|'down'|'partial'} DomainStatus
+ */
 
 /**
- * Run HEAD requests against encoded service URLs and display a summary.
- * Caps concurrency and ignores CORS errors.
- * @param {string} svcEnc
- * @returns {Promise<{ok:number,fail:number,unknown:number}>}
+ * Per-domain counters and status.
+ * @typedef {Object} DomainInfo
+ * @property {number} up    Number of successful probes for this domain.
+ * @property {number} down  Number of failed probes for this domain.
+ * @property {number} total Total probes for this domain.
+ * @property {DomainStatus} status Aggregated domain status.
  */
+
+/**
+ * Result object returned by runHealthcheck.
+ * @typedef {Object} HealthcheckResult
+ * @property {number} ok
+ * @property {number} fail
+ * @property {number} unknown
+ * @property {Record<string, DomainInfo>} byDomain
+ * @property {number} checkedAt Epoch milliseconds when finished.
+ */
+
+/**
+ * Progress payload emitted per URL.
+ * @typedef {Object} HealthcheckProgress
+ * @property {string} url
+ * @property {string} domain
+ * @property {'ok'|'fail'} verdict
+ * @property {{ ok:number, fail:number, unknown:number, checkedAt:number }} totals
+ * @property {Record<string, DomainInfo>} byDomain
+ */
+
 /**
  * Health-check a list of URLs from the browser.
  * "Reachable" means: the browser could reach the origin over the network,
@@ -531,11 +673,17 @@ async function computeUniqueDomains (svcEnc) {
  * Expects svcEnc to decode to an array of { url: string }.
  *
  * @param {string} svcEnc Encoded services payload.
- * @param {{ concurrency?: number, timeoutMs?: number }} [opts] Optional execution settings.
- * @returns {Promise<{ok:number,fail:number,unknown:number}>} Aggregate result counters.
+ * @param {{
+ *   concurrency?: number,
+ *   timeoutMs?: number,
+ *   notify?: boolean,
+ *   onProgress?: (p: HealthcheckProgress) => void
+ * }} [opts] Optional execution settings.
+ * @returns {Promise<HealthcheckResult>} Aggregate result counters + per-domain details.
  */
-async function runHealthcheck (svcEnc, { concurrency = 4, timeoutMs = 5000 } = {}) {
-  const res = { ok: 0, fail: 0, unknown: 0 }
+async function runHealthcheck (svcEnc, { concurrency = 4, timeoutMs = 5000, notify = true, onProgress } = {}) {
+  /** @type {HealthcheckResult} */
+  const res = { ok: 0, fail: 0, unknown: 0, byDomain: Object.create(null), checkedAt: Date.now() }
   if (!svcEnc) return res
 
   // --- helpers --------------------------------------------------------------
@@ -544,14 +692,13 @@ async function runHealthcheck (svcEnc, { concurrency = 4, timeoutMs = 5000 } = {
    * Decode the encoded services payload to an array.
    * Returns an empty array when decoding fails or the payload is not an array.
    * @param {string} enc Encoded services payload.
-   * @returns {Promise<Array<Record<string, any>>>} Decoded services array or [].
+   * @returns {Promise<Array<{url?: string}>>} Decoded services array or [].
    */
   async function decodeOrArray (enc) {
     try {
       const svc = await decodeSnapshot(enc)
       return Array.isArray(svc) ? svc : []
     } catch {
-      // If decode fails, behave safely
       return []
     }
   }
@@ -569,32 +716,27 @@ async function runHealthcheck (svcEnc, { concurrency = 4, timeoutMs = 5000 } = {
   }
 
   /**
-   * Wrap a promise factory with an AbortController-based timeout.
-   * Aborts the underlying request after the provided duration and clears timers reliably.
-   * @template T
-   * @param {(signal: AbortSignal) => Promise<T>} promiseFactory Function that produces a promise using the given AbortSignal.
-   * @param {number} ms Timeout in milliseconds.
-   * @returns {Promise<T>} The wrapped promise.
+   * @param {(signal: AbortSignal) => Promise<Response>} promiseFactory
+   * @param {number} ms
+   * @returns {Promise<Response>}
    */
   function withTimeout (promiseFactory, ms) {
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), ms)
-    const p = promiseFactory(ctrl.signal)
-      .finally(() => clearTimeout(timer))
+    const p = promiseFactory(ctrl.signal).finally(() => clearTimeout(timer))
     return p
   }
 
   /**
-   * Attempt a CORS-visible HEAD request (inspectable response on success).
-   * @param {string} url Target URL.
-   * @param {number} timeout Timeout in ms.
-   * @returns {Promise<Response>} Fetch response (may reject on network/abort).
+   * @param {string} url
+   * @param {number} timeout
+   * @returns {Promise<Response>}
    */
   async function tryCorsHead (url, timeout) {
     return withTimeout(
       signal => fetch(url, {
         method: 'HEAD',
-        mode: 'cors', // inspectable if CORS is allowed
+        mode: 'cors',
         redirect: 'follow',
         credentials: 'omit',
         cache: 'no-store',
@@ -605,16 +747,15 @@ async function runHealthcheck (svcEnc, { concurrency = 4, timeoutMs = 5000 } = {
   }
 
   /**
-   * Fallback: attempt a no-cors GET (opaque response still indicates reachability).
-   * @param {string} url Target URL.
-   * @param {number} timeout Timeout in ms.
-   * @returns {Promise<Response>} Fetch response (opaque for cross-origin); may reject on network/abort.
+   * @param {string} url
+   * @param {number} timeout
+   * @returns {Promise<Response>}
    */
   async function tryNoCorsGet (url, timeout) {
     return withTimeout(
       signal => fetch(url, {
         method: 'GET',
-        mode: 'no-cors', // always opaque for cross-origin
+        mode: 'no-cors',
         redirect: 'follow',
         credentials: 'omit',
         cache: 'no-store',
@@ -626,8 +767,8 @@ async function runHealthcheck (svcEnc, { concurrency = 4, timeoutMs = 5000 } = {
 
   /**
    * When the page is https and the target is http, return an https-upgraded URL.
-   * @param {string} url Candidate URL.
-   * @returns {string|null} Upgraded URL string or null if not applicable.
+   * @param {string} url
+   * @returns {string|null}
    */
   function maybeUpgradeToHttps (url) {
     try {
@@ -637,51 +778,48 @@ async function runHealthcheck (svcEnc, { concurrency = 4, timeoutMs = 5000 } = {
         u.protocol = 'https:'
         return u.toString()
       }
-    } catch { /* ignore */ }
+    } catch {}
     return null
   }
 
   /**
-   * Core probe classifier: determines reachability for a single URL.
-   * - Any CORS-visible Response (any status) => 'ok'
-   * - Opaque no-cors GET Response => 'ok'
-   * - Network/timeout/mixed-content errors => 'fail'
-   * @param {string} url Target URL to probe.
-   * @returns {Promise<'ok'|'fail'>} Probe verdict.
+   * @param {string} url
+   * @returns {Promise<'ok'|'fail'>}
    */
   async function probe (url) {
-    // 1) Try CORS HEAD: if we get ANY Response, the server is reachable
     try {
       const r = await tryCorsHead(url, timeoutMs)
-      // We do NOT gate on r.ok: any status proves reachability
       if (r instanceof Response) return 'ok'
-      // Extremely unlikely branch; fall through to fallback
-    } catch (e) {
-      // Mixed-content shortcut: if blocked due to http on https page, try https version once
+    } catch {
       const upgraded = maybeUpgradeToHttps(url)
       if (upgraded) {
         try {
           const r2 = await tryCorsHead(upgraded, timeoutMs)
           if (r2 instanceof Response) return 'ok'
-        } catch {
-          // ignore; proceed to no-cors fallback
-        }
+        } catch {}
       }
     }
-
-    // 2) Fallback: no-cors GET.
-    // If this resolves to an opaque Response, the network path is alive (treat as OK).
     try {
       const r3 = await tryNoCorsGet(url, timeoutMs)
-      if (r3 instanceof Response) {
-        // In cross-origin no-cors, r3.type === 'opaque'. That's good enough for "reachable".
-        return 'ok'
-      }
-    } catch {
-      // network error / timeout / blocking => fail
-    }
-
+      if (r3 instanceof Response) return 'ok'
+    } catch {}
     return 'fail'
+  }
+
+  /**
+   * Update per-domain counters and aggregate status.
+   * @param {string} domain
+   * @param {'ok'|'fail'} verdict
+   */
+  function bumpDomain (domain, verdict) {
+    if (!domain) return
+    const d = res.byDomain[domain] || (res.byDomain[domain] = { up: 0, down: 0, total: 0, status: 'down' })
+    if (verdict === 'ok') d.up += 1
+    else d.down += 1
+    d.total += 1
+    d.status = d.up > 0 && d.down === 0
+      ? 'up'
+      : (d.up > 0 && d.down > 0 ? 'partial' : 'down')
   }
 
   // --- worker pool ----------------------------------------------------------
@@ -689,39 +827,46 @@ async function runHealthcheck (svcEnc, { concurrency = 4, timeoutMs = 5000 } = {
   try {
     const items = await decodeOrArray(svcEnc)
     const queue = uniqueUrls(items)
-
-    // Nothing to do
     if (!queue.length) {
-      showNotification(`Healthcheck: ${res.ok} OK, ${res.fail} FAIL, ${res.unknown} UNKNOWN`)
+      if (notify) showNotification(`Healthcheck: ${res.ok} OK, ${res.fail} FAIL, ${res.unknown} UNKNOWN`)
       return res
     }
 
+    const q = queue.slice()
     /**
-     * Worker that consumes the shared queue and updates aggregate counters.
-     * @returns {Promise<void>} Resolves when the queue is exhausted.
+     * @returns {Promise<void>}
      */
     async function worker () {
-      while (queue.length) {
-        const url = queue.shift()
+      while (q.length) {
+        const url = q.shift()
         if (!url) break
+        const domain = (() => { try { return new URL(url).hostname } catch { return '' } })()
         try {
           const verdict = await probe(url)
           if (verdict === 'ok') res.ok++
-          else if (verdict === 'fail') res.fail++
-          else res.unknown++ // currently unused, kept for API compatibility
+          else res.fail++
+          bumpDomain(domain, verdict)
         } catch {
           res.fail++
+          bumpDomain(domain, 'fail')
+        } finally {
+          res.checkedAt = Date.now()
+          onProgress?.({
+            url,
+            domain,
+            verdict: res.byDomain[domain]?.up ? 'ok' : 'fail',
+            totals: { ok: res.ok, fail: res.fail, unknown: res.unknown, checkedAt: res.checkedAt },
+            byDomain: res.byDomain
+          })
         }
       }
     }
 
     const n = Math.min(concurrency, queue.length)
     await Promise.all(Array.from({ length: n }, () => worker()))
-  } catch {
-    // swallow to keep the function resilient
-  }
+  } catch {}
 
-  showNotification(`Healthcheck: ${res.ok} OK, ${res.fail} FAIL, ${res.unknown} UNKNOWN`)
+  if (notify) showNotification(`Healthcheck: ${res.ok} OK, ${res.fail} FAIL, ${res.unknown} UNKNOWN`)
   return res
 }
 
