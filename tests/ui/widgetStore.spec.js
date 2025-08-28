@@ -164,7 +164,8 @@ test.describe('WidgetStore UI Tests', () => {
 
     // Use StorageManager to clear persisted data instead of localStorage.clear()
     await page.evaluate(async () => {
-      const { default: sm } = await import('../../../../../../storage/StorageManager.js')
+      // eslint-disable-next-line
+      const { default: sm } = await import('/storage/StorageManager.js')
       sm.clearAll()
     })
 

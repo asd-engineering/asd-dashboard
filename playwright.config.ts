@@ -52,13 +52,13 @@ export default defineConfig({
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      // grep: process.env.CI ? /.*/ : /.^/,
+      grep: process.env.CI ? /.*/ : /.^/,
     },
 
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-      // grep: process.env.CI ? /.*/ : /.^/,
+      grep: process.env.CI ? /.*/ : /.^/,
     },
   ],
   /* Run local dev server before starting the tests */
