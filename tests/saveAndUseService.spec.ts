@@ -10,7 +10,6 @@ test.describe('Use saved service', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await bootWithDashboardState(page, {}, saved, { board: '', view: '' })
-    
   })
 
   test('selects saved service and adds widget', async ({ page }) => {
@@ -18,10 +17,4 @@ test.describe('Use saved service', () => {
     await navigate(page, '/')
     await ensurePanelOpen(page, 'service-panel')
   })
-
-  // test('selects saved service and adds widget', async ({ page }) => {
-  //   await page.click(`#widget-selector-panel .widget-option:has-text("${saved[0].name}")`)
-  //   const iframe = page.locator('.widget-wrapper iframe').first()
-  //   await expect(iframe).toHaveAttribute('src', saved[0].url)
-  // })
 })

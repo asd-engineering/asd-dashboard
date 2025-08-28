@@ -5,7 +5,7 @@ import { ciServices } from './data/ciServices'
 import { gzipJsonToBase64url } from '../src/utils/compression.js'
 import { openConfigModalSafe } from './shared/uiHelpers'
 import { bootWithDashboardState } from './shared/bootState.js'
-import { navigate, getUnwrappedConfig } from './shared/common.js'
+import { navigate, getUnwrappedConfig, wipeConfigPreserveSnapshots } from './shared/common.js'
 
 test('URL import stores snapshot and remains switchable', async ({ page }) => {
   const cfgEnc = await gzipJsonToBase64url({ ...ciConfig, boards: ciBoards })
@@ -37,12 +37,7 @@ test('URL import stores snapshot and remains switchable', async ({ page }) => {
   ).toHaveText(/imported/i)
 
   // Wipe persistent state (simulate fresh boot)
-  await page.evaluate(() => {
-    localStorage.removeItem('config')
-    localStorage.removeItem('services')
-    localStorage.removeItem('lastUsedBoardId')
-    localStorage.removeItem('lastUsedViewId')
-  })
+  await wipeConfigPreserveSnapshots(page);
 
   // Reboot SPA
   await navigate(page, '/')
@@ -61,10 +56,6 @@ test('URL import stores snapshot and remains switchable', async ({ page }) => {
   await page.waitForLoadState('domcontentloaded')
   await page.waitForFunction(() => document.body.dataset.ready === 'true')
 
-  // Robustly poll localStorage for config, unwrapping { version, data } if present
   const cfg = await getUnwrappedConfig(page);
   expect((cfg.boards || []).length).toBeGreaterThan(0);
-
-
-  // expect(await boardsLengthHandle.jsonValue()).toBeGreaterThan(0)
 })
