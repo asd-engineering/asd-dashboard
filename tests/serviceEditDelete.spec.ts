@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
 import { ensurePanelOpen } from './shared/panels'
-
+import { getServices } from './shared/common'
 
 test.describe('Service Edit/Delete', () => {
   test.beforeEach(async ({ page }) => {
@@ -26,7 +26,7 @@ test.describe('Service Edit/Delete', () => {
     await page.click('#save-service-modal button:has-text("Save")')
     await expect(modal).toBeHidden()
 
-    const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services')))
+    const services = await getServices(page);
     expect(services.some(s => s.name === 'Toolbox X' && s.url === 'http://localhost/x')).toBeTruthy()
     await expect(page.locator('[data-testid="service-panel"] .panel-item').filter({ hasText: 'Toolbox X' })).toHaveCount(1)
   })

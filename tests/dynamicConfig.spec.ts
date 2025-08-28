@@ -7,6 +7,8 @@ import {
   getConfigBoards,
   b64,
   navigate,
+  getServices,
+  clearStorage
 } from "./shared/common";
 import { ensurePanelOpen } from './shared/panels'
 import { decodeConfig } from "../src/utils/compression.js";
@@ -216,15 +218,13 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
     const stored = await getUnwrappedConfig(page);
     expect(Array.isArray(stored.boards)).toBeTruthy();
 
-    const services = await page.evaluate(
-      () => JSON.parse(localStorage.getItem("services") || "[]")
-    );
+    const services = await getServices(page);
     expect(services.some((s: any) => s.name === "svc1")).toBeTruthy();
   });
 
   test("removing config from localStorage shows popup again", async ({ page }) => {
     await navigate(page, `/?config_base64=${b64(ciConfig)}`);
-    await page.evaluate(() => localStorage.clear());
+    await clearStorage(page);
     await page.reload();
     await expect(page.locator("#config-modal")).toBeVisible();
   });

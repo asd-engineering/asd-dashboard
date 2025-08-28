@@ -263,3 +263,30 @@ export async function selectViewByLabel(page: Page, label: string): Promise<void
     }, label);
   }
 }
+
+/**
+ * Set config and services via StorageManager, not localStorage.
+ * Keeps StorageManager semantics (wrapping, defaults, migrations).
+ */
+export async function setConfigAndServices(
+  page: Page,
+  cfg: any,
+  services: any[],
+): Promise<void> {
+  await page.evaluate(async ({ cfg, services }) => {
+    const { default: sm } = await import('/storage/StorageManager.js');
+    sm.setConfig(cfg);
+    sm.setServices(services as any);
+  }, { cfg, services });
+}
+
+/**
+ * Wipe config/services/lastUsed* but keep the snapshot store intact.
+ * Mirrors the semantics used in reset/switch flows.
+ */
+export async function wipeConfigPreserveSnapshots(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const { default: sm } = await import('/storage/StorageManager.js');
+    sm.clearAllExceptState();
+  });
+}

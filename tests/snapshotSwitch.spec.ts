@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures'
 import { ciConfig, ciBoards } from './data/ciConfig'
 import { ciServices } from './data/ciServices'
-import { navigate, clearStorage } from './shared/common.js'
+import { navigate, clearStorage, wipeConfigPreserveSnapshots } from './shared/common.js'
 import { openConfigModalSafe } from './shared/uiHelpers'
 import { injectSnapshot } from './shared/state.js'
 
@@ -9,12 +9,11 @@ test('switch restores board and view ids with widgets', async ({ page }) => {
   await clearStorage(page)
   await navigate(page,'/')
   const baselineCfg = { ...ciConfig, boards: ciBoards }
+  
   await injectSnapshot(page, baselineCfg, ciServices, 'export/base')
-  await page.evaluate(() => {
-    localStorage.setItem('config', JSON.stringify({ boards: [] }))
-    localStorage.setItem('services', JSON.stringify([]))
-  })
+  await wipeConfigPreserveSnapshots(page);
   await openConfigModalSafe(page)
+
   await page.locator('#stateTab').waitFor();
 
   await page.locator('#stateTab tbody tr:has-text("export/base") button[data-action="switch"]').click()

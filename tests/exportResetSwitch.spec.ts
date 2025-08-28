@@ -1,26 +1,18 @@
 import { test, expect } from './fixtures'
 import { ciConfig } from './data/ciConfig'
 import { ciServices } from './data/ciServices'
-import { navigate } from './shared/common.js'
+import { navigate, wipeConfigPreserveSnapshots, setConfigAndServices } from './shared/common.js'
 import { openConfigModalSafe } from './shared/uiHelpers'
 import { injectSnapshot } from './shared/state.js'
 
 test('exported snapshot remains switchable after reset', async ({ page }) => {
   await navigate(page,'/')
 
-  await page.evaluate(([cfg, svc]) => {
-    localStorage.setItem('config', JSON.stringify(cfg))
-    localStorage.setItem('services', JSON.stringify(svc))
-  }, [ciConfig, ciServices])
+  await setConfigAndServices(page, ciConfig, ciServices);
 
   await injectSnapshot(page, ciConfig, ciServices, 'export/switchable')
 
-  await page.evaluate(() => {
-    localStorage.removeItem('config')
-    localStorage.removeItem('services')
-    localStorage.removeItem('lastUsedBoardId')
-    localStorage.removeItem('lastUsedViewId')
-  })
+  await wipeConfigPreserveSnapshots(page);
 
   await openConfigModalSafe(page)
   await page.click('.tabs button[data-tab="stateTab"]')

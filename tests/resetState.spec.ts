@@ -1,7 +1,7 @@
 // @ts-check
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
-import { navigate, getConfigBoards } from './shared/common'
+import { navigate, getConfigBoards, getServices } from './shared/common'
 
  test.describe('dashboard reset', () => {
   test.beforeEach(async ({ page }) => {
@@ -28,7 +28,7 @@ import { navigate, getConfigBoards } from './shared/common'
 
     const boards = await getConfigBoards(page)
     expect(boards.some(b => b.id === 'b2')).toBeFalsy()
-    const services = await page.evaluate(() => JSON.parse(localStorage.getItem('services') || '[]'))
+    const services = await getServices(page);
     expect(services.some(s => s.name === 'svc1')).toBeFalsy()
 
     await page.click('#open-config-modal')
