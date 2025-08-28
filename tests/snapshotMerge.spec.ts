@@ -23,6 +23,7 @@ test('merge snapshot unions boards and services without duplicates', async ({ pa
   await page.waitForLoadState('domcontentloaded')
   await page.waitForFunction(() => document.body.dataset.ready === 'true')
   await page.waitForSelector('#open-config-modal')
+  
   const final = await page.evaluate(async () => {
     const { default: sm } = await import('/storage/StorageManager.js')
     return { boards: sm.getConfig().boards.length, services: sm.getServices().length }

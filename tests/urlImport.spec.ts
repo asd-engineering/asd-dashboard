@@ -1,3 +1,4 @@
+// tests/urlImport.spec.ts
 import { test, expect } from './fixtures'
 import { ciConfig, ciBoards } from './data/ciConfig'
 import { ciServices } from './data/ciServices'
@@ -18,22 +19,24 @@ test('URL import stores snapshot and remains switchable', async ({ page }) => {
     `/#cfg=${cfgEnc}&svc=${svcEnc}`
   )
 
-  await page.waitForSelector('#fragment-decision-modal')
+  // Decide to switch to the imported environment
+  await page.waitForSelector('#fragment-decision-modal', { state: 'visible' })
   await page.click('#fragment-decision-modal button#switch-environment')
 
-  // Wait for first boot to complete
+  // Wait for first boot to complete (SPA-ready gate)
   await page.waitForLoadState('domcontentloaded')
   await page.waitForFunction(() => document.body.dataset.ready === 'true')
 
+  // Verify snapshot is registered as Imported
   await openConfigModalSafe(page)
   await page.click('.tabs button[data-tab="stateTab"]')
-  await page.locator('#stateTab').waitFor();
+  await page.locator('#stateTab').waitFor()
 
   await expect(
     page.locator('#stateTab tbody tr:not(.hc-details-row)').first().locator('td[data-col="type"]')
   ).toHaveText(/imported/i)
 
-  // wipe persistent state
+  // Wipe persistent state (simulate fresh boot)
   await page.evaluate(() => {
     localStorage.removeItem('config')
     localStorage.removeItem('services')
@@ -44,9 +47,10 @@ test('URL import stores snapshot and remains switchable', async ({ page }) => {
   // Reboot SPA
   await navigate(page, '/')
 
+  // Open the state tab again and switch to the Imported snapshot
   await openConfigModalSafe(page)
   await page.click('.tabs button[data-tab="stateTab"]')
-  await page.locator('#stateTab').waitFor();
+  await page.locator('#stateTab').waitFor()
 
   await page
     .locator('#stateTab tbody tr:not(.hc-details-row):has-text("Imported")')
@@ -57,17 +61,20 @@ test('URL import stores snapshot and remains switchable', async ({ page }) => {
   await page.waitForLoadState('domcontentloaded')
   await page.waitForFunction(() => document.body.dataset.ready === 'true')
 
-  // Instead of immediate evaluate, poll until config is populated
-  const boardCount = await page.waitForFunction(() => {
+  // Robustly poll localStorage for config, unwrapping { version, data } if present
+  const boardsLengthHandle = await page.waitForFunction(() => {
     try {
-      return import('/storage/StorageManager.js').then(m => {
-        const cfg = m.default.getConfig()
-        return cfg && cfg.boards && cfg.boards.length
-      })
+      const raw = localStorage.getItem('config')
+      if (!raw) return 0
+
+      const parsed = JSON.parse(raw)
+      const unwrapped = parsed && typeof parsed === 'object' && 'data' in parsed ? parsed.data : parsed
+      const boards = unwrapped && Array.isArray(unwrapped.boards) ? unwrapped.boards : []
+      return boards.length
     } catch {
       return 0
     }
-  })
+  }, { timeout: 5000 })
 
-  expect(await boardCount.jsonValue()).toBeGreaterThan(0)
+  expect(await boardsLengthHandle.jsonValue()).toBeGreaterThan(0)
 })
