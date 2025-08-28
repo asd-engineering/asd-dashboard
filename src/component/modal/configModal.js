@@ -325,13 +325,10 @@ export async function openConfigModal () {
       delAll.addEventListener('click', async () => {
         if (!confirm('Delete all saved snapshots?')) return
         await StorageManager.clearStateStore()
-        showNotification('All snapshots deleted')
-      })
 
-      delAll.addEventListener('click', async () => {
-        if (!confirm('Delete all saved snapshots?')) return
-        await StorageManager.clearStateStore()
-      // await populateStateTab(tab)
+        const stateTab = document.getElementById('stateTab')
+        if (stateTab) await populateStateTab(stateTab)
+        showNotification('All snapshots deleted')
       })
 
       const closeButton = document.createElement('button')
