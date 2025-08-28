@@ -383,12 +383,12 @@ async function populateStateTab (tab) {
     const domainsTooltip = escapeHtml(Array.from(uniqueDomains).join(', '))
 
     tr.innerHTML = `
-      <td class="hc-actions">
+      <td class="hc-actions" data-col="actions">
         <button data-action="switch" data-id="${row.md5}">Switch</button>
         <button data-action="merge" data-id="${row.md5}">Merge into current</button>
         <button data-action="delete" data-id="${row.md5}">Delete</button>
       </td>
-      <td class="hc-health">
+      <td class="hc-health" data-col="health">
         <span class="hc-summary" aria-live="polite" aria-atomic="true">
           <span class="hc-dot muted"></span>
           <span class="hc-summary-text">not checked</span>
@@ -396,12 +396,12 @@ async function populateStateTab (tab) {
         <button class="hc-btn" data-action="health" data-id="${row.md5}">Healthcheck</button>
         <button class="hc-btn" data-action="toggle" data-id="${row.md5}" disabled>Details</button>
       </td>
-      <td>${escapeHtml(row.name || '')}</td>
-      <td>${escapeHtml(row.type || '')}</td>
-      <td>${new Date(row.ts || Date.now()).toLocaleString()}</td>
-      <td><code>${row.md5 || ''}</code></td>
-      <td>${size} bytes</td>
-      <td class="hc-domains" title="${domainsTooltip}">
+      <td data-col="name">${escapeHtml(row.name || '')}</td>
+      <td data-col="type">${escapeHtml(row.type || '')}</td>
+      <td data-col="date">${new Date(row.ts || Date.now()).toLocaleString()}</td>
+      <td data-col="md5"><code>${row.md5 || ''}</code></td>
+      <td data-col="size">${size} bytes</td>
+      <td class="hc-domains" data-col="domains" title="${domainsTooltip}">
         <span class="hc-domains-count">${uniqueDomains.size}</span>
       </td>
     `
@@ -477,7 +477,6 @@ async function populateStateTab (tab) {
     renderHealthUI(summaryTextEl, summaryDotEl, domainsCell, listEl, {}, undefined, uniqueDomains)
   }
 }
-
 
 /**
  * Switch to the provided snapshot.

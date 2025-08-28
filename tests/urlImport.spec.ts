@@ -16,7 +16,13 @@ test('URL import stores snapshot and remains switchable', async ({ page }) => {
   await page.waitForFunction(() => document.body.dataset.ready === 'true')
   await openConfigModalSafe(page)
   await page.click('.tabs button[data-tab="stateTab"]')
-  await expect(page.locator('#stateTab tbody tr:first-child td:nth-child(2)')).toHaveText('imported')
+
+  // was: td:nth-child(2)
+  await expect(
+    page.locator('#stateTab tbody tr:not(.hc-details-row)').first().locator('td[data-col="type"]')
+  ).toHaveText(/imported/i)
+
+
   await page.evaluate(() => {
     localStorage.removeItem('config')
     localStorage.removeItem('services')
@@ -26,7 +32,10 @@ test('URL import stores snapshot and remains switchable', async ({ page }) => {
   await navigate(page,'/')
   await openConfigModalSafe(page)
   await page.click('.tabs button[data-tab="stateTab"]')
-  await page.locator('#stateTab tbody tr:has-text("Imported") button[data-action="switch"]').click()
+  await page
+    .locator('#stateTab tbody tr:not(.hc-details-row):has-text("Imported")')
+    .locator('button[data-action="switch"]')
+    .click()
   await page.waitForLoadState('domcontentloaded')
   await page.waitForFunction(() => document.body.dataset.ready === 'true')
   await page.waitForSelector('#open-config-modal')
