@@ -61,6 +61,7 @@ export async function injectSnapshot(
   cfg: object,
   svc: object[],
   name: string,
+  opts?: { reload?: boolean }
 ): Promise<void> {
   await page.evaluate(
     async ({ cfg, svc, name }) => {
@@ -77,8 +78,7 @@ export async function injectSnapshot(
     },
     { cfg, svc, name },
   );
-  // We must reload or we witness an empty state table
-  await page.reload()
+  if (opts?.reload !== false) await page.reload();
 }
 
 /**
@@ -118,4 +118,35 @@ export async function mergeSnapshotByName(page: Page, name: string): Promise<voi
 
   await page.waitForLoadState('domcontentloaded');
   await page.waitForSelector('body[data-ready="true"]');
+}
+
+
+/**
+ * If the LRU eviction modal appears, confirm it; otherwise no-op.
+ * Keeps timeouts small and waits for widgetStore to settle.
+ */
+export async function evictIfModalPresent(
+  page: Page,
+  opts: { appearTimeoutMs?: number; hideTimeoutMs?: number } = {},
+): Promise<void> {
+  const appearTimeoutMs = opts.appearTimeoutMs ?? 900;
+  const hideTimeoutMs = opts.hideTimeoutMs ?? 2000;
+
+  const modal = page.locator('#eviction-modal');
+
+  // Give WebKit a brief chance to render the modal. Ignore if it never shows.
+  await modal.waitFor({ state: 'visible', timeout: appearTimeoutMs }).catch(() => {});
+
+  if (await modal.isVisible().catch(() => false)) {
+    await modal.locator('button:has-text("Remove")').click({ trial: false }).catch(() => {});
+  }
+
+  // Always wait for the store to settle; modal may have auto-evicted.
+  try {
+    // reuse your existing helper
+    await waitForWidgetStoreIdle(page);
+  } catch {}
+
+  // If it did show, let it disappear (don’t fail if it’s already gone).
+  await modal.waitFor({ state: 'hidden', timeout: hideTimeoutMs }).catch(() => {});
 }

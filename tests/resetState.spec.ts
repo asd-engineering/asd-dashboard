@@ -21,6 +21,7 @@ import { navigate, getConfigBoards, getServices } from './shared/common'
       expect(dialog.message()).toContain('keep saved states')
       dialog.accept()
     })
+    
     await Promise.all([
       page.click('#reset-button'),
       page.waitForLoadState('networkidle')

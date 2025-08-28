@@ -86,13 +86,6 @@ test.describe("Widget limits", () => {
     await page.locator(".widget-wrapper").first().waitFor();
     await ensurePanelOpen(page, 'service-panel')
 
-    // await page.click('[data-testid="service-panel"] .panel-item:has-text("ASD-terminal")');
-    // const modal = page.locator("#eviction-modal");
-    // await expect(modal).toBeVisible();
-    // await modal.locator('button:has-text("Remove")').click();
-    // await waitForWidgetStoreIdle(page);
-    // await expect(modal).toBeHidden();
-
     await page.click('[data-testid="service-panel"] .panel-item:has-text("ASD-terminal")')
 
     const modal = page.locator('#eviction-modal')
@@ -103,7 +96,7 @@ test.describe("Widget limits", () => {
     }
     await waitForWidgetStoreIdle(page)
 
-    await expect(modal).toHaveCount(0) // hidden or never shown
+    await expect(modal).toBeHidden();
     await page.waitForFunction(() => document.querySelectorAll('.widget-wrapper').length === 1)
 
     const ids = await page.$$eval(".widget-wrapper", (els) =>

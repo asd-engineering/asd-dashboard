@@ -40,7 +40,7 @@ export async function evaluateSafe(page: Page, fn: (arg?: any) => any, arg?: any
     return await run();
   } catch (e: any) {
     // WebKit (and sometimes Chromium) throws this when a nav happens mid-evaluate
-    if (String(e?.message || '').includes('Execution context was destroyed')) {
+    if (/(Execution context was destroyed|Target closed|Navigation failed)/i.test(String(e?.message || ''))) {
       await waitForAppReady(page);
       return await run();
     }

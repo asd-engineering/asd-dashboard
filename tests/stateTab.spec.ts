@@ -13,12 +13,12 @@ test.describe('Snapshots & Share tab', () => {
     const svc = ciServices
     await injectSnapshot(page, cfg, svc, 'one')
     const altCfg = { ...ciConfig, globalSettings: { ...ciConfig.globalSettings, theme: 'dark' } }
-    await injectSnapshot(page, altCfg, svc, 'two')
+    await injectSnapshot(page, altCfg, svc, 'two', { reload: true })
     await page.waitForSelector('dialog.user-notification', { state: 'detached' }).catch(() => {})
   })
 
   test('restore and delete snapshot (direct switch, no modal)', async ({ page }) => {
-    await page.reload()
+    // await page.reload()
     await openConfigModalSafe(page)
 
     await page.click('.tabs button[data-tab="stateTab"]')
@@ -27,7 +27,6 @@ test.describe('Snapshots & Share tab', () => {
 
     await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
 
-    // SPA reload pattern (see AGENTS.md “Best Practices”)
     await page.waitForLoadState('domcontentloaded')
     await page.waitForFunction(() => document.body.dataset.ready === 'true')
 

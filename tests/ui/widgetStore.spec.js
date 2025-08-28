@@ -1,6 +1,6 @@
 // tests/ui/widgetStore.spec.js
 import { test, expect } from '../fixtures'
-import { getWidgetStoreSize, waitForWidgetStoreIdle } from '../shared/state.js'
+import { getWidgetStoreSize, waitForWidgetStoreIdle, evictIfModalPresent } from '../shared/state.js'
 import { navigate, selectViewByLabel } from '../shared/common.js'
 import { ciConfig, ciBoards } from '../data/ciConfig'
 import { ciServices } from '../data/ciServices'
@@ -179,12 +179,9 @@ test.describe('WidgetStore UI Tests', () => {
     expect(afterHydration).toBeGreaterThanOrEqual(2)
     expect(afterHydration).toBeLessThanOrEqual(3)
 
-    const widgets = page.locator('.widget-wrapper')
-    const modal = page.locator('#eviction-modal')
+    await evictIfModalPresent(page)
 
-    await modal.locator('button:has-text("Remove")').click()
-    await waitForWidgetStoreIdle(page)
-    await expect(modal).toBeHidden()
+    const widgets = page.locator('.widget-wrapper')
 
     // Now enforce the invariant: exactly 2 widgets should remain.
     await expect(widgets).toHaveCount(2)

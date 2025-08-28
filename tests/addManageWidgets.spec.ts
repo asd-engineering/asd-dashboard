@@ -7,10 +7,10 @@ import {
   addServicesByName,
   navigate,
   handleDialog,
-  dragAndDropWidgetStable
+  dragAndDropWidgetStable,
 } from './shared/common.js';
 import { setLocalItem } from './shared/state'
-
+import { waitForWidgetStoreIdle } from "./shared/state.js";
 
 test.describe('Widgets', () => {
   test.beforeEach(async ({ page }) => {
@@ -54,7 +54,9 @@ test.describe('Widgets', () => {
     }
 
     await dragAndDropWidgetStable(page, 0, 1)
+    await waitForWidgetStoreIdle(page);
     await dragAndDropWidgetStable(page, 2, 3)
+    await waitForWidgetStoreIdle(page);
 
     // Log data-order attributes after drag and drop
     const orderAfterDragDrop = {};
@@ -111,6 +113,7 @@ test.describe('Widgets', () => {
   test('should generate widgets with unique and persistent UUIDs', async ({ page }) => {
     // Add multiple widgets
     await addServicesByName(page, 'ASD-terminal', 10);
+    
 
     // Collect UUIDs of all widgets
     const widgetUUIDs = await page.$$eval('.widget-wrapper', 
@@ -133,6 +136,7 @@ test.describe('Widgets', () => {
 
   test(`should be able to change the widget url ${emojiList.link.unicode}`, async ({ page }) => {
     await addServices(page, 2);
+    await waitForWidgetStoreIdle(page);
 
     // Listen for the dialog event
     await handleDialog(page, 'prompt', 'https://new.url')
