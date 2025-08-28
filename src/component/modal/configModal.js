@@ -328,11 +328,6 @@ export async function openConfigModal () {
         showNotification('All snapshots deleted')
       })
 
-      // const delAll = document.createElement('button')
-      // delAll.id = 'delete-all-snapshots'
-      // delAll.textContent = 'Delete all snapshots'
-      // delAll.setAttribute('aria-label', 'Delete all saved snapshots')
-      // tab.appendChild(delAll)
       delAll.addEventListener('click', async () => {
         if (!confirm('Delete all saved snapshots?')) return
         await StorageManager.clearStateStore()

@@ -207,13 +207,10 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 #stateTab td:first-child {
   font-family: var(--font-mono);
   font-size: 0.8rem;
-
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
-
   display: inline-flex;
-  /* flex-flow: row; */
   padding: 4px;
   min-height: 82px;
   align-items: center;
@@ -227,22 +224,19 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 
 /* Snapshot actions: Switch (green), Merge (blue), Delete (red) */
 #stateTab td:first-child button[data-action="switch"] {
-  background-color: var(--color-success);
-  color: #fff;
+  color: var(--color-text); 
   border: none;
   border-radius: var(--radius-1);
 }
 
 #stateTab td:first-child button[data-action="merge"] {
-  background-color: var(--color-accent);
-  color: #fff;
+  color: var(--color-text); 
   border: none;
   border-radius: var(--radius-1);
 }
 
 #stateTab td:first-child button[data-action="delete"] {
-  background-color: var(--color-danger);
-  color: #fff;
+  color: var(--color-text); 
   border: none;
   border-radius: var(--radius-1);
 }
