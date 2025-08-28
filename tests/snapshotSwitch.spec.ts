@@ -19,16 +19,19 @@ test('switch restores board and view ids with widgets', async ({ page }) => {
 
   await page.locator('#stateTab tbody tr:has-text("export/base") button[data-action="switch"]').click()
   await page.waitForLoadState('domcontentloaded')
-  await page.waitForFunction(() => document.body.dataset.ready === 'true')
+
+  await page.waitForSelector('body[data-ready="true"]');
+
   const result = await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js')
-    const cfg = sm.getConfig()
+    const { default: sm } = await import('/storage/StorageManager.js');
+    const cfg = sm.getConfig();
     return {
       boardId: sm.misc.getLastBoardId(),
       viewId: sm.misc.getLastViewId(),
       widgets: cfg.boards?.[0]?.views?.[0]?.widgetState.length || 0
-    }
-  })
+    };
+  });
+
   expect(result.boardId).toBe(ciBoards[0].id)
   expect(result.viewId).toBe(ciBoards[0].views[0].id)
   expect(result.widgets).toBeGreaterThan(0)

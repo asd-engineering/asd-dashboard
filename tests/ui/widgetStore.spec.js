@@ -157,27 +157,21 @@ test.describe('WidgetStore UI Tests', () => {
       }
     ]
 
-    const beforeHydration = await page.$$eval(
-      '.widget-wrapper',
-      (els) => els.length
-    )
+    const beforeHydration = await page.$$eval('.widget-wrapper', els => els.length)
     console.log('Widget count before hydration:', beforeHydration)
 
     await routeWithLRUConfig(page, widgetState, 2)
 
     // Use StorageManager to clear persisted data instead of localStorage.clear()
     await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js')
+      const { default: sm } = await import('../../../../../../storage/StorageManager.js')
       sm.clearAll()
     })
 
     await page.reload()
     await waitForWidgetStoreIdle(page)
 
-    const afterHydration = await page.$$eval(
-      '.widget-wrapper',
-      (els) => els.length
-    )
+    const afterHydration = await page.$$eval('.widget-wrapper', els => els.length)
     console.log('Widget count after hydration:', afterHydration)
 
     // Cross-engine tolerance: WebKit may render 3 before eviction modal processes.
@@ -187,24 +181,20 @@ test.describe('WidgetStore UI Tests', () => {
     const widgets = page.locator('.widget-wrapper')
     const modal = page.locator('#eviction-modal')
 
-    // If the modal appears (overflow detected), resolve it; otherwise widgets may already be <= maxSize
-    await modal.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {})
-    if (await modal.isVisible()) {
-      await modal.locator('button:has-text("Remove")').click()
-      await waitForWidgetStoreIdle(page)
-      await expect(modal).toBeHidden()
-    }
+    await modal.locator('button:has-text("Remove")').click()
+    await waitForWidgetStoreIdle(page)
+    await expect(modal).toBeHidden()
 
     // Now enforce the invariant: exactly 2 widgets should remain.
-    await expect(widgets).toHaveCount(2, { timeout: 3000 })
+    await expect(widgets).toHaveCount(2)
 
     // Reload should keep at most 2
     await page.reload()
     await waitForWidgetStoreIdle(page)
-    await expect(widgets).toHaveCount(2, { timeout: 3000 })
+    await expect(widgets).toHaveCount(2)
 
-    const ids = await page.$$eval('.widget-wrapper', (els) =>
-      els.map((e) => e.getAttribute('data-dataid'))
+    const ids = await page.$$eval('.widget-wrapper', els =>
+      els.map(e => e.getAttribute('data-dataid'))
     )
     expect(ids).not.toContain('W1')
   })
