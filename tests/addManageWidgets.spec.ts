@@ -34,7 +34,7 @@ test.describe('Widgets', () => {
 
     // Add 4 services
     await addServices(page, widgetCount);
-
+    
     const widgets = page.locator('.widget-wrapper');
     await expect(widgets).toHaveCount(4);
 
@@ -113,8 +113,8 @@ test.describe('Widgets', () => {
   test('should generate widgets with unique and persistent UUIDs', async ({ page }) => {
     // Add multiple widgets
     await addServicesByName(page, 'ASD-terminal', 10);
+    await waitForWidgetStoreIdle(page);
     
-
     // Collect UUIDs of all widgets
     const widgetUUIDs = await page.$$eval('.widget-wrapper', 
       elements => elements.map(el => el.getAttribute('data-dataid'))
@@ -136,7 +136,6 @@ test.describe('Widgets', () => {
 
   test(`should be able to change the widget url ${emojiList.link.unicode}`, async ({ page }) => {
     await addServices(page, 2);
-    await waitForWidgetStoreIdle(page);
 
     // Listen for the dialog event
     await handleDialog(page, 'prompt', 'https://new.url')

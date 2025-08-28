@@ -35,16 +35,20 @@ test('switch environment flow', async ({ page }) => {
   await injectSnapshot(page, snapCfg, ciServices, 'snap1')
   await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()))
   await page.waitForSelector('dialog.user-notification', { state: 'detached' }).catch(() => {})
-  await page.click('.tabs button[data-tab="stateTab"]')
-  await page.locator('#stateTab').waitFor();
+
+  // await page.locator('#stateTab').waitFor();
+  // await page.click('.tabs button[data-tab="stateTab"]')
+
   await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
   await page.waitForLoadState('domcontentloaded')
   await page.waitForSelector('[data-testid="board-panel"]')
   await page.waitForFunction(() => document.body.dataset.ready === 'true')
+  
   const count = await page.evaluate(async () => {
     const { default: sm } = await import('/storage/StorageManager.js')
     return (await sm.loadStateStore()).states.length
   })
+
   const theme = await page.evaluate(async () => {
     const { default: sm } = await import('/storage/StorageManager.js')
     return sm.getConfig().globalSettings.theme
@@ -60,7 +64,8 @@ test('no restore wording remains', async ({ page }) => {
   await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()))
   await page.waitForSelector('dialog.user-notification', { state: 'detached' }).catch(() => {})
   await page.click('.tabs button[data-tab="stateTab"]')
-  await page.locator('#stateTab').waitFor();
+  // await page.locator('#stateTab').waitFor();
+  
   await expect(page.locator('text=Restore')).toHaveCount(0)
   await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
   await page.waitForLoadState('domcontentloaded')

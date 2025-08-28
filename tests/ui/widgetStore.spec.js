@@ -1,7 +1,7 @@
 // tests/ui/widgetStore.spec.js
 import { test, expect } from '../fixtures'
 import { getWidgetStoreSize, waitForWidgetStoreIdle, evictIfModalPresent } from '../shared/state.js'
-import { navigate, selectViewByLabel } from '../shared/common.js'
+import { navigate, selectViewByLabel, evaluateSafe } from '../shared/common.js'
 import { ciConfig, ciBoards } from '../data/ciConfig'
 import { ciServices } from '../data/ciServices'
 
@@ -157,20 +157,20 @@ test.describe('WidgetStore UI Tests', () => {
       }
     ]
 
-    const beforeHydration = await page.$$eval('.widget-wrapper', els => els.length)
-    console.log('Widget count before hydration:', beforeHydration)
+    // const beforeHydration = await page.$$eval('.widget-wrapper', els => els.length)
+    // console.log('Widget count before hydration:', beforeHydration)
 
     await routeWithLRUConfig(page, widgetState, 2)
 
     // Use StorageManager to clear persisted data instead of localStorage.clear()
-    await page.evaluate(async () => {
+    await evaluateSafe(page, async () => {
       // eslint-disable-next-line
       const { default: sm } = await import('/storage/StorageManager.js')
       sm.clearAll()
     })
 
     await page.reload()
-    await waitForWidgetStoreIdle(page)
+    await evictIfModalPresent(page)
 
     const afterHydration = await page.$$eval('.widget-wrapper', els => els.length)
     console.log('Widget count after hydration:', afterHydration)
@@ -179,16 +179,16 @@ test.describe('WidgetStore UI Tests', () => {
     expect(afterHydration).toBeGreaterThanOrEqual(2)
     expect(afterHydration).toBeLessThanOrEqual(3)
 
-    await evictIfModalPresent(page)
-
     const widgets = page.locator('.widget-wrapper')
 
     // Now enforce the invariant: exactly 2 widgets should remain.
+    await waitForWidgetStoreIdle(page)
     await expect(widgets).toHaveCount(2)
 
     // Reload should keep at most 2
     await page.reload()
-    await waitForWidgetStoreIdle(page)
+    await evictIfModalPresent(page)
+
     await expect(widgets).toHaveCount(2)
 
     const ids = await page.$$eval('.widget-wrapper', els =>

@@ -1,7 +1,7 @@
 // common.ts
 import { type Page, expect } from "@playwright/test";
 import { ensurePanelOpen } from './panels'
-
+import { waitForWidgetStoreIdle, evictIfModalPresent } from '../shared/state.js'
 
 /**
  * Wait until the app signals readiness.
@@ -52,11 +52,25 @@ export async function evaluateSafe(page: Page, fn: (arg?: any) => any, arg?: any
  * Add the first `count` services by clicking options in the widget selector panel.
  * Skips index 0 if it’s a placeholder/search row.
  */
+// export async function addServices(page: Page, count: number) {
+//   await ensurePanelOpen(page, 'service-panel')
+//   for (let i = 0; i < count; i++) {
+//     await page.locator('[data-testid="service-panel"] .panel-item').nth(i).click();
+//   }
+// }
 export async function addServices(page: Page, count: number) {
-  await ensurePanelOpen(page, 'service-panel')
+  // If an eviction dialog is up from the previous add, resolve it first.
+  await evictIfModalPresent(page, { appearTimeoutMs: 800, hideTimeoutMs: 2000 });
+
   for (let i = 0; i < count; i++) {
-    await page.locator('[data-testid="service-panel"] .panel-item').nth(i).click();
+    // Re-open the panel (it may have auto-hidden).
+    await ensurePanelOpen(page, 'service-panel');
+    const row = page.locator('[data-testid="service-panel"] .panel-item').nth(i);
+    await row.scrollIntoViewIfNeeded();
+    await row.click();
   }
+  // Let create+evict complete; handle any modal that appeared because of THIS click.
+  await evictIfModalPresent(page, { appearTimeoutMs: 800, hideTimeoutMs: 2000 });
 }
 
 /**

@@ -1,5 +1,6 @@
 // @ts-check
 import { type Page } from "@playwright/test";
+import { evaluateSafe } from "./common";
 
 /**
  * Retrieve the current widgetStore size.
@@ -18,7 +19,7 @@ export async function getWidgetStoreSize(page: Page): Promise<number> {
  * @returns {Promise<void>}
  */
 export async function waitForWidgetStoreIdle(page: Page): Promise<void> {
-  await page.evaluate(async () => {
+  await evaluateSafe(page, async () => {
     if (window.asd?.widgetStore?.idle) {
       await window.asd.widgetStore.idle();
     }
