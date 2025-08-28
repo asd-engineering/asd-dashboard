@@ -129,3 +129,26 @@ select:-webkit-autofill {
   transition: background-color 9999s ease-out 0s;
   box-shadow: 0 0 0px 1000px var(--control-bg) inset;
 }
+
+/* Global scrollbar styling (Firefox) */
+* {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin; /* auto | thin | none */
+}
+
+/* Global scrollbar styling (WebKit: Chrome, Edge, Safari) */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px; /* horizontal bars */
+}
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 8px;
+  border: 2px solid var(--scrollbar-track); /* adds padding illusion */
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}

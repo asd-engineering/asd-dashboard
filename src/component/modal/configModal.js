@@ -401,7 +401,7 @@ async function populateStateTab (tab) {
 
     // name cell: prepend a green check icon when current (fallback ✓)
     const checkIcon = (typeof emojiList !== 'undefined' && emojiList?.checkGreen?.icon) ? emojiList.checkGreen.icon : '✓'
-    const currentBadge = isCurrent ? `<span class="hc-current-badge" title="Currently in use"> (current)</span>` : ''
+    const currentBadge = isCurrent ? '<span class="hc-current-badge" title="Currently in use"> (current)</span>' : ''
 
     // actions: hide Switch/Merge when current
     const actionsHtml = isCurrent
@@ -542,7 +542,6 @@ async function applySnapshotSwitch (row) {
     alert('Failed to switch snapshot')
   }
 }
-
 
 /**
  * Merge snapshot payloads into current live state.

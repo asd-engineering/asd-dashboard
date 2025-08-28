@@ -198,13 +198,18 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 }
 #stateFilter:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--focus-ring); }
 
+thead {
+  min-height: 20px;
+}
+
 #stateTab table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 #stateTab th, #stateTab td {
-  padding: 12px var(--space-6); text-align: left; vertical-align: middle; border-bottom: 1px solid var(--color-border);
+  padding: 12px var(--space-6); text-align: left; vertical-align: middle; border-bottom: 1px solid var(--color-border); min-height: 110px; 
 }
 #stateTab th { font-weight: 600; color: var(--color-text-weak); background-color: var(--color-soft); }
 #stateTab td { color: var(--color-text); }
 
+tZ
 /* Named columns for stability */
 #stateTab th[data-col="actions"],
 #stateTab td[data-col="actions"] {
@@ -215,13 +220,16 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
   text-overflow: unset;
   padding: 4px;
   vertical-align: middle;
-}
-#stateTab td[data-col="actions"] {
   display: inline-flex;
   min-height: 82px;
   align-items: center;
   gap: 8px;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  min-height: 110px;       /* replace old 82px */
 }
+
 
 /* Base buttons */
 #stateTab td button {
@@ -327,4 +335,8 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
   opacity: 0.5;
   cursor: default;
   pointer-events: none;
+}
+#stateTab th,
+#stateTab td {
+  min-height: 40px;       /* uniform row baseline */
 }
