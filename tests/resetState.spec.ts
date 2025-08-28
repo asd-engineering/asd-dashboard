@@ -33,13 +33,13 @@ import { navigate, getConfigBoards } from './shared/common'
 
     await page.click('#open-config-modal')
     await page.click('button:has-text("Snapshots & Share")')
-    await expect(page.locator('#stateTab tbody tr')).toHaveCount(1)
+    await expect(page.locator('#stateTab tbody tr:has-text("snap")')).toHaveCount(1)
 
     page.once('dialog', dialog => {
       expect(dialog.message()).toContain('Delete all saved snapshots')
       dialog.accept()
     })
     await page.click('text=Delete all snapshots')
-    await expect(page.locator('#stateTab tbody tr')).toHaveCount(0)
+    await expect(page.locator('#stateTab tbody tr:has-text("snap")')).toHaveCount(0)
   })
  })
