@@ -38,6 +38,7 @@ export function openEvictionModal (opts) {
       buildContent: (modal, closeModal) => {
         const headerEl = document.createElement('h1')
         headerEl.id = 'eviction-header'
+        headerEl.classList.add('modal__header')
         headerEl.textContent = evictionMessages.header(vm.selectionLimit)
 
         const subEl = document.createElement('p')
@@ -54,13 +55,6 @@ export function openEvictionModal (opts) {
 
         const list = document.createElement('div')
         list.id = 'eviction-list'
-        Object.assign(list.style, {
-          maxHeight: '200px',
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.25rem'
-        })
 
         /** @type {Map<string,HTMLInputElement>} */
         const cbMap = new Map()

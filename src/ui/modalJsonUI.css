@@ -144,6 +144,26 @@
 .modal__btn--cancel:hover { background-color: #6c757d; color: #fff; }
 .modal__btn--toggle { align-self: flex-end; margin: 0 0 12px 0; }
 
+/* Eviction modal styles */
+#eviction-modal #eviction-header {
+  margin: 0 0 .5rem 0;
+}
+#eviction-modal #eviction-subtext,
+#eviction-modal #eviction-disclaimer {
+  margin: 0 0 .5rem 0;
+}
+#eviction-modal #eviction-list {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+  margin: 0;
+}
+#eviction-modal #eviction-counter {
+  margin: .5rem 0;
+}
+
 .modal__label + div > button:last-of-type, div[style*="display: flex"] > button {
   flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
   font-size: 1.5rem; font-weight: 300; line-height: 1; display: flex;

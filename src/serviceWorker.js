@@ -7,7 +7,8 @@
  */
 const CACHE_NAME = 'my-cache-v3'
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', function (event) {
+  const fetchEvent = /** @type {any} */(event)
   const testUrls = [
     'http://localhost:8000/asd/toolbox',
     'http://localhost:8000/asd/terminal',
@@ -15,8 +16,8 @@ self.addEventListener('fetch', (event) => {
     'http://localhost:8000/asd/containers'
   ]
 
-  if (testUrls.includes(event.request.url)) {
-    event.respondWith(
+  if (testUrls.includes(fetchEvent.request.url)) {
+    fetchEvent.respondWith(
       new Response('<html><body></body></html>', {
         headers: { 'Content-Type': 'text/html' }
       })

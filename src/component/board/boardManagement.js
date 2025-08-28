@@ -143,6 +143,10 @@ export async function switchView (boardId = getCurrentBoardId(), viewId) {
     }
   }
 
+  const missing = view.widgetState.filter(w => !widgetStore.has(w.dataid))
+  const proceed = await widgetStore.confirmCapacity(missing.length)
+  if (!proceed) return
+
   for (const widget of view.widgetState) {
     if (widgetStore.has(widget.dataid)) {
       widgetStore.show(widget.dataid)
@@ -154,7 +158,8 @@ export async function switchView (boardId = getCurrentBoardId(), viewId) {
         widget.type,
         boardId,
         viewId,
-        widget.dataid
+        widget.dataid,
+        { skipCapacity: true }
       )
     }
   }
