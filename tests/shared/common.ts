@@ -148,12 +148,15 @@ export async function handleDialog(page: Page, type: string, inputText = "") {
     }
   });
 }
-
+// await waitForWidgetStoreIdle(page);
 /**
  * Click a specific service multiple times using the widget selector panel.
  */
-export async function addServicesByName(page: Page, serviceName: string, count: number) {
+export async function addServicesByName(page: Page, serviceName: string, count: number, processEvict=false) {
   for (let i = 0; i < count; i++) {
+    if(processEvict){
+      await evictIfModalPresent(page)
+    }
     await selectServiceByName(page, serviceName);
   }
 }

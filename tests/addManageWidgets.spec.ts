@@ -34,7 +34,6 @@ test.describe('Widgets', () => {
 
     // Add 4 services
     await addServices(page, widgetCount);
-    
     const widgets = page.locator('.widget-wrapper');
     await expect(widgets).toHaveCount(4);
 

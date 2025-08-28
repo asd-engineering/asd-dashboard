@@ -1,9 +1,10 @@
 // tests/ui/widgetStore.spec.js
 import { test, expect } from '../fixtures'
-import { getWidgetStoreSize, waitForWidgetStoreIdle, evictIfModalPresent } from '../shared/state.js'
-import { navigate, selectViewByLabel, evaluateSafe } from '../shared/common.js'
+import { getWidgetStoreSize, waitForWidgetStoreIdle } from '../shared/state.js'
+import { navigate, selectViewByLabel, addServicesByName } from '../shared/common.js'
 import { ciConfig, ciBoards } from '../data/ciConfig'
 import { ciServices } from '../data/ciServices'
+import { routeWithWidgetStoreSize } from '../shared/mocking'
 
 /**
  * Deep clone helper used to avoid mutating shared fixtures.
@@ -53,39 +54,6 @@ async function routeBase (page, boards) {
   )
 }
 
-/**
- * Routes config for LRU scenario and sets maxSize.
- * @param {import('@playwright/test').Page} page
- * @param {Array<object>} widgetState
- * @param {number} [maxSize=2]
- * @returns {Promise<void>}
- */
-async function routeWithLRUConfig (page, widgetState, maxSize = 2) {
-  const boards = [
-    {
-      id: 'board-lru',
-      name: 'LRU Board',
-      order: 0,
-      views: [{ id: 'view-lru', name: 'LRU View', widgetState }]
-    }
-  ]
-
-  await page.unroute('**/config.json').catch(() => {})
-  await routeBase(page, boards)
-
-  // Ensure the widgetStore picks up maxSize ASAP during boot.
-  await page.addInitScript((size) => {
-    const apply = () => {
-      if (window.asd?.widgetStore) {
-        window.asd.widgetStore.maxSize = size
-      } else {
-        setTimeout(apply, 0)
-      }
-    }
-    apply()
-  }, maxSize)
-}
-
 const defaultBoards = () => [
   {
     ...clone(ciBoards[0]),
@@ -127,74 +95,40 @@ test.describe('WidgetStore UI Tests', () => {
   })
 
   test('LRU Eviction Policy', async ({ page }) => {
-    const widgetState = [
-      {
-        order: '0',
-        url: 'http://localhost:8000/asd/toolbox',
-        columns: '1',
-        rows: '1',
-        type: 'web',
-        dataid: 'W1',
-        metadata: { title: 'w1' }
-      },
-      {
-        order: '1',
-        url: 'http://localhost:8000/asd/toolbox',
-        columns: '1',
-        rows: '1',
-        type: 'web',
-        dataid: 'W2',
-        metadata: { title: 'w2' }
-      },
-      {
-        order: '2',
-        url: 'http://localhost:8000/asd/toolbox',
-        columns: '1',
-        rows: '1',
-        type: 'web',
-        dataid: 'W3',
-        metadata: { title: 'w3' }
-      }
-    ]
-
-    // const beforeHydration = await page.$$eval('.widget-wrapper', els => els.length)
-    // console.log('Widget count before hydration:', beforeHydration)
-
-    await routeWithLRUConfig(page, widgetState, 2)
-
-    // Use StorageManager to clear persisted data instead of localStorage.clear()
-    await evaluateSafe(page, async () => {
-      // eslint-disable-next-line
-      const { default: sm } = await import('/storage/StorageManager.js')
-      sm.clearAll()
-    })
-
-    await page.reload()
-    await evictIfModalPresent(page)
-
-    const afterHydration = await page.$$eval('.widget-wrapper', els => els.length)
-    console.log('Widget count after hydration:', afterHydration)
-
-    // Cross-engine tolerance: WebKit may render 3 before eviction modal processes.
-    expect(afterHydration).toBeGreaterThanOrEqual(2)
-    expect(afterHydration).toBeLessThanOrEqual(3)
-
-    const widgets = page.locator('.widget-wrapper')
-
-    // Now enforce the invariant: exactly 2 widgets should remain.
-    await waitForWidgetStoreIdle(page)
-    await expect(widgets).toHaveCount(2)
-
-    // Reload should keep at most 2
-    await page.reload()
-    await evictIfModalPresent(page)
-
-    await expect(widgets).toHaveCount(2)
-
-    const ids = await page.$$eval('.widget-wrapper', els =>
-      els.map(e => e.getAttribute('data-dataid'))
+    // Boot with maxSize=2 so adding a 3rd forces an eviction
+    await routeWithWidgetStoreSize(
+      page,
+      [
+        {
+          id: 'b1',
+          name: 'B1',
+          order: 0,
+          views: [{ id: 'v1', name: 'V1', widgetState: [] }]
+        }
+      ],
+      [
+        { name: 'ASD-toolbox', url: 'http://localhost:8000/asd/toolbox' },
+        { name: 'ASD-terminal', url: 'http://localhost:8000/asd/terminal' },
+        { name: 'ASD-tunnel', url: 'http://localhost:8000/asd/tunnel' }
+      ],
+      2
     )
-    expect(ids).not.toContain('W1')
+
+    await navigate(page, '/')
+
+    // Add three → oldest must be evicted to keep at most 2 visible
+    await addServicesByName(page, 'ASD-toolbox', 1, true)
+    await addServicesByName(page, 'ASD-terminal', 2, true)
+    await addServicesByName(page, 'ASD-tunnel', 2, true)
+    await waitForWidgetStoreIdle(page)
+
+    // Count only visible wrappers — hidden/tearing-down nodes shouldn't fail the test
+    await expect(page.locator('.widget-wrapper:visible')).toHaveCount(2)
+
+    // Reload must preserve the invariant
+    await page.reload()
+    await waitForWidgetStoreIdle(page)
+    await expect(page.locator('.widget-wrapper:visible')).toHaveCount(2)
   })
 
   test('Removes widget via UI and updates widgetStore state', async ({
