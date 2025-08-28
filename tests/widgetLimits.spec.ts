@@ -122,6 +122,67 @@ test.describe("Widget limits", () => {
     expect(ids).not.toContain("W1");
   });
 
+  test("view switch auto-evicts multiple widgets in one pass", async ({ page }) => {
+    const boards = [
+      {
+        id: "b",
+        name: "B",
+        order: 0,
+        views: [
+          {
+            id: "v1",
+            name: "V1",
+            widgetState: [
+              { order: "0", url: "http://localhost:8000/asd/toolbox", type: "web", dataid: "W1", serviceId: "toolbox" },
+              { order: "1", url: "http://localhost:8000/asd/terminal", type: "web", dataid: "W2", serviceId: "terminal" },
+              { order: "2", url: "http://localhost:8000/asd/tunnel", type: "web", dataid: "W3", serviceId: "tunnel" },
+              { order: "3", url: "http://localhost:8000/asd/containers", type: "web", dataid: "W4", serviceId: "containers" }
+            ]
+          },
+          {
+            id: "v2",
+            name: "V2",
+            widgetState: [
+              { order: "0", url: "http://localhost:8000/asd/toolbox", type: "web", dataid: "W1", serviceId: "toolbox" },
+              { order: "1", url: "http://localhost:8000/asd/terminal", type: "web", dataid: "W2", serviceId: "terminal" },
+              { order: "2", url: "http://localhost:8000/asd/tunnel", type: "web", dataid: "W5", serviceId: "tunnel" },
+              { order: "3", url: "http://localhost:8000/asd/containers", type: "web", dataid: "W6", serviceId: "containers" }
+            ]
+          }
+        ]
+      }
+    ]
+
+    await routeLimits(page, boards, ciServices, 4, {
+      globalSettings: {
+        ...ciConfig.globalSettings,
+        localStorage: {
+          ...ciConfig.globalSettings.localStorage,
+          defaultBoard: "b",
+          defaultView: "v1",
+          loadDashboardFromConfig: "true"
+        }
+      }
+    })
+
+    await navigate(page, "/")
+    await page.locator('.widget-wrapper').nth(3).waitFor()
+
+    await page.evaluate(async () => {
+      const { switchView } = await import('/component/board/boardManagement.js')
+      await switchView('b', 'v2')
+    })
+
+    const modal = page.locator('#eviction-modal')
+    await expect(modal).toBeVisible()
+    await expect(modal.locator('#eviction-header')).toHaveText('2 widgets must be removed to continue navigation.')
+    await modal.locator('#evict-lru-btn').click()
+    await waitForWidgetStoreIdle(page)
+    await expect(modal).toBeHidden()
+    const ids = await page.$$eval('.widget-wrapper', els => els.map(e => e.getAttribute('data-dataid')))
+    expect(ids.sort()).toEqual(['W1', 'W2', 'W5', 'W6'].sort())
+  })
+
   test("simultaneous instance request uses single widget", async ({ page }) => {
     const boards = [
       { id: "b1", name: "B1", order: 0, views: [{ id: "v1", name: "V1", widgetState: [] }] },

@@ -38,11 +38,8 @@ export function openEvictionModal (opts) {
       buildContent: (modal, closeModal) => {
         const headerEl = document.createElement('h1')
         headerEl.id = 'eviction-header'
+        headerEl.classList.add('modal__header')
         headerEl.textContent = evictionMessages.header(vm.selectionLimit)
-
-        const subEl = document.createElement('p')
-        subEl.id = 'eviction-subtext'
-        subEl.textContent = evictionMessages.subtextMax(vm.maxPerService || 0)
 
         const discEl = document.createElement('p')
         discEl.id = 'eviction-disclaimer'
@@ -50,17 +47,10 @@ export function openEvictionModal (opts) {
         discEl.classList.add('small', 'muted')
 
         modal.setAttribute('aria-labelledby', headerEl.id)
-        modal.setAttribute('aria-describedby', `${subEl.id} ${discEl.id}`)
+        // modal.setAttribute('aria-describedby', `${subEl.id} ${discEl.id}`)
 
         const list = document.createElement('div')
         list.id = 'eviction-list'
-        Object.assign(list.style, {
-          maxHeight: '200px',
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.25rem'
-        })
 
         /** @type {Map<string,HTMLInputElement>} */
         const cbMap = new Map()
@@ -91,7 +81,7 @@ export function openEvictionModal (opts) {
 
         const autoBtn = document.createElement('button')
         autoBtn.id = 'evict-lru-btn'
-        autoBtn.textContent = 'Auto-select LRU'
+        autoBtn.textContent = 'Auto-Remove oldest widget(s)'
         autoBtn.classList.add('modal__btn')
         autoBtn.disabled = vm.items.length === 0
         autoBtn.addEventListener('click', async () => {
@@ -126,9 +116,9 @@ export function openEvictionModal (opts) {
 
         const btnGroup = document.createElement('div')
         btnGroup.classList.add('modal__btn-group')
-        btnGroup.append(autoBtn, continueBtn, cancelBtn)
+        btnGroup.append(continueBtn, autoBtn, cancelBtn)
 
-        modal.append(headerEl, subEl, discEl, list, counter, btnGroup)
+        modal.append(headerEl, discEl, list, counter, btnGroup)
 
         const update = () => {
           counter.textContent = `${vm.state.selectedIds.size} of ${vm.selectionLimit} widgets selected`
