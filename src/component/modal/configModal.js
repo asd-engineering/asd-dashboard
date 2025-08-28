@@ -523,34 +523,204 @@ async function computeUniqueDomains (svcEnc) {
  * @param {string} svcEnc
  * @returns {Promise<{ok:number,fail:number,unknown:number}>}
  */
-async function runHealthcheck (svcEnc) {
+/**
+ * Health-check a list of URLs from the browser.
+ * "Reachable" means: the browser could reach the origin over the network,
+ * regardless of HTTP status or CORS. Only network/mixed-content/timeout errors count as FAIL.
+ *
+ * Expects svcEnc to decode to an array of { url: string }.
+ *
+ * @param {string} svcEnc Encoded services payload.
+ * @param {{ concurrency?: number, timeoutMs?: number }} [opts] Optional execution settings.
+ * @returns {Promise<{ok:number,fail:number,unknown:number}>} Aggregate result counters.
+ */
+async function runHealthcheck (svcEnc, { concurrency = 4, timeoutMs = 5000 } = {}) {
   const res = { ok: 0, fail: 0, unknown: 0 }
   if (!svcEnc) return res
-  try {
-    const svc = await decodeSnapshot(svcEnc)
-    const urls = (Array.isArray(svc) ? svc : []).map(s => (s && typeof s.url === 'string') ? s.url : '').filter(Boolean)
-    const unique = Array.from(new Set(urls))
-    const concurrency = 4
-    const queue = unique.slice()
-    const worker = async () => {
-      while (queue.length) {
-        const u = queue.shift()
-        if (!u) break
+
+  // --- helpers --------------------------------------------------------------
+
+  /**
+   * Decode the encoded services payload to an array.
+   * Returns an empty array when decoding fails or the payload is not an array.
+   * @param {string} enc Encoded services payload.
+   * @returns {Promise<Array<Record<string, any>>>} Decoded services array or [].
+   */
+  async function decodeOrArray (enc) {
+    try {
+      const svc = await decodeSnapshot(enc)
+      return Array.isArray(svc) ? svc : []
+    } catch {
+      // If decode fails, behave safely
+      return []
+    }
+  }
+
+  /**
+   * Extract unique, non-empty URL strings from service-like items.
+   * @param {Array<{url?: string}>} items Services list with optional `url` fields.
+   * @returns {string[]} Unique URL list.
+   */
+  function uniqueUrls (items) {
+    const urls = items
+      .map(s => (s && typeof s.url === 'string') ? s.url.trim() : '')
+      .filter(Boolean)
+    return Array.from(new Set(urls))
+  }
+
+  /**
+   * Wrap a promise factory with an AbortController-based timeout.
+   * Aborts the underlying request after the provided duration and clears timers reliably.
+   * @template T
+   * @param {(signal: AbortSignal) => Promise<T>} promiseFactory Function that produces a promise using the given AbortSignal.
+   * @param {number} ms Timeout in milliseconds.
+   * @returns {Promise<T>} The wrapped promise.
+   */
+  function withTimeout (promiseFactory, ms) {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), ms)
+    const p = promiseFactory(ctrl.signal)
+      .finally(() => clearTimeout(timer))
+    return p
+  }
+
+  /**
+   * Attempt a CORS-visible HEAD request (inspectable response on success).
+   * @param {string} url Target URL.
+   * @param {number} timeout Timeout in ms.
+   * @returns {Promise<Response>} Fetch response (may reject on network/abort).
+   */
+  async function tryCorsHead (url, timeout) {
+    return withTimeout(
+      signal => fetch(url, {
+        method: 'HEAD',
+        mode: 'cors', // inspectable if CORS is allowed
+        redirect: 'follow',
+        credentials: 'omit',
+        cache: 'no-store',
+        signal
+      }),
+      timeout
+    )
+  }
+
+  /**
+   * Fallback: attempt a no-cors GET (opaque response still indicates reachability).
+   * @param {string} url Target URL.
+   * @param {number} timeout Timeout in ms.
+   * @returns {Promise<Response>} Fetch response (opaque for cross-origin); may reject on network/abort.
+   */
+  async function tryNoCorsGet (url, timeout) {
+    return withTimeout(
+      signal => fetch(url, {
+        method: 'GET',
+        mode: 'no-cors', // always opaque for cross-origin
+        redirect: 'follow',
+        credentials: 'omit',
+        cache: 'no-store',
+        signal
+      }),
+      timeout
+    )
+  }
+
+  /**
+   * When the page is https and the target is http, return an https-upgraded URL.
+   * @param {string} url Candidate URL.
+   * @returns {string|null} Upgraded URL string or null if not applicable.
+   */
+  function maybeUpgradeToHttps (url) {
+    try {
+      const u = new URL(url, window.location.href)
+      const pageIsHttps = typeof window !== 'undefined' && window.location && window.location.protocol === 'https:'
+      if (pageIsHttps && u.protocol === 'http:') {
+        u.protocol = 'https:'
+        return u.toString()
+      }
+    } catch { /* ignore */ }
+    return null
+  }
+
+  /**
+   * Core probe classifier: determines reachability for a single URL.
+   * - Any CORS-visible Response (any status) => 'ok'
+   * - Opaque no-cors GET Response => 'ok'
+   * - Network/timeout/mixed-content errors => 'fail'
+   * @param {string} url Target URL to probe.
+   * @returns {Promise<'ok'|'fail'>} Probe verdict.
+   */
+  async function probe (url) {
+    // 1) Try CORS HEAD: if we get ANY Response, the server is reachable
+    try {
+      const r = await tryCorsHead(url, timeoutMs)
+      // We do NOT gate on r.ok: any status proves reachability
+      if (r instanceof Response) return 'ok'
+      // Extremely unlikely branch; fall through to fallback
+    } catch (e) {
+      // Mixed-content shortcut: if blocked due to http on https page, try https version once
+      const upgraded = maybeUpgradeToHttps(url)
+      if (upgraded) {
         try {
-          const ctrl = new AbortController()
-          const to = setTimeout(() => ctrl.abort(), 2000)
-          const r = await fetch(u, { method: 'HEAD', mode: 'no-cors', signal: ctrl.signal })
-          clearTimeout(to)
-          if (r.type === 'opaque') res.unknown++
-          else if (r.ok) res.ok++
-          else res.fail++
+          const r2 = await tryCorsHead(upgraded, timeoutMs)
+          if (r2 instanceof Response) return 'ok'
+        } catch {
+          // ignore; proceed to no-cors fallback
+        }
+      }
+    }
+
+    // 2) Fallback: no-cors GET.
+    // If this resolves to an opaque Response, the network path is alive (treat as OK).
+    try {
+      const r3 = await tryNoCorsGet(url, timeoutMs)
+      if (r3 instanceof Response) {
+        // In cross-origin no-cors, r3.type === 'opaque'. That's good enough for "reachable".
+        return 'ok'
+      }
+    } catch {
+      // network error / timeout / blocking => fail
+    }
+
+    return 'fail'
+  }
+
+  // --- worker pool ----------------------------------------------------------
+
+  try {
+    const items = await decodeOrArray(svcEnc)
+    const queue = uniqueUrls(items)
+
+    // Nothing to do
+    if (!queue.length) {
+      showNotification(`Healthcheck: ${res.ok} OK, ${res.fail} FAIL, ${res.unknown} UNKNOWN`)
+      return res
+    }
+
+    /**
+     * Worker that consumes the shared queue and updates aggregate counters.
+     * @returns {Promise<void>} Resolves when the queue is exhausted.
+     */
+    async function worker () {
+      while (queue.length) {
+        const url = queue.shift()
+        if (!url) break
+        try {
+          const verdict = await probe(url)
+          if (verdict === 'ok') res.ok++
+          else if (verdict === 'fail') res.fail++
+          else res.unknown++ // currently unused, kept for API compatibility
         } catch {
           res.fail++
         }
       }
     }
-    await Promise.all(Array.from({ length: Math.min(concurrency, queue.length) }, worker))
-  } catch {}
+
+    const n = Math.min(concurrency, queue.length)
+    await Promise.all(Array.from({ length: n }, () => worker()))
+  } catch {
+    // swallow to keep the function resilient
+  }
+
   showNotification(`Healthcheck: ${res.ok} OK, ${res.fail} FAIL, ${res.unknown} UNKNOWN`)
   return res
 }
