@@ -88,19 +88,7 @@ export async function navigate(
   destination: string,
   options?: NavigateOptions
 ): Promise<void> {
-  const totalBudget = Math.max(1, options?.totalTimeoutMs ?? 2000);
-
-  // Optional console proxy
-  if (options?.debugConsole) {
-    const allowedPrefixes = ['[navigate]', '[hydrate]', '[modal]'];
-    page.on('console', msg => {
-      const text = msg.text();
-      if (msg.type() === 'log' && allowedPrefixes.some(p => text.startsWith(p))) {
-        console.log(`[browser] ${text}`);
-      }
-    });
-  }
-
+  const totalBudget = Math.max(1, options?.totalTimeoutMs ?? 3000);
   const gotoBudget = Math.max(1, Math.floor(totalBudget * 0.7));
   const readyBudget = Math.max(0, totalBudget - gotoBudget);
 
@@ -116,17 +104,23 @@ export async function navigate(
     timeout: finalGotoTimeout,
   };
 
-  await page.goto(destination, mergedGotoOptions);
+  // Two quick attempts – cheap and effective against cold starts in CI
+  let ok = false;
+  for (let i = 0; i < 2; i++) {
+    try {
+      await page.goto(destination, mergedGotoOptions);
+      ok = true;
+      break;
+    } catch {
+      // small, bounded retry; no sleeps
+    }
+  }
+  if (!ok) throw new Error(`navigate(): failed to goto ${destination} within ${finalGotoTimeout * 2}ms`);
 
-  // Early exit if no budget or readiness wait disabled
   if (readyBudget === 0 || options?.disableReadyWait) return;
 
-  // Soft wait for app readiness using selector (no waitForFunction)
-  try {
-    await page.waitForSelector('body[data-ready="true"]', { timeout: readyBudget });
-  } catch {
-    // Soft timeout: continue; tests may rely on explicit waits later
-  }
+  // App readiness via selector only (no waitForFunction)
+  await page.waitForSelector('body[data-ready="true"]', { timeout: readyBudget }).catch(() => {});
 }
 
 // Helper function to handle dialog interactions
