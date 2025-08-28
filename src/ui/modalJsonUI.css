@@ -261,9 +261,11 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 #stateTab td button.state-switch:hover {
   background-color: var(--color-success-bg); border-color: var(--color-success); color: var(--color-success);
 }
+
 #stateTab td button:not(.state-switch):hover {
-  background-color: var(--color-danger-bg); border-color: var(--color-danger); color: var(--color-danger);
+  background-color: rgba(13,110,253,0.15);; border-color: none; color: var(--color-accent);
 }
+
 #delete-all-snapshots {
     /* margin: var(--space-6) auto 0 auto; */
     font-size: 14px;
@@ -292,8 +294,9 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 }
 
 /* --- Healthcheck: compact cell + expandable details row ------------------- */
-#stateTab td.hc-domains,
-#stateTab td.hc-health { white-space: nowrap; width: 1%; }
+/* Health and domains columns stay narrow */
+#stateTab td.hc-health,
+#stateTab td.hc-domains { white-space: nowrap; width: 1%; }
 
 .hc-summary { display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; }
 .hc-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }

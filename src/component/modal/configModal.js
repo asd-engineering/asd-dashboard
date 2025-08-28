@@ -346,10 +346,9 @@ export async function openConfigModal () {
     }
   })
 }
-
 /**
  * Populate the saved states tab with stored snapshots.
- * Rows stay compact; a collapsible sibling <tr> shows detailed domain chips.
+ * Health is the 2nd column; details live in a collapsible row.
  * @param {HTMLElement} tab
  * @returns {Promise<void>}
  */
@@ -363,8 +362,9 @@ async function populateStateTab (tab) {
     <thead>
       <tr>
         <th>Actions</th>
+        <th>Health</th>
         <th>Name</th><th>Type</th><th>Date</th><th>MD5</th>
-        <th>Size</th><th>Unique domains</th><th>Health</th>
+        <th>Size</th><th>Unique domains</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -388,14 +388,6 @@ async function populateStateTab (tab) {
         <button data-action="merge" data-id="${row.md5}">Merge into current</button>
         <button data-action="delete" data-id="${row.md5}">Delete</button>
       </td>
-      <td>${escapeHtml(row.name || '')}</td>
-      <td>${escapeHtml(row.type || '')}</td>
-      <td>${new Date(row.ts || Date.now()).toLocaleString()}</td>
-      <td><code>${row.md5 || ''}</code></td>
-      <td>${size} bytes</td>
-      <td class="hc-domains" title="${domainsTooltip}">
-        <span class="hc-domains-count">${uniqueDomains.size}</span>
-      </td>
       <td class="hc-health">
         <span class="hc-summary" aria-live="polite" aria-atomic="true">
           <span class="hc-dot muted"></span>
@@ -404,10 +396,18 @@ async function populateStateTab (tab) {
         <button class="hc-btn" data-action="health" data-id="${row.md5}">Healthcheck</button>
         <button class="hc-btn" data-action="toggle" data-id="${row.md5}" disabled>Details</button>
       </td>
+      <td>${escapeHtml(row.name || '')}</td>
+      <td>${escapeHtml(row.type || '')}</td>
+      <td>${new Date(row.ts || Date.now()).toLocaleString()}</td>
+      <td><code>${row.md5 || ''}</code></td>
+      <td>${size} bytes</td>
+      <td class="hc-domains" title="${domainsTooltip}">
+        <span class="hc-domains-count">${uniqueDomains.size}</span>
+      </td>
     `
     tbody.appendChild(tr)
 
-    // Collapsible details row (initially hidden)
+    // Collapsible details row (spans whole table)
     const detailsTr = document.createElement('tr')
     detailsTr.className = 'hc-details-row'
     detailsTr.style.display = 'none'
@@ -428,7 +428,7 @@ async function populateStateTab (tab) {
     const toggleBtn = /** @type {HTMLButtonElement} */ (tr.querySelector('[data-action="toggle"]'))
     const healthBtn = /** @type {HTMLButtonElement} */ (tr.querySelector('[data-action="health"]'))
 
-    // Row action handlers
+    // Row actions
     tr.querySelector('[data-action="switch"]')?.addEventListener('click', async () => {
       await applySnapshotSwitch(row)
     })
@@ -452,7 +452,7 @@ async function populateStateTab (tab) {
     healthBtn.addEventListener('click', async () => {
       healthBtn.disabled = true
       healthBtn.textContent = 'Checking…'
-      listEl.innerHTML = '' // clear details
+      listEl.innerHTML = ''
       try {
         const result = await runHealthcheck(row.svc, {
           notify: false,
@@ -463,7 +463,7 @@ async function populateStateTab (tab) {
         renderHealthUI(summaryTextEl, summaryDotEl, domainsCell, listEl, result.byDomain, result.checkedAt, uniqueDomains)
         toggleBtn.disabled = false
         toggleBtn.textContent = 'Details'
-        detailsTr.style.display = '' // auto-open once after first run
+        detailsTr.style.display = '' // auto-open after first run
       } catch {
         summaryTextEl.textContent = 'error'
         summaryDotEl.className = 'hc-dot down'
@@ -478,58 +478,6 @@ async function populateStateTab (tab) {
   }
 }
 
-
-/**
- * Render per-domain health results into the table cells.
- * @param {HTMLDivElement} listEl Container for the badges (inside "Health" column).
- * @param {HTMLSpanElement} metaEl Small meta line (inside "Health" column).
- * @param {HTMLTableCellElement} domainsCell "Unique domains" cell to update counts/tooltip.
- * @param {Record<string, import('./configModal.js').DomainInfo>} byDomain Map domain -> stats.
- * @param {number} [checkedAt] Epoch ms when last update happened.
- * @param {Set<string>} [initialUnique] Optional precomputed unique domains for initial render.
- */
-function renderHealthCells (listEl, metaEl, domainsCell, byDomain, checkedAt, initialUnique) {
-  // Compute aggregates
-  const domains = initialUnique ? Array.from(initialUnique) : Object.keys(byDomain || {})
-  const up = domains.filter(d => (byDomain?.[d]?.status || 'down') === 'up').length
-  const down = domains.filter(d => (byDomain?.[d]?.status || 'down') === 'down').length
-  const partial = domains.filter(d => (byDomain?.[d]?.status || 'down') === 'partial').length
-
-  // Update "Unique domains" cell
-  const countEl = domainsCell.querySelector('.hc-domains-count')
-  if (countEl) countEl.textContent = String(domains.length || 0)
-  const tooltip = domains.map(d => `${d} : ${byDomain?.[d]?.status || 'unknown'}`).join(', ')
-  domainsCell.title = tooltip || 'No domains'
-  // Show small summary next to count
-  const summary = domainsCell.querySelector('.hc-muted')
-  if (summary) {
-    summary.textContent = domains.length
-      ? `(${up} up / ${down} down${partial ? ` / ${partial} partial` : ''})`
-      : '(no domains)'
-  }
-
-  // Render the badge list inside "Health" column
-  listEl.innerHTML = ''
-  if (domains.length) {
-    for (const d of domains) {
-      const info = byDomain?.[d]
-      const st = info?.status || 'down'
-      const badge = document.createElement('span')
-      badge.className = 'hc-item'
-      const dot = document.createElement('span')
-      dot.className = `hc-dot ${st === 'up' ? 'hc-up' : st === 'partial' ? 'hc-partial' : 'hc-down'}`
-      const text = document.createElement('span')
-      text.textContent = info ? `${d} (${info.up}/${info.total})` : `${d} (0/0)`
-      badge.append(dot, text)
-      listEl.appendChild(badge)
-    }
-  }
-
-  // Meta line
-  metaEl.textContent = domains.length
-    ? `Last checked ${checkedAt ? new Date(checkedAt).toLocaleString() : ''}`
-    : 'No domains'
-}
 
 /**
  * Switch to the provided snapshot.
@@ -878,10 +826,8 @@ async function runHealthcheck (svcEnc, { concurrency = 4, timeoutMs = 5000, noti
 function escapeHtml (s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 }
-
 /**
- * Render compact summary + optional expanded panel for health results.
- * Keeps table cells narrow; details live in a sibling <tr> that spans all columns.
+ * Render compact health summary and the expanded chips panel.
  *
  * @param {HTMLSpanElement} summaryTextEl  Inline summary text element in the cell.
  * @param {HTMLSpanElement} summaryDotEl   Inline status dot element in the cell.
@@ -893,28 +839,34 @@ function escapeHtml (s) {
  */
 function renderHealthUI (summaryTextEl, summaryDotEl, domainsCell, panelListEl, byDomain, checkedAt, initialUnique) {
   const domains = initialUnique ? Array.from(initialUnique) : Object.keys(byDomain || {})
-  let up = 0, down = 0, partial = 0
+  let up = 0
+  let partial = 0
   for (const d of domains) {
     const st = byDomain?.[d]?.status || 'down'
     if (st === 'up') up++
     else if (st === 'partial') partial++
-    else down++
   }
 
-  // --- Compact summary in the cell -----------------------------------------
+  // Compact summary in the Health cell
   summaryTextEl.textContent = domains.length
     ? `${up}/${domains.length} up${partial ? ` (${partial} partial)` : ''}`
     : '—'
   summaryDotEl.className = `hc-dot ${up === domains.length ? 'up' : (up > 0 ? 'partial' : 'down')}`
 
-  // --- Update "Unique domains" count + tooltip ------------------------------
+  // Unique domains count + tooltip
   const countEl = domainsCell.querySelector('.hc-domains-count')
   if (countEl) countEl.textContent = String(domains.length || 0)
   domainsCell.title = domains.map(d => `${d} : ${byDomain?.[d]?.status || 'unknown'}`).join(', ') || 'No domains'
 
-  // --- Expanded panel chips -------------------------------------------------
+  // Expanded chips panel
   if (panelListEl) {
     panelListEl.innerHTML = ''
+    if (domains.length) {
+      const meta = document.createElement('div')
+      meta.className = 'hc-meta-line'
+      meta.textContent = `Last checked ${checkedAt ? new Date(checkedAt).toLocaleString() : ''}`
+      panelListEl.appendChild(meta)
+    }
     for (const d of domains) {
       const info = byDomain?.[d]
       const st = info?.status || 'down'
@@ -927,12 +879,5 @@ function renderHealthUI (summaryTextEl, summaryDotEl, domainsCell, panelListEl, 
       chip.append(dot, text)
       panelListEl.appendChild(chip)
     }
-    if (domains.length) {
-      const meta = document.createElement('div')
-      meta.className = 'hc-meta-line'
-      meta.textContent = `Last checked ${checkedAt ? new Date(checkedAt).toLocaleString() : ''}`
-      panelListEl.prepend(meta)
-    }
   }
 }
-
