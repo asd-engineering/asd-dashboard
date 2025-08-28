@@ -1,13 +1,14 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
 import { ensurePanelOpen } from './shared/panels'
+import { navigate } from './shared/common'
 
 // Verify that widgets respect size defaults from their service template
 
 test.describe('Widget Sizing', () => {
   test('should apply default dimensions from service template on creation', async ({ page }) => {
     await routeServicesConfig(page)
-    await page.goto('/')
+    await navigate(page, '/')
     // Wait until service templates have been applied
     await page.waitForFunction(async () => {
       const StorageManager = (await import('/storage/StorageManager.js')).default

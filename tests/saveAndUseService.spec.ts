@@ -15,8 +15,7 @@ test.describe('Use saved service', () => {
 
   test('selects saved service and adds widget', async ({ page }) => {
     await selectServiceByName(page, saved[0].name);
-    await page.goto('/')
-    await page.waitForLoadState('domcontentloaded')
+    await navigate(page, '/')
     await ensurePanelOpen(page, 'service-panel')
   })
 

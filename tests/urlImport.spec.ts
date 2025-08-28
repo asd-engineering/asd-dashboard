@@ -5,7 +5,7 @@ import { ciServices } from './data/ciServices'
 import { gzipJsonToBase64url } from '../src/utils/compression.js'
 import { openConfigModalSafe } from './shared/uiHelpers'
 import { bootWithDashboardState } from './shared/bootState.js'
-import { navigate } from './shared/common.js'
+import { navigate, getUnwrappedConfig } from './shared/common.js'
 
 test('URL import stores snapshot and remains switchable', async ({ page }) => {
   const cfgEnc = await gzipJsonToBase64url({ ...ciConfig, boards: ciBoards })
@@ -62,19 +62,9 @@ test('URL import stores snapshot and remains switchable', async ({ page }) => {
   await page.waitForFunction(() => document.body.dataset.ready === 'true')
 
   // Robustly poll localStorage for config, unwrapping { version, data } if present
-  const boardsLengthHandle = await page.waitForFunction(() => {
-    try {
-      const raw = localStorage.getItem('config')
-      if (!raw) return 0
+  const cfg = await getUnwrappedConfig(page);
+  expect((cfg.boards || []).length).toBeGreaterThan(0);
 
-      const parsed = JSON.parse(raw)
-      const unwrapped = parsed && typeof parsed === 'object' && 'data' in parsed ? parsed.data : parsed
-      const boards = unwrapped && Array.isArray(unwrapped.boards) ? unwrapped.boards : []
-      return boards.length
-    } catch {
-      return 0
-    }
-  }, { timeout: 5000 })
 
-  expect(await boardsLengthHandle.jsonValue()).toBeGreaterThan(0)
+  // expect(await boardsLengthHandle.jsonValue()).toBeGreaterThan(0)
 })
