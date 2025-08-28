@@ -222,6 +222,12 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
     width: max-content;
 }
 
+#stateTab td button[data-action="delete"]:hover {
+  background-color: var(--color-danger-bg);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
 /* Snapshot actions: Switch (green), Merge (blue), Delete (red) */
 #stateTab td:first-child button[data-action="switch"] {
   color: var(--color-text); 
@@ -331,4 +337,5 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 }
 .hc-chip .hc-dot { width: 7px; height: 7px; }
 .hc-meta-line { width: 100%; font-size: 11px; color: var(--color-text-weak); margin-bottom: 6px; }
+
 
