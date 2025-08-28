@@ -2,14 +2,50 @@
 import { type Page, expect } from "@playwright/test";
 import { ensurePanelOpen } from './panels'
 
+
 /**
  * Wait until the app signals readiness.
  * Uses DOMContentLoaded + body[data-ready="true"].
  * No waitForFunction.
+ *
+ * @param {Page} page Playwright page
+ * @returns {Promise<void>}
  */
 export async function waitForAppReady(page: import('@playwright/test').Page) {
   await page.waitForLoadState('domcontentloaded');
   await page.waitForSelector('body[data-ready="true"]');
+}
+
+/**
+ * Safely run `page.evaluate` with one automatic retry if the page navigated and
+ * destroyed the execution context (common right after snapshot switch/merge).
+ *
+ * Overloads match Playwright's evaluate:
+ *  - No-arg page function
+ *  - Single-arg page function
+ *
+ * @template R, Arg
+ * @param {Page} page Playwright page
+ * @param {(arg: Arg) => R | Promise<R>} fn Function executed in the page context
+ * @param {Arg} [arg] Optional argument passed to `fn`
+ * @returns {Promise<R>} The result of `fn`
+ */
+export async function evaluateSafe<R>(page: Page, fn: () => R | Promise<R>): Promise<R>;
+export async function evaluateSafe<R, Arg>(page: Page, fn: (arg: Arg) => R | Promise<R>, arg: Arg): Promise<R>;
+export async function evaluateSafe(page: Page, fn: (arg?: any) => any, arg?: any): Promise<any> {
+  const run = () =>
+    arg === undefined ? page.evaluate(fn as any) : page.evaluate(fn as any, arg);
+
+  try {
+    return await run();
+  } catch (e: any) {
+    // WebKit (and sometimes Chromium) throws this when a nav happens mid-evaluate
+    if (String(e?.message || '').includes('Execution context was destroyed')) {
+      await waitForAppReady(page);
+      return await run();
+    }
+    throw e;
+  }
 }
 
 /**
@@ -371,6 +407,38 @@ export async function dragAndDropWidgetByIndex(page: Page, fromIndex: number, to
   const dst = `.widget-wrapper:nth-child(${toIndex + 1}) .widget-icon-drag`;
   await page.dragAndDrop(src, dst);
 }
+
+export async function dragAndDropWidgetStable(page: Page, fromIndex: number, toIndex: number): Promise<void> {
+  // Temporarily neutralize the header controls during DnD
+  await page.evaluate(() => {
+    const el = document.getElementById('controls') as HTMLElement | null
+    if (el) {
+      el.dataset.prevPointer = el.style.pointerEvents || ''
+      el.style.pointerEvents = 'none'
+    }
+  })
+
+  try {
+    const src = page.locator('.widget-wrapper').nth(fromIndex).locator('.widget-icon-drag')
+    const dst = page.locator('.widget-wrapper').nth(toIndex).locator('.widget-icon-drag')
+    await src.scrollIntoViewIfNeeded()
+    await dst.scrollIntoViewIfNeeded()
+    const sb = await src.boundingBox()
+    const db = await dst.boundingBox()
+    if (!sb || !db) throw new Error('drag handles not found')
+
+    await page.mouse.move(sb.x + sb.width / 2, sb.y + sb.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(db.x + db.width / 2, db.y + db.height / 2, { steps: 10 })
+    await page.mouse.up()
+  } finally {
+    await page.evaluate(() => {
+      const el = document.getElementById('controls') as HTMLElement | null
+      if (el) el.style.pointerEvents = el.dataset.prevPointer || ''
+    })
+  }
+}
+
 
 /**
  * Assert visible widget count quickly (no extra waits).

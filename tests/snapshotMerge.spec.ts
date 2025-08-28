@@ -1,9 +1,9 @@
 import { test, expect } from './fixtures'
 import { ciConfig, ciBoards } from './data/ciConfig'
 import { ciServices } from './data/ciServices'
-import { navigate, setConfigAndServices } from './shared/common.js'
-import { openConfigModalSafe } from './shared/uiHelpers'
+import { navigate, setConfigAndServices, evaluateSafe } from './shared/common.js'
 import { injectSnapshot, mergeSnapshotByName } from './shared/state.js'
+
 
 test('merge snapshot unions boards and services without duplicates', async ({ page }) => {
   await navigate(page,'/')
@@ -18,7 +18,7 @@ test('merge snapshot unions boards and services without duplicates', async ({ pa
   await injectSnapshot(page, { ...ciConfig, boards: stateBBoards }, stateBServices, 'export/stateB')
   await mergeSnapshotByName(page, 'export/stateB')
   
-  const final = await page.evaluate(async () => {
+  const final = await evaluateSafe(page, async () => {
     const { default: sm } = await import('/storage/StorageManager.js')
     return { boards: sm.getConfig().boards.length, services: sm.getServices().length }
   })

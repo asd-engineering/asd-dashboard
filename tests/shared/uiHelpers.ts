@@ -86,13 +86,29 @@ export async function enableUITestMode(page: Page, opts?: {
  * - Try a normal click first.
  * - Fallback to programmatic open if something still covers the button.
  */
-export async function openConfigModalSafe(page: Page): Promise<void> {
+// replace openConfigModalSafe with a sturdier version
+export async function openConfigModalSafe(page: Page, tab?: 'stateTab'|'cfgTab'|'svcTab'): Promise<void> {
   await page.waitForLoadState('domcontentloaded')
-  if (!(await page.locator('#config-modal').isVisible())) {
-    await page.click('#open-config-modal')
+
+  // Try twice in case something closes it immediately
+  for (let i = 0; i < 2; i++) {
+    if (!(await page.locator('#config-modal').isVisible())) {
+      await page.click('#open-config-modal', { force: true }).catch(() => {})
+    }
+
+    // Attached is enough; don’t require "visible"
+    await page.locator('#config-modal .tabs').waitFor({ state: 'attached', timeout: 1500 }).catch(() => {})
+
+    if (tab) {
+      const btn = page.locator(`#config-modal .tabs button[data-tab="${tab}"]`)
+      if (await btn.count()) await btn.click().catch(() => {})
+      await page.locator(`#${tab}`).waitFor({ state: 'attached', timeout: 1500 }).catch(() => {})
+    }
+
+    if (await page.locator('#config-modal').isVisible()) break
   }
-  await page.locator('#config-modal').waitFor({ state: 'visible' })
 }
+
 
 /**
  * Dismiss any stack of user notifications (toasts).

@@ -7,7 +7,7 @@ import {
   addServicesByName,
   navigate,
   handleDialog,
-  dragAndDropWidgetByIndex
+  dragAndDropWidgetStable
 } from './shared/common.js';
 import { setLocalItem } from './shared/state'
 
@@ -53,8 +53,8 @@ test.describe('Widgets', () => {
       }
     }
 
-    await dragAndDropWidgetByIndex(page, 0, 1)
-    await dragAndDropWidgetByIndex(page, 2, 3)
+    await dragAndDropWidgetStable(page, 0, 1)
+    await dragAndDropWidgetStable(page, 2, 3)
 
     // Log data-order attributes after drag and drop
     const orderAfterDragDrop = {};

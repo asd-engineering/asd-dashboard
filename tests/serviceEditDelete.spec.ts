@@ -38,9 +38,8 @@ test.describe('Service Edit/Delete', () => {
     await expect(page.locator('.widget-wrapper')).toHaveCount(1)
 
     page.on('dialog', d => d.accept())
-
+    
     await clickFlyoutAction(page, 'service-panel', 'ASD-terminal', 'delete')
-    // await page.waitForSelector('.widget-wrapper', { state: 'detached' })
 
     const services = await getServices(page);
     expect(services.find(s => s.name === 'ASD-terminal')).toBeUndefined()

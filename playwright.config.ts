@@ -47,13 +47,13 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      grep: process.env.CI ? /.*/ : /.^/,
+      // grep: process.env.CI ? /.*/ : /.^/,
     },
 
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      grep: process.env.CI ? /.*/ : /.^/,
+      // grep: process.env.CI ? /.*/ : /.^/,
     },
 
     {
