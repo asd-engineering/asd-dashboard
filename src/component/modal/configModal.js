@@ -348,7 +348,7 @@ export async function openConfigModal () {
 }
 /**
  * Populate the saved states tab with stored snapshots.
- * Health is the 2nd column; details live in a collapsible row.
+ * Health is 2nd column; all cells are named with data-col for stable selectors.
  * @param {HTMLElement} tab
  * @returns {Promise<void>}
  */
@@ -361,10 +361,14 @@ async function populateStateTab (tab) {
   table.innerHTML = `
     <thead>
       <tr>
-        <th>Actions</th>
-        <th>Health</th>
-        <th>Name</th><th>Type</th><th>Date</th><th>MD5</th>
-        <th>Size</th><th>Unique domains</th>
+        <th data-col="actions">Actions</th>
+        <th data-col="health">Health</th>
+        <th data-col="name">Name</th>
+        <th data-col="type">Type</th>
+        <th data-col="date">Date</th>
+        <th data-col="md5">MD5</th>
+        <th data-col="size">Size</th>
+        <th data-col="domains">Unique domains</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -407,7 +411,7 @@ async function populateStateTab (tab) {
     `
     tbody.appendChild(tr)
 
-    // Collapsible details row (spans whole table)
+    // Collapsible details row
     const detailsTr = document.createElement('tr')
     detailsTr.className = 'hc-details-row'
     detailsTr.style.display = 'none'
@@ -420,21 +424,17 @@ async function populateStateTab (tab) {
     `
     tr.insertAdjacentElement('afterend', detailsTr)
 
-    // Element refs
-    const domainsCell = /** @type {HTMLTableCellElement} */ (tr.querySelector('.hc-domains'))
+    // refs
+    const domainsCell = /** @type {HTMLTableCellElement} */ (tr.querySelector('td[data-col="domains"]'))
     const summaryDotEl = /** @type {HTMLSpanElement} */ (tr.querySelector('.hc-summary .hc-dot'))
     const summaryTextEl = /** @type {HTMLSpanElement} */ (tr.querySelector('.hc-summary-text'))
     const listEl = /** @type {HTMLDivElement} */ (detailsTr.querySelector('.hc-list'))
     const toggleBtn = /** @type {HTMLButtonElement} */ (tr.querySelector('[data-action="toggle"]'))
     const healthBtn = /** @type {HTMLButtonElement} */ (tr.querySelector('[data-action="health"]'))
 
-    // Row actions
-    tr.querySelector('[data-action="switch"]')?.addEventListener('click', async () => {
-      await applySnapshotSwitch(row)
-    })
-    tr.querySelector('[data-action="merge"]')?.addEventListener('click', async () => {
-      await applySnapshotMerge(row)
-    })
+    // actions
+    tr.querySelector('[data-action="switch"]')?.addEventListener('click', async () => { await applySnapshotSwitch(row) })
+    tr.querySelector('[data-action="merge"]')?.addEventListener('click', async () => { await applySnapshotMerge(row) })
     tr.querySelector('[data-action="delete"]')?.addEventListener('click', async () => {
       if (!confirm(`Delete snapshot "${row.name}"?`)) return
       const idx = rows.indexOf(row)
@@ -463,7 +463,7 @@ async function populateStateTab (tab) {
         renderHealthUI(summaryTextEl, summaryDotEl, domainsCell, listEl, result.byDomain, result.checkedAt, uniqueDomains)
         toggleBtn.disabled = false
         toggleBtn.textContent = 'Details'
-        detailsTr.style.display = '' // auto-open after first run
+        detailsTr.style.display = '' // open after first run
       } catch {
         summaryTextEl.textContent = 'error'
         summaryDotEl.className = 'hc-dot down'
@@ -473,7 +473,7 @@ async function populateStateTab (tab) {
       }
     })
 
-    // Initial compact render
+    // initial compact
     renderHealthUI(summaryTextEl, summaryDotEl, domainsCell, listEl, {}, undefined, uniqueDomains)
   }
 }
@@ -827,6 +827,8 @@ function escapeHtml (s) {
 }
 /**
  * Render compact health summary and the expanded chips panel.
+ * - Before any run (no domain totals), show "not checked" and keep panel empty.
+ * - After a run begins (progress emits), show live counts and enable details.
  *
  * @param {HTMLSpanElement} summaryTextEl  Inline summary text element in the cell.
  * @param {HTMLSpanElement} summaryDotEl   Inline status dot element in the cell.
@@ -838,6 +840,24 @@ function escapeHtml (s) {
  */
 function renderHealthUI (summaryTextEl, summaryDotEl, domainsCell, panelListEl, byDomain, checkedAt, initialUnique) {
   const domains = initialUnique ? Array.from(initialUnique) : Object.keys(byDomain || {})
+
+  // Do we actually have data from a run yet?
+  const hasData = !!byDomain && Object.values(byDomain).some(v => (v && typeof v.total === 'number' && v.total > 0))
+
+  // Always keep the "Unique domains" count and tooltip accurate
+  const countEl = domainsCell.querySelector('.hc-domains-count')
+  if (countEl) countEl.textContent = String(domains.length || 0)
+  domainsCell.title = domains.map(d => `${d} : ${byDomain?.[d]?.status || 'unknown'}`).join(', ') || 'No domains'
+
+  // If no data yet, show a neutral summary and an empty panel
+  if (!hasData) {
+    summaryTextEl.textContent = 'not checked'
+    summaryDotEl.className = 'hc-dot muted'
+    if (panelListEl) panelListEl.innerHTML = ''
+    return
+  }
+
+  // We have data -> compute aggregates
   let up = 0
   let partial = 0
   for (const d of domains) {
@@ -847,25 +867,17 @@ function renderHealthUI (summaryTextEl, summaryDotEl, domainsCell, panelListEl, 
   }
 
   // Compact summary in the Health cell
-  summaryTextEl.textContent = domains.length
-    ? `${up}/${domains.length} up${partial ? ` (${partial} partial)` : ''}`
-    : '—'
+  summaryTextEl.textContent = `${up}/${domains.length} up${partial ? ` (${partial} partial)` : ''}`
   summaryDotEl.className = `hc-dot ${up === domains.length ? 'up' : (up > 0 ? 'partial' : 'down')}`
-
-  // Unique domains count + tooltip
-  const countEl = domainsCell.querySelector('.hc-domains-count')
-  if (countEl) countEl.textContent = String(domains.length || 0)
-  domainsCell.title = domains.map(d => `${d} : ${byDomain?.[d]?.status || 'unknown'}`).join(', ') || 'No domains'
 
   // Expanded chips panel
   if (panelListEl) {
     panelListEl.innerHTML = ''
-    if (domains.length) {
-      const meta = document.createElement('div')
-      meta.className = 'hc-meta-line'
-      meta.textContent = `Last checked ${checkedAt ? new Date(checkedAt).toLocaleString() : ''}`
-      panelListEl.appendChild(meta)
-    }
+    const meta = document.createElement('div')
+    meta.className = 'hc-meta-line'
+    meta.textContent = `Last checked ${checkedAt ? new Date(checkedAt).toLocaleString() : ''}`
+    panelListEl.appendChild(meta)
+
     for (const d of domains) {
       const info = byDomain?.[d]
       const st = info?.status || 'down'

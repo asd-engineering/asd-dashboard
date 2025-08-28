@@ -204,72 +204,56 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 }
 #stateTab th { font-weight: 600; color: var(--color-text-weak); background-color: var(--color-soft); }
 #stateTab td { color: var(--color-text); }
-#stateTab td:first-child {
+
+/* Named columns for stability */
+#stateTab th[data-col="actions"],
+#stateTab td[data-col="actions"] {
   font-family: var(--font-mono);
   font-size: 0.8rem;
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
-  display: inline-flex;
   padding: 4px;
+  vertical-align: middle;
+}
+#stateTab td[data-col="actions"] {
+  display: inline-flex;
   min-height: 82px;
   align-items: center;
+  gap: 8px;
 }
 
-#stateTab td:first-child button {
-    flex: 1 1 auto;
-    height: 30px;
-    width: max-content;
-}
-
-#stateTab td button[data-action="delete"]:hover {
-  background-color: var(--color-danger-bg);
-  border-color: var(--color-danger);
-  color: var(--color-danger);
-}
-
-/* Snapshot actions: Switch (green), Merge (blue), Delete (red) */
-#stateTab td:first-child button[data-action="switch"] {
-  color: var(--color-text); 
-  border: none;
-  border-radius: var(--radius-1);
-}
-
-#stateTab td:first-child button[data-action="merge"] {
-  color: var(--color-text); 
-  border: none;
-  border-radius: var(--radius-1);
-}
-
-#stateTab td:first-child button[data-action="delete"] {
-  color: var(--color-text); 
-  border: none;
-  border-radius: var(--radius-1);
-}
-
-/* Hover states for better affordance */
-#stateTab td:first-child button[data-action="switch"]:hover {
-  background-color: var(--color-success-bg);
-  color: var(--color-success);
-}
-
-#stateTab td:first-child button[data-action="merge"]:hover {
-  background-color: rgba(13,110,253,0.15); /* light accent bg */
-  color: var(--color-accent);
-}
-
+/* Base buttons */
 #stateTab td button {
   font-size: 12px; font-weight: 400; padding: 4px 10px; border-radius: var(--radius-3);
   border: 1px solid var(--color-border); background-color: var(--color-surface); cursor: pointer;
   margin-right: 8px; transition: all 150ms ease; color: var(--color-text);
 }
 
-#stateTab td button.state-switch:hover {
-  background-color: var(--color-success-bg); border-color: var(--color-success); color: var(--color-success);
+/* Action-group buttons sizing */
+#stateTab td[data-col="actions"] button {
+  flex: 1 1 auto;
+  height: 30px;
+  width: max-content;
 }
 
-#stateTab td button:not(.state-switch):hover {
-  background-color: rgba(13,110,253,0.15);; border-color: none; color: var(--color-accent);
+/* Specific hover states */
+#stateTab td[data-col="actions"] button[data-action="switch"]:hover,
+#stateTab td[data-col="health"] button[data-action="health"]:hover {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+#stateTab td[data-col="health"] button[data-action="toggle"]:hover,
+#stateTab td[data-col="actions"] button[data-action="merge"]:hover {
+  background-color: rgba(13,110,253,0.15);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+#stateTab td[data-col="actions"] button[data-action="delete"]:hover {
+  background-color: var(--color-danger-bg);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
 }
 
 #delete-all-snapshots {
@@ -327,6 +311,7 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
   padding: var(--space-4);
   max-height: 180px;           /* keeps modal tidy */
   overflow: auto;              /* chips scroll, table stays stable */
+  max-width: min-content;
 }
 .hc-list { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .hc-chip {
@@ -338,4 +323,8 @@ div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
 .hc-chip .hc-dot { width: 7px; height: 7px; }
 .hc-meta-line { width: 100%; font-size: 11px; color: var(--color-text-weak); margin-bottom: 6px; }
 
-
+.hc-btn[disabled] {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
