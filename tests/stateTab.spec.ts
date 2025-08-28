@@ -18,10 +18,7 @@ test.describe('Snapshots & Share tab', () => {
   })
 
   test('restore and delete snapshot (direct switch, no modal)', async ({ page }) => {
-    await openConfigModalSafe(page)
-    await page.locator('#stateTab').waitFor();
-    await page.click('.tabs button[data-tab="stateTab"]')
-
+    await openConfigModalSafe(page, "stateTab")
     await expect(page.locator('#stateTab tbody tr:visible')).toHaveCount(2)
     await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
 
@@ -30,9 +27,7 @@ test.describe('Snapshots & Share tab', () => {
     const boards = await getBoardCount(page)
     expect(boards).toBeGreaterThan(0)
 
-    await openConfigModalSafe(page)
-    await page.locator('#stateTab').waitFor();
-    await page.click('.tabs button[data-tab="stateTab"]')
+    await openConfigModalSafe(page, "stateTab")
 
     page.on('dialog', d => d.accept())
     await page.locator('#stateTab tbody tr button:has-text("Delete")').last().click({ force: true })
@@ -41,10 +36,7 @@ test.describe('Snapshots & Share tab', () => {
     await navigate(page, '/')
 
     await page.waitForSelector('#open-config-modal')
-    await openConfigModalSafe(page)
-    await page.locator('#stateTab').waitFor();
-    await page.click('.tabs button[data-tab="stateTab"]')
-
+    await openConfigModalSafe(page, "stateTab")
     await expect(page.locator('#stateTab tbody tr:visible')).toHaveCount(2)
   })
 })
