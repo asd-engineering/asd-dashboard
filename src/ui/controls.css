@@ -21,9 +21,6 @@ menu#controls {
   min-width: 0;
   max-width: 100%;
   word-break: break-word;
-  /* position: relative;
-  isolation: isolate;
-  z-index: 1; */
 }
 
 /* Lift open panels */

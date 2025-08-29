@@ -1,6 +1,6 @@
 // @ts-check
 import { type Page } from "@playwright/test";
-import { evaluateSafe, waitForAppReady } from "./common";
+import { evaluateSafe, waitForAppReady, reloadReady } from "./common";
 import { openConfigModalSafe } from './uiHelpers'
 
 /**
@@ -65,7 +65,7 @@ export async function injectSnapshot(
   name: string,
   opts?: { reload?: boolean }
 ): Promise<void> {
-  await page.evaluate(
+  await evaluateSafe(page,
     async ({ cfg, svc, name }) => {
       const { default: sm } = await import("/storage/StorageManager.js");
       const { gzipJsonToBase64url } = await import("/utils/compression.js");
@@ -80,7 +80,9 @@ export async function injectSnapshot(
     },
     { cfg, svc, name },
   );
-  if (opts?.reload !== false) await page.reload();
+  if (opts?.reload !== false) {
+    await reloadReady(page)
+  };
 }
 
 /**
