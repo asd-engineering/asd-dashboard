@@ -28,7 +28,7 @@ ASD Dashboard is architected with a focus on simplicity and adaptability:
 
 ## Reset & State Management
 
-The admin reset control clears boards, views, services and configuration while keeping any saved state snapshots. Bulk removal of saved states is available from the **Saved States** tab in the configuration modal via the "Delete all snapshots" button. A full wipe, including saved states, remains possible through the legacy `StorageManager.clearAll()` API.
+The admin reset control clears boards, views, services and configuration while keeping any saved state snapshots. Bulk removal of snapshots is available from the **Snapshots & Share** tab in the configuration modal via the "Delete all snapshots" button. A full wipe, including snapshots, remains possible through the legacy `StorageManager.clearAll()` API.
 
 ### Snapshot de-duplication
 

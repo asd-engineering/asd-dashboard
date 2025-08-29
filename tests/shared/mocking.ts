@@ -52,3 +52,40 @@ export async function routeServicesConfig(page: Page) {
     });
 }
 
+/**
+ * Parameterized router: serve provided cfg/svc; fallback to CI fixtures.
+ */
+export async function routeConfigAndServices(page: Page, opts?: { config?: any; services?: any }) {
+  const cfg = opts?.config ?? ciConfig;
+  const svc = opts?.services ?? ciServices;
+
+  await page.route('**/config.json', route => route.fulfill({ json: cfg }));
+  await page.route('**/services.json', route => route.fulfill({ json: svc }));
+}
+
+/**
+ * Route config/services AND set widgetStore.maxSize early.
+ * Mirrors ad-hoc routeLimits() used in widget limits tests.
+ */
+export async function routeWithWidgetStoreSize(
+  page: Page,
+  boards: any[],
+  services: any[],
+  maxSize = 2,
+  configOverrides: Record<string, any> = {}
+) {
+  await page.route('**/services.json', route => route.fulfill({ json: services }));
+  await page.route('**/config.json', route =>
+    route.fulfill({ json: { ...ciConfig, ...configOverrides, boards } }),
+  );
+  await page.addInitScript((size) => {
+    const apply = () => {
+      if ((window as any).asd?.widgetStore) {
+        (window as any).asd.widgetStore.maxSize = size;
+      } else {
+        setTimeout(apply, 0);
+      }
+    };
+    apply();
+  }, maxSize);
+}

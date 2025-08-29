@@ -21,13 +21,10 @@ menu#controls {
   min-width: 0;
   max-width: 100%;
   word-break: break-word;
-  position: relative;
-  isolation: isolate;
-  z-index: 1;
 }
 
 /* Lift open panels */
-.control-group:has(.dropdown.panel.open) { z-index: 1000; }
+/* .control-group:has(.dropdown.panel.open) { z-index: 1000; }
 .control-group:has(.dropdown.panel.open)::after {
   content: "";
   position: absolute;
@@ -35,7 +32,7 @@ menu#controls {
   z-index: 1000;
   pointer-events: auto;
   background: transparent;
-}
+} */
 
 /* Inputs */
 #controls select,

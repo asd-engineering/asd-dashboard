@@ -61,6 +61,10 @@
   /* Base */
   background-color: var(--color-bg);
   color: var(--color-text);
+
+  --scrollbar-track: #f1f3f5;
+  --scrollbar-thumb: #c4c9cf;
+  --scrollbar-thumb-hover: #aab1b8;
 }
 
 /* Dark theme */
@@ -89,4 +93,8 @@
 
   --toast-bg: #2962ff;
   --toast-fg: #ffffff;
+
+  --scrollbar-track: #141823;        /* matches --color-elevated */
+  --scrollbar-thumb: #2f3747;        /* subtle contrast vs track */
+  --scrollbar-thumb-hover: #3a4355;  /* slightly brighter on hover */
 }

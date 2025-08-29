@@ -31,20 +31,21 @@ format:
 
 # Run static type checking
 check:
+    bash -c "! rg \"localStorage\\.getItem\\(['\\\"]asd\\.\" -n src | rg -v 'migration|adapters' || (echo 'Direct asd.* localStorage access found'; exit 1)"
     npm run check
 
 [private]
 export-all:
     mkdir -p local
-    find scripts src tests . \
+    find src tests \
         -maxdepth 3 \
-        -type f \( -name '*.js' -o -name '*.ts' -o -name '*.css' \) \
+        -type f \( -name '*.ts' \) \
         -not -path './.git/*' \
         -not -path './local/*' \
         -not -path './node_modules/*' \
         -print0 \
-    | xargs -0 -I{} realpath -z --relative-to=. "{}" \
-    | sort -z \
+    | xargs -0 realpath -z \
+    | sort -zu \
     | xargs -0 -I{} sh -c 'printf "\n// --- %s ---\n" "{}"; cat "{}"' \
     > local/src.txt
 
