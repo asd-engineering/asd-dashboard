@@ -120,16 +120,22 @@ export async function navigate(
 
   // Two quick attempts – cheap and effective against cold starts in CI
   let ok = false;
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 3; i++) {
     try {
       await page.goto(destination, mergedGotoOptions);
       ok = true;
       break;
     } catch {
       // small, bounded retry; no sleeps
+      if (i === 2) {
+        // last resort: require 'load'
+        await page.goto(destination, { ...mergedGotoOptions, waitUntil: 'load' });
+        ok = true;
+        break;
+      }
     }
   }
-  if (!ok) throw new Error(`navigate(): failed to goto ${destination} within ${finalGotoTimeout * 2}ms`);
+  if (!ok) throw new Error(`navigate(): failed to goto ${destination} within ${finalGotoTimeout * 3}ms`);
 
   if (readyBudget === 0 || options?.disableReadyWait) return;
 
