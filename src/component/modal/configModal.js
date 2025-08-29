@@ -51,11 +51,7 @@ export async function openConfigModal () {
           }
 
       const tabsMeta = [
-        {
-          id: 'stateTab',
-          label: 'Snapshots & Share',
-          populate: populateStateTab
-        },
+        { id: 'stateTab', label: 'Snapshots & Share', populate: populateStateTab },
         {
           id: 'cfgTab',
           label: 'Configuration',
@@ -240,26 +236,7 @@ export async function openConfigModal () {
 
       const populatedTabs = new Set()
 
-      const switchTab = async (tabId) => {
-        for (const id in tabContents) {
-          const isActive = id === tabId
-          tabContents[id].style.display = isActive ? 'flex' : 'none'
-          tabButtons[id].classList.toggle('active', isActive)
-        }
-
-        if (!populatedTabs.has(tabId)) {
-          const tab = tabsMeta.find(t => t.id === tabId)
-          if (tab?.populate) await tab.populate(tabContents[tabId])
-          populatedTabs.add(tabId)
-        }
-
-        StorageManager.misc.setItem('configModalTab', tabId)
-      }
-
-      for (const id in tabButtons) {
-        tabButtons[id].addEventListener('click', () => switchTab(id))
-      }
-
+      // Buttons (Save / Export / Delete all snapshots / Close)
       const saveButton = document.createElement('button')
       saveButton.textContent = 'Save'
       saveButton.classList.add('modal__btn', 'modal__btn--save')
@@ -317,16 +294,16 @@ export async function openConfigModal () {
       exportButton.classList.add('modal__btn', 'modal__btn--export')
       exportButton.addEventListener('click', exportConfig)
 
-      // New "Delete all snapshots" button
+      // Show this only on stateTab
       const delAll = document.createElement('button')
       delAll.id = 'delete-all-snapshots'
       delAll.textContent = 'Delete all snapshots'
       delAll.setAttribute('aria-label', 'Delete all saved snapshots')
       delAll.classList.add('modal__btn', 'modal__btn--danger')
+      delAll.hidden = true
       delAll.addEventListener('click', async () => {
         if (!confirm('Delete all saved snapshots?')) return
         await StorageManager.clearStateStore()
-
         const stateTab = document.getElementById('stateTab')
         if (stateTab) await populateStateTab(stateTab)
         showNotification('All snapshots deleted')
@@ -339,14 +316,38 @@ export async function openConfigModal () {
 
       const buttonContainer = document.createElement('div')
       buttonContainer.classList.add('modal__btn-group')
-      // Order: Save, Export, Delete all snapshots, Close
       buttonContainer.append(saveButton, exportButton, delAll, closeButton)
       modal.appendChild(buttonContainer)
+
+      // tab switcher (now also toggles Delete-all visibility)
+      const switchTab = async (tabId) => {
+        for (const id in tabContents) {
+          const isActive = id === tabId
+          tabContents[id].style.display = isActive ? 'flex' : 'none'
+          tabButtons[id].classList.toggle('active', isActive)
+        }
+
+        // Only show the delete-all button on the Snapshots & Share tab
+        if (delAll) delAll.hidden = tabId !== 'stateTab'
+
+        if (!populatedTabs.has(tabId)) {
+          const t = tabsMeta.find(t => t.id === tabId)
+          if (t?.populate) await t.populate(tabContents[tabId])
+          populatedTabs.add(tabId)
+        }
+
+        StorageManager.misc.setItem('configModalTab', tabId)
+      }
+
+      for (const id in tabButtons) {
+        tabButtons[id].addEventListener('click', () => switchTab(id))
+      }
 
       await switchTab(last)
     }
   })
 }
+
 /**
  * Populate the saved states tab with stored snapshots.
  * Columns: Name, Unique domains, Size, Actions, Health, Type, Date, MD5.
@@ -355,6 +356,7 @@ export async function openConfigModal () {
  * @param {HTMLElement} tab
  * @returns {Promise<void>}
  */
+// full function: populateStateTab
 async function populateStateTab (tab) {
   tab.innerHTML = ''
   tab.classList.add('modal__tab--column')
@@ -383,7 +385,6 @@ async function populateStateTab (tab) {
   const rows = Array.isArray(store.states) ? store.states : []
   const colCount = table.querySelectorAll('thead th').length || 8
 
-  // Identify current snapshot and sort it to the top, then by recency (desc)
   const currentMd5 = StorageManager.misc.getItem('currentSnapshotMd5') || ''
   const sorted = rows.slice().sort((a, b) => {
     if (a.md5 === currentMd5 && b.md5 !== currentMd5) return -1
@@ -399,11 +400,9 @@ async function populateStateTab (tab) {
     const uniqueDomains = await computeUniqueDomains(row.svc)
     const domainsTooltip = escapeHtml(Array.from(uniqueDomains).join(', '))
 
-    // name cell: prepend a green check icon when current (fallback ✓)
     const checkIcon = (typeof emojiList !== 'undefined' && emojiList?.checkGreen?.icon) ? emojiList.checkGreen.icon : '✓'
     const currentBadge = isCurrent ? '<span class="hc-current-badge" title="Currently in use"> (current)</span>' : ''
 
-    // actions: hide Switch/Merge when current
     const actionsHtml = isCurrent
       ? `<button data-action="delete" data-id="${row.md5}">Delete</button>`
       : `<button data-action="switch" data-id="${row.md5}">Switch</button>
@@ -428,14 +427,13 @@ async function populateStateTab (tab) {
           <span class="hc-summary-text">not checked</span>
         </span>
         <button class="hc-btn" data-action="health" data-id="${row.md5}">Healthcheck</button>
-        <button class="hc-btn" data-action="toggle" data-id="${row.md5}" disabled>Details</button>
+        <button class="hc-btn" data-action="toggle" data-id="${row.md5}" disabled aria-expanded="false">Details</button>
       </td>
       <td data-col="type">${escapeHtml(row.type || '')}</td>
       <td data-col="date">${new Date(row.ts || Date.now()).toLocaleString()}</td>
       <td data-col="md5"><code>${row.md5 || ''}</code></td>
     `
-
-    if (isCurrent) tr.classList.add('hc-current-row') // styling via CSS, no inline styles
+    if (isCurrent) tr.classList.add('hc-current-row')
     tbody.appendChild(tr)
 
     // Collapsible details row
@@ -459,6 +457,15 @@ async function populateStateTab (tab) {
     const toggleBtn = /** @type {HTMLButtonElement} */ (tr.querySelector('[data-action="toggle"]'))
     const healthBtn = /** @type {HTMLButtonElement} */ (tr.querySelector('[data-action="health"]'))
 
+    // Toggle handler keeps label + aria-expanded in sync
+    toggleBtn.addEventListener('click', () => {
+      const open = detailsTr.style.display !== 'none'
+      const nextOpen = !open
+      detailsTr.style.display = nextOpen ? '' : 'none'
+      toggleBtn.textContent = nextOpen ? 'Hide' : 'Details'
+      toggleBtn.setAttribute('aria-expanded', nextOpen ? 'true' : 'false')
+    })
+
     // actions
     if (!isCurrent) {
       tr.querySelector('[data-action="switch"]')?.addEventListener('click', async () => { await applySnapshotSwitch(row) })
@@ -472,12 +479,7 @@ async function populateStateTab (tab) {
       await populateStateTab(tab)
     })
 
-    toggleBtn.addEventListener('click', () => {
-      const open = detailsTr.style.display !== 'none'
-      detailsTr.style.display = open ? 'none' : ''
-      toggleBtn.textContent = open ? 'Details' : 'Hide'
-    })
-
+    // Healthcheck: after first run, auto-open details and show "Hide" immediately
     healthBtn.addEventListener('click', async () => {
       healthBtn.disabled = true
       healthBtn.textContent = 'Checking…'
@@ -490,9 +492,12 @@ async function populateStateTab (tab) {
           }
         })
         renderHealthUI(summaryTextEl, summaryDotEl, domainsCell, listEl, result.byDomain, result.checkedAt, uniqueDomains)
+
+        // enable and OPEN details; set label to "Hide" immediately
         toggleBtn.disabled = false
-        toggleBtn.textContent = 'Details'
-        detailsTr.style.display = '' // open after first run
+        detailsTr.style.display = ''
+        toggleBtn.textContent = 'Hide'
+        toggleBtn.setAttribute('aria-expanded', 'true')
       } catch {
         summaryTextEl.textContent = 'error'
         summaryDotEl.className = 'hc-dot down'
