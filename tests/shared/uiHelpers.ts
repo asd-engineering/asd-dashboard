@@ -86,7 +86,6 @@ export async function enableUITestMode(page: Page, opts?: {
  * - Try a normal click first.
  * - Fallback to programmatic open if something still covers the button.
  */
-// replace openConfigModalSafe with a sturdier version
 // export async function openConfigModalSafe(page: Page, tab?: 'stateTab'|'cfgTab'|'svcTab'): Promise<void> {
 //   await page.waitForLoadState('domcontentloaded')
 

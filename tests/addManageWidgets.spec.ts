@@ -8,6 +8,7 @@ import {
   navigate,
   handleDialog,
   dragAndDropWidgetStable,
+  reloadReady,
 } from './shared/common.js';
 import { setLocalItem } from './shared/state'
 import { waitForWidgetStoreIdle } from "./shared/state.js";
@@ -78,8 +79,7 @@ test.describe('Widgets', () => {
     }
 
     // Reload the page to restore widgets from local storage
-    await page.reload();
-    
+    await reloadReady(page);
 
     // Verify the order of widgets after reload
     const orderAfterReload = {};
@@ -186,9 +186,8 @@ test.describe('Widgets', () => {
     await expect(firstWidget).toHaveAttribute('data-rows', '1');
 
     // Reload the page
-    await page.reload();
+    await reloadReady(page);
     
-
     // Verify the widget retains its size
     await expect(firstWidget).toHaveAttribute('data-columns', '1');
     await expect(firstWidget).toHaveAttribute('data-rows', '1');
@@ -208,7 +207,7 @@ test.describe('Widgets', () => {
     await expect(firstWidget).toHaveAttribute('data-rows', '3');
 
     // Reload the page
-    await page.reload();
+    await reloadReady(page);
     
 
     // Verify the widget retains its size

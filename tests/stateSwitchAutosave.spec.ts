@@ -14,7 +14,7 @@ test('switching creates autosave when existing state is present', async ({ page 
   await switchSnapshotByName(page, 'export/test')
 
   await openConfigModalSafe(page, 'stateTab')
-  await page.locator('#stateTab tbody').waitFor({ state: 'attached' })
+
   const rows = await page.locator('#stateTab tbody tr').allInnerTexts()
   expect(rows.join('\n')).toContain('autosave/')
 })

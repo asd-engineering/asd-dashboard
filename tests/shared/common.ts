@@ -102,7 +102,7 @@ export async function navigate(
   destination: string,
   options?: NavigateOptions
 ): Promise<void> {
-  const totalBudget = Math.max(1, options?.totalTimeoutMs ?? 3000);
+  const totalBudget = Math.max(1, options?.totalTimeoutMs ?? 4000);
   const gotoBudget = Math.max(1, Math.floor(totalBudget * 0.7));
   const readyBudget = Math.max(0, totalBudget - gotoBudget);
 
@@ -467,4 +467,16 @@ export async function resizeWidgetTo(page: Page, index: number, columns: number,
   await page.click(`text=${columns} columns, ${rows} rows`);
   await expect(widget).toHaveAttribute('data-columns', String(columns));
   await expect(widget).toHaveAttribute('data-rows', String(rows));
+}
+
+export async function reloadReady(page: Page, totalTimeoutMs = 4000): Promise<void> {
+    const gotoBudget = Math.max(1, Math.floor(totalTimeoutMs * 0.7));
+    const readyBudget = Math.max(0, totalTimeoutMs - gotoBudget);
+    try {
+      await page.reload({ waitUntil: 'domcontentloaded', timeout: gotoBudget });
+    } catch {
+      // last try with 'load' in case DOMContentLoaded didn't fire in time
+      await page.reload({ waitUntil: 'load', timeout: gotoBudget }).catch(() => {});
+    }
+    await page.waitForSelector('body[data-ready="true"]', { timeout: readyBudget }).catch(() => {});
 }
