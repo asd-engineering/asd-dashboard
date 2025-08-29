@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     concurrency:
-      group: playwright-${{ github.event.pull_request.head.ref || github.ref_name }}
-      cancel-in-progress: true
+      group: ${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
+      cancel-in-progress: ${{ github.ref_name != 'main' }}
 
     steps:
     - uses: actions/checkout@v4
