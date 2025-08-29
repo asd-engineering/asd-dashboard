@@ -5,7 +5,7 @@
   padding: var(--space-1) calc(var(--space-1) + 2px);
   border-radius: var(--radius-1);
   background: var(--color-elevated);
-  /* z-index: 2000; */
+  z-index: 2000;
 }
 
 .panel-arrow { font-size: .8rem; margin-right: -2px; }

@@ -427,13 +427,16 @@ export async function dragAndDropWidgetByIndex(page: Page, fromIndex: number, to
 
 export async function dragAndDropWidgetStable(page: Page, fromIndex: number, toIndex: number): Promise<void> {
   // Temporarily neutralize the header controls during DnD
-  await page.evaluate(() => {
-    const el = document.getElementById('controls') as HTMLElement | null
-    if (el) {
-      el.dataset.prevPointer = el.style.pointerEvents || ''
-      el.style.pointerEvents = 'none'
-    }
-  })
+  // Guard against a closed page because of page.reload after adding widgets (test)
+  if (!page.isClosed()) {
+    await page.evaluate(() => {
+      const el = document.getElementById('controls') as HTMLElement | null
+      if (el) {
+        el.dataset.prevPointer = el.style.pointerEvents || ''
+        el.style.pointerEvents = 'none'
+      }
+    })
+  }
 
   try {
     const src = page.locator('.widget-wrapper').nth(fromIndex).locator('.widget-icon-drag')
