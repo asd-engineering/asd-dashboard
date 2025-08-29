@@ -1,6 +1,7 @@
 // @ts-check
 import { type Page } from "@playwright/test";
-import { evaluateSafe } from "./common";
+import { evaluateSafe, waitForAppReady } from "./common";
+import { openConfigModalSafe } from './uiHelpers'
 
 /**
  * Retrieve the current widgetStore size.
@@ -97,28 +98,24 @@ export async function loadStateStore(page: Page): Promise<{ version: number; sta
  * (Keeps UI-path parity with real users; avoids LS mutations.)
  */
 export async function switchSnapshotByName(page: Page, name: string): Promise<void> {
-  await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()));
-  await page.locator('.tabs button[data-tab="stateTab"]').click();
-  await page.locator('#stateTab').waitFor();
+  await openConfigModalSafe(page, "stateTab")
+
   const row = page.locator(`#stateTab tbody tr:has-text("${name}")`).first();
   await row.locator('button[data-action="switch"]').click();
 
-  await page.waitForLoadState('domcontentloaded');
-  await page.waitForSelector('body[data-ready="true"]');
+  await waitForAppReady(page)
 }
 
 /**
  * Merge a snapshot by name via UI (idempotent).
  */
 export async function mergeSnapshotByName(page: Page, name: string): Promise<void> {
-  await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()));
-  await page.locator('.tabs button[data-tab="stateTab"]').click();
-  await page.locator('#stateTab').waitFor();
+  await openConfigModalSafe(page, "stateTab")
+  
   const row = page.locator(`#stateTab tbody tr:has-text("${name}")`).first();
   await row.locator('button[data-action="merge"]').click({ force: true });
 
-  await page.waitForLoadState('domcontentloaded');
-  await page.waitForSelector('body[data-ready="true"]');
+  await waitForAppReady(page)
 }
 
 

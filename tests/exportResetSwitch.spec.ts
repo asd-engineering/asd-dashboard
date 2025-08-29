@@ -14,7 +14,7 @@ test('exported snapshot remains switchable after reset', async ({ page }) => {
 
   await wipeConfigPreserveSnapshots(page);
 
-  await openConfigModalSafe(page)
+  await openConfigModalSafe(page, "stateTab")
 
   await switchSnapshotByName(page, 'export/switchable')
 })

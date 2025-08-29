@@ -11,7 +11,7 @@ test.describe('advanced mode toggle', () => {
   })
 
   test('toggles tabs and subtabs', async ({ page }) => {
-    await openConfigModalSafe(page)
+    await openConfigModalSafe(page, "stateTab")
 
     const tabs = page.locator('#config-modal .tabs button')
     await expect(tabs).toHaveText(['Snapshots & Share', 'Configuration'])

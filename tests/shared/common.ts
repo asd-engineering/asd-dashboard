@@ -363,8 +363,7 @@ export async function saveConfigJson(page: Page, cfg: any): Promise<void> {
   await page.locator('#config-modal .modal__btn--save').click();
 
   // App-ready (selector gate only, no waitForFunction)
-  await page.waitForLoadState('domcontentloaded');
-  await page.waitForSelector('body[data-ready="true"]');
+  await waitForAppReady(page)
 }
 
 /**

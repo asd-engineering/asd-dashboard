@@ -8,7 +8,7 @@ import {
   navigate,
   handleDialog,
   dragAndDropWidgetStable,
-  reloadReady,
+  reloadReady
 } from './shared/common.js';
 import { setLocalItem } from './shared/state'
 import { waitForWidgetStoreIdle } from "./shared/state.js";
@@ -126,7 +126,6 @@ test.describe('Widgets', () => {
     const uniqueUUIDs = new Set(widgetUUIDs);
     expect(uniqueUUIDs.size).toEqual(widgetUUIDs.length);
 
-    // await popup.waitForLoadState('domcontentloaded'); // Wait for the 'DOMContentLoaded' event.
     const reloadedWidgetUUIDs = await page.locator('.widget-wrapper').evaluateAll(widgets => 
       widgets.map(widget => widget.getAttribute('data-dataid'))
     );
@@ -208,7 +207,6 @@ test.describe('Widgets', () => {
 
     // Reload the page
     await reloadReady(page);
-    
 
     // Verify the widget retains its size
     await expect(firstWidget).toHaveAttribute('data-columns', '3');
