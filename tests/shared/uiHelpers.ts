@@ -19,7 +19,7 @@ export async function enableUITestMode(page: Page, opts?: {
   const {
     showFlyouts = true,
     disableMotion = true,
-    fixHeaderOverlaps = true,
+    fixHeaderOverlaps = false,
   } = opts || {};
 
   // Mark page as test-mode (one tiny evaluate).
@@ -63,16 +63,16 @@ export async function enableUITestMode(page: Page, opts?: {
     `);
   }
 
-  if (fixHeaderOverlaps) {
-    // Ensure the config button is always clickable even if sibling header controls exist.
-    parts.push(`
-      html[data-test-mode="true"] #open-config-modal {
-        position: relative !important;
-        z-index: 1000 !important;
-        pointer-events: auto !important;
-      }
-    `);
-  }
+  // if (fixHeaderOverlaps) {
+  //   // Ensure the config button is always clickable even if sibling header controls exist.
+  //   parts.push(`
+  //     html[data-test-mode="true"] #open-config-modal {
+  //       position: relative !important;
+  //       z-index: 1000 !important;
+  //       pointer-events: auto !important;
+  //     }
+  //   `);
+  // }
 
   if (parts.length) {
     await page.addStyleTag({
