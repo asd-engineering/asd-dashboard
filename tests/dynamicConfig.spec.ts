@@ -182,7 +182,7 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
     await page.click("#open-config-modal");
     await page.locator('button[data-tab="cfgTab"]').click();
     
-    await page.locator('[data-testid="advanced-mode-toggle"]').check();
+    await page.locator('[data-testid="advanced-mode-toggle"]').click();
     await page.locator('#config-modal').waitFor({ state: 'visible' });
     await expect(page.locator("#config-modal")).toBeVisible();
 

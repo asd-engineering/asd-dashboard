@@ -20,7 +20,7 @@ test.describe('advanced mode toggle', () => {
     let subtabs = page.locator('#config-form .jf-subtabs button')
     await expect(subtabs).toHaveText(['globalSettings', 'serviceTemplates'])
 
-    await page.locator('[data-testid="advanced-mode-toggle"]').check()
+    await page.locator('[data-testid="advanced-mode-toggle"]').click()
     await page.locator('#config-modal').waitFor({ state: 'visible' })
 
     const tabsAdv = page.locator('#config-modal .tabs button')

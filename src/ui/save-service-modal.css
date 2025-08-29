@@ -1,36 +1,39 @@
-/* --- src/ui/save-service-modal.css --------------------------------------- */
-/* Save Service Modal: compact, non-stretching, responsive two-column layout */
+/* Save Service Modal: compact, responsive two-column layout with sticky footer */
 
 #save-service-modal.modal {
-  /* This modal has no header block; use content + sticky footer rows */
-  grid-template-rows: 1fr auto;
+  grid-template-rows: auto auto;      /* content + footer only */
   padding: var(--space-6);
+  height: auto;                       /* shrink-wrap content */
+  max-height: 85vh;                   /* cap for long forms */
+  overflow: hidden;
 }
 
-/* Grid container for fields */
+/* Form grid */
 #save-service-modal {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: min-content;          /* prevent row stretching */
-  align-items: start;                    /* prevent item stretching */
-  gap: var(--space-6);
-  overflow: auto;                        /* scroll form, keep footer visible */
+  grid-auto-rows: auto;
+  gap: var(--space-5);
+  align-items: start;
+  overflow-y: auto;
+  padding-bottom: var(--space-6);     /* breathing room before footer */
 }
 
-/* Inputs: compact, consistent, never stretch vertically */
+/* Inputs */
 #save-service-modal .modal__input {
   width: 100%;
   min-width: 0;
-  height: auto;                          /* ensure height is intrinsic */
-  padding: 10px 12px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  height: 2.2rem;
+  line-height: 1.2;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-1);
   background: var(--color-elevated);
   color: var(--color-text);
   outline: none;
   box-shadow: none;
-  line-height: 1.2;
-  align-self: start;                     /* belt-and-suspenders anti-stretch */
+  align-self: start;
   transition: border-color .15s ease, box-shadow .15s ease;
 }
 #save-service-modal .modal__input:focus {
@@ -47,33 +50,29 @@
 #service-category    { grid-column: 2 / 3; }
 #service-subcategory { grid-column: 1 / 2; }
 #service-max         { grid-column: 2 / 3; }
-
 #service-tags,
-#service-url         { grid-column: 1 / -1; }  /* full width rows */
+#service-url         { grid-column: 1 / -1; }
 
-/* Numeric input width tuned but flexible */
 #service-max.modal__input { max-width: 200px; }
 
-/* Checkbox row (Start in current board) */
+/* Checkbox row */
 #save-service-modal > div:has(#service-start) {
   grid-column: 1 / -1;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   user-select: none;
 }
 
-/* Sticky footer: stays visible while form scrolls */
+/* Footer */
 #save-service-modal .modal__btn-group {
   grid-column: 1 / -1;
   bottom: 0;
+  padding: var(--space-5);
   margin: 0 calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) calc(-1 * var(--space-6));
-  padding: var(--space-6);
   background: var(--color-elevated);
   border-top: 1px solid var(--color-border);
 }
-
-/* Subtle gradient seam above footer */
 #save-service-modal .modal__btn-group::before {
   content: "";
   position: absolute;
@@ -83,7 +82,7 @@
   pointer-events: none;
 }
 
-/* Close button hover affordance (keeps inline absolute positioning) */
+/* Close button hover */
 #save-service-modal > [aria-label="Close modal"] {
   z-index: 2;
   line-height: 1;
@@ -96,7 +95,7 @@
 
 /* Mobile: collapse to single column */
 @media (max-width: 700px) {
-  #save-service-modal { grid-template-columns: 1fr; gap: var(--space-5); }
+  #save-service-modal { grid-template-columns: 1fr; gap: var(--space-4); }
   #service-name,
   #service-category,
   #service-subcategory,
@@ -104,70 +103,4 @@
   #service-tags,
   #service-url { grid-column: 1 / -1 !important; }
   #service-max.modal__input { max-width: 100%; }
-}
-/* --- src/ui/save-service-modal.css --- */
-
-/* Modal shell: remove the big flexible row */
-#save-service-modal.modal {
-  grid-template-rows: auto auto;   /* content + footer only */
-  padding: var(--space-6);
-  height: auto;                    /* shrink-wrap content */
-  max-height: 85vh;                /* but cap for long forms */
-  overflow: hidden;
-}
-
-/* Form grid: compact rows */
-#save-service-modal {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: auto;            /* no stretching */
-  gap: var(--space-4);             /* tighter spacing */
-  align-items: start;
-  overflow-y: auto;
-  padding-bottom: var(--space-6);  /* breathing room before footer */
-}
-
-/* Reduce input vertical footprint */
-#save-service-modal .modal__input {
-  padding: 6px 10px;
-  font-size: 0.9rem;
-  height: 2.2rem;                  /* consistent compact height */
-  line-height: 1.2;
-}
-
-/* Field placement rules same as before */
-#service-name        { grid-column: 1 / 2; }
-#service-category    { grid-column: 2 / 3; }
-#service-subcategory { grid-column: 1 / 2; }
-#service-max         { grid-column: 2 / 3; }
-#service-tags,
-#service-url         { grid-column: 1 / -1; }
-
-/* Checkbox row */
-#save-service-modal > div:has(#service-start) {
-  grid-column: 1 / -1;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* Footer: still sticky */
-#save-service-modal .modal__btn-group {
-  grid-column: 1 / -1;
-  bottom: 0;
-  padding: var(--space-5);
-  margin: 0 calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) calc(-1 * var(--space-6));
-  background: var(--color-elevated);
-  border-top: 1px solid var(--color-border);
-}
-
-/* Mobile collapse */
-@media (max-width: 700px) {
-  #save-service-modal { grid-template-columns: 1fr; }
-  #service-name,
-  #service-category,
-  #service-subcategory,
-  #service-max,
-  #service-tags,
-  #service-url { grid-column: 1 / -1 !important; }
 }

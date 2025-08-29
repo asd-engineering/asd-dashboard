@@ -12,7 +12,7 @@ test.describe('config array defaults', () => {
   test('boards, views and widgets get full defaults when added', async ({ page }) => {
     await page.click('#open-config-modal')
     await page.locator('button[data-tab="cfgTab"]').click();
-    await page.locator('[data-testid="advanced-mode-toggle"]').check()
+    await page.locator('[data-testid="advanced-mode-toggle"]').click()
     await page.locator('#config-modal').waitFor({ state: 'visible' })
     // set config to only have empty boards array
     await page.click('#cfgTab .modal__btn--toggle')
@@ -37,7 +37,7 @@ test.describe('config array defaults', () => {
     await page.click('#open-config-modal')
     await page.locator('button[data-tab="cfgTab"]').click();
     
-    await page.locator('[data-testid="advanced-mode-toggle"]').check()
+    await page.locator('[data-testid="advanced-mode-toggle"]').click()
     await page.locator('#config-modal').waitFor({ state: 'visible' })
     await page.click('#config-modal .tabs button:has-text("Services")')
 
