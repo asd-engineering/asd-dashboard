@@ -172,7 +172,7 @@ test.describe("config.servicesUrl - Priority order", () => {
     // Use both fragment config AND services_base64 param
     await navigate(
       page,
-      `/?services_base64=${b64(alternateServices)}#${fragmentParams}`
+      `/?services_base64=${b64(alternateServices)}&import=true#${fragmentParams}`
     );
 
     const services = await getServices(page);
@@ -205,7 +205,7 @@ test.describe("config.servicesUrl - Priority order", () => {
     // Use both fragment config AND services_url param
     await navigate(
       page,
-      `/?services_url=/alternate-services.json#${fragmentParams}`
+      `/?services_url=/alternate-services.json&import=true#${fragmentParams}`
     );
 
     const services = await getServices(page);
@@ -233,7 +233,7 @@ test.describe("config.servicesUrl - Priority order", () => {
 
     await navigate(
       page,
-      `/?services_url=/param-services.json#${fragmentParams}`
+      `/?services_url=/param-services.json&import=true#${fragmentParams}`
     );
 
     const services = await getServices(page);
