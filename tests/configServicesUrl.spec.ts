@@ -111,7 +111,8 @@ test.describe("config.servicesUrl - Fragment-based external service loading", ()
     }, ciServices);
 
     const fragmentParams = await encodeConfigForFragment(configWithBadUrl);
-    await navigate(page, `/#${fragmentParams}`);
+    // Use ?import=true to skip fragment decision modal (localStorage has data)
+    await navigate(page, `/?import=true#${fragmentParams}`);
 
     const services = await getServices(page);
 
@@ -245,7 +246,8 @@ test.describe("config.servicesUrl - Priority order", () => {
     }, ciServices);
 
     const fragmentParams = await encodeConfigForFragment(configWithBadUrl);
-    await navigate(page, `/#${fragmentParams}`);
+    // Use ?import=true to skip fragment decision modal (localStorage has data)
+    await navigate(page, `/?import=true#${fragmentParams}`);
 
     const services = await getServices(page);
 
