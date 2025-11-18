@@ -67,7 +67,7 @@ test.describe("config.servicesUrl - Fragment-based external service loading", ()
 
     // Encode config as fragment
     const fragmentParams = await encodeConfigForFragment(configWithServicesUrl);
-    await navigate(page, `/#${fragmentParams}`);
+    await navigate(page, `/?import=true#${fragmentParams}`);
 
     // Verify external services were loaded (not default ciServices)
     const services = await getServices(page);
@@ -92,7 +92,7 @@ test.describe("config.servicesUrl - Fragment-based external service loading", ()
     );
 
     const fragmentParams = await encodeConfigForFragment(configWithRelativeUrl);
-    await navigate(page, `/#${fragmentParams}`);
+    await navigate(page, `/?import=true#${fragmentParams}`);
 
     const services = await getServices(page);
 
@@ -139,7 +139,7 @@ test.describe("config.servicesUrl - Fragment-based external service loading", ()
     );
 
     const fragmentParams = await encodeConfigForFragment(configWithoutServicesUrl);
-    await navigate(page, `/#${fragmentParams}`);
+    await navigate(page, `/?import=true#${fragmentParams}`);
 
     const services = await getServices(page);
 
@@ -280,7 +280,7 @@ test.describe("config.servicesUrl - Priority order", () => {
     );
 
     const fragmentParams = await encodeConfigForFragment(configWithoutServicesUrl);
-    await navigate(page, `/#${fragmentParams}`);
+    await navigate(page, `/?import=true#${fragmentParams}`);
 
     const services = await getServices(page);
 
@@ -309,7 +309,7 @@ test.describe("config.servicesUrl - Edge cases", () => {
     );
 
     const fragmentParams = await encodeConfigForFragment(configWithEmptyUrl);
-    await navigate(page, `/#${fragmentParams}`);
+    await navigate(page, `/?import=true#${fragmentParams}`);
 
     const services = await getServices(page);
 
@@ -336,7 +336,7 @@ test.describe("config.servicesUrl - Edge cases", () => {
     );
 
     const fragmentParams = await encodeConfigForFragment(configWithBadEndpoint);
-    await navigate(page, `/#${fragmentParams}`);
+    await navigate(page, `/?import=true#${fragmentParams}`);
 
     const services = await getServices(page);
 
@@ -356,7 +356,7 @@ test.describe("config.servicesUrl - Edge cases", () => {
     );
 
     const fragmentParams = await encodeConfigForFragment(configWithServicesUrl);
-    await navigate(page, `/#${fragmentParams}`);
+    await navigate(page, `/?import=true#${fragmentParams}`);
 
     let services = await getServices(page);
     expect(services.length).toBe(externalServices.length);
@@ -388,7 +388,7 @@ test.describe("config.servicesUrl - Edge cases", () => {
     );
 
     const fragmentParams1 = await encodeConfigForFragment(config1);
-    await navigate(page, `/#${fragmentParams1}`);
+    await navigate(page, `/?import=true#${fragmentParams1}`);
 
     let services = await getServices(page);
     expect(services.some((s: any) => s.name === "External-Service-1")).toBeTruthy();
@@ -401,7 +401,7 @@ test.describe("config.servicesUrl - Edge cases", () => {
     };
 
     const fragmentParams2 = await encodeConfigForFragment(config2);
-    await navigate(page, `/#${fragmentParams2}`);
+    await navigate(page, `/?import=true#${fragmentParams2}`);
 
     await page.reload();
     services = await getServices(page);
