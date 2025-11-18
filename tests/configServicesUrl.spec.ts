@@ -20,11 +20,13 @@ import { computeCRC32Hex } from "../src/utils/checksum.js";
  */
 async function encodeConfigForFragment(config: any): Promise<string> {
   const cfgDefaults = applyKeyMap(DEFAULT_CONFIG_TEMPLATE, KEY_MAP, 'encode');
-  const cfgMinimized = FRAG_MINIMIZE_ENABLED ? minimizeDeep(config, cfgDefaults) : config;
-  const cfgMapped = applyKeyMap(cfgMinimized, KEY_MAP, 'encode');
-  const encoded = await encodeConfig(cfgMapped, { algo: 'deflate' });
-  const checksum = computeCRC32Hex(JSON.stringify(cfgMapped));
-  return `cfg=${encoded}&algo=deflate&cc=${checksum}`;
+  const cfgMapped = applyKeyMap(config, KEY_MAP, 'encode');
+  const cfgMinimized = FRAG_MINIMIZE_ENABLED
+    ? minimizeDeep(cfgMapped, cfgDefaults) ?? {}
+    : cfgMapped;
+  const { data } = await encodeConfig(cfgMinimized, { algo: 'deflate' });
+  const checksum = computeCRC32Hex(JSON.stringify(cfgMinimized));
+  return `cfg=${data}&algo=deflate&cc=${checksum}`;
 }
 
 const externalServices = [
@@ -36,11 +38,25 @@ const alternateServices = [
   { name: "Alternate-Service-1", url: "http://alternate.com/service1" }
 ];
 
-test.describe.skip("config.servicesUrl - Fragment-based external service loading", () => {
+function fulfillJsonWithCors(route: import('@playwright/test').Route, data: any) {
+  route.fulfill({
+    json: data,
+    headers: {
+      'access-control-allow-origin': '*'
+    }
+  });
+}
+
+test.describe("config.servicesUrl - Fragment-based external service loading", () => {
   test.beforeEach(async ({ page }) => {
     // Clear localStorage to prevent fragment decision modal from appearing
     await page.addInitScript(() => {
-      localStorage.clear();
+      if (window.top === window) {
+        if (!sessionStorage.getItem('__asdCleared__')) {
+          localStorage.clear();
+          sessionStorage.setItem('__asdCleared__', '1');
+        }
+      }
     });
   });
 
@@ -54,15 +70,15 @@ test.describe.skip("config.servicesUrl - Fragment-based external service loading
 
     // Mock the external services endpoint
     await page.route("**/external-services.json", (route) =>
-      route.fulfill({ json: externalServices })
+      fulfillJsonWithCors(route, externalServices)
     );
 
     // Mock default files to ensure they're not used
     await page.route("**/services.json", (route) =>
-      route.fulfill({ json: ciServices })
+      fulfillJsonWithCors(route, ciServices)
     );
     await page.route("**/config.json", (route) =>
-      route.fulfill({ json: ciConfig })
+      fulfillJsonWithCors(route, ciConfig)
     );
 
     // Encode config as fragment
@@ -88,7 +104,7 @@ test.describe.skip("config.servicesUrl - Fragment-based external service loading
     };
 
     await page.route("**/api/services.json", (route) =>
-      route.fulfill({ json: externalServices })
+      fulfillJsonWithCors(route, externalServices)
     );
 
     const fragmentParams = await encodeConfigForFragment(configWithRelativeUrl);
@@ -135,7 +151,7 @@ test.describe.skip("config.servicesUrl - Fragment-based external service loading
     };
 
     await page.route("**/services.json", (route) =>
-      route.fulfill({ json: ciServices })
+      fulfillJsonWithCors(route, ciServices)
     );
 
     const fragmentParams = await encodeConfigForFragment(configWithoutServicesUrl);
@@ -148,11 +164,16 @@ test.describe.skip("config.servicesUrl - Fragment-based external service loading
   });
 });
 
-test.describe.skip("config.servicesUrl - Priority order", () => {
+test.describe("config.servicesUrl - Priority order", () => {
   test.beforeEach(async ({ page }) => {
     // Clear localStorage to prevent fragment decision modal from appearing
     await page.addInitScript(() => {
-      localStorage.clear();
+      if (window.top === window) {
+        if (!sessionStorage.getItem('__asdCleared__')) {
+          localStorage.clear();
+          sessionStorage.setItem('__asdCleared__', '1');
+        }
+      }
     });
   });
 
@@ -164,7 +185,7 @@ test.describe.skip("config.servicesUrl - Priority order", () => {
     };
 
     await page.route("**/external-services.json", (route) =>
-      route.fulfill({ json: externalServices })
+      fulfillJsonWithCors(route, externalServices)
     );
 
     const fragmentParams = await encodeConfigForFragment(configWithServicesUrl);
@@ -193,11 +214,11 @@ test.describe.skip("config.servicesUrl - Priority order", () => {
     };
 
     await page.route("**/external-services.json", (route) =>
-      route.fulfill({ json: externalServices })
+      fulfillJsonWithCors(route, externalServices)
     );
 
     await page.route("**/alternate-services.json", (route) =>
-      route.fulfill({ json: alternateServices })
+      fulfillJsonWithCors(route, alternateServices)
     );
 
     const fragmentParams = await encodeConfigForFragment(configWithServicesUrl);
@@ -226,7 +247,7 @@ test.describe.skip("config.servicesUrl - Priority order", () => {
     };
 
     await page.route("**/param-services.json", (route) =>
-      route.fulfill({ json: alternateServices })
+      fulfillJsonWithCors(route, alternateServices)
     );
 
     const fragmentParams = await encodeConfigForFragment(configWithoutServicesUrl);
@@ -276,7 +297,7 @@ test.describe.skip("config.servicesUrl - Priority order", () => {
     };
 
     await page.route("**/services.json", (route) =>
-      route.fulfill({ json: ciServices })
+      fulfillJsonWithCors(route, ciServices)
     );
 
     const fragmentParams = await encodeConfigForFragment(configWithoutServicesUrl);
@@ -289,11 +310,16 @@ test.describe.skip("config.servicesUrl - Priority order", () => {
   });
 });
 
-test.describe.skip("config.servicesUrl - Edge cases", () => {
+test.describe("config.servicesUrl - Edge cases", () => {
   test.beforeEach(async ({ page }) => {
     // Clear localStorage to prevent fragment decision modal from appearing
     await page.addInitScript(() => {
-      localStorage.clear();
+      if (window.top === window) {
+        if (!sessionStorage.getItem('__asdCleared__')) {
+          localStorage.clear();
+          sessionStorage.setItem('__asdCleared__', '1');
+        }
+      }
     });
   });
 
@@ -305,7 +331,7 @@ test.describe.skip("config.servicesUrl - Edge cases", () => {
     };
 
     await page.route("**/services.json", (route) =>
-      route.fulfill({ json: ciServices })
+      fulfillJsonWithCors(route, ciServices)
     );
 
     const fragmentParams = await encodeConfigForFragment(configWithEmptyUrl);
@@ -332,7 +358,7 @@ test.describe.skip("config.servicesUrl - Edge cases", () => {
     );
 
     await page.route("**/services.json", (route) =>
-      route.fulfill({ json: ciServices })
+      fulfillJsonWithCors(route, ciServices)
     );
 
     const fragmentParams = await encodeConfigForFragment(configWithBadEndpoint);
@@ -352,7 +378,7 @@ test.describe.skip("config.servicesUrl - Edge cases", () => {
     };
 
     await page.route("**/persistent-services.json", (route) =>
-      route.fulfill({ json: externalServices })
+      fulfillJsonWithCors(route, externalServices)
     );
 
     const fragmentParams = await encodeConfigForFragment(configWithServicesUrl);
@@ -380,11 +406,11 @@ test.describe.skip("config.servicesUrl - Edge cases", () => {
     };
 
     await page.route("**/services-v1.json", (route) =>
-      route.fulfill({ json: externalServices })
+      fulfillJsonWithCors(route, externalServices)
     );
 
     await page.route("**/services-v2.json", (route) =>
-      route.fulfill({ json: alternateServices })
+      fulfillJsonWithCors(route, alternateServices)
     );
 
     const fragmentParams1 = await encodeConfigForFragment(config1);
