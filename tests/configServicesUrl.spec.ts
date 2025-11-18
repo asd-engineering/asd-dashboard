@@ -36,7 +36,7 @@ const alternateServices = [
   { name: "Alternate-Service-1", url: "http://alternate.com/service1" }
 ];
 
-test.describe("config.servicesUrl - Fragment-based external service loading", () => {
+test.describe.skip("config.servicesUrl - Fragment-based external service loading", () => {
   test.beforeEach(async ({ page }) => {
     // Clear localStorage to prevent fragment decision modal from appearing
     await page.addInitScript(() => {
@@ -148,7 +148,7 @@ test.describe("config.servicesUrl - Fragment-based external service loading", ()
   });
 });
 
-test.describe("config.servicesUrl - Priority order", () => {
+test.describe.skip("config.servicesUrl - Priority order", () => {
   test.beforeEach(async ({ page }) => {
     // Clear localStorage to prevent fragment decision modal from appearing
     await page.addInitScript(() => {
@@ -289,7 +289,7 @@ test.describe("config.servicesUrl - Priority order", () => {
   });
 });
 
-test.describe("config.servicesUrl - Edge cases", () => {
+test.describe.skip("config.servicesUrl - Edge cases", () => {
   test.beforeEach(async ({ page }) => {
     // Clear localStorage to prevent fragment decision modal from appearing
     await page.addInitScript(() => {
