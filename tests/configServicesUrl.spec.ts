@@ -7,7 +7,6 @@ import {
   navigate,
   getServices
 } from "./shared/common";
-import { ensurePanelOpen } from './shared/panels';
 import { encodeConfig } from "../src/utils/compression.js";
 import { applyKeyMap } from "../src/utils/keymap.js";
 import { KEY_MAP } from "../src/utils/fragmentKeyMap.js";
@@ -64,7 +63,6 @@ test.describe("config.servicesUrl - Fragment-based external service loading", ()
     await navigate(page, `/#${fragmentParams}`);
 
     // Verify external services were loaded (not default ciServices)
-    await ensurePanelOpen(page, 'service-panel');
     const services = await getServices(page);
 
     expect(services.length).toBe(externalServices.length);
@@ -89,7 +87,6 @@ test.describe("config.servicesUrl - Fragment-based external service loading", ()
     const fragmentParams = await encodeConfigForFragment(configWithRelativeUrl);
     await navigate(page, `/#${fragmentParams}`);
 
-    await ensurePanelOpen(page, 'service-panel');
     const services = await getServices(page);
 
     expect(services.length).toBe(externalServices.length);
@@ -116,7 +113,6 @@ test.describe("config.servicesUrl - Fragment-based external service loading", ()
     const fragmentParams = await encodeConfigForFragment(configWithBadUrl);
     await navigate(page, `/#${fragmentParams}`);
 
-    await ensurePanelOpen(page, 'service-panel');
     const services = await getServices(page);
 
     // Should fall back to localStorage services
@@ -137,7 +133,6 @@ test.describe("config.servicesUrl - Fragment-based external service loading", ()
     const fragmentParams = await encodeConfigForFragment(configWithoutServicesUrl);
     await navigate(page, `/#${fragmentParams}`);
 
-    await ensurePanelOpen(page, 'service-panel');
     const services = await getServices(page);
 
     // Should use local services.json
@@ -165,7 +160,6 @@ test.describe("config.servicesUrl - Priority order", () => {
       `/?services_base64=${b64(alternateServices)}#${fragmentParams}`
     );
 
-    await ensurePanelOpen(page, 'service-panel');
     const services = await getServices(page);
 
     // services_base64 should win (Priority 1)
@@ -199,7 +193,6 @@ test.describe("config.servicesUrl - Priority order", () => {
       `/?services_url=/alternate-services.json#${fragmentParams}`
     );
 
-    await ensurePanelOpen(page, 'service-panel');
     const services = await getServices(page);
 
     // config.servicesUrl should win (Priority 2 beats Priority 3)
@@ -228,7 +221,6 @@ test.describe("config.servicesUrl - Priority order", () => {
       `/?services_url=/param-services.json#${fragmentParams}`
     );
 
-    await ensurePanelOpen(page, 'service-panel');
     const services = await getServices(page);
 
     // services_url should work (Priority 3)
@@ -255,7 +247,6 @@ test.describe("config.servicesUrl - Priority order", () => {
     const fragmentParams = await encodeConfigForFragment(configWithBadUrl);
     await navigate(page, `/#${fragmentParams}`);
 
-    await ensurePanelOpen(page, 'service-panel');
     const services = await getServices(page);
 
     // Should fall back to localStorage (Priority 4)
@@ -275,7 +266,6 @@ test.describe("config.servicesUrl - Priority order", () => {
     const fragmentParams = await encodeConfigForFragment(configWithoutServicesUrl);
     await navigate(page, `/#${fragmentParams}`);
 
-    await ensurePanelOpen(page, 'service-panel');
     const services = await getServices(page);
 
     // Should use local file (Priority 5)
@@ -298,7 +288,6 @@ test.describe("config.servicesUrl - Edge cases", () => {
     const fragmentParams = await encodeConfigForFragment(configWithEmptyUrl);
     await navigate(page, `/#${fragmentParams}`);
 
-    await ensurePanelOpen(page, 'service-panel');
     const services = await getServices(page);
 
     // Should fall back to local services.json
@@ -326,7 +315,6 @@ test.describe("config.servicesUrl - Edge cases", () => {
     const fragmentParams = await encodeConfigForFragment(configWithBadEndpoint);
     await navigate(page, `/#${fragmentParams}`);
 
-    await ensurePanelOpen(page, 'service-panel');
     const services = await getServices(page);
 
     // Should fall back to local services.json
@@ -347,14 +335,12 @@ test.describe("config.servicesUrl - Edge cases", () => {
     const fragmentParams = await encodeConfigForFragment(configWithServicesUrl);
     await navigate(page, `/#${fragmentParams}`);
 
-    await ensurePanelOpen(page, 'service-panel');
     let services = await getServices(page);
     expect(services.length).toBe(externalServices.length);
 
     // Reload page (fragment should be cleared, but config persists in localStorage)
     await page.reload();
 
-    await ensurePanelOpen(page, 'service-panel');
     services = await getServices(page);
 
     // Services should still be loaded from the URL in config
@@ -381,7 +367,6 @@ test.describe("config.servicesUrl - Edge cases", () => {
     const fragmentParams1 = await encodeConfigForFragment(config1);
     await navigate(page, `/#${fragmentParams1}`);
 
-    await ensurePanelOpen(page, 'service-panel');
     let services = await getServices(page);
     expect(services.some((s: any) => s.name === "External-Service-1")).toBeTruthy();
 
@@ -396,7 +381,6 @@ test.describe("config.servicesUrl - Edge cases", () => {
     await navigate(page, `/#${fragmentParams2}`);
 
     await page.reload();
-    await ensurePanelOpen(page, 'service-panel');
     services = await getServices(page);
 
     // Should now load from the new URL
