@@ -1,5 +1,6 @@
 // tests/configServicesUrl.spec.ts
 import { test, expect } from "./fixtures";
+import type { Route } from "playwright";
 import { ciConfig, ciBoards } from "./data/ciConfig";
 import { ciServices } from "./data/ciServices";
 import {
@@ -38,7 +39,7 @@ const alternateServices = [
   { name: "Alternate-Service-1", url: "http://alternate.com/service1" }
 ];
 
-function fulfillJsonWithCors(route: import('@playwright/test').Route, data: any) {
+function fulfillJsonWithCors(route: Route, data: any) {
   route.fulfill({
     json: data,
     headers: {
