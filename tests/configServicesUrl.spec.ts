@@ -37,6 +37,13 @@ const alternateServices = [
 ];
 
 test.describe("config.servicesUrl - Fragment-based external service loading", () => {
+  test.beforeEach(async ({ page }) => {
+    // Clear localStorage to prevent fragment decision modal from appearing
+    await page.addInitScript(() => {
+      localStorage.clear();
+    });
+  });
+
   test("loads services from config.servicesUrl when present in fragment config", async ({ page }) => {
     // Create config with servicesUrl field
     const configWithServicesUrl = {
@@ -142,6 +149,13 @@ test.describe("config.servicesUrl - Fragment-based external service loading", ()
 });
 
 test.describe("config.servicesUrl - Priority order", () => {
+  test.beforeEach(async ({ page }) => {
+    // Clear localStorage to prevent fragment decision modal from appearing
+    await page.addInitScript(() => {
+      localStorage.clear();
+    });
+  });
+
   test("Priority 1: services_base64 param overrides config.servicesUrl", async ({ page }) => {
     const configWithServicesUrl = {
       ...ciConfig,
@@ -276,6 +290,13 @@ test.describe("config.servicesUrl - Priority order", () => {
 });
 
 test.describe("config.servicesUrl - Edge cases", () => {
+  test.beforeEach(async ({ page }) => {
+    // Clear localStorage to prevent fragment decision modal from appearing
+    await page.addInitScript(() => {
+      localStorage.clear();
+    });
+  });
+
   test("handles empty servicesUrl gracefully", async ({ page }) => {
     const configWithEmptyUrl = {
       ...ciConfig,
