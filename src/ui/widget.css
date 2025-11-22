@@ -39,6 +39,13 @@
 }
 .widget-wrapper.fullscreen .widget-iframe { flex-grow: 1; }
 
+/* Ensure widget menu always renders above the iframe and chrome.
+   Put iframe at a baseline stacking level and raise the menu above resize handles. */
+.widget-iframe {
+  position: relative;
+  z-index: 0; /* baseline stacking so siblings with higher z-index appear above */
+}
+
 .widget-wrapper.exceeding-max { border: 2px solid var(--color-danger); }
 .widget-wrapper.below-min { border: 2px solid orange; }
 
@@ -52,7 +59,9 @@
 /* Widget menu (icons row) */
 .widget-menu {
   position: absolute; top: 5px; right: 5px;
-  display: grid; grid-auto-flow: column; gap: 10px; z-index: 10;
+  display: grid; grid-auto-flow: column; gap: 10px;
+  z-index: 1000; /* above resize-handle (99) and resize menus (20) */
+  pointer-events: auto;
 }
 .widget-button {
   background: none; border: none; cursor: pointer; font-size: 1.2rem; opacity: .2;
