@@ -31,8 +31,11 @@ export function attachFloatingWidgetMenu (widgetWrapper) {
     throw new Error('widgetWrapper element required')
   }
 
-  const menu = widgetWrapper.querySelector('.widget-menu')
-  if (!menu) return { cleanup: () => {} }
+  const menuElement = widgetWrapper.querySelector('.widget-menu')
+  if (!menuElement || !(menuElement instanceof HTMLElement)) {
+    return { cleanup: () => {} }
+  }
+  const menu = /** @type {HTMLElement & {_floatingCleanup?: () => void}} */ (menuElement)
 
   // Avoid double-attachment
   if (menu.dataset.floatingAttached === 'true') {
@@ -75,7 +78,7 @@ export function attachFloatingWidgetMenu (widgetWrapper) {
       return menu.offsetWidth
     }
     // fallback measurement strategy: clone off-screen
-    const clone = menu.cloneNode(true)
+    const clone = /** @type {HTMLElement} */ (menu.cloneNode(true))
     clone.style.position = 'absolute'
     clone.style.visibility = 'hidden'
     clone.style.display = 'block'
