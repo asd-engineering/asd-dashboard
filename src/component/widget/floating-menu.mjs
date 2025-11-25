@@ -1,4 +1,5 @@
 // @ts-check
+/* global ResizeObserver, MutationObserver */
 /**
  * Floating widget menu management.
  * Moves widget menus out of their wrapper's stacking context to prevent z-index issues.
