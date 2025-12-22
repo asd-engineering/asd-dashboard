@@ -1,0 +1,148 @@
+/* Controls Bar */
+menu#controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--controls-gap-row) var(--controls-gap-col);
+  width: 100%;
+  padding: 5px;
+  background: var(--color-surface);
+  justify-content: center;
+  margin: 0 auto;
+  align-items: center;
+}
+
+/* Group */
+.control-group {
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0.3rem;
+  border-radius: var(--radius-3);
+  background: var(--color-soft);
+  min-width: 0;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+/* Lift open panels */
+/* .control-group:has(.dropdown.panel.open) { z-index: 1000; }
+.control-group:has(.dropdown.panel.open)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: auto;
+  background: transparent;
+} */
+
+/* Inputs */
+#controls select,
+#controls input {
+  padding: 0.3rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-1);
+  background: var(--color-elevated);
+  color: var(--color-text);
+  max-width: 100%;
+  min-width: 0;
+  flex-shrink: 1;
+  position: relative;
+  z-index: 0;
+}
+#controls select { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Buttons */
+#controls button {
+  padding: 0.3rem 0.6rem;
+  border: none;
+  border-radius: var(--radius-1);
+  background: transparent;
+  color: var(--color-text-weak);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color .15s ease;
+}
+#controls button:hover { background: var(--color-surface); }
+
+/* View buttons */
+#view-button-menu button {
+  margin: 2px;
+  padding: 8px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-3);
+  background: var(--color-elevated);
+  color: var(--color-text);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+#view-button-menu button.active { background: var(--color-success); color: #fff; }
+
+/* Dropdown links */
+.dropdown-content a {
+  display: block;
+  font-size: .8rem;
+  padding: 6px 10px;
+  color: var(--color-text);
+}
+
+/* Admin control */
+menu#controls #admin-control.control-group {
+  display: flex;
+  column-gap: 0.6rem;
+  row-gap: 0.6rem;
+  overflow: hidden;
+  justify-content: start;
+  align-content: start;
+  max-height: calc(2 * var(--admin-icon-box) + 0.6rem);
+}
+
+/* GRID buttons on small screens */
+@media (max-width: 535px) {
+  menu#controls #admin-control.control-group {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    grid-template-rows: repeat(2, max-content);
+  }
+}
+
+#admin-control label {
+  display: inline-grid;
+  place-items: center;
+  width: var(--admin-icon-box);
+  height: var(--admin-icon-box);
+  font-size: var(--admin-icon-size);
+  cursor: pointer;
+  line-height: 1;
+  transition: transform .15s ease;
+}
+#admin-control label:hover { transform: scale(1.15); }
+#admin-control label:hover::after {
+  content: attr(aria-label);
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  font-size: .8rem;
+  padding: 2px 6px;
+  border-radius: var(--radius-1);
+  white-space: nowrap;
+  z-index: 10;
+}
+
+/* Responsive */
+@media (max-width: 520px) {
+  menu#controls { grid-template-columns: 1fr; }
+}
+
+#sw-toggle { display: none; }
+
+#toggle-widget-menu,
+.icon-checkbox {
+  display: inline-block;
+  cursor: pointer;
+  font-size: var(--admin-icon-size);
+  user-select: none;
+}

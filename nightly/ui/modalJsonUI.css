@@ -1,0 +1,342 @@
+/* -------------------------------------------------------------------------- */
+/* ! MODAL SHELL & LAYOUT                                                     */
+/* -------------------------------------------------------------------------- */
+.modal {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  /* Raise far above any other UI (dropdowns @ 2000, notifications @ 9000) */
+  z-index: 10000;
+  width: 70vw;
+  height: 85vh;
+  border-radius: var(--radius-3);
+  box-shadow: var(--shadow-3);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+  background: var(--color-soft);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+.modal--lg { width: 70vw; height: 85vh; }
+.modal--md { width: 50vw; height: auto; max-height: 85vh; }
+.modal--sm { width: 40vw; height: auto; max-height: 85vh; }
+@media (max-width: 768px) { .modal { width: 95vw; height: 90vh; max-height: 90vh; } }
+
+/* -------------------------------------------------------------------------- */
+/* ! MODAL COMPONENTS (HEADER, CONTENT, FOOTER)                               */
+/* -------------------------------------------------------------------------- */
+.modal .tabs {
+  padding: 0 var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-elevated);
+  display: flex;
+  align-items: center;
+}
+.modal .tabs button {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  padding: 14px 4px;
+  margin: 0 12px;
+  font-size: .9rem;
+  font-weight: 500;
+  color: var(--color-text-weak);
+  transition: all 150ms ease;
+  cursor: pointer;
+}
+.modal .tabs button:hover { color: var(--color-text); border-bottom-color: var(--color-border); }
+.modal .tabs button.active { font-weight: 600; color: var(--color-accent); border-bottom-color: var(--color-accent); }
+.modal .tabs button:first-child { margin-left: 0; }
+
+@media (max-width: 1250px) {
+  .modal .tabs { flex-wrap: wrap; gap: 4px; }
+  .modal .tabs button { margin: 0 6px; font-size: 1rem; padding: 10px 2px; }
+}
+
+.modal .modal__btn-group {
+  padding: var(--space-6);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-elevated);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+#cfgTab, #svcTab, #stateTab { overflow: auto; display: flex; flex-direction: column; }
+
+/* -------------------------------------------------------------------------- */
+/* ! FORM & SUB-TABS                                                          */
+/* -------------------------------------------------------------------------- */
+#config-form .jf-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--color-border);
+  margin: 0 -1rem 1rem -1rem;
+  padding: 0 1rem;
+  position: sticky;
+  top: -1rem;
+  background: var(--color-surface);
+  /* z-index: 10; */
+}
+.jf-subtabs button {
+  padding: .75rem 1.25rem;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: none;
+  cursor: pointer;
+  font-size: .9rem;
+  color: var(--color-text-weak);
+  transition: all .2s ease;
+}
+.jf-subtabs button:hover { color: #0056b3; background: var(--color-soft); } /* Retaining specific hover color */
+.jf-subtabs button.active { color: var(--color-accent); font-weight: 600; border-bottom-color: var(--color-accent); }
+
+.modal__jsonform { padding: 1rem; overflow-y: auto; }
+
+/* Rows & Inputs */
+.jf-row { display: flex; flex-wrap: wrap; align-items: start; gap: 1rem; padding: .5rem 0; }
+.jf-row > label { flex: 0 0 200px; font-weight: 500; color: var(--color-text-weak); padding-top: .3rem; text-align: left; word-break: break-word; }
+.jf-row input[type="text"], .jf-row input[type="number"] {
+  flex: 1 1 300px; min-width: 200px; padding: .5rem;
+  border: 1px solid #ced4da; border-radius: var(--radius-1);
+}
+
+/* Arrays as cards */
+.jf-array { display: flex; flex-direction: column; gap: 1.5rem; width: 100%; }
+.jf-array > .jf-row {
+  flex-direction: row; border: 1px solid var(--color-border); border-radius: var(--radius-3);
+  padding: 1rem; background: var(--color-soft); box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.jf-array > .jf-row > .jf-object { flex-grow: 1; }
+.jf-row > .jf-object, .jf-row > .jf-array { flex-grow: 1; display: flex; flex-direction: column; padding-left: 1rem; }
+
+/* -------------------------------------------------------------------------- */
+/* ! FORM CONTROLS (BUTTONS, TOGGLES)                                         */
+/* -------------------------------------------------------------------------- */
+.array__add, .array__remove {
+  padding: 0; font-family: var(--font-mono); font-size: 1.2rem;
+  border-radius: 50%; width: 28px; height: 28px; border: 1px solid var(--color-border);
+  cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.array__add { background-color: #e7f5ff; color: #1c7ed6; align-self: flex-start; }
+.array__add:hover { background-color: #d0ebff; }
+.array__remove { background-color: #fff5f5; color: #c92a2a; }
+.array__remove:hover { background-color: #ffe3e3; }
+
+.modal__btn {
+  padding: 10px 15px; font-size: 14px; font-weight: 600; border: 1px solid transparent;
+  border-radius: var(--radius-3); transition: all 150ms ease; cursor: pointer;
+}
+.modal__btn--save { background-color: var(--color-success); border-color: var(--color-success); color: #fff; }
+.modal__btn--save:hover { background-color: #157347; border-color: #146c43;}
+.modal__btn--export { background-color: #6c757d; border-color: #6c757d; color: #fff; }
+.modal__btn--export:hover { background-color: #5c636a; border-color: #565e64; }
+.modal__btn--cancel { background-color: transparent; border-color: #6c757d; color: #6c757d; }
+.modal__btn--cancel:hover { background-color: #6c757d; color: #fff; }
+.modal__btn--toggle { align-self: flex-end; margin: 0 0 12px 0; }
+
+.modal__label + div > button:last-of-type, div[style*="display: flex"] > button {
+  flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+  font-size: 1.5rem; font-weight: 300; line-height: 1; display: flex;
+  align-items: center; justify-content: center; border: none; cursor: pointer;
+}
+.modal__label + div > button:last-of-type { background-color: var(--color-success-bg); color: var(--color-success); }
+.modal__label + div > button:last-of-type:hover { background-color: #b6dcc2; }
+div[style*="display: flex"] > button { background-color: var(--color-danger-bg); color: var(--color-danger); }
+div[style*="display: flex"] > button:hover { background-color: #f1c2c7; }
+
+.modal__textarea--grow {
+  flex: 1 1 auto; width: 100%; min-height: 70vh; font-family: var(--font-mono);
+  white-space: pre; resize: none; box-sizing: border-box;
+  margin-top: 15px;
+}
+
+/* Only style toggles inside config form */
+#config-form input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  background: var(--color-border);
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  outline: none;
+  transition: background-color .2s ease-in-out;
+}
+#config-form input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  top: 3px;
+  left: 3px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  transition: transform .2s ease-in-out;
+}
+#config-form input[type="checkbox"]:checked { background: var(--color-success); }
+#config-form input[type="checkbox"]:checked::before { transform: translateX(16px); }
+
+/* Alignment fixes for toggles and numbers */
+.jf-row input[type="checkbox"] { margin: 0; align-self: center; justify-self: start; }
+.jf-row > input[type="checkbox"] { margin-left: .5rem; }
+.jf-row input[type="number"] { max-width: 80px; display: inline-block; margin-left: .5rem; }
+.jf-row input[type="number"] + input[type="number"] { margin-left: 1rem; }
+
+/* -------------------------------------------------------------------------- */
+/* ! SAVED STATES TAB                                                         */
+/* -------------------------------------------------------------------------- */
+#stateTab { padding: 20px; }
+#stateFilter {
+  font-size: 0.9rem; padding: 8px 12px; border: 1px solid var(--color-border);
+  border-radius: var(--radius-3); margin-bottom: var(--space-6); width: 100%; box-sizing: border-box;
+}
+#stateFilter:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--focus-ring); }
+
+thead {
+  min-height: 20px;
+}
+
+#stateTab table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+#stateTab th, #stateTab td {
+  padding: 12px var(--space-6); text-align: left; vertical-align: middle; border-bottom: 1px solid var(--color-border); min-height: 110px; 
+}
+#stateTab th { font-weight: 600; color: var(--color-text-weak); background-color: var(--color-soft); }
+#stateTab td { color: var(--color-text); }
+
+tZ
+/* Named columns for stability */
+#stateTab th[data-col="actions"],
+#stateTab td[data-col="actions"] {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  padding: 4px;
+  vertical-align: middle;
+  display: inline-flex;
+  min-height: 82px;
+  align-items: center;
+  gap: 8px;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  min-height: 110px;       /* replace old 82px */
+}
+
+
+/* Base buttons */
+#stateTab td button {
+  font-size: 12px; font-weight: 400; padding: 4px 10px; border-radius: var(--radius-3);
+  border: 1px solid var(--color-border); background-color: var(--color-surface); cursor: pointer;
+  margin-right: 8px; transition: all 150ms ease; color: var(--color-text);
+}
+
+/* Action-group buttons sizing */
+#stateTab td[data-col="actions"] button {
+  flex: 1 1 auto;
+  height: 30px;
+  width: max-content;
+}
+
+/* Specific hover states */
+#stateTab td[data-col="actions"] button[data-action="switch"]:hover,
+#stateTab td[data-col="health"] button[data-action="health"]:hover {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+#stateTab td[data-col="health"] button[data-action="toggle"]:hover,
+#stateTab td[data-col="actions"] button[data-action="merge"]:hover {
+  background-color: rgba(13,110,253,0.15);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+#stateTab td[data-col="actions"] button[data-action="delete"]:hover {
+  background-color: var(--color-danger-bg);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+#delete-all-snapshots {
+    /* margin: var(--space-6) auto 0 auto; */
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-danger);
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-3);
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 150ms ease;
+    white-space: nowrap;
+}
+
+#delete-all-snapshots:hover {
+    background-color: var(--color-danger-bg);
+    border-color: var(--color-danger);
+}
+
+#fragment-decision-modal { display: flex; flex-direction: column; padding: 10px; }
+#fragment-decision-modal > #importName { display: block; margin: 10px 0; max-width: 40%; }
+#fragment-decision-modal > .modal__btn-group { justify-content: flex-start; }
+
+.modal__btn.modal__btn--toggle.modal__toggle{
+  margin: 15px 0px 0px 15px
+}
+
+/* --- Healthcheck: compact cell + expandable details row ------------------- */
+/* Health and domains columns stay narrow */
+#stateTab td.hc-health,
+#stateTab td.hc-domains { white-space: nowrap; width: 1%; }
+
+.hc-summary { display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; }
+.hc-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.hc-dot.up { background: var(--color-success); }
+.hc-dot.down { background: var(--color-danger); }
+.hc-dot.partial { background: #f2c037; }
+.hc-dot.muted { background: var(--color-border); }
+
+.hc-btn {
+  font-size: 12px; font-weight: 400; padding: 4px 10px; border-radius: var(--radius-3);
+  border: 1px solid var(--color-border); background-color: var(--color-surface);
+  cursor: pointer; margin-left: 6px; transition: all 150ms ease; color: var(--color-text);
+}
+.hc-btn:hover { background-color: var(--color-soft); }
+
+.hc-details-row td { padding: 0 var(--space-6) var(--space-6); }
+.hc-panel {
+  margin-top: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2);
+  background: var(--color-soft);
+  padding: var(--space-4);
+  max-height: 180px;           /* keeps modal tidy */
+  overflow: auto;              /* chips scroll, table stays stable */
+  max-width: min-content;
+}
+.hc-list { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.hc-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 2px 8px; border: 1px solid var(--color-border);
+  border-radius: 999px; font-size: 12px; line-height: 1.3;
+  background: var(--color-surface);
+}
+.hc-chip .hc-dot { width: 7px; height: 7px; }
+.hc-meta-line { width: 100%; font-size: 11px; color: var(--color-text-weak); margin-bottom: 6px; }
+
+.hc-btn[disabled] {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+#stateTab th,
+#stateTab td {
+  min-height: 40px;       /* uniform row baseline */
+}
