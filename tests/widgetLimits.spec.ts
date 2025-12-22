@@ -1,9 +1,27 @@
 import { test, expect } from "./fixtures";
+import { ciConfig } from './data/ciConfig';
 import { ciServices } from "./data/ciServices";
 import { getUnwrappedConfig, navigate } from "./shared/common";
 import { waitForWidgetStoreIdle } from "./shared/state.js";
 import { ensurePanelOpen } from "./shared/panels";
 import { routeWithWidgetStoreSize } from './shared/mocking'
+
+async function routeLimits(page, boards, services, maxSize = 2, configOverrides = {}) {
+  await page.route('**/services.json', (route) => route.fulfill({ json: services }));
+  await page.route('**/config.json', (route) =>
+    route.fulfill({ json: { ...ciConfig, ...configOverrides, boards } }),
+  );
+  await page.addInitScript((size) => {
+    const apply = () => {
+      if (window.asd?.widgetStore) {
+        window.asd.widgetStore.maxSize = size;
+      } else {
+        setTimeout(apply, 0);
+      }
+    };
+    apply();
+  }, maxSize);
+}
 
 
 test.describe("Widget limits", () => {
