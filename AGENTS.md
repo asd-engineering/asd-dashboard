@@ -215,39 +215,124 @@ const logger = new Logger('moduleName.js');
 | **Architectural ambiguity** | Remember: state‑driven UI; avoid direct DOM; locate new logic in the matching `board/` or `widget/` module.                            |
 | **Flaky tests timing out on navigation/clicks** | Avoid `page.waitForNavigation()`. Use the explicit `action -> wait for state` pattern. See *Playwright Best Practices* section below. |
 
-## 🧪 Playwright Best Practices & Anti-Patterns
+Got it—here’s a trimmed update you can drop into **AGENTS.md**. It references the helpers and only shows short, targeted snippets.
 
-To maintain a fast and stable test suite, agents must avoid common race conditions. This application is a Single-Page App (SPA) that re-renders and reloads quickly; traditional waiting strategies are unreliable.
+---
 
-### Anti-Pattern: `page.waitForNavigation()`
+# 🧪 Playwright Best Practices (for AI/Codex)
 
-Do not use `page.waitForNavigation()` for actions that trigger client-side updates or fast page reloads. It waits for the `load` event, which may not fire predictably in an SPA, leading to timeouts.
+This SPA rehydrates fast. Sync on **app signals**, not generic navigation. Keep timeouts low.
 
-**INCORRECT (Flaky):**
+## Core Rules
 
-```typescript
-// 🚨 ANTI-PATTERN: This creates a race condition and will time out.
-await Promise.all([
-  page.waitForNavigation(),
-  page.click('#switch-environment')
-]);
-```
+**Act → App Ready**
 
-**CORRECT (Reliable):**
-The proper sequence is to **perform the action first**, then **wait for a specific application-level signal** that indicates the UI is ready. Our application provides a `data-ready="true"` attribute on the `<body>` for this purpose.
-
-```typescript
-// ✅ BEST PRACTICE: Act, then wait for the app to be ready.
+```ts
 await page.click('#switch-environment');
-
-// Wait for the DOM to be available after the reload.
-await page.waitForLoadState('domcontentloaded');
-
-// Wait for our application's specific signal that hydration is complete.
-await page.waitForFunction(() => document.body.dataset.ready === 'true');
+await waitForAppReady(page); // uses DOMContentLoaded + body[data-ready="true"]
 ```
 
-This pattern is deterministic, fast, and resilient to variations in execution speed. Apply it to **any** test step that causes a full or partial page reload.
+**Don’t use `waitForNavigation()`**
+
+```ts
+// ❌ Flaky
+await Promise.all([page.waitForNavigation(), page.click('#switch-environment')]);
+```
+
+**Prefer selectors (or `expect.poll`) over `waitForFunction`**
+
+```ts
+await page.waitForSelector('body[data-ready="true"]'); // ✅
+```
+
+**Navigation (use helper)**
+
+```ts
+await navigate(page, '/');                 // default budget
+await navigate(page, '/', { totalTimeoutMs: 5000 }); // WebKit-friendly
+```
+
+**Safe evaluations across reloads**
+
+```ts
+const data = await evaluateSafe(page, () => {
+  const sm = (window as any).asd?.StorageManager; /* example */
+  return { /* … */ };
+});
+```
+
+**Panels & hover UI (no timing races)**
+
+```ts
+await enableUITestMode(page);
+await ensurePanelOpen(page, 'service-panel');
+```
+
+**Dialogs: single-shot**
+
+```ts
+page.once('dialog', d => d.accept('value'));
+```
+
+**Selects (fast + deterministic)**
+
+```ts
+await selectViewByLabel(page, 'View A');
+```
+
+**Widget store work queue**
+
+```ts
+await waitForWidgetStoreIdle(page);
+```
+
+**Storage via app API**
+
+```ts
+await setConfigAndServices(page, cfg, services);
+```
+
+**Clean slate**
+
+```ts
+await clearStorage(page);
+```
+
+## Do / Don’t (quick)
+
+| Don’t                             | Do                                       |
+| --------------------------------- | ---------------------------------------- |
+| `waitForNavigation()`             | `waitForAppReady(page)` after the action |
+| `waitForFunction` for DOM         | `waitForSelector` / `expect(locator)…`   |
+| `toHaveCount(0)` for modals       | `toBeHidden()`                           |
+
+## Common Flows
+
+**Snapshot switch**
+
+```ts
+await page.click('#switch-environment');
+await waitForAppReady(page);
+const res = await evaluateSafe(page, () => /* read StorageManager */);
+```
+
+**Service add → assert**
+
+```ts
+await ensurePanelOpen(page, 'service-panel');
+await page.click('[data-testid="service-panel"] .panel-item:has-text("ASD-toolbox")]');
+await waitForWidgetStoreIdle(page);
+await expect(page.locator('.widget-wrapper')).toHaveCount(1);
+```
+
+**Board/View navigation**
+
+```ts
+await selectViewByLabel(page, 'View B');
+await waitForWidgetStoreIdle(page);
+```
+
+Keep snippets short, rely on the helpers, and always sync on `body[data-ready="true"]` after any action that can cause a reload or hydration.
 
 ## ✅ AI‑Driven PR Validation & QA
 

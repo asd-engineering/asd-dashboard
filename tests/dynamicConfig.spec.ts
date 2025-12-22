@@ -7,6 +7,8 @@ import {
   getConfigBoards,
   b64,
   navigate,
+  getServices,
+  clearStorage
 } from "./shared/common";
 import { ensurePanelOpen } from './shared/panels'
 import { decodeConfig } from "../src/utils/compression.js";
@@ -14,6 +16,7 @@ import { restoreDeep } from "../src/utils/minimizer.js";
 import { DEFAULT_CONFIG_TEMPLATE } from "../src/storage/defaultConfig.js";
 import { bootWithDashboardState } from "./shared/bootState.js";
 import { enableUITestMode } from './shared/uiHelpers';
+import { ensureNoBlockingDialogs, waitForNotificationsToClear } from './shared/uiHelpers'
 
 
 test.describe("Dashboard Config - Base64 via URL Params", () => {
@@ -121,15 +124,17 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
     });
 
     await page.click("#config-modal .modal__btn--export");
-    const url = await page.evaluate(() => (window as any).__copied);
+    const url = await page.waitForFunction(() => (window as any).__copied || null).then(r => r.jsonValue());
     const hash = url.split("#")[1] || "";
     const params = new URLSearchParams(hash);
     const algo = (params.get("algo") || "gzip") as "gzip" | "deflate";
     const cc = params.get("cc")?.split(",") || [];
     const cfgChecksum = cc[0] || null;
     const svcChecksum = cc[1] || null;
-    const cfgMin = await decodeConfig(params.get("cfg")!, { algo, expectChecksum: cfgChecksum });
-    const svcMin = await decodeConfig(params.get("svc")!, { algo, expectChecksum: svcChecksum });
+    const cfgParam = params.get("cfg") || params.get("cfg0") || "";
+    const svcParam = params.get("svc") || params.get("svc0") || "";
+    const cfgMin = await decodeConfig(cfgParam, { algo, expectChecksum: cfgChecksum });
+    const svcMin = await decodeConfig(svcParam, { algo, expectChecksum: svcChecksum });
     const cfg = restoreDeep(cfgMin, DEFAULT_CONFIG_TEMPLATE);
     const svc = restoreDeep(svcMin, []);
     expect(cfg.globalSettings.theme).toBe(ciConfig.globalSettings.theme);
@@ -144,10 +149,15 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
       import("/component/modal/configModal.js").then((m) => m.openConfigModal())
     );
 
+    await page.locator('button[data-tab="cfgTab"]').click();
+
     await page.click('button:has-text("JSON mode")');
     await page.fill("#config-json", JSON.stringify(ciConfig));
-    await page.click("#config-modal .modal__btn--save");
 
+    await ensureNoBlockingDialogs(page)
+    await page.click("#config-modal .modal__btn--save");
+    await waitForNotificationsToClear(page)
+    
     await page.waitForSelector('[data-testid="service-panel"]');
 
     const stored = await getUnwrappedConfig(page);
@@ -170,6 +180,10 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
 
     // Open and verify modal is visible
     await page.click("#open-config-modal");
+    await page.locator('button[data-tab="cfgTab"]').click();
+    
+    await page.locator('[data-testid="advanced-mode-toggle"]').click();
+    await page.locator('#config-modal').waitFor({ state: 'visible' });
     await expect(page.locator("#config-modal")).toBeVisible();
 
     await page.click('button:has-text("JSON mode")');
@@ -185,6 +199,8 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
       );
       await expect(page.locator("#config-modal")).toBeVisible();
     }
+
+    await page.locator('button[data-tab="cfgTab"]').click();
 
     // Prefer a modal-scoped Services tab locator
     const svcTab = page.locator('#config-modal button[data-tab="svcTab"]');
@@ -206,15 +222,13 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
     const stored = await getUnwrappedConfig(page);
     expect(Array.isArray(stored.boards)).toBeTruthy();
 
-    const services = await page.evaluate(
-      () => JSON.parse(localStorage.getItem("services") || "[]")
-    );
+    const services = await getServices(page);
     expect(services.some((s: any) => s.name === "svc1")).toBeTruthy();
   });
 
   test("removing config from localStorage shows popup again", async ({ page }) => {
     await navigate(page, `/?config_base64=${b64(ciConfig)}`);
-    await page.evaluate(() => localStorage.clear());
+    await clearStorage(page);
     await page.reload();
     await expect(page.locator("#config-modal")).toBeVisible();
   });

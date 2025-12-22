@@ -11,9 +11,16 @@ import { clearConfigFragment } from '../../utils/fragmentGuard.js'
 import StorageManager from '../../storage/StorageManager.js'
 import { DEFAULT_CONFIG_TEMPLATE } from '../../storage/defaultConfig.js'
 import { exportConfig } from '../configModal/exportConfig.js'
-import { openFragmentDecisionModal } from './fragmentDecisionModal.js'
 import { JsonForm } from '../utils/json-form.js'
 import { DEFAULT_TEMPLATES, DEFAULT_PLACEHOLDERS } from '../utils/json-form-defaults.js'
+import { isAdvancedMode, setAdvancedMode } from '../../state/uiState.js'
+import { applyTheme, THEME } from '../../ui/theme.js'
+import { autosaveIfPresent } from '../../storage/snapshots.js'
+import { decodeConfig } from '../../utils/compression.js'
+import { KEY_MAP } from '../../utils/fragmentKeyMap.js'
+import { mergeBoards, mergeServices } from '../../utils/merge.js'
+import { FRAG_DEFAULT_ALGO } from '../../utils/fragmentConstants.js'
+import emojiList from '../../ui/unicodeEmoji.js'
 
 /** @typedef {import('../../types.js').DashboardConfig} DashboardConfig */
 
@@ -27,15 +34,24 @@ const logger = new Logger('configModal.js')
  */
 export async function openConfigModal () {
   const storedConfig = StorageManager.getConfig()
-  const configData = storedConfig || { ...DEFAULT_CONFIG_TEMPLATE }
-  const last = StorageManager.misc.getItem('configModalTab') || 'cfgTab'
+  let configData = storedConfig || { ...DEFAULT_CONFIG_TEMPLATE }
+  const last = StorageManager.misc.getItem('configModalTab') || 'stateTab'
   let cfgForm, svcForm
+  const advancedMode = isAdvancedMode()
 
   openModal({
     id: 'config-modal',
     onCloseCallback: () => logger.log('Config modal closed'),
     buildContent: async (modal, closeModal) => {
+      const getVisibleConfig = () => advancedMode
+        ? structuredClone(configData)
+        : {
+            globalSettings: structuredClone(configData.globalSettings),
+            serviceTemplates: structuredClone(configData.serviceTemplates)
+          }
+
       const tabsMeta = [
+        { id: 'stateTab', label: 'Snapshots & Share', populate: populateStateTab },
         {
           id: 'cfgTab',
           label: 'Configuration',
@@ -47,13 +63,62 @@ export async function openConfigModal () {
             toggle.textContent = 'JSON mode'
             toggle.classList.add('modal__btn', 'modal__btn--toggle', 'modal__toggle')
 
+            const advLabel = document.createElement('label')
+            advLabel.classList.add('modal__toggle')
+            Object.assign(advLabel.style, { margin: '15px 0 0 15px', display: 'flex', alignItems: 'center', gap: '4px' })
+            const advInput = document.createElement('input')
+            advInput.type = 'checkbox'
+            advInput.role = 'switch'
+            advInput.ariaLabel = 'Advanced mode'
+            advInput.dataset.testid = 'advanced-mode-toggle'
+            advInput.checked = advancedMode
+            advInput.addEventListener('change', () => {
+              setAdvancedMode(advInput.checked)
+              closeModal()
+              openConfigModal().catch(() => {})
+            })
+            advLabel.append(advInput, document.createTextNode('Advanced mode'))
+
             const formDiv = document.createElement('div')
             formDiv.id = 'config-form'
             formDiv.classList.add('modal__jsonform')
-            cfgForm = new JsonForm(formDiv, configData, {
-              topLevelTabs: { enabled: true, order: ['globalSettings', 'boards', 'serviceTemplates', 'styling'] },
+            cfgForm = new JsonForm(formDiv, getVisibleConfig(), {
+              topLevelTabs: {
+                enabled: true,
+                order: advancedMode
+                  ? ['globalSettings', 'boards', 'serviceTemplates', 'styling']
+                  : ['globalSettings', 'serviceTemplates']
+              },
               templates: DEFAULT_TEMPLATES,
               placeholders: DEFAULT_PLACEHOLDERS
+            })
+
+            const setupThemeSelect = () => {
+              const input = formDiv.querySelector('input[data-path="globalSettings.theme"]')
+              if (!input) return
+              const select = document.createElement('select')
+              select.id = 'theme-select'
+              ;[THEME.LIGHT, THEME.DARK].forEach(t => {
+                const opt = document.createElement('option')
+                opt.value = t
+                opt.textContent = t.charAt(0).toUpperCase() + t.slice(1)
+                select.appendChild(opt)
+              })
+              select.value = cfgForm.data.globalSettings?.theme || THEME.LIGHT
+              select.addEventListener('change', () => {
+                if (!cfgForm.data.globalSettings) cfgForm.data.globalSettings = {}
+                cfgForm.data.globalSettings.theme = select.value
+                applyTheme(select.value)
+              })
+              input.replaceWith(select)
+            }
+
+            setupThemeSelect()
+
+            formDiv.addEventListener('click', e => {
+              const target = /** @type {HTMLElement} */(e.target)
+              const btn = target.closest('.jf-subtabs button')
+              if (btn) setTimeout(setupThemeSelect)
             })
 
             const textarea = document.createElement('textarea')
@@ -65,13 +130,21 @@ export async function openConfigModal () {
             toggle.addEventListener('click', () => {
               if (formDiv.style.display !== 'none') {
                 const val = cfgForm.getValue()
-                textarea.value = JSON.stringify(val, null, 2)
+                if (advancedMode) {
+                  configData = val
+                } else {
+                  configData = { ...configData, ...val }
+                }
+                textarea.value = JSON.stringify(configData, null, 2)
                 formDiv.style.display = 'none'
                 textarea.style.display = 'block'
                 toggle.textContent = 'Form mode'
               } else {
                 try {
-                  cfgForm.setValue(JSON.parse(textarea.value))
+                  const parsed = JSON.parse(textarea.value)
+                  configData = parsed
+                  cfgForm.setValue(getVisibleConfig())
+                  setupThemeSelect()
                   textarea.style.display = 'none'
                   formDiv.style.display = 'block'
                   toggle.textContent = 'JSON mode'
@@ -81,64 +154,61 @@ export async function openConfigModal () {
               }
             })
 
-            wrap.append(toggle, formDiv, textarea)
+            wrap.append(toggle, advLabel, formDiv, textarea)
             return wrap
           }
         },
-        {
-          id: 'svcTab',
-          label: 'Services',
-          contentFn: () => {
-            const wrap = document.createElement('div')
-            wrap.classList.add('modal__tab--column')
+        ...(advancedMode
+          ? [{
+              id: 'svcTab',
+              label: 'Services',
+              contentFn: () => {
+                const wrap = document.createElement('div')
+                wrap.classList.add('modal__tab--column')
 
-            const toggle = document.createElement('button')
-            toggle.textContent = 'JSON mode'
-            toggle.classList.add('modal__btn', 'modal__btn--toggle', 'modal__toggle')
+                const toggle = document.createElement('button')
+                toggle.textContent = 'JSON mode'
+                toggle.classList.add('modal__btn', 'modal__btn--toggle', 'modal__toggle')
 
-            const formDiv = document.createElement('div')
-            formDiv.id = 'services-form'
-            formDiv.classList.add('modal__jsonform', 'modal__textarea--grow')
-            svcForm = new JsonForm(formDiv, StorageManager.getServices(), {
-              templates: DEFAULT_TEMPLATES,
-              placeholders: DEFAULT_PLACEHOLDERS,
-              rootPath: 'services'
-            })
+                const formDiv = document.createElement('div')
+                formDiv.id = 'services-form'
+                formDiv.classList.add('modal__jsonform', 'modal__textarea--grow')
+                svcForm = new JsonForm(formDiv, StorageManager.getServices(), {
+                  templates: DEFAULT_TEMPLATES,
+                  placeholders: DEFAULT_PLACEHOLDERS,
+                  rootPath: 'services'
+                })
 
-            const textarea = document.createElement('textarea')
-            textarea.id = 'config-services'
-            textarea.classList.add('modal__textarea--grow')
-            textarea.style.display = 'none'
-            textarea.value = JSON.stringify(StorageManager.getServices(), null, 2)
+                const textarea = document.createElement('textarea')
+                textarea.id = 'config-services'
+                textarea.classList.add('modal__textarea--grow')
+                textarea.style.display = 'none'
+                textarea.value = JSON.stringify(StorageManager.getServices(), null, 2)
 
-            toggle.addEventListener('click', () => {
-              if (formDiv.style.display !== 'none') {
-                const val = svcForm.getValue()
-                textarea.value = JSON.stringify(val, null, 2)
-                formDiv.style.display = 'none'
-                textarea.style.display = 'block'
-                toggle.textContent = 'Form mode'
-              } else {
-                try {
-                  svcForm.setValue(JSON.parse(textarea.value))
-                  textarea.style.display = 'none'
-                  formDiv.style.display = 'block'
-                  toggle.textContent = 'JSON mode'
-                } catch (e) {
-                  showNotification('Invalid JSON format', 3000, 'error')
-                }
+                toggle.addEventListener('click', () => {
+                  if (formDiv.style.display !== 'none') {
+                    const val = svcForm.getValue()
+                    textarea.value = JSON.stringify(val, null, 2)
+                    formDiv.style.display = 'none'
+                    textarea.style.display = 'block'
+                    toggle.textContent = 'Form mode'
+                  } else {
+                    try {
+                      svcForm.setValue(JSON.parse(textarea.value))
+                      textarea.style.display = 'none'
+                      formDiv.style.display = 'block'
+                      toggle.textContent = 'JSON mode'
+                    } catch (e) {
+                      showNotification('Invalid JSON format', 3000, 'error')
+                    }
+                  }
+                })
+
+                wrap.append(toggle, formDiv, textarea)
+                return wrap
               }
-            })
-
-            wrap.append(toggle, formDiv, textarea)
-            return wrap
-          }
-        },
-        {
-          id: 'stateTab',
-          label: 'Saved States',
-          populate: populateStateTab
-        }
+            }]
+          : [])
       ]
 
       const tabButtons = {}
@@ -166,26 +236,7 @@ export async function openConfigModal () {
 
       const populatedTabs = new Set()
 
-      const switchTab = async (tabId) => {
-        for (const id in tabContents) {
-          const isActive = id === tabId
-          tabContents[id].style.display = isActive ? 'flex' : 'none'
-          tabButtons[id].classList.toggle('active', isActive)
-        }
-
-        if (!populatedTabs.has(tabId)) {
-          const tab = tabsMeta.find(t => t.id === tabId)
-          if (tab?.populate) await tab.populate(tabContents[tabId])
-          populatedTabs.add(tabId)
-        }
-
-        StorageManager.misc.setItem('configModalTab', tabId)
-      }
-
-      for (const id in tabButtons) {
-        tabButtons[id].addEventListener('click', () => switchTab(id))
-      }
-
+      // Buttons (Save / Export / Delete all snapshots / Close)
       const saveButton = document.createElement('button')
       saveButton.textContent = 'Save'
       saveButton.classList.add('modal__btn', 'modal__btn--save')
@@ -200,25 +251,37 @@ export async function openConfigModal () {
         const svcFormDiv = modal.querySelector('#services-form')
         let cfg, svc
         try {
-          cfg = cfgFormDiv && cfgFormDiv.style.display !== 'none'
-            ? cfgForm.getValue()
-            : cfgEl ? JSON.parse(cfgEl.value) : {}
+          if (cfgFormDiv && cfgFormDiv.style.display !== 'none') {
+            const val = cfgForm.getValue()
+            if (advancedMode) {
+              configData = val
+            } else {
+              configData = { ...configData, ...val }
+            }
+            cfg = configData
+          } else {
+            cfg = cfgEl ? JSON.parse(cfgEl.value) : {}
+          }
         } catch (e) {
           logger.error('Invalid config JSON:', e)
           showNotification('Invalid config JSON format', 3000, 'error')
           return
         }
         try {
-          svc = svcFormDiv && svcFormDiv.style.display !== 'none'
-            ? svcForm.getValue()
-            : svcEl ? JSON.parse(svcEl.value) : []
+          if (svcFormDiv || svcEl) {
+            svc = svcFormDiv && svcFormDiv.style.display !== 'none'
+              ? svcForm.getValue()
+              : svcEl ? JSON.parse(svcEl.value) : []
+          } else {
+            svc = StorageManager.getServices()
+          }
         } catch (e) {
           logger.error('Invalid services JSON:', e)
           showNotification('Invalid services JSON format', 3000, 'error')
           return
         }
         StorageManager.setConfig(cfg)
-        StorageManager.setServices(Array.isArray(svc) ? svc : [])
+        StorageManager.setServices(Array.isArray(svc) ? svc : StorageManager.getServices())
         showNotification('Config saved to localStorage')
         closeModal()
         clearConfigFragment()
@@ -231,6 +294,21 @@ export async function openConfigModal () {
       exportButton.classList.add('modal__btn', 'modal__btn--export')
       exportButton.addEventListener('click', exportConfig)
 
+      // Show this only on stateTab
+      const delAll = document.createElement('button')
+      delAll.id = 'delete-all-snapshots'
+      delAll.textContent = 'Delete all snapshots'
+      delAll.setAttribute('aria-label', 'Delete all saved snapshots')
+      delAll.classList.add('modal__btn', 'modal__btn--danger')
+      delAll.hidden = true
+      delAll.addEventListener('click', async () => {
+        if (!confirm('Delete all saved snapshots?')) return
+        await StorageManager.clearStateStore()
+        const stateTab = document.getElementById('stateTab')
+        if (stateTab) await populateStateTab(stateTab)
+        showNotification('All snapshots deleted')
+      })
+
       const closeButton = document.createElement('button')
       closeButton.textContent = 'Close'
       closeButton.classList.add('modal__btn', 'modal__btn--cancel')
@@ -238,8 +316,32 @@ export async function openConfigModal () {
 
       const buttonContainer = document.createElement('div')
       buttonContainer.classList.add('modal__btn-group')
-      buttonContainer.append(saveButton, exportButton, closeButton)
+      buttonContainer.append(saveButton, exportButton, delAll, closeButton)
       modal.appendChild(buttonContainer)
+
+      // tab switcher (now also toggles Delete-all visibility)
+      const switchTab = async (tabId) => {
+        for (const id in tabContents) {
+          const isActive = id === tabId
+          tabContents[id].style.display = isActive ? 'flex' : 'none'
+          tabButtons[id].classList.toggle('active', isActive)
+        }
+
+        // Only show the delete-all button on the Snapshots & Share tab
+        if (delAll) delAll.hidden = tabId !== 'stateTab'
+
+        if (!populatedTabs.has(tabId)) {
+          const t = tabsMeta.find(t => t.id === tabId)
+          if (t?.populate) await t.populate(tabContents[tabId])
+          populatedTabs.add(tabId)
+        }
+
+        StorageManager.misc.setItem('configModalTab', tabId)
+      }
+
+      for (const id in tabButtons) {
+        tabButtons[id].addEventListener('click', () => switchTab(id))
+      }
 
       await switchTab(last)
     }
@@ -248,126 +350,582 @@ export async function openConfigModal () {
 
 /**
  * Populate the saved states tab with stored snapshots.
+ * Columns: Name, Unique domains, Size, Actions, Health, Type, Date, MD5.
+ * - Current snapshot (by misc.currentSnapshotMd5) is highlighted, sorted first,
+ *   and hides Switch/Merge buttons.
  * @param {HTMLElement} tab
  * @returns {Promise<void>}
  */
-/**
- * Populate the saved states tab with stored snapshots.
- * @param {HTMLElement} tab
- * @returns {Promise<void>}
- */
+// full function: populateStateTab
 async function populateStateTab (tab) {
-  const store = await StorageManager.loadStateStore()
-  const list = Array.isArray(store.states) ? store.states : []
-
-  const filter = document.createElement('input')
-  filter.id = 'stateFilter'
-  filter.placeholder = 'Filter snapshots...'
-  filter.style.marginBottom = '0.5rem'
-  filter.style.display = 'block'
-  filter.style.width = '100%'
-  tab.appendChild(filter)
+  tab.innerHTML = ''
   tab.classList.add('modal__tab--column')
 
   const table = document.createElement('table')
-  const thead = document.createElement('thead')
-  const tbody = document.createElement('tbody')
-
-  const headers = ['Environment', '', 'Name', 'Type', 'Date', 'MD5']
-  const headerRow = document.createElement('tr')
-  headers.forEach(h => {
-    const th = document.createElement('th')
-    th.textContent = h
-    headerRow.appendChild(th)
-  })
-  thead.appendChild(headerRow)
-  table.append(thead, tbody)
+  table.classList.add('table')
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th data-col="name">Name</th>
+        <th data-col="domains">Unique domains</th>
+        <th data-col="size">Size</th>
+        <th data-col="actions">Actions</th>
+        <th data-col="health">Health</th>
+        <th data-col="type">Type</th>
+        <th data-col="date">Date</th>
+        <th data-col="md5">MD5</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  `
   tab.appendChild(table)
 
-  const wipeBtn = document.createElement('button')
-  wipeBtn.textContent = 'Delete all snapshots'
-  wipeBtn.ariaLabel = 'Delete all saved states'
-  wipeBtn.title = 'Delete all saved states'
-  wipeBtn.addEventListener('click', async () => {
-    if (confirm('Delete all saved states? This cannot be undone.')) {
-      await StorageManager.clearStateStore()
-      list.splice(0, list.length)
-      render()
-    }
+  const tbody = table.querySelector('tbody')
+  const store = await StorageManager.loadStateStore()
+  const rows = Array.isArray(store.states) ? store.states : []
+  const colCount = table.querySelectorAll('thead th').length || 8
+
+  const currentMd5 = StorageManager.misc.getItem('currentSnapshotMd5') || ''
+  const sorted = rows.slice().sort((a, b) => {
+    if (a.md5 === currentMd5 && b.md5 !== currentMd5) return -1
+    if (b.md5 === currentMd5 && a.md5 !== currentMd5) return 1
+    return (b.ts || 0) - (a.ts || 0)
   })
-  tab.appendChild(wipeBtn)
+
+  for (const row of sorted) {
+    const tr = document.createElement('tr')
+    const isCurrent = row.md5 === currentMd5
+
+    const size = (row.cfg?.length || 0) + (row.svc?.length || 0)
+    const uniqueDomains = await computeUniqueDomains(row.svc)
+    const domainsTooltip = escapeHtml(Array.from(uniqueDomains).join(', '))
+
+    const checkIcon = (typeof emojiList !== 'undefined' && emojiList?.checkGreen?.icon) ? emojiList.checkGreen.icon : '✓'
+    const currentBadge = isCurrent ? '<span class="hc-current-badge" title="Currently in use"> (current)</span>' : ''
+
+    const actionsHtml = isCurrent
+      ? `<button data-action="delete" data-id="${row.md5}">Delete</button>`
+      : `<button data-action="switch" data-id="${row.md5}">Switch</button>
+         <button data-action="merge" data-id="${row.md5}">Merge into current</button>
+         <button data-action="delete" data-id="${row.md5}">Delete</button>`
+
+    tr.innerHTML = `
+      <td data-col="name">
+        ${isCurrent ? `<span class="hc-current-flag" aria-hidden="true">${checkIcon}</span>` : ''}
+        <span class="hc-name">${escapeHtml(row.name || '')}</span>${currentBadge}
+      </td>
+      <td class="hc-domains" data-col="domains" title="${domainsTooltip}">
+        <span class="hc-domains-count">${uniqueDomains.size}</span>
+      </td>
+      <td data-col="size">${size} bytes</td>
+      <td class="hc-actions" data-col="actions">
+        ${actionsHtml}
+      </td>
+      <td class="hc-health" data-col="health">
+        <span class="hc-summary" aria-live="polite" aria-atomic="true">
+          <span class="hc-dot muted"></span>
+          <span class="hc-summary-text">not checked</span>
+        </span>
+        <button class="hc-btn" data-action="health" data-id="${row.md5}">Healthcheck</button>
+        <button class="hc-btn" data-action="toggle" data-id="${row.md5}" disabled aria-expanded="false">Details</button>
+      </td>
+      <td data-col="type">${escapeHtml(row.type || '')}</td>
+      <td data-col="date">${new Date(row.ts || Date.now()).toLocaleString()}</td>
+      <td data-col="md5"><code>${row.md5 || ''}</code></td>
+    `
+    if (isCurrent) tr.classList.add('hc-current-row')
+    tbody.appendChild(tr)
+
+    // Collapsible details row
+    const detailsTr = document.createElement('tr')
+    detailsTr.className = 'hc-details-row'
+    detailsTr.style.display = 'none'
+    detailsTr.innerHTML = `
+      <td colspan="${colCount}">
+        <div class="hc-panel">
+          <div class="hc-list"></div>
+        </div>
+      </td>
+    `
+    tr.insertAdjacentElement('afterend', detailsTr)
+
+    // refs
+    const domainsCell = /** @type {HTMLTableCellElement} */ (tr.querySelector('td[data-col="domains"]'))
+    const summaryDotEl = /** @type {HTMLSpanElement} */ (tr.querySelector('.hc-summary .hc-dot'))
+    const summaryTextEl = /** @type {HTMLSpanElement} */ (tr.querySelector('.hc-summary-text'))
+    const listEl = /** @type {HTMLDivElement} */ (detailsTr.querySelector('.hc-list'))
+    const toggleBtn = /** @type {HTMLButtonElement} */ (tr.querySelector('[data-action="toggle"]'))
+    const healthBtn = /** @type {HTMLButtonElement} */ (tr.querySelector('[data-action="health"]'))
+
+    // Toggle handler keeps label + aria-expanded in sync
+    toggleBtn.addEventListener('click', () => {
+      const open = detailsTr.style.display !== 'none'
+      const nextOpen = !open
+      detailsTr.style.display = nextOpen ? '' : 'none'
+      toggleBtn.textContent = nextOpen ? 'Hide' : 'Details'
+      toggleBtn.setAttribute('aria-expanded', nextOpen ? 'true' : 'false')
+    })
+
+    // actions
+    if (!isCurrent) {
+      tr.querySelector('[data-action="switch"]')?.addEventListener('click', async () => { await applySnapshotSwitch(row) })
+      tr.querySelector('[data-action="merge"]')?.addEventListener('click', async () => { await applySnapshotMerge(row) })
+    }
+    tr.querySelector('[data-action="delete"]')?.addEventListener('click', async () => {
+      if (!confirm(`Delete snapshot "${row.name}"?`)) return
+      const idx = rows.indexOf(row)
+      if (idx !== -1) rows.splice(idx, 1)
+      await StorageManager.saveStateStore({ version: store.version, states: rows })
+      await populateStateTab(tab)
+    })
+
+    // Healthcheck: after first run, auto-open details and show "Hide" immediately
+    healthBtn.addEventListener('click', async () => {
+      healthBtn.disabled = true
+      healthBtn.textContent = 'Checking…'
+      listEl.innerHTML = ''
+      try {
+        const result = await runHealthcheck(row.svc, {
+          notify: false,
+          onProgress: (p) => {
+            renderHealthUI(summaryTextEl, summaryDotEl, domainsCell, listEl, p.byDomain, p.totals.checkedAt, uniqueDomains)
+          }
+        })
+        renderHealthUI(summaryTextEl, summaryDotEl, domainsCell, listEl, result.byDomain, result.checkedAt, uniqueDomains)
+
+        // enable and OPEN details; set label to "Hide" immediately
+        toggleBtn.disabled = false
+        detailsTr.style.display = ''
+        toggleBtn.textContent = 'Hide'
+        toggleBtn.setAttribute('aria-expanded', 'true')
+      } catch {
+        summaryTextEl.textContent = 'error'
+        summaryDotEl.className = 'hc-dot down'
+      } finally {
+        healthBtn.disabled = false
+        healthBtn.textContent = 'Re-run'
+      }
+    })
+
+    // initial compact
+    renderHealthUI(summaryTextEl, summaryDotEl, domainsCell, listEl, {}, undefined, uniqueDomains)
+  }
+}
+
+/**
+ * Switch to the provided snapshot.
+ * Marks the snapshot as current, autosaves previous state, then reloads.
+ * @param {{cfg?:string,svc?:string,md5?:string,name?:string}} row
+ * @returns {Promise<void>}
+ */
+async function applySnapshotSwitch (row) {
+  try {
+    await autosaveIfPresent()
+    StorageManager.misc.setLastBoardId(null)
+    StorageManager.misc.setLastViewId(null)
+
+    const cfg = row.cfg ? await decodeSnapshot(row.cfg) : null
+    const svc = row.svc ? await decodeSnapshot(row.svc) : null
+
+    const nextCfg = cfg || { boards: [] }
+    const nextSvc = Array.isArray(svc) ? svc : []
+
+    StorageManager.setConfig(nextCfg)
+    StorageManager.setServices(nextSvc)
+
+    // Remember which snapshot is currently in use (used for highlight/sorting)
+    if (row.md5) StorageManager.misc.setItem('currentSnapshotMd5', row.md5)
+
+    const firstBoardId = nextCfg?.boards?.[0]?.id || null
+    const firstViewId = nextCfg?.boards?.[0]?.views?.[0]?.id || null
+    StorageManager.misc.setLastBoardId(firstBoardId)
+    StorageManager.misc.setLastViewId(firstViewId)
+
+    window.location.reload()
+  } catch (e) {
+    logger.error('snapshot.switch.failed', e)
+    alert('Failed to switch snapshot')
+  }
+}
+
+/**
+ * Merge snapshot payloads into current live state.
+ * @param {{cfg?:string,svc?:string}} row
+ * @returns {Promise<void>}
+ */
+async function applySnapshotMerge (row) {
+  try {
+    await autosaveIfPresent()
+    const incomingCfg = row.cfg ? await decodeSnapshot(row.cfg) : null
+    const incomingSvc = row.svc ? await decodeSnapshot(row.svc) : null
+    const currentCfg = StorageManager.getConfig() || { boards: [] }
+    const currentSvc = StorageManager.getServices() || []
+
+    const mergedCfg = incomingCfg ? { ...currentCfg, boards: mergeBoards(currentCfg.boards || [], incomingCfg.boards || []) } : currentCfg
+    const mergedSvc = incomingSvc ? mergeServices(currentSvc, incomingSvc) : currentSvc
+
+    StorageManager.setConfig(mergedCfg)
+    StorageManager.setServices(mergedSvc)
+
+    const firstBoardId = mergedCfg?.boards?.[0]?.id || null
+    const firstViewId = mergedCfg?.boards?.[0]?.views?.[0]?.id || null
+    StorageManager.misc.setLastBoardId(firstBoardId)
+    StorageManager.misc.setLastViewId(firstViewId)
+
+    window.location.reload()
+  } catch (e) {
+    logger.error('snapshot.merge.failed', e)
+    alert('Failed to merge snapshot')
+  }
+}
+
+/**
+ * Decode an encoded snapshot string using supported algorithms.
+ * @param {string} str
+ * @returns {Promise<any>}
+ */
+async function decodeSnapshot (str) {
+  try {
+    return await decodeConfig(str, { algo: FRAG_DEFAULT_ALGO, keyMap: KEY_MAP, expectChecksum: null })
+  } catch {
+    try {
+      return await decodeConfig(str, { algo: 'gzip', keyMap: KEY_MAP, expectChecksum: null })
+    } catch {
+      return null
+    }
+  }
+}
+
+/**
+ * Compute unique service hostnames from encoded services payload.
+ * @param {string} svcEnc
+ * @returns {Promise<Set<string>>}
+ */
+async function computeUniqueDomains (svcEnc) {
+  const set = new Set()
+  if (!svcEnc) return set
+  try {
+    const svc = await decodeSnapshot(svcEnc)
+    if (Array.isArray(svc)) {
+      svc.forEach(s => {
+        try {
+          if (s && s.url) set.add(new URL(s.url).hostname)
+        } catch {}
+      })
+    }
+  } catch {}
+  return set
+}
+/**
+ * @typedef {'up'|'down'|'partial'} DomainStatus
+ */
+
+/**
+ * Per-domain counters and status.
+ * @typedef {Object} DomainInfo
+ * @property {number} up    Number of successful probes for this domain.
+ * @property {number} down  Number of failed probes for this domain.
+ * @property {number} total Total probes for this domain.
+ * @property {DomainStatus} status Aggregated domain status.
+ */
+
+/**
+ * Result object returned by runHealthcheck.
+ * @typedef {Object} HealthcheckResult
+ * @property {number} ok
+ * @property {number} fail
+ * @property {number} unknown
+ * @property {Record<string, DomainInfo>} byDomain
+ * @property {number} checkedAt Epoch milliseconds when finished.
+ */
+
+/**
+ * Progress payload emitted per URL.
+ * @typedef {Object} HealthcheckProgress
+ * @property {string} url
+ * @property {string} domain
+ * @property {'ok'|'fail'} verdict
+ * @property {{ ok:number, fail:number, unknown:number, checkedAt:number }} totals
+ * @property {Record<string, DomainInfo>} byDomain
+ */
+
+/**
+ * Health-check a list of URLs from the browser.
+ * "Reachable" means: the browser could reach the origin over the network,
+ * regardless of HTTP status or CORS. Only network/mixed-content/timeout errors count as FAIL.
+ *
+ * Expects svcEnc to decode to an array of { url: string }.
+ *
+ * @param {string} svcEnc Encoded services payload.
+ * @param {{
+ *   concurrency?: number,
+ *   timeoutMs?: number,
+ *   notify?: boolean,
+ *   onProgress?: (p: HealthcheckProgress) => void
+ * }} [opts] Optional execution settings.
+ * @returns {Promise<HealthcheckResult>} Aggregate result counters + per-domain details.
+ */
+async function runHealthcheck (svcEnc, { concurrency = 4, timeoutMs = 5000, notify = true, onProgress } = {}) {
+  /** @type {HealthcheckResult} */
+  const res = { ok: 0, fail: 0, unknown: 0, byDomain: Object.create(null), checkedAt: Date.now() }
+  if (!svcEnc) return res
+
+  // --- helpers --------------------------------------------------------------
 
   /**
-   * Render all saved state entries as table rows inside the tab's <tbody>.
-   *
-   * This function clears the existing table body and repopulates it using
-   * the `list` of saved state snapshots. Each row includes buttons to:
-   * - Switch to a snapshot via `openFragmentDecisionModal()`
-   * - Delete the snapshot and persist the new list
-   *
-   * Table rows are tagged with `data-name` for filtering via the search input.
-   *
-   * Side effects:
-   * - Updates DOM inside <tbody>
-   * - Binds event handlers to buttons in each row
+   * Decode the encoded services payload to an array.
+   * Returns an empty array when decoding fails or the payload is not an array.
+   * @param {string} enc Encoded services payload.
+   * @returns {Promise<Array<{url?: string}>>} Decoded services array or [].
    */
-  function render () {
-    tbody.innerHTML = ''
-    list.forEach(row => {
-      const tr = document.createElement('tr')
-      tr.dataset.name = row.name
-
-      const switchBtn = document.createElement('button')
-      switchBtn.textContent = 'Switch'
-      switchBtn.dataset.action = 'switch'
-      switchBtn.classList.add('state-switch')
-      switchBtn.addEventListener('click', async () => {
-        try {
-          await openFragmentDecisionModal({ cfgParam: row.cfg, svcParam: row.svc, nameParam: row.name })
-        } catch (error) {
-          logger.error('Error opening fragment decision modal:', error)
-        }
-      })
-
-      const del = document.createElement('button')
-      del.textContent = 'Delete'
-      del.addEventListener('click', async () => {
-        if (confirm('Delete snapshot?')) {
-          const idx = list.indexOf(row)
-          if (idx !== -1) list.splice(idx, 1)
-          await StorageManager.saveStateStore({ version: store.version, states: list })
-          tr.remove()
-        }
-      })
-
-      const cells = [
-        switchBtn,
-        del,
-        row.name,
-        row.type,
-        new Date(row.ts).toLocaleString(),
-        row.md5
-      ]
-
-      cells.forEach(c => {
-        const td = document.createElement('td')
-        if (c instanceof HTMLElement) td.appendChild(c)
-        else td.textContent = String(c)
-        tr.appendChild(td)
-      })
-
-      tbody.appendChild(tr)
-    })
+  async function decodeOrArray (enc) {
+    try {
+      const svc = await decodeSnapshot(enc)
+      return Array.isArray(svc) ? svc : []
+    } catch {
+      return []
+    }
   }
 
-  filter.addEventListener('input', () => {
-    const q = filter.value.toLowerCase()
-    Array.from(tbody.children).forEach(el => {
-      const row = /** @type {HTMLElement} */(el)
-      const t = row.dataset.name || ''
-      row.hidden = !t.toLowerCase().includes(q)
-    })
-  })
+  /**
+   * Extract unique, non-empty URL strings from service-like items.
+   * @param {Array<{url?: string}>} items Services list with optional `url` fields.
+   * @returns {string[]} Unique URL list.
+   */
+  function uniqueUrls (items) {
+    const urls = items
+      .map(s => (s && typeof s.url === 'string') ? s.url.trim() : '')
+      .filter(Boolean)
+    return Array.from(new Set(urls))
+  }
 
-  render()
+  /**
+   * @param {(signal: AbortSignal) => Promise<Response>} promiseFactory
+   * @param {number} ms
+   * @returns {Promise<Response>}
+   */
+  function withTimeout (promiseFactory, ms) {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), ms)
+    const p = promiseFactory(ctrl.signal).finally(() => clearTimeout(timer))
+    return p
+  }
+
+  /**
+   * @param {string} url
+   * @param {number} timeout
+   * @returns {Promise<Response>}
+   */
+  async function tryCorsHead (url, timeout) {
+    return withTimeout(
+      signal => fetch(url, {
+        method: 'HEAD',
+        mode: 'cors',
+        redirect: 'follow',
+        credentials: 'omit',
+        cache: 'no-store',
+        signal
+      }),
+      timeout
+    )
+  }
+
+  /**
+   * @param {string} url
+   * @param {number} timeout
+   * @returns {Promise<Response>}
+   */
+  async function tryNoCorsGet (url, timeout) {
+    return withTimeout(
+      signal => fetch(url, {
+        method: 'GET',
+        mode: 'no-cors',
+        redirect: 'follow',
+        credentials: 'omit',
+        cache: 'no-store',
+        signal
+      }),
+      timeout
+    )
+  }
+
+  /**
+   * When the page is https and the target is http, return an https-upgraded URL.
+   * @param {string} url
+   * @returns {string|null}
+   */
+  function maybeUpgradeToHttps (url) {
+    try {
+      const u = new URL(url, window.location.href)
+      const pageIsHttps = typeof window !== 'undefined' && window.location && window.location.protocol === 'https:'
+      if (pageIsHttps && u.protocol === 'http:') {
+        u.protocol = 'https:'
+        return u.toString()
+      }
+    } catch {}
+    return null
+  }
+
+  /**
+   * @param {string} url
+   * @returns {Promise<'ok'|'fail'>}
+   */
+  async function probe (url) {
+    try {
+      const r = await tryCorsHead(url, timeoutMs)
+      if (r instanceof Response) return 'ok'
+    } catch {
+      const upgraded = maybeUpgradeToHttps(url)
+      if (upgraded) {
+        try {
+          const r2 = await tryCorsHead(upgraded, timeoutMs)
+          if (r2 instanceof Response) return 'ok'
+        } catch {}
+      }
+    }
+    try {
+      const r3 = await tryNoCorsGet(url, timeoutMs)
+      if (r3 instanceof Response) return 'ok'
+    } catch {}
+    return 'fail'
+  }
+
+  /**
+   * Update per-domain counters and aggregate status.
+   * @param {string} domain
+   * @param {'ok'|'fail'} verdict
+   */
+  function bumpDomain (domain, verdict) {
+    if (!domain) return
+    const d = res.byDomain[domain] || (res.byDomain[domain] = { up: 0, down: 0, total: 0, status: 'down' })
+    if (verdict === 'ok') d.up += 1
+    else d.down += 1
+    d.total += 1
+    d.status = d.up > 0 && d.down === 0
+      ? 'up'
+      : (d.up > 0 && d.down > 0 ? 'partial' : 'down')
+  }
+
+  // --- worker pool ----------------------------------------------------------
+
+  try {
+    const items = await decodeOrArray(svcEnc)
+    const queue = uniqueUrls(items)
+    if (!queue.length) {
+      if (notify) showNotification(`Healthcheck: ${res.ok} OK, ${res.fail} FAIL, ${res.unknown} UNKNOWN`)
+      return res
+    }
+
+    const q = queue.slice()
+    /**
+     * @returns {Promise<void>}
+     */
+    async function worker () {
+      while (q.length) {
+        const url = q.shift()
+        if (!url) break
+        const domain = (() => { try { return new URL(url).hostname } catch { return '' } })()
+        try {
+          const verdict = await probe(url)
+          if (verdict === 'ok') res.ok++
+          else res.fail++
+          bumpDomain(domain, verdict)
+        } catch {
+          res.fail++
+          bumpDomain(domain, 'fail')
+        } finally {
+          res.checkedAt = Date.now()
+          onProgress?.({
+            url,
+            domain,
+            verdict: res.byDomain[domain]?.up ? 'ok' : 'fail',
+            totals: { ok: res.ok, fail: res.fail, unknown: res.unknown, checkedAt: res.checkedAt },
+            byDomain: res.byDomain
+          })
+        }
+      }
+    }
+
+    const n = Math.min(concurrency, queue.length)
+    await Promise.all(Array.from({ length: n }, () => worker()))
+  } catch {}
+
+  if (notify) showNotification(`Healthcheck: ${res.ok} OK, ${res.fail} FAIL, ${res.unknown} UNKNOWN`)
+  return res
+}
+
+/**
+ * Escape HTML entities in a string.
+ * @param {string} s
+ * @returns {string}
+ */
+function escapeHtml (s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+}
+/**
+ * Render compact health summary and the expanded chips panel.
+ * - Before any run (no domain totals), show "not checked" and keep panel empty.
+ * - After a run begins (progress emits), show live counts and enable details.
+ *
+ * @param {HTMLSpanElement} summaryTextEl  Inline summary text element in the cell.
+ * @param {HTMLSpanElement} summaryDotEl   Inline status dot element in the cell.
+ * @param {HTMLTableCellElement} domainsCell  "Unique domains" cell to update count/tooltip.
+ * @param {HTMLDivElement} panelListEl     Container inside the expanded panel for chips.
+ * @param {Record<string, {up:number,down:number,total:number,status:'up'|'down'|'partial'}>} byDomain
+ * @param {number} [checkedAt]
+ * @param {Set<string>} [initialUnique]
+ */
+function renderHealthUI (summaryTextEl, summaryDotEl, domainsCell, panelListEl, byDomain, checkedAt, initialUnique) {
+  const domains = initialUnique ? Array.from(initialUnique) : Object.keys(byDomain || {})
+
+  // Do we actually have data from a run yet?
+  const hasData = !!byDomain && Object.values(byDomain).some(v => (v && typeof v.total === 'number' && v.total > 0))
+
+  // Always keep the "Unique domains" count and tooltip accurate
+  const countEl = domainsCell.querySelector('.hc-domains-count')
+  if (countEl) countEl.textContent = String(domains.length || 0)
+  domainsCell.title = domains.map(d => `${d} : ${byDomain?.[d]?.status || 'unknown'}`).join(', ') || 'No domains'
+
+  // If no data yet, show a neutral summary and an empty panel
+  if (!hasData) {
+    summaryTextEl.textContent = 'not checked'
+    summaryDotEl.className = 'hc-dot muted'
+    if (panelListEl) panelListEl.innerHTML = ''
+    return
+  }
+
+  // We have data -> compute aggregates
+  let up = 0
+  let partial = 0
+  for (const d of domains) {
+    const st = byDomain?.[d]?.status || 'down'
+    if (st === 'up') up++
+    else if (st === 'partial') partial++
+  }
+
+  // Compact summary in the Health cell
+  summaryTextEl.textContent = `${up}/${domains.length} up${partial ? ` (${partial} partial)` : ''}`
+  summaryDotEl.className = `hc-dot ${up === domains.length ? 'up' : (up > 0 ? 'partial' : 'down')}`
+
+  // Expanded chips panel
+  if (panelListEl) {
+    panelListEl.innerHTML = ''
+    const meta = document.createElement('div')
+    meta.className = 'hc-meta-line'
+    meta.textContent = `Last checked ${checkedAt ? new Date(checkedAt).toLocaleString() : ''}`
+    panelListEl.appendChild(meta)
+
+    for (const d of domains) {
+      const info = byDomain?.[d]
+      const st = info?.status || 'down'
+      const chip = document.createElement('span')
+      chip.className = 'hc-chip'
+      const dot = document.createElement('span')
+      dot.className = `hc-dot ${st === 'up' ? 'up' : st === 'partial' ? 'partial' : 'down'}`
+      const text = document.createElement('span')
+      text.textContent = info ? `${d} (${info.up}/${info.total})` : `${d} (0/0)`
+      chip.append(dot, text)
+      panelListEl.appendChild(chip)
+    }
+  }
 }

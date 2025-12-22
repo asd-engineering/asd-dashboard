@@ -21,6 +21,7 @@ import { widgetStore } from './component/widget/widgetStore.js'
 import { debounce, debounceLeading } from './utils/utils.js'
 import StorageManager, { APP_STATE_CHANGED } from './storage/StorageManager.js'
 import { runSilentImportFlowIfRequested } from './flows/silentImportFlow.js'
+import { initThemeFromConfig } from './ui/theme.js'
 
 import { mountServiceControl } from './component/service/ServiceControl.js'
 
@@ -75,6 +76,7 @@ async function main () {
   }
 
   // 4. Apply settings that depend on the loaded config
+  initThemeFromConfig(config)
   applyControlVisibility()
   applyWidgetMenuVisibility()
 

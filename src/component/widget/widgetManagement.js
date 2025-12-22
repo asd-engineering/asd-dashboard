@@ -78,6 +78,7 @@ async function createWidget (
   widgetWrapper.dataset.rows = String(gridRowSpan)
 
   const iframe = document.createElement('iframe')
+  iframe.className = 'widget-iframe'
   iframe.src = url
   iframe.loading = 'lazy'
   iframe.style.border = '1px solid #ccc'

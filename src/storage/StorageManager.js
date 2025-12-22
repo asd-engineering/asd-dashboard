@@ -39,7 +39,10 @@ const KEYS = {
  * @returns {object} - Fully shaped config matching DEFAULT_CONFIG_TEMPLATE
  */
 function mergeWithDefaults (userConfig = {}) {
-  return deepMerge(DEFAULT_CONFIG_TEMPLATE, userConfig)
+  const merged = deepMerge(DEFAULT_CONFIG_TEMPLATE, userConfig)
+  if (!merged.globalSettings) merged.globalSettings = {}
+  merged.globalSettings.theme = merged.globalSettings.theme === 'dark' ? 'dark' : 'light'
+  return merged
 }
 
 /**

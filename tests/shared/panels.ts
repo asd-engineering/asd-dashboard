@@ -11,7 +11,8 @@ export async function openCreateFromTopMenu (page: Page, panelTestId: 'service-p
   const menu = page.locator(`[data-testid="${panelTestId}"] .menu`)
   // Target specific action buttons to avoid misfiring on wrapper rows
   const directBtn = menu.locator('[data-menu-action]', { hasText: label }).first()
-  if (await directBtn.count() && await directBtn.isVisible()) {
+  if (await directBtn.count()) {
+    await directBtn.waitFor({ state: 'visible' }).catch(() => {})
     await directBtn.click()
     return
   }

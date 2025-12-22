@@ -11,6 +11,8 @@ test.describe('config consistency', () => {
 
   test('open-config-modal shows boards after reset', async ({ page }) => {
     await page.click('#open-config-modal', { force: true })
+    await page.locator('button[data-tab="cfgTab"]').click();
+
     await page.click('#config-modal .modal__btn--toggle')
     
     const text = await page.locator('#config-json').inputValue()
@@ -21,6 +23,8 @@ test.describe('config consistency', () => {
 
   test('config matches localStorage after save', async ({ page }) => {
     await page.click('#open-config-modal', { force: true })
+    await page.locator('button[data-tab="cfgTab"]').click();
+
     await page.click('#config-modal .modal__btn--toggle')
 
     await page.waitForSelector('#config-json')
@@ -34,6 +38,7 @@ test.describe('config consistency', () => {
 
   test('saving config without boards removes boards storage', async ({ page }) => {
     await page.click('#open-config-modal', { force: true })
+    await page.locator('button[data-tab="cfgTab"]').click();
     await page.click('#config-modal .modal__btn--toggle')
 
     const textarea = page.locator('#config-json')

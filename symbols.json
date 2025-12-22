@@ -183,6 +183,20 @@
     "returns": "any"
   },
   {
+    "name": "applyTheme",
+    "kind": "function",
+    "file": "src/ui/theme.js",
+    "description": "Apply the given theme by setting a data attribute on <html>. Falls back to 'light' when an unknown value is provided.",
+    "params": [
+      {
+        "name": "theme",
+        "type": "string|undefined|null",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "applyWidgetMenuVisibility",
     "kind": "function",
     "file": "src/component/menu/dashboardMenu.js",
@@ -1278,6 +1292,20 @@
     "returns": "void"
   },
   {
+    "name": "initThemeFromConfig",
+    "kind": "function",
+    "file": "src/ui/theme.js",
+    "description": "Initialize the theme from a configuration object.",
+    "params": [
+      {
+        "name": "cfg",
+        "type": "DashboardConfig|undefined|null",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "installHoverIntent",
     "kind": "function",
     "file": "src/component/panel/selector-hover-intent.js",
@@ -2184,6 +2212,30 @@
       }
     ],
     "returns": "Promise<void>"
+  },
+  {
+    "name": "snapshotDedup",
+    "kind": "function",
+    "file": "src/utils/snapshotDedup.js",
+    "description": "Deduplicate items keeping first occurrence.",
+    "params": [
+      {
+        "name": "items",
+        "type": "Array<T>",
+        "desc": ""
+      },
+      {
+        "name": "getId",
+        "type": "(item:T)=>string|undefined",
+        "desc": ""
+      },
+      {
+        "name": "getName",
+        "type": "(item:T)=>string|undefined",
+        "desc": ""
+      }
+    ],
+    "returns": "Array<T>"
   },
   {
     "name": "splitIntoParams",
