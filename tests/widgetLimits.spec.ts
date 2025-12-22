@@ -169,9 +169,10 @@ test.describe("Widget limits", () => {
     await navigate(page, "/")
     await page.locator('.widget-wrapper').nth(3).waitFor()
 
-    await page.evaluate(async () => {
+    // Trigger switchView asynchronously (don't await inside evaluate to avoid deadlock)
+    page.evaluate(async () => {
       const { switchView } = await import('/component/board/boardManagement.js')
-      await switchView('b', 'v2')
+      switchView('b', 'v2') // Don't await - let it run async
     })
 
     const modal = page.locator('#eviction-modal')

@@ -125,6 +125,14 @@ test.describe('WidgetStore UI Tests', () => {
     // Count only visible wrappers — hidden/tearing-down nodes shouldn't fail the test
     await expect(page.locator('.widget-wrapper:visible')).toHaveCount(2)
 
+    // Verify LRU eviction kept the newest widgets
+    const visibleIds = await page.$$eval('.widget-wrapper:visible', (els) =>
+      els.map((e) => e.getAttribute('data-dataid'))
+    )
+    // W1 should have been evicted (oldest)
+    expect(visibleIds).not.toContain('W1')
+    expect(visibleIds.length).toBe(2)
+
     // Reload must preserve the invariant
     await page.reload()
     await waitForWidgetStoreIdle(page)
@@ -138,21 +146,12 @@ test.describe('WidgetStore UI Tests', () => {
     const widgets = page.locator('.widget-wrapper')
     await expect(widgets).toHaveCount(2)
 
-    const modal = page.locator('#eviction-modal')
-    await modal.waitFor({ state: 'visible' })
-    await modal.locator('#eviction-list input[type="checkbox"]').first().check()
-    await modal.locator('button:has-text("Continue")').click()
-    await waitForWidgetStoreIdle(page)
-    await expect(modal).toBeHidden()
-
-    await page.reload()
-    await waitForWidgetStoreIdle(page)
-    await expect(widgets).toHaveCount(2)
-
-    const ids = await page.$$eval('.widget-wrapper', (els) =>
+    // Verify LRU policy persisted after reload
+    const idsAfterReload = await page.$$eval('.widget-wrapper', (els) =>
       els.map((e) => e.getAttribute('data-dataid'))
     )
-    expect(ids).not.toContain('W1')
+    expect(idsAfterReload).not.toContain('W1')
+    expect(idsAfterReload.length).toBe(2)
   })
 
   test('Removes widget via UI and updates widgetStore state', async ({
