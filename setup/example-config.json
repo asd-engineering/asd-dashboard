@@ -1,0 +1,144 @@
+{
+    "globalSettings": {
+        "theme": "light",
+        "widgetStoreUrl": ["*/services.json"],
+        "database": "localStorage",
+        "hideBoardControl": false,
+        "hideViewControl": false,
+        "hideServiceControl": false,
+        "showMenuWidget": true,
+        "views": {
+            "showViewOptionsAsButtons": false,
+            "viewToShow": ""
+        },
+        "localStorage": {
+            "enabled": "true",
+            "loadDashboardFromConfig": "false",
+            "defaultBoard": "board-1728763634657",
+            "defaultView": "view-1728763634657"
+        }
+    },
+    "boards": [ 
+        {
+            "name": "Imported Board",
+            "id": "board-1728763634657",
+            "boardOrder": 0,
+            "views": [
+                {
+                    "name": "Imported View",
+                    "id": "view-1728763634657",
+                    "widgetState": [
+                                {
+                                    "order": "0",
+                                    "url": "http://localhost:8000/asd/terminal",
+                                    "columns": "2",
+                                    "rows": "2",
+                                    "settings": {
+                                        "autoRefresh": false,
+                                        "refreshInterval": 0
+                                    },
+                                    "metadata": {
+                                        "title": "Terminal"
+                                    }
+                                },
+                                {
+                                    "order": "1",
+                                    "url": "http://localhost:8000/asd/terminal",
+                                    "columns": "2",
+                                    "rows": "2",
+                                    "settings": {
+                                        "autoRefresh": false,
+                                        "refreshInterval": 0
+                                    },
+                                    "metadata": {
+                                        "title": "Terminal"
+                                    }
+                                },
+                                {
+                                    "order": "2",
+                                    "url": "http://localhost:8000/asd/terminal",
+                                    "columns": "2",
+                                    "rows": "2",
+                                    "settings": {
+                                        "autoRefresh": false,
+                                        "refreshInterval": 0
+                                    },
+                                    "metadata": {
+                                        "title": "Terminal"
+                                    }
+                                },
+                                {
+                                    "order": "3",
+                                    "url": "http://localhost:8000/asd/tunnel",
+                                    "columns": "1",
+                                    "rows": "1"
+                                },
+                                {
+                                    "order": "4",
+                                    "url": "http://localhost:8000/asd/tunnel",
+                                    "columns": "1",
+                                    "rows": "1"
+                                }
+                            ]
+                },
+                {
+                    "name": "Another view",
+                    "id": "view-1728763637807",
+                    "widgetState": [
+                                {
+                                    "order": "0",
+                                    "url": "http://localhost:8000/asd/terminal",
+                                    "columns": "2",
+                                    "rows": "2",
+                                    "settings": {
+                                        "autoRefresh": false,
+                                        "refreshInterval": 0
+                                    },
+                                    "metadata": {
+                                        "title": "Terminal"
+                                    }
+                                },
+                                {
+                                    "order": "1",
+                                    "url": "http://localhost:8000/asd/terminal",
+                                    "columns": "2",
+                                    "rows": "2",
+                                    "settings": {
+                                        "autoRefresh": false,
+                                        "refreshInterval": 0
+                                    },
+                                    "metadata": {
+                                        "title": "Terminal"
+                                    }
+                                },
+                                {
+                                    "order": "2",
+                                    "url": "http://localhost:8000/asd/terminal",
+                                    "columns": "2",
+                                    "rows": "2",
+                                    "settings": {
+                                        "autoRefresh": false,
+                                        "refreshInterval": 0
+                                    },
+                                    "metadata": {
+                                        "title": "Terminal"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+    ],
+    "styling": {
+        "widget": {
+            "minColumns": 1,
+            "maxColumns": 6,
+            "minRows": 1,
+            "maxRows": 6
+        },
+        "themes": {
+            "light": {},
+            "dark": {}
+        }
+    }
+}
