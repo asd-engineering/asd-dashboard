@@ -1,9 +1,12 @@
-# Deploy main branch to root of GitHub Pages
-name: Deploy Production
+# Deploy develop branch to /nightly/ subdirectory on GitHub Pages
+name: Deploy Nightly Build
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
+  schedule:
+    # Run every night at 2:00 UTC
+    - cron: '0 2 * * *'
   workflow_dispatch:
 
 # Sets permissions for GITHUB_TOKEN
@@ -12,17 +15,18 @@ permissions:
 
 # Prevent concurrent deployments
 concurrency:
-  group: "pages-production"
+  group: "pages-nightly"
   cancel-in-progress: false
 
 jobs:
-  deploy-production:
-    name: Deploy to root
+  deploy-nightly:
+    name: Deploy to /nightly/
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main branch
+      - name: Checkout develop branch
         uses: actions/checkout@v4
         with:
+          ref: develop
           fetch-depth: 1
 
       - name: Deploy to GitHub Pages
@@ -30,5 +34,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./src
+          destination_dir: nightly
           keep_files: true
-          commit_message: "deploy: production build from main"
+          commit_message: "deploy: nightly build from develop"
