@@ -103,6 +103,11 @@
         "name": "dataid",
         "type": "string|null",
         "desc": "- An optional persistent identifier for the widget."
+      },
+      {
+        "name": "opts",
+        "type": "{skipCapacity?:boolean}",
+        "desc": "- Optional flags."
       }
     ],
     "returns": "Promise<void>"
@@ -346,7 +351,13 @@
     "kind": "function",
     "file": "src/component/widget/widgetStore.js",
     "description": "Ensure capacity before adding a widget. Prompts for eviction when full.",
-    "params": [],
+    "params": [
+      {
+        "name": "needed",
+        "type": "number",
+        "desc": "- Number of widgets that will be added."
+      }
+    ],
     "returns": "Promise<boolean>"
   },
   {
@@ -1612,20 +1623,6 @@
       }
     ],
     "returns": "void"
-  },
-  {
-    "name": "openEvictionModal",
-    "kind": "function",
-    "file": "src/component/modal/evictionModal.js",
-    "description": "Display a modal to choose a widget for removal.",
-    "params": [
-      {
-        "name": "widgets",
-        "type": "Map<string, HTMLElement>",
-        "desc": "- Current widget map."
-      }
-    ],
-    "returns": "Promise<{id:string, title:string}|null>"
   },
   {
     "name": "openFragmentDecisionModal",

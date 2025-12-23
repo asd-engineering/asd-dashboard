@@ -1,9 +1,27 @@
 import { test, expect } from "./fixtures";
+import { ciConfig } from './data/ciConfig';
 import { ciServices } from "./data/ciServices";
 import { getUnwrappedConfig, navigate } from "./shared/common";
 import { waitForWidgetStoreIdle } from "./shared/state.js";
 import { ensurePanelOpen } from "./shared/panels";
 import { routeWithWidgetStoreSize } from './shared/mocking'
+
+async function routeLimits(page, boards, services, maxSize = 2, configOverrides = {}) {
+  await page.route('**/services.json', (route) => route.fulfill({ json: services }));
+  await page.route('**/config.json', (route) =>
+    route.fulfill({ json: { ...ciConfig, ...configOverrides, boards } }),
+  );
+  await page.addInitScript((size) => {
+    const apply = () => {
+      if (window.asd?.widgetStore) {
+        window.asd.widgetStore.maxSize = size;
+      } else {
+        setTimeout(apply, 0);
+      }
+    };
+    apply();
+  }, maxSize);
+}
 
 
 test.describe("Widget limits", () => {
@@ -104,6 +122,68 @@ test.describe("Widget limits", () => {
     );
     expect(ids).not.toContain("W1");
   });
+
+  test("view switch auto-evicts multiple widgets in one pass", async ({ page }) => {
+    const boards = [
+      {
+        id: "b",
+        name: "B",
+        order: 0,
+        views: [
+          {
+            id: "v1",
+            name: "V1",
+            widgetState: [
+              { order: "0", url: "http://localhost:8000/asd/toolbox", type: "web", dataid: "W1", serviceId: "toolbox" },
+              { order: "1", url: "http://localhost:8000/asd/terminal", type: "web", dataid: "W2", serviceId: "terminal" },
+              { order: "2", url: "http://localhost:8000/asd/tunnel", type: "web", dataid: "W3", serviceId: "tunnel" },
+              { order: "3", url: "http://localhost:8000/asd/containers", type: "web", dataid: "W4", serviceId: "containers" }
+            ]
+          },
+          {
+            id: "v2",
+            name: "V2",
+            widgetState: [
+              { order: "0", url: "http://localhost:8000/asd/toolbox", type: "web", dataid: "W1", serviceId: "toolbox" },
+              { order: "1", url: "http://localhost:8000/asd/terminal", type: "web", dataid: "W2", serviceId: "terminal" },
+              { order: "2", url: "http://localhost:8000/asd/tunnel", type: "web", dataid: "W5", serviceId: "tunnel" },
+              { order: "3", url: "http://localhost:8000/asd/containers", type: "web", dataid: "W6", serviceId: "containers" }
+            ]
+          }
+        ]
+      }
+    ]
+
+    await routeLimits(page, boards, ciServices, 4, {
+      globalSettings: {
+        ...ciConfig.globalSettings,
+        localStorage: {
+          ...ciConfig.globalSettings.localStorage,
+          defaultBoard: "b",
+          defaultView: "v1",
+          loadDashboardFromConfig: "true"
+        }
+      }
+    })
+
+    await navigate(page, "/")
+    await page.locator('.widget-wrapper').nth(3).waitFor()
+
+    // Trigger switchView asynchronously (don't await inside evaluate to avoid deadlock)
+    page.evaluate(async () => {
+      const { switchView } = await import('/component/board/boardManagement.js')
+      switchView('b', 'v2') // Don't await - let it run async
+    })
+
+    const modal = page.locator('#eviction-modal')
+    await expect(modal).toBeVisible()
+    await expect(modal.locator('#eviction-header')).toHaveText('2 widgets must be removed to continue navigation.')
+    await modal.locator('#evict-lru-btn').click()
+    await waitForWidgetStoreIdle(page)
+    await expect(modal).toBeHidden()
+    const ids = await page.$$eval('.widget-wrapper', els => els.map(e => e.getAttribute('data-dataid')))
+    expect(ids.sort()).toEqual(['W1', 'W2', 'W5', 'W6'].sort())
+  })
 
   test("simultaneous instance request uses single widget", async ({ page }) => {
     const boards = [

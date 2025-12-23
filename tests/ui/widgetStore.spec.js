@@ -125,10 +125,32 @@ test.describe('WidgetStore UI Tests', () => {
     // Count only visible wrappers — hidden/tearing-down nodes shouldn't fail the test
     await expect(page.locator('.widget-wrapper:visible')).toHaveCount(2)
 
+    // Verify LRU eviction kept the newest widgets
+    const visibleIds = await page.locator('.widget-wrapper:visible').evaluateAll((els) =>
+      els.map((e) => e.getAttribute('data-dataid'))
+    )
+    // W1 should have been evicted (oldest)
+    expect(visibleIds).not.toContain('W1')
+    expect(visibleIds.length).toBe(2)
+
     // Reload must preserve the invariant
     await page.reload()
     await waitForWidgetStoreIdle(page)
-    await expect(page.locator('.widget-wrapper:visible')).toHaveCount(2)
+
+    const afterHydration = await page.locator('.widget-wrapper').evaluateAll(
+      (els) => els.length
+    )
+    console.log('Widget count after hydration:', afterHydration)
+
+    const widgets = page.locator('.widget-wrapper')
+    await expect(widgets).toHaveCount(2)
+
+    // Verify LRU policy persisted after reload
+    const idsAfterReload = await page.locator('.widget-wrapper').evaluateAll((els) =>
+      els.map((e) => e.getAttribute('data-dataid'))
+    )
+    expect(idsAfterReload).not.toContain('W1')
+    expect(idsAfterReload.length).toBe(2)
   })
 
   test('Removes widget via UI and updates widgetStore state', async ({
