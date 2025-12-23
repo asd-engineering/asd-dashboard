@@ -2,6 +2,20 @@
 // @ts-check
 import { type Page } from "@playwright/test";
 
+// Minimal globalSettings to ensure config is not detected as "empty"
+const MIN_GLOBAL_SETTINGS = {
+  globalSettings: {
+    theme: 'light',
+    widgetStoreUrl: [],
+    database: 'localStorage',
+    views: { showViewOptionsAsButtons: false, viewToShow: '' },
+    localStorage: { enabled: 'true', loadDashboardFromConfig: 'true' }
+  },
+  serviceTemplates: {
+    default: { type: 'iframe', maxInstances: 1, config: {} }
+  }
+};
+
 /**
  * Boot the app with optional pre-injected storage state (IndexedDB),
  * before any app JS runs. When `inject=false`, the app boots cold
@@ -18,6 +32,17 @@ export async function bootWithDashboardState(
 ): Promise<void> {
   const waitForReady = options.waitForReady !== false;
   const inject = options.inject !== false;
+
+  // Only merge with minimal settings if config has meaningful content (boards, globalSettings, etc.)
+  // Empty configs {} should remain empty so the "no config" modal appears
+  const hasMeaningfulContent = cfg.boards?.length > 0 || cfg.globalSettings || cfg.serviceTemplates;
+  const mergedCfg = hasMeaningfulContent
+    ? {
+        ...MIN_GLOBAL_SETTINGS,
+        ...cfg,
+        globalSettings: { ...MIN_GLOBAL_SETTINGS.globalSettings, ...(cfg.globalSettings || {}) }
+      }
+    : cfg;
 
   // Always start from a clean storage baseline for determinism
   await page.addInitScript(async () => {
@@ -70,7 +95,7 @@ export async function bootWithDashboardState(
           };
         });
       },
-      { cfg, services, last }
+      { cfg: mergedCfg, services, last }
     );
   }
 

@@ -16,7 +16,8 @@ test('URL import stores snapshot and remains switchable', async ({ page }) => {
     { globalSettings: { theme: 'dark' }, boards: [] },
     [],
     { board: '', view: '' },
-    `/#cfg=${cfgEnc}&svc=${svcEnc}`
+    `/#cfg=${cfgEnc}&svc=${svcEnc}`,
+    { waitForReady: false }
   )
 
   // Decide to switch to the imported environment

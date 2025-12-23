@@ -78,13 +78,13 @@ export const idbKV = {
     return out
   },
   async set (store, key, value) {
-    await withStore(store, 'readwrite', (s, res) => { s.put(value, key); res(undefined) })
+    await withStore(store, 'readwrite', (s) => { s.put(value, key) })
   },
   async del (store, key) {
-    await withStore(store, 'readwrite', (s, res) => { s.delete(key); res(undefined) })
+    await withStore(store, 'readwrite', (s) => { s.delete(key) })
   },
   async clear (store) {
-    await withStore(store, 'readwrite', (s, res) => { s.clear(); res(undefined) })
+    await withStore(store, 'readwrite', (s) => { s.clear() })
   },
   async keys (store) {
     const keys = []

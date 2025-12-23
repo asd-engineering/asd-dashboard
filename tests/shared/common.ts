@@ -165,6 +165,8 @@ export function b64(obj: any) {
  * Leaves UI in a clean state for subsequent actions.
  */
 export async function clearStorage(page: Page) {
+  // Navigate to the app first to ensure we have access to localStorage/IndexedDB
+  await navigate(page, '/');
   await page.evaluate(async () => {
     localStorage.clear();
     await new Promise(res => {
@@ -172,9 +174,20 @@ export async function clearStorage(page: Page) {
       req.onsuccess = req.onerror = req.onblocked = () => res(null);
     });
   });
-  // Navigate to a blank page and then to the app to ensure a full reset
+  // Navigate to blank page then back to app to get a fresh state
   await page.goto('about:blank');
   await navigate(page, '/');
+}
+
+/**
+ * Flush all pending IndexedDB writes via StorageManager.flush().
+ * Call this before page.reload() to ensure data is persisted.
+ */
+export async function flushStorage(page: Page) {
+  await page.evaluate(async () => {
+    const { StorageManager } = await import('/storage/StorageManager.js');
+    await StorageManager.flush();
+  });
 }
 
 /**

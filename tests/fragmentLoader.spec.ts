@@ -39,6 +39,7 @@ test("fragment data is not reapplied if localStorage already has data", async ({
     [],
     { board: "", view: "" },
     `/#cfg=${cfg}`,
+    { waitForReady: false }
   );
 
   await page.waitForSelector("#fragment-decision-modal", { timeout: 5000 });
@@ -63,6 +64,7 @@ test("shows merge decision modal when local data exists", async ({ page }) => {
     [{ name: "Old", url: "http://localhost/old" }],
     { board: "", view: "" },
     `/#cfg=${cfg}&svc=${svc}`,
+    { waitForReady: false }
   );
 
   await page.waitForSelector("#fragment-decision-modal", { timeout: 5000 });

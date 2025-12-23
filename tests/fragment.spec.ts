@@ -23,8 +23,8 @@ test.describe("Secure fragments loading configuration", () => {
     const svc = await encode(ciServices);
     const name = "MySnapshot";
 
-    // Navigate with fragment (triggers modal)
-    await navigate(page,`/#cfg=${cfg}&svc=${svc}&name=${encodeURIComponent(name)}`);
+    // Navigate with fragment (triggers modal - skip readiness wait as modal blocks it)
+    await navigate(page,`/#cfg=${cfg}&svc=${svc}&name=${encodeURIComponent(name)}`, { disableReadyWait: true });
     
     await page.waitForSelector("#fragment-decision-modal");
     await expect(page.locator("#importName")).toHaveValue(name);

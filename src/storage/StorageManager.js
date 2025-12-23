@@ -35,6 +35,28 @@ const cache = {
 }
 
 /**
+ * Track pending writes for flush support.
+ * @type {Promise<void>[]}
+ */
+const pendingWrites = []
+
+/**
+ * Track a write promise and clean it up when done.
+ * @param {Promise<void>} promise
+ */
+function trackWrite (promise) {
+  pendingWrites.push(promise)
+  promise.finally(() => {
+    const idx = pendingWrites.indexOf(promise)
+    if (idx !== -1) {
+      // Removing completed promise from tracking array (returns removed elements, ignored intentionally)
+      const _ = pendingWrites.splice(idx, 1)
+      if (_) { /* noop - suppress unused var */ }
+    }
+  }).catch(() => {}) // Intentional no-op: cleanup runs regardless of resolve/reject
+}
+
+/**
  * Dispatch an application state change event.
  * @param {string} reason
  * @param {object} [detail]
@@ -267,8 +289,8 @@ export const StorageManager = {
     cache.config = sanitized
     cache.boards = boards
     cache.config.boards = boards
-    kv.set('config', 'v1', sanitized).catch(() => {})
-    kv.set('boards', 'v1', boards).catch(() => {})
+    trackWrite(kv.set('config', 'v1', sanitized).catch(() => {}))
+    trackWrite(kv.set('boards', 'v1', boards).catch(() => {}))
     busPost({ type: 'STORE_UPDATED', store: 'config', at: Date.now() })
     busPost({ type: 'STORE_UPDATED', store: 'boards', at: Date.now() })
     dispatchChange('update:config', { store: 'config' })
@@ -287,14 +309,15 @@ export const StorageManager = {
     const sanitized = sanitizeBoards(boards)
     cache.boards = sanitized
     cache.config.boards = sanitized
-    kv.set('boards', 'v1', sanitized).catch(() => {})
+    trackWrite(kv.set('boards', 'v1', sanitized).catch(() => {}))
     busPost({ type: 'STORE_UPDATED', store: 'boards', at: Date.now() })
     dispatchChange('update:boards', { store: 'boards' })
   },
   updateBoards (updater) {
     const boards = StorageManager.getBoards()
     const result = updater(boards)
-    if (Array.isArray(result)) StorageManager.setBoards(result)
+    // If updater returns an array, use that; otherwise use the mutated boards array
+    StorageManager.setBoards(Array.isArray(result) ? result : boards)
   },
 
   // ---- Services ----
@@ -333,7 +356,7 @@ export const StorageManager = {
 
     const sanitized = sanitizeServices(resolvedAndNormalizedServices)
     cache.services = sanitized
-    kv.set('services', 'v1', sanitized).catch(() => {})
+    trackWrite(kv.set('services', 'v1', sanitized).catch(() => {}))
     busPost({ type: 'STORE_UPDATED', store: 'services', at: Date.now() })
     dispatchChange('update:services', { store: 'services' })
   },
@@ -365,6 +388,15 @@ export const StorageManager = {
   },
 
   // ---- Utilities ----
+  /**
+   * Wait for all pending IndexedDB writes to complete.
+   * @returns {Promise<void>}
+   */
+  async flush () {
+    if (pendingWrites.length > 0) {
+      await Promise.all(pendingWrites)
+    }
+  },
   async clearAll () {
     await Promise.all([
       kv.clear('config'),
