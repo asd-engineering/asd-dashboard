@@ -93,6 +93,7 @@
  * @property {Array<Board>} [boards]
  * @property {Object.<string, ServiceTemplate>} [serviceTemplates]
  * @property {{widget: {minColumns:number, maxColumns:number, minRows:number, maxRows:number}}} [styling]
+ * @property {string} [servicesUrl] - Optional URL to fetch services from (used with fragment-based config)
  */
 
 /**

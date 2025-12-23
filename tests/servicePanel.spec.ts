@@ -2,7 +2,7 @@
 
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
-import { addServices, clearStorage } from './shared/common'
+import { addServices, clearStorage, navigate } from './shared/common'
 import { openCreateFromTopMenu, ensurePanelOpen } from './shared/panels'
 
 // Basic structure tests for service selector panel
@@ -10,7 +10,7 @@ import { openCreateFromTopMenu, ensurePanelOpen } from './shared/panels'
 test.describe('Service panel', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
-    await page.goto('/')
+    await navigate(page, '/')
     await page.waitForSelector('[data-testid="service-panel"]')
   })
 
@@ -56,7 +56,7 @@ test.describe('Service panel', () => {
     );
 
     await clearStorage(page)
-    await page.goto('/')
+    await navigate(page, '/')
     
     await ensurePanelOpen(page, 'service-panel')
     

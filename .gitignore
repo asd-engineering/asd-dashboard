@@ -14,3 +14,4 @@ errors.json
 local/
 playwright-report.json
 playwright-report-index.json.gz
+errors.json

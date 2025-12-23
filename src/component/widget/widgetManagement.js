@@ -78,6 +78,7 @@ async function createWidget (
   widgetWrapper.dataset.rows = String(gridRowSpan)
 
   const iframe = document.createElement('iframe')
+  iframe.className = 'widget-iframe'
   iframe.src = url
   iframe.loading = 'lazy'
   iframe.style.border = '1px solid #ccc'
@@ -184,6 +185,7 @@ async function createWidget (
  * @param {string} boardId - The ID of the board to add the widget to.
  * @param {string} viewId - The ID of the view to add the widget to.
  * @param {string|null} [dataid=null] - An optional persistent identifier for the widget.
+ * @param {{skipCapacity?:boolean}} [opts] - Optional flags.
  * @returns {Promise<void>}
  */
 async function addWidget (
@@ -193,7 +195,8 @@ async function addWidget (
   type = 'iframe',
   boardId = null,
   viewId = null,
-  dataid = null
+  dataid = null,
+  opts = {}
 ) {
   logger.log('Adding widget with URL:', url)
   const widgetContainer = document.getElementById('widget-container')
@@ -249,8 +252,11 @@ async function addWidget (
       }
     }
 
-    const proceed = await window.asd.widgetStore.confirmCapacity()
-    if (!proceed) return
+    const { skipCapacity = false } = opts
+    if (!skipCapacity) {
+      const proceed = await window.asd.widgetStore.confirmCapacity()
+      if (!proceed) return
+    }
 
     // Restore from cache if available
     if (dataid && window.asd.widgetStore.has(dataid)) {

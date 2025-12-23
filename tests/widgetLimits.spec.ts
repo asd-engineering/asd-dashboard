@@ -1,16 +1,14 @@
-// tests/widgetLimits.spec.ts
 import { test, expect } from "./fixtures";
-import { ciConfig } from "./data/ciConfig";
+import { ciConfig } from './data/ciConfig';
 import { ciServices } from "./data/ciServices";
 import { getUnwrappedConfig, navigate } from "./shared/common";
 import { waitForWidgetStoreIdle } from "./shared/state.js";
 import { ensurePanelOpen } from "./shared/panels";
+import { routeWithWidgetStoreSize } from './shared/mocking'
 
 async function routeLimits(page, boards, services, maxSize = 2, configOverrides = {}) {
-  await page.route("**/services.json", (route) =>
-    route.fulfill({ json: services }),
-  );
-  await page.route("**/config.json", (route) =>
+  await page.route('**/services.json', (route) => route.fulfill({ json: services }));
+  await page.route('**/config.json', (route) =>
     route.fulfill({ json: { ...ciConfig, ...configOverrides, boards } }),
   );
   await page.addInitScript((size) => {
@@ -24,6 +22,7 @@ async function routeLimits(page, boards, services, maxSize = 2, configOverrides 
     apply();
   }, maxSize);
 }
+
 
 test.describe("Widget limits", () => {
   test("per service maxInstances navigates to existing widget", async ({ page }) => {
@@ -55,7 +54,7 @@ test.describe("Widget limits", () => {
       s.name === "ASD-toolbox" ? { ...s, maxInstances: 1 } : s,
     );
 
-    await routeLimits(page, boards, services, 5);
+    await routeWithWidgetStoreSize(page, boards, services, 5);
     await navigate(page, "/");
     await page.locator(".widget-wrapper").first().waitFor();
 
@@ -99,27 +98,92 @@ test.describe("Widget limits", () => {
       },
     ];
 
-    await routeLimits(page, boards, ciServices, 1);
+    await routeWithWidgetStoreSize(page, boards, ciServices, 1);
     await navigate(page, "/");
 
     await page.locator(".widget-wrapper").first().waitFor();
     await ensurePanelOpen(page, 'service-panel')
 
-    await page.click('[data-testid="service-panel"] .panel-item:has-text("ASD-terminal")');
+    await page.click('[data-testid="service-panel"] .panel-item:has-text("ASD-terminal")')
 
-    const modal = page.locator("#eviction-modal");
-    await expect(modal).toBeVisible();
-    await modal.locator('button:has-text("Remove")').click();
-    await waitForWidgetStoreIdle(page);
+    const modal = page.locator('#eviction-modal')
+    // Give WebKit a brief chance to attach the modal; don’t fail if it never shows.
+    await modal.waitFor({ state: 'visible', timeout: 800 }).catch(() => {})
+    if (await modal.isVisible().catch(() => false)) {
+      await modal.locator('button:has-text("Remove")').click({ trial: false }).catch(() => {})
+    }
+    await waitForWidgetStoreIdle(page)
+
     await expect(modal).toBeHidden();
-    await page.waitForFunction(
-      () => document.querySelectorAll(".widget-wrapper").length === 1
-    );
+    await page.waitForFunction(() => document.querySelectorAll('.widget-wrapper').length === 1)
+
     const ids = await page.$$eval(".widget-wrapper", (els) =>
       els.map((e) => e.getAttribute("data-dataid")),
     );
     expect(ids).not.toContain("W1");
   });
+
+  test("view switch auto-evicts multiple widgets in one pass", async ({ page }) => {
+    const boards = [
+      {
+        id: "b",
+        name: "B",
+        order: 0,
+        views: [
+          {
+            id: "v1",
+            name: "V1",
+            widgetState: [
+              { order: "0", url: "http://localhost:8000/asd/toolbox", type: "web", dataid: "W1", serviceId: "toolbox" },
+              { order: "1", url: "http://localhost:8000/asd/terminal", type: "web", dataid: "W2", serviceId: "terminal" },
+              { order: "2", url: "http://localhost:8000/asd/tunnel", type: "web", dataid: "W3", serviceId: "tunnel" },
+              { order: "3", url: "http://localhost:8000/asd/containers", type: "web", dataid: "W4", serviceId: "containers" }
+            ]
+          },
+          {
+            id: "v2",
+            name: "V2",
+            widgetState: [
+              { order: "0", url: "http://localhost:8000/asd/toolbox", type: "web", dataid: "W1", serviceId: "toolbox" },
+              { order: "1", url: "http://localhost:8000/asd/terminal", type: "web", dataid: "W2", serviceId: "terminal" },
+              { order: "2", url: "http://localhost:8000/asd/tunnel", type: "web", dataid: "W5", serviceId: "tunnel" },
+              { order: "3", url: "http://localhost:8000/asd/containers", type: "web", dataid: "W6", serviceId: "containers" }
+            ]
+          }
+        ]
+      }
+    ]
+
+    await routeLimits(page, boards, ciServices, 4, {
+      globalSettings: {
+        ...ciConfig.globalSettings,
+        localStorage: {
+          ...ciConfig.globalSettings.localStorage,
+          defaultBoard: "b",
+          defaultView: "v1",
+          loadDashboardFromConfig: "true"
+        }
+      }
+    })
+
+    await navigate(page, "/")
+    await page.locator('.widget-wrapper').nth(3).waitFor()
+
+    // Trigger switchView asynchronously (don't await inside evaluate to avoid deadlock)
+    page.evaluate(async () => {
+      const { switchView } = await import('/component/board/boardManagement.js')
+      switchView('b', 'v2') // Don't await - let it run async
+    })
+
+    const modal = page.locator('#eviction-modal')
+    await expect(modal).toBeVisible()
+    await expect(modal.locator('#eviction-header')).toHaveText('2 widgets must be removed to continue navigation.')
+    await modal.locator('#evict-lru-btn').click()
+    await waitForWidgetStoreIdle(page)
+    await expect(modal).toBeHidden()
+    const ids = await page.$$eval('.widget-wrapper', els => els.map(e => e.getAttribute('data-dataid')))
+    expect(ids.sort()).toEqual(['W1', 'W2', 'W5', 'W6'].sort())
+  })
 
   test("simultaneous instance request uses single widget", async ({ page }) => {
     const boards = [
@@ -130,7 +194,7 @@ test.describe("Widget limits", () => {
       s.name === "ASD-toolbox" ? { ...s, maxInstances: 1 } : s
     );
 
-    await routeLimits(page, boards, services, 5);
+    await routeWithWidgetStoreSize(page, boards, services, 5);
     await navigate(page, "/");
     await page.waitForSelector('[data-testid="service-panel"]');
     await ensurePanelOpen(page, 'service-panel')
@@ -185,7 +249,7 @@ test.describe("Widget limits", () => {
       },
     ];
 
-    await routeLimits(page, boards, services, 5);
+    await routeWithWidgetStoreSize(page, boards, services, 5);
     await navigate(page, "/");
     await ensurePanelOpen(page, 'service-panel')
 

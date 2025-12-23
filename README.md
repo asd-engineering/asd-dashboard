@@ -28,7 +28,7 @@ ASD Dashboard is architected with a focus on simplicity and adaptability:
 
 ## Reset & State Management
 
-The admin reset control clears boards, views, services and configuration while keeping any saved state snapshots. Bulk removal of saved states is available from the **Saved States** tab in the configuration modal via the "Delete all snapshots" button. A full wipe, including saved states, remains possible through the legacy `StorageManager.clearAll()` API.
+The admin reset control clears boards, views, services and configuration while keeping any saved state snapshots. Bulk removal of snapshots is available from the **Snapshots & Share** tab in the configuration modal via the "Delete all snapshots" button. A full wipe, including snapshots, remains possible through the legacy `StorageManager.clearAll()` API.
 
 ### Snapshot de-duplication
 
@@ -87,6 +87,76 @@ The fragment follows standard `URLSearchParams` semantics and may include:
 ### Use Case Example
 
 You can configure your dashboard, click **Export**, and share the link in Slack or WhatsApp. The recipient opens it and instantly gets your layout, widgets, theme, and services—no installation, syncing, or servers involved.
+
+### Using External Services with URL Fragments
+
+You can combine the privacy benefits of URL fragments with dynamic external service loading by adding a `servicesUrl` field to your configuration. This allows you to:
+
+* ✅ Keep config private (embedded in fragment)
+* ✅ Load services dynamically from an external endpoint
+* ✅ Update services without regenerating the fragment URL
+* ✅ Share a single URL that always pulls fresh service definitions
+
+#### How It Works
+
+Add a `servicesUrl` property to your `config.json`:
+
+```json
+{
+  "servicesUrl": "https://example.com/services.json",
+  "boards": [...],
+  "theme": {...},
+  ...
+}
+```
+
+When you export this config via URL fragment:
+
+```
+https://your-dashboard.app/#cfg=<compressed-config>&name=MyDash&algo=deflate
+```
+
+The dashboard will:
+1. Load the config from the fragment (including `servicesUrl`)
+2. Fetch services dynamically from `https://example.com/services.json`
+3. Merge everything together for the final dashboard state
+
+#### Priority Order for Services
+
+When multiple service sources are present, the dashboard loads services in this priority order:
+
+1. `?services_base64=<data>` (query parameter - highest priority)
+2. **`config.servicesUrl`** (from fragment config) ← **New feature**
+3. `?services_url=<url>` (query parameter)
+4. `localStorage` (previously saved services)
+5. `services.json` (local file - lowest priority)
+
+#### Example Workflow
+
+```bash
+# 1. Create your config.json with external services reference
+{
+  "servicesUrl": "https://api.example.com/dashboards/prod-services.json",
+  "theme": "dark",
+  "boards": [...]
+}
+
+# 2. Load it in the dashboard and export via fragment
+# Result: https://your-dashboard.app/#cfg=<compressed>&name=Production
+
+# 3. Share the URL - users get:
+#    - Your exact config (from fragment)
+#    - Fresh services (from external URL)
+
+# 4. Update services.json on your server
+#    - Users reload and get new services automatically
+#    - No need to regenerate the fragment URL
+```
+
+This approach is ideal for teams that want to:
+* Share dashboard layouts privately via fragments
+* Maintain centralized service catalogs that update independently
+* Avoid embedding large service lists in URL fragments
 
 ## Dynamic Configuration (via URL Parameters)
 

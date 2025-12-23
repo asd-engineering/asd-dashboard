@@ -232,147 +232,107 @@ This section documents the recommended approach for **extracting all file diffs 
 
 #### **Current Script Reference**
 
-```js
-(function () {
-  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-  async function waitForActive(el, className, timeout = 4000, interval = 60) {
-    const start = Date.now();
-    while (Date.now() - start < timeout) {
-      if (el.classList.contains(className)) return;
-      await sleep(interval);
-    }
-    throw new Error(`Element "${el.textContent.trim()}" did not activate (${className})`);
-  }
-  async function waitForDiffContentChange(refHtml, timeout = 7000, interval = 60) {
-    const area = 'div[data-diff-header]';
-    const start = Date.now();
-    while (Date.now() - start < timeout) {
-      let html = Array.from(document.querySelectorAll(area)).map(x => x.innerHTML).join('');
-      if (html && html !== refHtml) return;
-      await sleep(interval);
-    }
-    throw new Error(`Diff content did not update in time`);
-  }
-  function downloadJSON(obj, filename) {
-    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a); URL.revokeObjectURL(url);
-  }
-  function scrapeGitDiffs() {
-    const activeBtn = document.querySelector('div.flex > span > button.text-token-text-primary');
-    const result = {
-      timestamp: new Date().toISOString(),
-      sourceUrl: window.location.href,
-      version: activeBtn ? activeBtn.textContent.trim() : null,
-      diffs: [],
-    };
-    document.querySelectorAll('div[data-diff-header]').forEach(container => {
-      const fileDiff = {
-        filePath: container.dataset.diffHeader,
-        additions: container.querySelector('.text-green-500')?.textContent.trim() || null,
-        deletions: container.querySelector('.text-red-500')?.textContent.trim() || null,
-        changes: [],
-      };
-      container.querySelectorAll('.diff-table-body tr.diff-line').forEach(row => {
-        fileDiff.changes.push({
-          old: {
-            lineNumber: row.querySelector('.diff-line-old-num')?.textContent.trim() || null,
-            content: row.querySelector('.diff-line-old-content .diff-line-syntax-raw')?.textContent ?? null,
-          },
-          new: {
-            lineNumber: row.querySelector('.diff-line-new-num')?.textContent.trim() || null,
-            content: row.querySelector('.diff-line-new-content .diff-line-syntax-raw')?.textContent ?? null,
-          }
-        });
-      });
-      result.diffs.push(fileDiff);
-    });
-    return result;
-  }
-
-  (async function () {
-    const versionBtns = Array.from(document.querySelectorAll('div.flex > span > button'))
-      .filter(btn => /^Version \d+$/.test(btn.textContent.trim()));
-    if (!versionBtns.length) throw new Error('No version buttons found.');
-    const allVersionDiffs = {
-      _meta: {
-        extractedAt: new Date().toISOString(),
-        sourceUrl: window.location.href,
-        versionCount: versionBtns.length
-      }
-    };
-
-    for (const btn of versionBtns) {
-      const label = btn.textContent.trim();
-      const wasActive = btn.classList.contains('text-token-text-primary');
-      if (!wasActive) {
-        const beforeHtml = Array.from(document.querySelectorAll('div[data-diff-header]')).map(x => x.innerHTML).join('');
-        btn.click();
-        await waitForActive(btn, 'text-token-text-primary', 5000);
-        await waitForDiffContentChange(beforeHtml, 7000);
-      }
-      // Always select Diff tab if not already
-      const diffNav = document.querySelector('div.flex.gap-4.text-sm.font-medium.border-b');
-      const diffBtn = Array.from(diffNav.querySelectorAll('span > button')).find(b => b.textContent.trim().toLowerCase() === 'diff');
-      if (!diffBtn) { console.warn(`No 'Diff' tab for ${label}. Skipping.`); continue; }
-      if (!diffBtn.classList.contains('text-token-text-primary')) {
-        const beforeDiffHtml = Array.from(document.querySelectorAll('div[data-diff-header]')).map(x => x.innerHTML).join('');
-        diffBtn.click();
-        await waitForActive(diffBtn, 'text-token-text-primary', 3000);
-        await waitForDiffContentChange(beforeDiffHtml, 7000);
-      }
-      // Scrape instantly
-      const scraped = scrapeGitDiffs();
-      allVersionDiffs[label] = scraped;
-      console.log(`[GitDiffScraper] ${label} scraped (${scraped.diffs.length} file diffs).`);
-    }
-
-    const nonEmpty = Object.values(allVersionDiffs).some(obj =>
-      obj && typeof obj === 'object' && Array.isArray(obj.diffs) && obj.diffs.length > 0
-    );
-    if (nonEmpty) {
-      downloadJSON(allVersionDiffs, 'git-diff-multiversion.json');
-      console.log('[GitDiffScraper] All versions processed. Data:', allVersionDiffs);
-    } else {
-      console.warn('[GitDiffScraper] No diffs extracted from any version. No file downloaded.');
-      console.log('Extracted data:', allVersionDiffs);
-    }
-  })();
-})();
-```
-
-All other logic is preserved, just the diff data per file is now a single text blob.
-This reduces +/- 60% of the output without losing contect or code changes.
+Changes:
+- Diff data per file is now a single text blob. This reduces +/- 60% of the output without losing content or code changes.
+- Iterate versions in ascending numeric order; if “Version 1” is missing or fails, we move on.
+- Re-query buttons by label before each action to avoid stale references after UI re-render.
+- Hardened Diff tab activation with a class-based poll that re-queries the element.
+- All failures are captured per-version and do not block subsequent versions.
 
 ```javascript
+// git-diff-multiversion-scraper.js
+// Robustly iterates "Version N" buttons (ascending) and scrapes their code diffs.
+// If a version is missing or fails to activate (e.g., Version 1), it automatically
+// tries the next one. Includes fallback re-queries to avoid stale DOM references.
+
 (function () {
+  "use strict";
+
+  // --- Utilities -------------------------------------------------------------
+
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  const SELECTORS = {
+    versionButtons: 'div.flex > span > button',
+    activeVersionButton: 'div.flex > span > button.text-token-text-primary',
+    diffTabBtn: 'button[aria-label="Tab to view the code diff"]',
+    diffHeader: 'div[data-diff-header]',
+    diffRow: '.diff-table-body tr.diff-line',
+    additions: '.text-green-500',
+    deletions: '.text-red-500',
+  };
+
+  function extractVersionNumber(label) {
+    const m = /^Version\s+(\d+)$/.exec(label);
+    return m ? Number(m[1]) : NaN;
+  }
+
+  function getAllVersionButtons() {
+    // Return objects that can re-find their button by label to avoid stale nodes after re-renders.
+    const raw = Array.from(document.querySelectorAll(SELECTORS.versionButtons));
+    const entries = [];
+    for (const btn of raw) {
+      const label = (btn.textContent || "").trim();
+      if (!/^Version\s+\d+$/.test(label)) continue;
+      const num = extractVersionNumber(label);
+      if (Number.isNaN(num)) continue;
+      entries.push({
+        label,
+        num,
+        // Re-query function by label (guards against re-renders)
+        getButton: () => Array.from(document.querySelectorAll(SELECTORS.versionButtons))
+          .find(x => (x.textContent || "").trim() === label) || null,
+      });
+    }
+    // Sort ascending so we try Version 1, then 2, then 3, etc.
+    entries.sort((a, b) => a.num - b.num);
+    return entries;
+  }
+
+  function getActiveVersionLabel() {
+    const activeBtn = document.querySelector(SELECTORS.activeVersionButton);
+    return activeBtn ? (activeBtn.textContent || "").trim() : null;
+  }
 
   async function waitForVersionActivation(expectedLabel, timeout = 5000, interval = 60) {
     const start = Date.now();
     while (Date.now() - start < timeout) {
-      const activeBtn = document.querySelector('div.flex > span > button.text-token-text-primary');
-      if (activeBtn?.textContent.trim() === expectedLabel) return;
+      const active = getActiveVersionLabel();
+      if (active === expectedLabel) return;
       await sleep(interval);
     }
     throw new Error(`Version "${expectedLabel}" did not become active`);
   }
 
+  async function activateVersion(label, timeout = 5000) {
+    const btn = getButtonByLabel(label);
+    if (!btn) throw new Error(`Button not found for "${label}"`);
+    // Scroll into view & click, then wait until the active-label matches.
+    btn.scrollIntoView({ block: "center", inline: "center" });
+    btn.click();
+    await waitForVersionActivation(label, timeout);
+  }
+
+  function getButtonByLabel(label) {
+    // Always re-query to avoid stale reference issues.
+    return Array.from(document.querySelectorAll(SELECTORS.versionButtons))
+      .find(x => (x.textContent || "").trim() === label) || null;
+  }
+
   async function waitForDiffContentChange(refHtml, timeout = 7000, interval = 60) {
-    const area = 'div[data-diff-header]';
     const start = Date.now();
 
+    // First, wait for at least one diff header to be present.
     while (Date.now() - start < timeout) {
-      const nodes = document.querySelectorAll(area);
+      const nodes = document.querySelectorAll(SELECTORS.diffHeader);
       if (nodes.length > 0) break;
       await sleep(interval);
     }
 
+    // Then, wait for the HTML to actually change.
     while (Date.now() - start < timeout) {
-      const html = Array.from(document.querySelectorAll(area)).map(x => x.innerHTML).join('');
+      const html = Array.from(document.querySelectorAll(SELECTORS.diffHeader))
+        .map(x => x.innerHTML).join('');
       if (html && html !== refHtml) return;
       await sleep(interval);
     }
@@ -380,42 +340,43 @@ This reduces +/- 60% of the output without losing contect or code changes.
     throw new Error(`Diff content did not update in time`);
   }
 
+  async function waitForDiffTabActive(timeout = 4000, interval = 60) {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      const el = document.querySelector(SELECTORS.diffTabBtn);
+      if (el && el.classList.contains('text-token-text-primary')) return;
+      await sleep(interval);
+    }
+    throw new Error('Diff tab did not activate');
+  }
+
   async function ensureDiffTabActive(timeout = 4000) {
-    const tabBtn = Array.from(document.querySelectorAll('button[aria-label="Tab to view the code diff"]'))[0];
+    const tabBtn = document.querySelector(SELECTORS.diffTabBtn);
     if (!tabBtn) throw new Error('Diff tab not found');
 
     if (!tabBtn.classList.contains('text-token-text-primary')) {
-      const beforeHtml = Array.from(document.querySelectorAll('div[data-diff-header]')).map(x => x.innerHTML).join('');
+      const beforeHtml = Array.from(document.querySelectorAll(SELECTORS.diffHeader))
+        .map(x => x.innerHTML).join('');
       tabBtn.click();
-      await waitForActive(tabBtn, 'text-token-text-primary', timeout);
+      await waitForDiffTabActive(timeout);
       await waitForDiffContentChange(beforeHtml, timeout + 2000);
     }
   }
 
-  async function waitForActive(el, className, timeout = 4000, interval = 60) {
-    const start = Date.now();
-    while (Date.now() - start < timeout) {
-      if (el.classList.contains(className)) return;
-      await sleep(interval);
-    }
-    throw new Error(`Element "${el.textContent.trim()}" did not activate (${className})`);
-  }
-
   function scrapeGitDiffsTextOnly() {
-    const activeBtn = document.querySelector('div.flex > span > button.text-token-text-primary');
     const result = {
       timestamp: new Date().toISOString(),
       sourceUrl: window.location.href,
-      version: activeBtn ? activeBtn.textContent.trim() : null,
+      version: getActiveVersionLabel(),
       diffs: [],
     };
-    document.querySelectorAll('div[data-diff-header]').forEach(container => {
-      const diffText = Array.from(container.querySelectorAll('.diff-table-body tr.diff-line'))
+    document.querySelectorAll(SELECTORS.diffHeader).forEach(container => {
+      const diffText = Array.from(container.querySelectorAll(SELECTORS.diffRow))
         .map(row => row.innerText || '').join('\n');
       result.diffs.push({
         filePath: container.dataset.diffHeader,
-        additions: container.querySelector('.text-green-500')?.textContent.trim() || null,
-        deletions: container.querySelector('.text-red-500')?.textContent.trim() || null,
+        additions: container.querySelector(SELECTORS.additions)?.textContent.trim() || null,
+        deletions: container.querySelector(SELECTORS.deletions)?.textContent.trim() || null,
         diffText,
       });
     });
@@ -431,30 +392,41 @@ This reduces +/- 60% of the output without losing contect or code changes.
     document.body.removeChild(a); URL.revokeObjectURL(url);
   }
 
+  // --- Main flow -------------------------------------------------------------
+
   (async function () {
-    const versionBtns = Array.from(document.querySelectorAll('div.flex > span > button'))
-      .filter(btn => /^Version \d+$/.test(btn.textContent.trim()));
-    if (!versionBtns.length) throw new Error('No version buttons found.');
+    const versions = getAllVersionButtons();
+    if (!versions.length) throw new Error('No version buttons found.');
 
     const allVersionDiffs = {
       _meta: {
         extractedAt: new Date().toISOString(),
         sourceUrl: window.location.href,
-        versionCount: versionBtns.length,
+        versionCount: versions.length,
+        order: versions.map(v => v.label), // explicit processing order (ascending)
       }
     };
 
-    for (const btn of versionBtns) {
-      const label = btn.textContent.trim();
-      const wasActive = btn.classList.contains('text-token-text-primary');
+    // If Version 1 is missing, we’ll naturally proceed to the next (e.g., Version 2, 3, ...).
+    if (!versions.some(v => v.num === 1)) {
+      console.warn('[GitDiffScraper] "Version 1" not found. Starting from the next available version.');
+    }
 
+    for (const v of versions) {
+      const label = v.label;
       try {
-        if (!wasActive) {
+        const activeLabel = getActiveVersionLabel();
+        if (activeLabel !== label) {
+          // Try to activate this version; if it fails, we catch and continue to next.
+          const btn = v.getButton();
+          if (!btn) throw new Error(`Button disappeared for "${label}"`);
+          btn.scrollIntoView({ block: "center", inline: "center" });
           btn.click();
           await waitForVersionActivation(label, 5000);
         }
 
-        const hasDiffTab = !!document.querySelector('button[aria-label="Tab to view the code diff"]');
+        // Verify the Diff tab exists for this version; if not, skip gracefully.
+        const hasDiffTab = !!document.querySelector(SELECTORS.diffTabBtn);
         if (!hasDiffTab) {
           console.warn(`[GitDiffScraper] ${label} has no Diff tab. Skipping.`);
           allVersionDiffs[label] = { error: 'No diff available' };
@@ -468,7 +440,8 @@ This reduces +/- 60% of the output without losing contect or code changes.
         console.log(`[GitDiffScraper] ${label} scraped (${scraped.diffs.length} file diffs).`);
       } catch (err) {
         console.error(`[GitDiffScraper] ${label} failed:`, err);
-        allVersionDiffs[label] = { error: err.message };
+        allVersionDiffs[label] = { error: err?.message || String(err) };
+        // Continue with the next version automatically.
       }
     }
 

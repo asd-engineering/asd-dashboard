@@ -1,5 +1,7 @@
 // @ts-check
 import { type Page } from "@playwright/test";
+import { evaluateSafe, waitForAppReady, reloadReady } from "./common";
+import { openConfigModalSafe } from './uiHelpers'
 
 /**
  * Retrieve the current widgetStore size.
@@ -18,7 +20,7 @@ export async function getWidgetStoreSize(page: Page): Promise<number> {
  * @returns {Promise<void>}
  */
 export async function waitForWidgetStoreIdle(page: Page): Promise<void> {
-  await page.evaluate(async () => {
+  await evaluateSafe(page, async () => {
     if (window.asd?.widgetStore?.idle) {
       await window.asd.widgetStore.idle();
     }
@@ -61,8 +63,9 @@ export async function injectSnapshot(
   cfg: object,
   svc: object[],
   name: string,
+  opts?: { reload?: boolean }
 ): Promise<void> {
-  await page.evaluate(
+  await evaluateSafe(page,
     async ({ cfg, svc, name }) => {
       const { StorageManager: sm } = await import("/storage/StorageManager.js");
       const { gzipJsonToBase64url } = await import("/utils/compression.js");
@@ -77,4 +80,73 @@ export async function injectSnapshot(
     },
     { cfg, svc, name },
   );
+  if (opts?.reload !== false) {
+    await reloadReady(page)
+  };
+}
+
+/**
+ * Load raw snapshot store via StorageManager.
+ */
+export async function loadStateStore(page: Page): Promise<{ version: number; states: any[] }> {
+  return await page.evaluate(async () => {
+    const { default: sm } = await import('/storage/StorageManager.js');
+    return sm.loadStateStore();
+  });
+}
+
+/**
+ * Switch to a snapshot by exact name through the State tab UI.
+ * (Keeps UI-path parity with real users; avoids LS mutations.)
+ */
+export async function switchSnapshotByName(page: Page, name: string): Promise<void> {
+  await openConfigModalSafe(page, "stateTab")
+
+  const row = page.locator(`#stateTab tbody tr:has-text("${name}")`).first();
+  await row.locator('button[data-action="switch"]').click();
+
+  await waitForAppReady(page)
+}
+
+/**
+ * Merge a snapshot by name via UI (idempotent).
+ */
+export async function mergeSnapshotByName(page: Page, name: string): Promise<void> {
+  await openConfigModalSafe(page, "stateTab")
+  
+  const row = page.locator(`#stateTab tbody tr:has-text("${name}")`).first();
+  await row.locator('button[data-action="merge"]').click({ force: true });
+
+  await waitForAppReady(page)
+}
+
+
+/**
+ * If the LRU eviction modal appears, confirm it; otherwise no-op.
+ * Keeps timeouts small and waits for widgetStore to settle.
+ */
+export async function evictIfModalPresent(
+  page: Page,
+  opts: { appearTimeoutMs?: number; hideTimeoutMs?: number } = {},
+): Promise<void> {
+  const appearTimeoutMs = opts.appearTimeoutMs ?? 900;
+  const hideTimeoutMs = opts.hideTimeoutMs ?? 2000;
+
+  const modal = page.locator('#eviction-modal');
+
+  // Give WebKit a brief chance to render the modal. Ignore if it never shows.
+  await modal.waitFor({ state: 'visible', timeout: appearTimeoutMs }).catch(() => {});
+
+  if (await modal.isVisible().catch(() => false)) {
+    await modal.locator('button:has-text("Remove")').click({ trial: false }).catch(() => {});
+  }
+
+  // Always wait for the store to settle; modal may have auto-evicted.
+  try {
+    // reuse your existing helper
+    await waitForWidgetStoreIdle(page);
+  } catch {}
+
+  // If it did show, let it disappear (don’t fail if it’s already gone).
+  await modal.waitFor({ state: 'hidden', timeout: hideTimeoutMs }).catch(() => {});
 }

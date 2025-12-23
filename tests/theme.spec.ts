@@ -19,6 +19,8 @@ test.describe('theme switching', () => {
     if (!(await page.locator('#config-modal').isVisible())) {
       await page.click('#open-config-modal');
     }
+    await page.locator('button[data-tab="cfgTab"]').click();
+    
     await page.selectOption('#theme-select', 'dark');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     const darkLogo = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--logo-url').trim());

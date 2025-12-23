@@ -15,10 +15,14 @@ body > main {
   height: 100%;
   /* main scrolbar */
   overflow: auto;
-  margin: 0; 
+  margin: 0;
+}
+main {
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
-body { 
+body {
   overflow: hidden;
 }
 
@@ -33,6 +37,7 @@ header {
   padding: 0.5rem;
   text-align: center;
 }
+
 /* ASD logo */
 menu::before {
   content: "";
@@ -128,4 +133,27 @@ select:-webkit-autofill {
   -webkit-text-fill-color: var(--control-fg);
   transition: background-color 9999s ease-out 0s;
   box-shadow: 0 0 0px 1000px var(--control-bg) inset;
+}
+
+/* Global scrollbar styling (Firefox) */
+* {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin; /* auto | thin | none */
+}
+
+/* Global scrollbar styling (WebKit: Chrome, Edge, Safari) */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px; /* horizontal bars */
+}
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 8px;
+  border: 2px solid var(--scrollbar-track); /* adds padding illusion */
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }

@@ -1,13 +1,12 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
 import { ensurePanelOpen } from './shared/panels'
-
+import { getServices, navigate, clickFlyoutAction } from './shared/common'
 
 test.describe('Service Edit/Delete', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
-    await page.goto('/')
-    await page.waitForLoadState('domcontentloaded')
+    await navigate(page, '/')
     await ensurePanelOpen(page, 'service-panel')
   })
 
@@ -26,10 +25,7 @@ test.describe('Service Edit/Delete', () => {
     await page.click('#save-service-modal button:has-text("Save")')
     await expect(modal).toBeHidden()
 
-    const services = await page.evaluate(async () => {
-      const { StorageManager: sm } = await import('/storage/StorageManager.js');
-      return sm.getServices();
-    })
+    const services = await getServices(page);
     expect(services.some(s => s.name === 'Toolbox X' && s.url === 'http://localhost/x')).toBeTruthy()
     await expect(page.locator('[data-testid="service-panel"] .panel-item').filter({ hasText: 'Toolbox X' })).toHaveCount(1)
   })
@@ -43,15 +39,9 @@ test.describe('Service Edit/Delete', () => {
 
     page.on('dialog', d => d.accept())
 
-    // Reveal action buttons before attempting to delete
-    await terminalRow.hover()
-    await terminalRow.locator('[data-item-action="delete"]').click()
-    await page.waitForSelector('.widget-wrapper', { state: 'detached' })
+    await clickFlyoutAction(page, 'service-panel', 'ASD-terminal', 'delete')
 
-    const services = await page.evaluate(async () => {
-      const { StorageManager: sm } = await import('/storage/StorageManager.js');
-      return sm.getServices();
-    })
+    const services = await getServices(page);
     expect(services.find(s => s.name === 'ASD-terminal')).toBeUndefined()
   })
 })

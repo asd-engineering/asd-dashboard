@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     concurrency:
-      group: linting-${{ github.head_ref || github.ref }}
-      cancel-in-progress: true
+      group: ${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
+      cancel-in-progress: ${{ github.ref_name != 'main' }}
 
     strategy:
       matrix:

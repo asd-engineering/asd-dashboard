@@ -1,7 +1,7 @@
 // @ts-check
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
-import { navigate, getConfigBoards } from './shared/common'
+import { navigate, getConfigBoards, getServices } from './shared/common'
 
  test.describe('dashboard reset', () => {
   test.beforeEach(async ({ page }) => {
@@ -21,6 +21,7 @@ import { navigate, getConfigBoards } from './shared/common'
       expect(dialog.message()).toContain('keep saved states')
       dialog.accept()
     })
+    
     await Promise.all([
       page.click('#reset-button'),
       page.waitForLoadState('networkidle')
@@ -28,21 +29,18 @@ import { navigate, getConfigBoards } from './shared/common'
 
     const boards = await getConfigBoards(page)
     expect(boards.some(b => b.id === 'b2')).toBeFalsy()
-    const services = await page.evaluate(async () => {
-      const { StorageManager: sm } = await import('/storage/StorageManager.js');
-      return sm.getServices();
-    })
+    const services = await getServices(page);
     expect(services.some(s => s.name === 'svc1')).toBeFalsy()
 
     await page.click('#open-config-modal')
-    await page.click('button:has-text("Saved States")')
-    await expect(page.locator('#stateTab tbody tr')).toHaveCount(1)
+    await page.click('button:has-text("Snapshots & Share")')
+    await expect(page.locator('#stateTab tbody tr:has-text("snap")')).toHaveCount(1)
 
     page.once('dialog', dialog => {
-      expect(dialog.message()).toContain('Delete all saved states')
+      expect(dialog.message()).toContain('Delete all saved snapshots')
       dialog.accept()
     })
     await page.click('text=Delete all snapshots')
-    await expect(page.locator('#stateTab tbody tr')).toHaveCount(0)
+    await expect(page.locator('#stateTab tbody tr:has-text("snap")')).toHaveCount(0)
   })
  })

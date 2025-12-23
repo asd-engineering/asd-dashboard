@@ -1,29 +1,35 @@
-/* Controls Bar */
+/* Controls Bar (Stage A: WIDE default) */
 menu#controls {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: var(--controls-gap-row) var(--controls-gap-col);
   width: 100%;
   padding: 5px;
   background: var(--color-surface);
-  justify-content: center;
+  align-items: start;
+  align-content: start;
   margin: 0 auto;
-  align-items: center;
+  container-type: inline-size; /* enable container queries */
 }
 
 /* Group */
 .control-group {
-  flex-wrap: wrap;
-  gap: 0.3rem;
   padding: 0.3rem;
   border-radius: var(--radius-3);
   background: var(--color-soft);
   min-width: 0;
   max-width: 100%;
   word-break: break-word;
-  position: relative;
   isolation: isolate;
   z-index: 1;
+  position: relative;
+}
+
+/* Raise the whole group above neighbors when a panel is HOVERED or OPEN */
+.control-group:has(.dropdown.panel:hover),
+.control-group:has(.dropdown.panel.open) {
+  z-index: 1000;
 }
 
 /* Lift open panels */
@@ -36,6 +42,7 @@ menu#controls {
   pointer-events: auto;
   background: transparent;
 }
+
 
 /* Inputs */
 #controls select,
@@ -88,26 +95,24 @@ menu#controls {
   color: var(--color-text);
 }
 
-/* Admin control */
-menu#controls #admin-control.control-group {
-  display: flex;
-  column-gap: 0.6rem;
-  row-gap: 0.6rem;
-  overflow: hidden;
-  justify-content: start;
-  align-content: start;
-  max-height: calc(2 * var(--admin-icon-box) + 0.6rem);
+/* Logo placement (all stages) */
+menu#controls::before {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  align-self: start;
 }
 
-/* GRID buttons on small screens */
-@media (max-width: 535px) {
-  menu#controls #admin-control.control-group {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: max-content;
-    grid-template-rows: repeat(2, max-content);
-  }
+menu#controls #admin-control.control-group {
+  display: flex;
+  gap: var(--controls-gap-col);
+  margin-left: 0;
+  order: 0;
+  position: static;
+  overflow: visible;
 }
+
+/* Admin icon hitbox */
 
 #admin-control label {
   display: inline-grid;
@@ -135,17 +140,48 @@ menu#controls #admin-control.control-group {
   z-index: 10;
 }
 
-/* Responsive */
-@media (max-width: 520px) {
-  menu#controls { grid-template-columns: 1fr; }
-}
-
 #sw-toggle { display: none; }
-
 #toggle-widget-menu,
-.icon-checkbox {
-  display: inline-block;
-  cursor: pointer;
-  font-size: var(--admin-icon-size);
-  user-select: none;
+.icon-checkbox { display: inline-block; cursor: pointer; font-size: var(--admin-icon-size); user-select: none; }
+
+/* ----------------------- Small screens: switch to grid -------------------- */
+@media (max-width: 645px) {
+  menu#controls {
+    display: grid;
+    grid-template-columns: min-content 1fr min-content;  /* logo | main | admin rail */
+    /* grid-auto-rows: max-content; */
+    column-gap: var(--controls-gap-col);
+    row-gap: var(--controls-gap-row);
+    /* justify-content: initial; */
+    align-items: start;
+    align-content: start;
+  }
+
+  /* Logo pinned left */
+  menu#controls::before { grid-column: 1; grid-row: 1; align-self: start; }
+
+  menu#controls #admin-control.control-group {
+    grid-column: 3;
+    grid-row: 1 / span 3;
+    display: flex;              /* vertical rail */
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  /* Admin becomes a vertical right rail */
+  #admin-control {
+    grid-column: 3; grid-row: 1 / span 4;
+    margin-left: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+  }
+
+  /* Main controls stacked, using full middle column */
+  #board-control   { grid-column: 2; grid-row: 1; }
+  #view-control    { grid-column: 2; grid-row: 2; }
+  #service-control { grid-column: 2; grid-row: 3; }
+
+  /* Make sure form controls don't overflow the column */
+  #controls select, #controls input { max-width: 100%; }
 }
+

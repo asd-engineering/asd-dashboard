@@ -1,6 +1,7 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
 import { ensurePanelOpen } from './shared/panels'
+import { navigate } from './shared/common'
 
 
 test.describe('Widget counters', () => {
@@ -16,7 +17,7 @@ test.describe('Widget counters', () => {
       }
       apply()
     })
-    await page.goto('/')
+    await navigate(page, '/')
     await page.waitForSelector('[data-testid="service-panel"]')
   })
 

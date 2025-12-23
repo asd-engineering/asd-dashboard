@@ -47,18 +47,19 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      // grep: process.env.CI ? /.*/ : /.^/,
     },
 
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      grep: process.env.CI ? /.*/ : /.^/,
+      // grep: process.env.CI ? /.*/ : /.^/,
     },
 
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-      grep: process.env.CI ? /.*/ : /.^/,
+      // grep: process.env.CI ? /.*/ : /.^/,
     },
   ],
   /* Run local dev server before starting the tests */

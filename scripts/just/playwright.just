@@ -34,6 +34,10 @@ logs NAME BROWSER='.*':
     #!/usr/bin/env bash
     node scripts/playwright-extract-logs.js "{{NAME}}" "{{BROWSER}}"
 
+pw-ci-test COUNT="10":
+    rm -rf log.txt
+    seq {{COUNT}} | xargs -n1 -I{} just test >> log.txt
+
 # extract unique error messages with locations, group test cases per message
 pw-extract-errors ARGS="":
     #!/usr/bin/env node

@@ -57,14 +57,26 @@ export const fetchServices = async () => {
   const params = new URLSearchParams(window.location.search)
   let services = null
 
+  // Priority 1: Explicit base64 parameter (highest priority for backwards compat)
   if (params.has('services_base64')) {
     services = parseBase64(params.get('services_base64'))
   }
 
+  // Priority 2: servicesUrl from config (fragment-based URL reference)
+  if (!services) {
+    const config = StorageManager.getConfig()
+    if (config && config.servicesUrl) {
+      logger.info(`Fetching services from config.servicesUrl: ${config.servicesUrl}`)
+      services = await fetchJson(config.servicesUrl)
+    }
+  }
+
+  // Priority 3: Explicit services_url parameter (backwards compat)
   if (!services && params.has('services_url')) {
     services = await fetchJson(params.get('services_url'))
   }
 
+  // Priority 4: localStorage (previously saved services)
   if (!services) {
     const stored = StorageManager.getServices()
     if (stored.length > 0) {
@@ -72,6 +84,7 @@ export const fetchServices = async () => {
     }
   }
 
+  // Priority 5: Local services.json file (fallback)
   if (!services) {
     services = await fetchJson('services.json')
   }

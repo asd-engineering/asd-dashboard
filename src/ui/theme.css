@@ -16,6 +16,7 @@
   --color-danger: #dc3545;
   --color-success-bg: #d1e7dd;
   --color-danger-bg: #f8d7da;
+  --color-action-widget: var(--color-accent);
 
   /* Shadows */
   --shadow-1: 0 -2px 4px rgba(0,0,0,0.10);
@@ -61,6 +62,10 @@
   /* Base */
   background-color: var(--color-bg);
   color: var(--color-text);
+
+  --scrollbar-track: #f1f3f5;
+  --scrollbar-thumb: #c4c9cf;
+  --scrollbar-thumb-hover: #aab1b8;
 }
 
 /* Dark theme */
@@ -82,6 +87,7 @@
   --color-danger: #ff6b6b;
   --color-success-bg: #1e4633;
   --color-danger-bg: #5a2529;
+  --color-action-widget: greenyellow;
 
   --shadow-1: 0 -2px 4px rgba(0,0,0,0.35);
   --shadow-2: 0 6px 24px rgba(0,0,0,0.35);
@@ -89,4 +95,8 @@
 
   --toast-bg: #2962ff;
   --toast-fg: #ffffff;
+
+  --scrollbar-track: #141823;        /* matches --color-elevated */
+  --scrollbar-thumb: #2f3747;        /* subtle contrast vs track */
+  --scrollbar-thumb-hover: #3a4355;  /* slightly brighter on hover */
 }

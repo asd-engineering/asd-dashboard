@@ -1,12 +1,12 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking.js'
 import { ensurePanelOpen } from './shared/panels'
-
+import { navigate } from './shared/common'
 
 test.describe('Widget search filter', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
-    await page.goto('/')
+    await navigate(page, '/')
     await page.waitForSelector('[data-testid="service-panel"]')
   })
 
