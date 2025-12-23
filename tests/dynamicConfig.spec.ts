@@ -172,8 +172,8 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
   test("changes via modal are saved and persist", async ({ page }) => {
     await navigate(page, `/?config_base64=${b64(ciConfig)}`);
 
-    await openConfigModalSafe(page);
-    await page.locator('[data-testid="advanced-mode-toggle"]').check();
+    await openConfigModalSafe(page, 'cfgTab');
+    await page.locator('[data-testid="advanced-mode-toggle"]').check({ force: true });
     await page.locator('#config-modal').waitFor({ state: 'visible' });
 
     await page.click('button:has-text("JSON mode")');
@@ -198,10 +198,17 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
   });
 
   test("removing config from localStorage shows popup again", async ({ page }) => {
-    // FIX: This test also needs the config.json to 404.
+    // Route config.json to 404 so fallback modal appears
     await page.route('**/config.json', route => route.fulfill({ status: 404 }));
     await navigate(page, `/?config_base64=${b64(ciConfig)}`);
-    await clearStorage(page);
+    // Clear storage without navigating
+    await page.evaluate(async () => {
+      localStorage.clear();
+      await new Promise(res => {
+        const req = indexedDB.deleteDatabase('asd-db');
+        req.onsuccess = req.onerror = req.onblocked = () => res(null);
+      });
+    });
     await page.reload();
     await expect(page.locator("#config-modal")).toBeVisible();
   });
