@@ -126,7 +126,7 @@ test.describe('WidgetStore UI Tests', () => {
     await expect(page.locator('.widget-wrapper:visible')).toHaveCount(2)
 
     // Verify LRU eviction kept the newest widgets
-    const visibleIds = await page.$$eval('.widget-wrapper:visible', (els) =>
+    const visibleIds = await page.locator('.widget-wrapper:visible').evaluateAll((els) =>
       els.map((e) => e.getAttribute('data-dataid'))
     )
     // W1 should have been evicted (oldest)
@@ -137,8 +137,7 @@ test.describe('WidgetStore UI Tests', () => {
     await page.reload()
     await waitForWidgetStoreIdle(page)
 
-    const afterHydration = await page.$$eval(
-      '.widget-wrapper',
+    const afterHydration = await page.locator('.widget-wrapper').evaluateAll(
       (els) => els.length
     )
     console.log('Widget count after hydration:', afterHydration)
@@ -147,7 +146,7 @@ test.describe('WidgetStore UI Tests', () => {
     await expect(widgets).toHaveCount(2)
 
     // Verify LRU policy persisted after reload
-    const idsAfterReload = await page.$$eval('.widget-wrapper', (els) =>
+    const idsAfterReload = await page.locator('.widget-wrapper').evaluateAll((els) =>
       els.map((e) => e.getAttribute('data-dataid'))
     )
     expect(idsAfterReload).not.toContain('W1')

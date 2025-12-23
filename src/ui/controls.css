@@ -32,16 +32,6 @@ menu#controls {
   z-index: 1000;
 }
 
-/* When open, keep the group on top so siblings don't intercept events */
-.control-group:has(.dropdown.panel.open)::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1000;
-  pointer-events: auto;
-  background: transparent;
-}
-
 /* Lift open panels */
 .control-group:has(.dropdown.panel.open) { z-index: 1000; }
 .control-group:has(.dropdown.panel.open)::after {
@@ -52,6 +42,7 @@ menu#controls {
   pointer-events: auto;
   background: transparent;
 }
+
 
 /* Inputs */
 #controls select,
@@ -122,6 +113,7 @@ menu#controls #admin-control.control-group {
 }
 
 /* Admin icon hitbox */
+
 #admin-control label {
   display: inline-grid;
   place-items: center;

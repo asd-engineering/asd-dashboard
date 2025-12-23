@@ -85,3 +85,4 @@ fix-playwright-webkit-deps:
   @echo "Setting environment variable for Playwright"
   echo "PW_SKIP_VALIDATE_HOST_REQUIREMENTS=1" >> ~/.profile
   @echo "Done. Please restart your shell or run: source ~/.profile"
+
