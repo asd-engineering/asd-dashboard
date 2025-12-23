@@ -304,7 +304,10 @@ export const StorageManager = {
 
   setServices (services) {
     const config = this.getConfig()
-    const templates = config.serviceTemplates || {}
+    // Fall back to DEFAULT_CONFIG_TEMPLATE.serviceTemplates when config is empty/missing templates
+    const templates = (config.serviceTemplates && Object.keys(config.serviceTemplates).length > 0)
+      ? config.serviceTemplates
+      : DEFAULT_CONFIG_TEMPLATE.serviceTemplates
 
     const resolvedAndNormalizedServices = services.map(rawService => {
       const templateName = rawService.template || 'default'

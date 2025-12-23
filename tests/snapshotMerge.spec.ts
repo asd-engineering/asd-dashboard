@@ -19,7 +19,7 @@ test('merge snapshot unions boards and services without duplicates', async ({ pa
   await mergeSnapshotByName(page, 'export/stateB')
   
   const final = await evaluateSafe(page, async () => {
-    const { default: sm } = await import('/storage/StorageManager.js')
+    const { StorageManager: sm } = await import('/storage/StorageManager.js')
     return { boards: sm.getConfig().boards.length, services: sm.getServices().length }
   })
   expect(final.boards).toBe(2)

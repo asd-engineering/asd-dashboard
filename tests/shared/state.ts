@@ -90,7 +90,7 @@ export async function injectSnapshot(
  */
 export async function loadStateStore(page: Page): Promise<{ version: number; states: any[] }> {
   return await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js');
+    const { StorageManager: sm } = await import('/storage/StorageManager.js');
     return sm.loadStateStore();
   });
 }

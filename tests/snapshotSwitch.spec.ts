@@ -15,7 +15,7 @@ test('switch restores board and view ids with widgets', async ({ page }) => {
   await switchSnapshotByName(page, 'export/base');
 
   const result = await evaluateSafe(page, async () => {
-    const { default: sm } = await import('/storage/StorageManager.js');
+    const { StorageManager: sm } = await import('/storage/StorageManager.js');
     const cfg = sm.getConfig();
     return {
       boardId: sm.misc.getLastBoardId(),

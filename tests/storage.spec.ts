@@ -248,7 +248,7 @@ test.describe('StorageManager', () => {
       subcategory: '',
       tags: [],
       config: { minColumns: 1, maxColumns: 8, minRows: 1, maxRows: 6 },
-      maxInstances: 10
+      maxInstances: 1 // DEFAULT_CONFIG_TEMPLATE.serviceTemplates.default.maxInstances
     })
     expect(services[1]).toEqual({
       id: 'srv-fixed',
