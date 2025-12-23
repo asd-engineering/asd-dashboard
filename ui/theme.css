@@ -16,6 +16,7 @@
   --color-danger: #dc3545;
   --color-success-bg: #d1e7dd;
   --color-danger-bg: #f8d7da;
+  --color-action-widget: var(--color-accent);
 
   /* Shadows */
   --shadow-1: 0 -2px 4px rgba(0,0,0,0.10);
@@ -86,6 +87,7 @@
   --color-danger: #ff6b6b;
   --color-success-bg: #1e4633;
   --color-danger-bg: #5a2529;
+  --color-action-widget: greenyellow;
 
   --shadow-1: 0 -2px 4px rgba(0,0,0,0.35);
   --shadow-2: 0 6px 24px rgba(0,0,0,0.35);

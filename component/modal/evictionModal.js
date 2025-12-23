@@ -1,82 +1,185 @@
 // @ts-check
 /**
  * Modal dialog prompting which widget to evict when the widgetStore is full.
- *
  * @module evictionModal
  */
 import { openModal } from './modalFactory.js'
-import emojiList from '../../ui/unicodeEmoji.js'
+import { evictionMessages } from './eviction-messages.js'
+import { createEvictionViewModel } from './evictionModalViewModel.js'
+import { showNotification } from '../dialog/notification.js'
+import { Logger } from '../../utils/Logger.js'
+
+const logger = new Logger('evictionModal.js')
 
 /**
- * Display a modal to choose a widget for removal.
- *
- * @param {Map<string, HTMLElement>} widgets - Current widget map.
- * @function openEvictionModal
- * @returns {Promise<{id:string, title:string}|null>} Resolves with selected widget info or null.
+ * Open the eviction modal.
+ * @param {{
+ *  reason:string,
+ *  maxPerService:number|null,
+ *  requiredCount:number|null,
+ *  items:Array<{id:string,title:string|null,serviceName:string,icon:string,boardIndex:number,viewIndex:number,lruRank:number}>,
+ *  onEvict:(ids:string[])=>Promise<void>
+ * }} opts
+ * @returns {Promise<boolean>}
  */
-export function openEvictionModal (widgets) {
-  return new Promise((resolve) => {
+export function openEvictionModal (opts) {
+  const vm = createEvictionViewModel(opts)
+  return new Promise(resolve => {
     let settled = false
-    const finalize = (result) => {
+    const finalize = (val) => {
       if (settled) return
       settled = true
-      resolve(result)
+      resolve(val)
     }
     openModal({
       id: 'eviction-modal',
       showCloseIcon: false,
-      onCloseCallback: () => finalize(null),
+      onCloseCallback: () => finalize(false),
       buildContent: (modal, closeModal) => {
-        const msg = document.createElement('p')
-        msg.textContent = 'Select a widget to remove:'
+        const headerEl = document.createElement('h1')
+        headerEl.id = 'eviction-header'
+        headerEl.classList.add('modal__header')
+        headerEl.textContent = evictionMessages.header(vm.selectionLimit)
 
-        const select = document.createElement('select')
-        select.id = 'eviction-select'
-        for (const [id, el] of widgets.entries()) {
-          let title = id
-          if (el.dataset.metadata) {
-            try {
-              title = JSON.parse(el.dataset.metadata).title || id
-            } catch {}
-          }
-          const service = el.dataset.service || ''
-          const key = service.toLowerCase().split('asd-')[1] || service.toLowerCase()
-          const emoji = emojiList[key]?.unicode || '🧱'
+        const discEl = document.createElement('p')
+        discEl.id = 'eviction-disclaimer'
+        discEl.textContent = evictionMessages.disclaimer()
+        discEl.classList.add('small', 'muted')
 
-          let friendlyName = title
-          if (title === id && service) {
-            friendlyName = service
-          }
-          const label = `${emoji} ${friendlyName}`
+        modal.setAttribute('aria-labelledby', headerEl.id)
+        // modal.setAttribute('aria-describedby', `${subEl.id} ${discEl.id}`)
 
-          const opt = document.createElement('option')
-          opt.value = id
-          opt.textContent = label
-          select.appendChild(opt)
+        const list = document.createElement('div')
+        list.id = 'eviction-list'
+
+        /** @type {Map<string,HTMLInputElement>} */
+        const cbMap = new Map()
+        for (const item of vm.items) {
+          const label = document.createElement('label')
+          label.style.display = 'block'
+          const cb = document.createElement('input')
+          cb.type = 'checkbox'
+          cb.value = item.id
+          const text = document.createElement('span')
+          text.textContent = `${item.icon} ${vm.displayName(item)}`
+          label.append(cb, text)
+          list.appendChild(label)
+          cbMap.set(item.id, cb)
+
+          cb.addEventListener('change', () => {
+            const removed = vm.toggle(item.id)
+            if (removed) {
+              const old = cbMap.get(removed)
+              if (old) old.checked = false
+            }
+            update()
+          })
         }
 
-        const removeBtn = document.createElement('button')
-        removeBtn.textContent = 'Remove'
-        removeBtn.classList.add('modal__btn', 'modal__btn--save')
-        removeBtn.addEventListener('click', () => {
-          finalize({ id: select.value, title: select.selectedOptions[0].textContent || '' })
-          closeModal()
+        const counter = document.createElement('p')
+        counter.id = 'eviction-counter'
+
+        const autoBtn = document.createElement('button')
+        autoBtn.id = 'evict-lru-btn'
+        autoBtn.textContent = 'Auto-Remove oldest widget(s)'
+        autoBtn.classList.add('modal__btn')
+        autoBtn.disabled = vm.items.length === 0
+        autoBtn.addEventListener('click', async () => {
+          autoBtn.disabled = true
+          continueBtn.disabled = true
+          cancelBtn.disabled = true
+          const picked = vm.autoSelectLru()
+          for (const [id, cb] of cbMap) {
+            cb.checked = vm.state.selectedIds.has(id)
+            cb.disabled = true
+          }
+          update()
+          await pipeline(picked, 'lru')
+        })
+
+        const continueBtn = document.createElement('button')
+        continueBtn.textContent = 'Continue'
+        continueBtn.classList.add('modal__btn', 'modal__btn--save')
+        if (vm.items.length === 0) {
+          continueBtn.style.display = 'none'
+        } else {
+          continueBtn.disabled = true
+        }
+        continueBtn.addEventListener('click', async () => {
+          autoBtn.disabled = true
+          continueBtn.disabled = true
+          cancelBtn.disabled = true
+          for (const cb of cbMap.values()) {
+            cb.disabled = true
+          }
+          const ids = Array.from(vm.state.selectedIds)
+          await pipeline(ids, 'manual')
         })
 
         const cancelBtn = document.createElement('button')
         cancelBtn.textContent = 'Cancel'
         cancelBtn.classList.add('modal__btn', 'modal__btn--cancel')
         cancelBtn.addEventListener('click', () => {
-          finalize(null)
+          finalize(false)
           closeModal()
         })
 
         const btnGroup = document.createElement('div')
         btnGroup.classList.add('modal__btn-group')
-        btnGroup.append(removeBtn, cancelBtn)
+        btnGroup.append(continueBtn, autoBtn, cancelBtn)
 
-        modal.append(msg, select, btnGroup)
+        modal.append(headerEl, discEl, list, counter, btnGroup)
+
+        const update = () => {
+          counter.textContent = `${vm.state.selectedIds.size} of ${vm.selectionLimit} widgets selected`
+          if (vm.items.length > 0) continueBtn.disabled = !vm.state.canProceed
+          for (const cb of cbMap.values()) {
+            const disable = vm.state.canProceed && !cb.checked
+            cb.disabled = disable
+            cb.parentElement.style.opacity = disable ? '0.5' : ''
+          }
+        }
+        update()
+
+        const focusable = modal.querySelectorAll('button, input')
+        if (focusable.length) {
+          focusable[0].focus()
+          modal.addEventListener('keydown', e => {
+            if (e.key === 'Tab') {
+              const first = focusable[0]
+              const last = focusable[focusable.length - 1]
+              if (e.shiftKey && document.activeElement === first) {
+                last.focus()
+                e.preventDefault()
+              } else if (!e.shiftKey && document.activeElement === last) {
+                first.focus()
+                e.preventDefault()
+              }
+            }
+          })
+        }
+
+        /**
+         * Eviction pipeline executing removal and logging.
+         * @param {string[]} ids
+         * @param {'lru'|'manual'} via
+         * @returns {Promise<void>}
+         */
+        async function pipeline (ids, via) {
+          try {
+            await opts.onEvict(Array.from(new Set(ids)))
+            logger.log('evict', { reason: vm.reason, requiredCount: vm.requiredCount, selectedCount: ids.length, via })
+            finalize(true)
+            closeModal()
+          } catch (error) {
+            logger.error('Eviction failed:', error)
+            showNotification('Could not remove one or more widgets', 3000, 'error')
+            finalize(false)
+          }
+        }
       }
     })
   })
 }
+
+export default openEvictionModal
