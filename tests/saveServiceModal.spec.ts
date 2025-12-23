@@ -1,12 +1,12 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking.js'
 import { ensurePanelOpen, openCreateFromTopMenu } from './shared/panels'
+import { navigate } from './shared/common.js'
 
 test.describe('Save Service Modal', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
-    await page.goto('/')
-    await page.waitForLoadState('domcontentloaded')
+    await navigate(page, '/')
     await ensurePanelOpen(page, 'service-panel')
   })
 

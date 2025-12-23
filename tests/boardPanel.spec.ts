@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
-import { navigate, addServices } from './shared/common'
+import { navigate, addServices, clickFlyoutAction } from './shared/common'
 import { openCreateFromTopMenu, ensurePanelOpen } from './shared/panels'
 import { enableUITestMode } from './shared/uiHelpers';
 
@@ -47,25 +47,20 @@ test.describe('Board panel', () => {
   })
 
   test('per-item rename and delete', async ({ page }) => {
-    const panel = page.locator('[data-testid="board-panel"]')
     const initial = 'Temp Board'
     page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(initial) })
     await openCreateFromTopMenu(page, 'board-panel', 'New Board')
-    await ensurePanelOpen(page, 'board-panel')
-    const row = panel.locator('.panel-item', { hasText: initial })
-    await row.hover()
-    const renameBtn = row.locator('[data-item-action="rename"]').first()
-    await expect(renameBtn).toHaveText('✏️')
+
+    // rename
     const renamed = 'Renamed Board'
     page.once('dialog', async d => { expect(d.type()).toBe('prompt'); await d.accept(renamed) })
-    await renameBtn.click()
-    const rowRenamed = panel.locator('.panel-item', { hasText: renamed })
-    await expect(rowRenamed).toBeVisible()
-    await rowRenamed.hover()
-    const deleteBtn = rowRenamed.locator('[data-item-action="delete"]').first()
+    await clickFlyoutAction(page, 'board-panel', initial, 'rename')
+    await expect(page.locator('[data-testid="board-panel"] .panel-item', { hasText: renamed })).toBeVisible()
+
+    // delete
     page.once('dialog', async d => { expect(d.type()).toBe('confirm'); await d.accept() })
-    await deleteBtn.click()
-    await expect(panel.locator('.panel-item', { hasText: renamed })).toHaveCount(0)
+    await clickFlyoutAction(page, 'board-panel', renamed, 'delete')
+    await expect(page.locator('[data-testid="board-panel"] .panel-item', { hasText: renamed })).toHaveCount(0)
   })
 
   test('focus reveals flyout', async ({ page }) => {

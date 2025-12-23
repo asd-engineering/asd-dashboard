@@ -3,6 +3,7 @@ import { test, expect } from "./fixtures";
 import { routeServicesConfig } from "./shared/mocking.js";
 import { selectServiceByName, selectViewByLabel } from "./shared/common.js";
 import { bootWithDashboardState } from "./shared/bootState.js";
+import { waitForWidgetStoreIdle } from "./shared/state.js";
 
 // Define a deterministic initial state with a clean board and two empty views.
 const initialBoards = [
@@ -44,31 +45,27 @@ test.describe("Widget State Isolation Between Views", () => {
   test("widgets added to one view should not appear in another view after switching", async ({
     page,
   }) => {
-    // Define locators for the widgets we'll be adding.
-    const widgetToolbox = page.locator(
-      '.widget-wrapper[data-service="ASD-toolbox"]',
-    );
+    const widgetToolbox = page.locator('.widget-wrapper[data-service="ASD-toolbox"]');
 
-    // --- STEP 1: Add a widget to View A ---
+    // View A: add widget
     await selectViewByLabel(page, "View A");
     await selectServiceByName(page, "ASD-toolbox");
+    await waitForWidgetStoreIdle(page);
 
-    // VERIFY (View A): Toolbox widget is visible, and it's the only one.
     await expect(widgetToolbox).toBeVisible();
     await expect(page.locator(".widget-wrapper:visible")).toHaveCount(1);
 
-    // --- STEP 2: Switch to View B ---
+    // Switch to View B
     await selectViewByLabel(page, "View B");
+    await waitForWidgetStoreIdle(page);
 
-    // VERIFY (View B): The container is now empty. The Toolbox widget should be hidden.
     await expect(widgetToolbox).toBeHidden();
     await expect(page.locator(".widget-wrapper:visible")).toHaveCount(0);
 
-    // --- STEP 3: Switch back to View A ---
+    // Switch back to View A
     await selectViewByLabel(page, "View A");
+    await waitForWidgetStoreIdle(page);
 
-    // CRITICAL VERIFICATION:
-    // Ensure View A shows ONLY the Toolbox widget.
     await expect(widgetToolbox).toBeVisible();
     await expect(page.locator(".widget-wrapper:visible")).toHaveCount(1);
   });

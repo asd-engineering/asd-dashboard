@@ -3,7 +3,7 @@ import { ciConfig } from "./data/ciConfig";
 import { ciServices } from "./data/ciServices";
 import { gzipJsonToBase64url } from "../src/utils/compression.js";
 import { bootWithDashboardState } from "./shared/bootState.js";
-import { navigate } from "./shared/common";
+import { navigate, evaluateSafe, waitForAppReady } from "./shared/common";
 
 async function encode(obj) {
   return gzipJsonToBase64url(obj);
@@ -31,13 +31,13 @@ test.describe("Secure fragments loading configuration", () => {
 
     // This click will trigger a page reload
     await page.locator('#switch-environment').click() 
-    await page.waitForLoadState('domcontentloaded');
+    await waitForAppReady(page)
     
     // Wait for a stable element on the new page to appear.
     await page.waitForSelector('[data-testid="board-panel"]');
 
     // Now re-import StorageManager in a fresh JS context
-    const result = await page.evaluate(async () => {
+    const result = await evaluateSafe(page, async () => {
       const sm = (await import("/storage/StorageManager.js")).default;
       const snapshot = (await sm.loadStateStore()).states.find(
         (s) => s.name === "MySnapshot",

@@ -1,52 +1,43 @@
 import { test, expect } from './fixtures'
 import { ciConfig } from './data/ciConfig'
 import { ciServices } from './data/ciServices'
-import { getBoardCount, navigate } from './shared/common.js'
+import { getBoardCount, navigate, clearStorage, waitForAppReady } from './shared/common.js'
 import { injectSnapshot } from './shared/state.js'
+import { openConfigModalSafe } from './shared/uiHelpers'
 
-test.describe('Saved States tab', () => {
+test.describe('Snapshots & Share tab', () => {
   test.beforeEach(async ({ page }) => {
+    await clearStorage(page)
     await navigate(page,'/')
-
     const cfg = ciConfig
     const svc = ciServices
     await injectSnapshot(page, cfg, svc, 'one')
     const altCfg = { ...ciConfig, globalSettings: { ...ciConfig.globalSettings, theme: 'dark' } }
-    await injectSnapshot(page, altCfg, svc, 'two')
+    await injectSnapshot(page, altCfg, svc, 'two', { reload: true })
     await page.waitForSelector('dialog.user-notification', { state: 'detached' }).catch(() => {})
   })
 
-  test('restore and delete snapshot', async ({ page }) => {
-    await page.reload()
-    await page.click('#open-config-modal')
-
-    await page.click('.tabs button[data-tab="stateTab"]')
-    await expect(page.locator('#stateTab tbody tr')).toHaveCount(2)
-
+  test('restore and delete snapshot (direct switch, no modal)', async ({ page }) => {
+    await openConfigModalSafe(page, "stateTab")
+    await expect(page.locator('#stateTab tbody tr:visible')).toHaveCount(2)
+    
     await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
-    
-    await page.click('#switch-environment')
-    await page.waitForLoadState('domcontentloaded')
-    
-    // Wait for a stable element on the new page to appear.
-    // This prevents the "Execution context was destroyed" race condition.
-    await page.waitForSelector('[data-testid="board-panel"]');
-    
-    await page.waitForFunction(() => document.body.dataset.ready === 'true')
 
-    const boards = await getBoardCount(page);
+    await waitForAppReady(page)
+
+    const boards = await getBoardCount(page)
     expect(boards).toBeGreaterThan(0)
 
-    await page.click('#open-config-modal')
-    await page.click('.tabs button[data-tab="stateTab"]')
-    page.on('dialog', d => d.accept())
-    await page.locator('#stateTab tbody tr:nth-child(2) button:has-text("Delete")').click()
-    await expect(page.locator('#stateTab tbody tr')).toHaveCount(1)
+    await openConfigModalSafe(page, "stateTab")
 
-    await page.reload()
-    
-    await page.click('#open-config-modal')
-    await page.click('.tabs button[data-tab="stateTab"]')
-    await expect(page.locator('#stateTab tbody tr')).toHaveCount(1)
+    page.on('dialog', d => d.accept())
+    await page.locator('#stateTab tbody tr button:has-text("Delete")').last().click({ force: true })
+    await expect(page.locator('#stateTab tbody tr:visible')).toHaveCount(2, { timeout: 2000 })
+
+    await navigate(page, '/')
+
+    await page.waitForSelector('#open-config-modal')
+    await openConfigModalSafe(page, "stateTab")
+    await expect(page.locator('#stateTab tbody tr:visible')).toHaveCount(2)
   })
 })

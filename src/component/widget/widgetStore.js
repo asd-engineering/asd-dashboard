@@ -185,7 +185,11 @@ export class WidgetStore {
   _evict (id) {
     const el = this.widgets.get(id)
     if (el) {
-      el.remove()
+      try {
+        el.remove()
+      } catch (error) {
+        this.logger.error('Error removing widget element:', error)
+      }
       this.widgets.delete(id)
       this.logger.log('Evicted widget:', id)
     }
@@ -282,7 +286,7 @@ export class WidgetStore {
         items,
         onEvict: async (ids) => {
           // IMPORTANT: runtime-only eviction; do NOT touch StorageManager
-          for (const id of new Set(ids)) {
+          for (const id of ids) {
             await this.evictRuntimeOnly(id)
           }
           this._ensureLimit() // keep internal invariants

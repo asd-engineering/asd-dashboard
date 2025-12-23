@@ -85,9 +85,13 @@ export function openEvictionModal (opts) {
         autoBtn.classList.add('modal__btn')
         autoBtn.disabled = vm.items.length === 0
         autoBtn.addEventListener('click', async () => {
+          autoBtn.disabled = true
+          continueBtn.disabled = true
+          cancelBtn.disabled = true
           const picked = vm.autoSelectLru()
           for (const [id, cb] of cbMap) {
             cb.checked = vm.state.selectedIds.has(id)
+            cb.disabled = true
           }
           update()
           await pipeline(picked, 'lru')
@@ -102,6 +106,12 @@ export function openEvictionModal (opts) {
           continueBtn.disabled = true
         }
         continueBtn.addEventListener('click', async () => {
+          autoBtn.disabled = true
+          continueBtn.disabled = true
+          cancelBtn.disabled = true
+          for (const cb of cbMap.values()) {
+            cb.disabled = true
+          }
           const ids = Array.from(vm.state.selectedIds)
           await pipeline(ids, 'manual')
         })
@@ -161,8 +171,10 @@ export function openEvictionModal (opts) {
             logger.log('evict', { reason: vm.reason, requiredCount: vm.requiredCount, selectedCount: ids.length, via })
             finalize(true)
             closeModal()
-          } catch {
+          } catch (error) {
+            logger.error('Eviction failed:', error)
             showNotification('Could not remove one or more widgets', 3000, 'error')
+            finalize(false)
           }
         }
       }

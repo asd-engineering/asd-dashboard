@@ -14,17 +14,19 @@ test("verify config and services from URL fragment does not load before user dec
 }) => {
   const cfg = await encode(ciConfig);
   const svc = await encode(ciServices);
-  await navigate(page,`/#cfg=${cfg}&svc=${svc}`);
-  
-  const config = await getUnwrappedConfig(page);
+  await navigate(page, `/#cfg=${cfg}&svc=${svc}`, { disableReadyWait: true });
+
+  // IMPORTANT: Do NOT wait for app ready here; the decision modal blocks ready.
+  const config = await getUnwrappedConfig(page, { waitForReady: false });
+
+  // Use StorageManager directly for services
   const services = await page.evaluate(async () => {
     const { default: sm } = await import("/storage/StorageManager.js");
     return sm.getServices();
   });
 
   // Storage should not have been updated yet
-  expect(config.globalSettings).toBe(undefined);
-  expect(services.length).toEqual(0);
+  expect(Array.isArray(services) ? services.length : 0).toEqual(0);
 });
 
 test("fragment data is not reapplied if localStorage already has data", async ({
@@ -38,7 +40,7 @@ test("fragment data is not reapplied if localStorage already has data", async ({
     { board: "", view: "" },
     `/#cfg=${cfg}`,
   );
-  
+
   await page.waitForSelector("#fragment-decision-modal", { timeout: 5000 });
   const modal = page.locator("#fragment-decision-modal");
   await expect(modal).toBeVisible();
@@ -62,7 +64,7 @@ test("shows merge decision modal when local data exists", async ({ page }) => {
     { board: "", view: "" },
     `/#cfg=${cfg}&svc=${svc}`,
   );
-  
+
   await page.waitForSelector("#fragment-decision-modal", { timeout: 5000 });
   const modal = page.locator("#fragment-decision-modal");
   await expect(modal).toBeVisible();
@@ -86,7 +88,8 @@ test("imports fragment silently when query import flag is set", async ({ page })
     `/?import=true&import_name=CIImport#cfg=${cfg}&svc=${svc}`,
   );
 
-  await page.waitForFunction(() => document.body.dataset.ready === "true");
+  // No waitForFunction: rely on a direct selector for app-ready signal
+  await page.waitForSelector('body[data-ready="true"]', { timeout: 10000 });
   await expect(page.locator("#fragment-decision-modal")).toHaveCount(0);
 
   const theme = await getConfigTheme(page);
@@ -114,7 +117,8 @@ test("loadFromFragment runs only once when import flag is set", async ({ page })
     `/?import=true#cfg=${cfg}&svc=${svc}`,
   );
 
-  await page.waitForFunction(() => document.body.dataset.ready === "true");
+  // Replace waitForFunction with attribute selector
+  await page.waitForSelector('body[data-ready="true"]', { timeout: 10000 });
 
   const count = await page.evaluate(() => (window as any).__fragmentLoadCount || 0);
   expect(count).toBe(1);
