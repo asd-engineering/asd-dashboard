@@ -1,0 +1,70 @@
+# Deploy develop branch to asd-dashboard-nightly repo
+name: Deploy Nightly Build
+
+on:
+  push:
+    branches: [develop]
+  schedule:
+    # Run every night at 2:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-changes:
+    name: Check for changes
+    runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      - name: Check if deployment needed
+        id: check
+        run: |
+          # Get current src directory hash
+          CURRENT_HASH=$(find src -type f -exec sha256sum {} \; | sort | sha256sum | cut -d' ' -f1)
+          echo "Current src hash: $CURRENT_HASH"
+
+          # Try to get the last deployed hash from nightly repo
+          LAST_HASH=$(curl -sf "https://raw.githubusercontent.com/asd-engineering/asd-dashboard-nightly/main/.deploy-hash" || echo "none")
+          echo "Last deployed hash: $LAST_HASH"
+
+          if [ "$CURRENT_HASH" = "$LAST_HASH" ]; then
+            echo "No changes detected, skipping deployment"
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected, proceeding with deployment"
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+            echo "current_hash=$CURRENT_HASH" >> $GITHUB_OUTPUT
+          fi
+
+  deploy-nightly:
+    name: Deploy to nightly repo
+    needs: check-changes
+    if: needs.check-changes.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+
+      - name: Create deploy hash file
+        run: |
+          CURRENT_HASH=$(find src -type f -exec sha256sum {} \; | sort | sha256sum | cut -d' ' -f1)
+          echo "$CURRENT_HASH" > src/.deploy-hash
+
+      - name: Push to nightly repo
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.CI_TOKEN }}
+        with:
+          source-directory: 'src'
+          destination-github-username: 'asd-engineering'
+          destination-repository-name: 'asd-dashboard-nightly'
+          target-branch: main
+          commit-message: 'nightly: update from ${{ github.sha }}'
