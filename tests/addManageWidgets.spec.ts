@@ -8,7 +8,8 @@ import {
   navigate,
   handleDialog,
   dragAndDropWidgetStable,
-  reloadReady
+  reloadReady,
+  flushStorage
 } from './shared/common.js';
 import { setLocalItem } from './shared/state'
 import { waitForWidgetStoreIdle } from "./shared/state.js";
@@ -184,9 +185,11 @@ test.describe('Widgets', () => {
     await expect(firstWidget).toHaveAttribute('data-columns', '1');
     await expect(firstWidget).toHaveAttribute('data-rows', '1');
 
+    // Flush IndexedDB writes before reload
+    await flushStorage(page);
     // Reload the page
     await reloadReady(page);
-    
+
     // Verify the widget retains its size
     await expect(firstWidget).toHaveAttribute('data-columns', '1');
     await expect(firstWidget).toHaveAttribute('data-rows', '1');
@@ -205,6 +208,8 @@ test.describe('Widgets', () => {
     await expect(firstWidget).toHaveAttribute('data-columns', '3');
     await expect(firstWidget).toHaveAttribute('data-rows', '3');
 
+    // Flush IndexedDB writes before reload
+    await flushStorage(page);
     // Reload the page
     await reloadReady(page);
 

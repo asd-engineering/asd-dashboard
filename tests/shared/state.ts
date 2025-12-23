@@ -113,9 +113,15 @@ export async function switchSnapshotByName(page: Page, name: string): Promise<vo
  */
 export async function mergeSnapshotByName(page: Page, name: string): Promise<void> {
   await openConfigModalSafe(page, "stateTab")
-  
+
   const row = page.locator(`#stateTab tbody tr:has-text("${name}")`).first();
-  await row.locator('button[data-action="merge"]').click({ force: true });
+  const mergeBtn = row.locator('button[data-action="merge"]');
+
+  // Click merge and wait for the reload it triggers
+  await Promise.all([
+    page.waitForEvent('load'),
+    mergeBtn.click({ force: true })
+  ]);
 
   await waitForAppReady(page)
 }

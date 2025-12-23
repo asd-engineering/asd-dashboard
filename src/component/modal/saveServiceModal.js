@@ -147,7 +147,7 @@ export function openSaveServiceModal (options, onCloseDeprecated) {
               })
             }
 
-            document.dispatchEvent(new CustomEvent('services-updated'))
+            document.dispatchEvent(new CustomEvent('state-change', { detail: { reason: 'services' } }))
           }
         } else {
           // Create new service entry

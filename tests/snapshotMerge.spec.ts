@@ -16,11 +16,15 @@ test('merge snapshot unions boards and services without duplicates', async ({ pa
   const stateBServices = [ciServices[1], serviceDup]
 
   await injectSnapshot(page, { ...ciConfig, boards: stateBBoards }, stateBServices, 'export/stateB')
+
   await mergeSnapshotByName(page, 'export/stateB')
-  
+
   const final = await evaluateSafe(page, async () => {
     const { StorageManager: sm } = await import('/storage/StorageManager.js')
-    return { boards: sm.getConfig().boards.length, services: sm.getServices().length }
+    return {
+      boards: sm.getConfig().boards.length,
+      services: sm.getServices().length
+    }
   })
   expect(final.boards).toBe(2)
   expect(final.services).toBe(2)

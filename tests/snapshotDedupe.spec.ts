@@ -34,33 +34,34 @@ test('switch environment flow', async ({ page }) => {
     const { StorageManager: sm } = await import('/storage/StorageManager.js')
     sm.setConfig(cfg)
     sm.setServices(svc)
+    await sm.flush()
   }, { cfg: ciConfig, svc: ciServices })
+
   const snapCfg = { ...ciConfig, globalSettings: { ...ciConfig.globalSettings, theme: 'dark' } }
   await injectSnapshot(page, snapCfg, ciServices, 'snap1')
 
   await openConfigModalSafe(page, "stateTab")
 
-  await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
-  await expect(page.locator('#switch-environment')).toContainText('Switch')
-
-  await page.click('#switch-environment');
-  await page.waitForLoadState('domcontentloaded');
+  // Click switch - wait for navigation caused by the switch action
+  const snap1Row = page.locator('#stateTab tbody tr:has-text("snap1")')
+  await Promise.all([
+    page.waitForEvent('load'),
+    snap1Row.locator('button[data-action="switch"]').click()
+  ])
 
   await waitForAppReady(page)
-
   await page.waitForSelector('[data-testid="board-panel"]')
 
-  const count = await page.evaluate(async () => {
+  const result = await evaluateSafe(page, async () => {
     const { StorageManager: sm } = await import('/storage/StorageManager.js')
-    return (await sm.loadStateStore()).states.length
+    return {
+      count: (await sm.loadStateStore()).states.length,
+      theme: sm.getConfig().globalSettings.theme
+    }
   })
 
-  const theme = await page.evaluate(async () => {
-    const { StorageManager: sm } = await import('/storage/StorageManager.js')
-    return sm.getConfig().globalSettings.theme
-  })
-  expect(count).toBe(2)
-  expect(theme).toBe('dark')
+  expect(result.count).toBe(2)
+  expect(result.theme).toBe('dark')
 })
 
 test('no restore wording remains', async ({ page }) => {
@@ -70,8 +71,8 @@ test('no restore wording remains', async ({ page }) => {
   await page.evaluate(() => import('/component/modal/configModal.js').then(m => m.openConfigModal()))
   await page.waitForSelector('dialog.user-notification', { state: 'detached' }).catch(() => {})
   await page.click('.tabs button[data-tab="stateTab"]')
+  // Verify "Restore" wording is not used in the UI
   await expect(page.locator('text=Restore')).toHaveCount(0)
-  await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
-  await expect(page.locator('text=Overwrite existing data')).toHaveCount(0)
-  await page.click('#cancel-environment')
+  // Verify switch button uses "Switch" not "Restore"
+  await expect(page.locator('#stateTab tbody tr button[data-action="switch"]')).toContainText('Switch')
 })

@@ -152,6 +152,8 @@ export function openFragmentDecisionModal ({ cfgParam, svcParam, nameParam, algo
             showNotification('Failed to decode configuration from the URL fragment.', 4000, 'error')
           } finally {
             closeModal()
+            // Wait for IndexedDB writes to complete before reload
+            await StorageManager.flush()
             location.reload()
           }
         }

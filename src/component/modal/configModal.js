@@ -541,6 +541,8 @@ async function applySnapshotSwitch (row) {
     StorageManager.misc.setLastBoardId(firstBoardId)
     StorageManager.misc.setLastViewId(firstViewId)
 
+    // Wait for IndexedDB writes to complete before reload
+    await StorageManager.flush()
     window.location.reload()
   } catch (e) {
     logger.error('snapshot.switch.failed', e)
@@ -572,6 +574,8 @@ async function applySnapshotMerge (row) {
     StorageManager.misc.setLastBoardId(firstBoardId)
     StorageManager.misc.setLastViewId(firstViewId)
 
+    // Wait for IndexedDB writes to complete before reload
+    await StorageManager.flush()
     window.location.reload()
   } catch (e) {
     logger.error('snapshot.merge.failed', e)
