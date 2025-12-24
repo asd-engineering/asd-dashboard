@@ -61,7 +61,7 @@ jobs:
       - name: Push to nightly repo
         uses: cpina/github-action-push-to-another-repository@main
         env:
-          API_TOKEN_GITHUB: ${{ secrets.CI_TOKEN }}
+          API_TOKEN_GITHUB: ${{ secrets.CI_TOKEN_DEMO }}
         with:
           source-directory: 'src'
           destination-github-username: 'asd-engineering'
