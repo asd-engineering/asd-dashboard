@@ -41,25 +41,30 @@ test.describe("Dashboard Config - Base64 via URL Params", () => {
   });
 
   test("shows config modal on invalid base64", async ({ page }) => {
-    await navigate(page, "/?config_base64=%%%");
-    await expect(page.locator("#config-modal")).toBeVisible();
+    await navigate(page, "/?config_base64=%%%", { disableReadyWait: true });
+    await expect(page.locator("#config-modal")).toBeVisible({ timeout: 5000 });
   });
 
   test("shows modal if base64 decodes to invalid JSON", async ({ page }) => {
     const bad = Buffer.from("{broken}").toString("base64");
-    await navigate(page, `/?config_base64=${bad}`);
-    await expect(page.locator("#config-modal")).toBeVisible();
+    await navigate(page, `/?config_base64=${bad}`, { disableReadyWait: true });
+    await expect(page.locator("#config-modal")).toBeVisible({ timeout: 5000 });
   });
 });
 
 test.describe("Dashboard Config - Remote via URL Params", () => {
   test("loads dashboard from valid config_url and services_url", async ({ page }) => {
-    await page.route("**/remote-config.json", (route) =>
+    // Route the remote config/services files
+    // Use function matchers to avoid matching query strings
+    await page.route((url) => url.pathname === '/remote-config.json', (route) =>
       route.fulfill({ json: ciConfig })
     );
-    await page.route("**/remote-services.json", (route) =>
+    await page.route((url) => url.pathname === '/remote-services.json', (route) =>
       route.fulfill({ json: ciServices })
     );
+    // Also mock default fallbacks to avoid 404s
+    await page.route((url) => url.pathname === '/config.json', (route) => route.fulfill({ status: 404 }));
+    await page.route((url) => url.pathname === '/services.json', (route) => route.fulfill({ status: 404 }));
 
     await navigate(
       page,
@@ -78,8 +83,8 @@ test.describe("Dashboard Config - Remote via URL Params", () => {
         route.continue();
       }
     });
-    await navigate(page, "/?config_url=/missing.json");
-    await expect(page.locator("#config-modal")).toBeVisible();
+    await navigate(page, "/?config_url=/missing.json", { disableReadyWait: true });
+    await expect(page.locator("#config-modal")).toBeVisible({ timeout: 5000 });
   });
 
   test("shows modal on invalid JSON from remote url", async ({ page }) => {
@@ -91,8 +96,8 @@ test.describe("Dashboard Config - Remote via URL Params", () => {
         route.continue();
       }
     });
-    await navigate(page, "/?config_url=/bad.json");
-    await expect(page.locator("#config-modal")).toBeVisible();
+    await navigate(page, "/?config_url=/bad.json", { disableReadyWait: true });
+    await expect(page.locator("#config-modal")).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -166,7 +171,8 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
     const config = b64(ciConfig);
     await navigate(page, `/?config_base64=${config}`);
     await page.reload();
-    await expect(page.locator('[data-testid="service-panel"]')).toBeVisible();
+    await page.waitForSelector('body[data-ready="true"]', { timeout: 5000 });
+    await expect(page.locator('[data-testid="service-panel"]')).toBeVisible({ timeout: 3000 });
   });
 
   test("changes via modal are saved and persist", async ({ page }) => {
@@ -199,7 +205,7 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
 
   test("removing config from localStorage shows popup again", async ({ page }) => {
     // Route config.json to 404 so fallback modal appears
-    await page.route('**/config.json', route => route.fulfill({ status: 404 }));
+    await page.route((url) => url.pathname === '/config.json', route => route.fulfill({ status: 404 }));
     await navigate(page, `/?config_base64=${b64(ciConfig)}`);
     // Clear storage without navigating
     await page.evaluate(async () => {
@@ -210,7 +216,7 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
       });
     });
     await page.reload();
-    await expect(page.locator("#config-modal")).toBeVisible();
+    await expect(page.locator("#config-modal")).toBeVisible({ timeout: 5000 });
   });
 });
 

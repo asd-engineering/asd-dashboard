@@ -72,7 +72,7 @@ export async function selectServiceByName(page: Page, serviceName: string) {
 }
 
 export interface NavigateOptions {
-  /** Total budget for navigate (goto + readiness), in ms. Default: 4000 */
+  /** Total budget for navigate (goto + readiness), in ms. Default: 6000 */
   totalTimeoutMs?: number;
   gotoOptions?: Parameters<Page['goto']>[1];
   debugConsole?: boolean;
@@ -90,8 +90,8 @@ export async function navigate(
   destination: string,
   options?: NavigateOptions,
 ): Promise<void> {
-  const totalBudget = Math.max(1, options?.totalTimeoutMs ?? 4000);
-  const gotoBudget = Math.max(1, Math.floor(totalBudget * 0.7));
+  const totalBudget = Math.max(1, options?.totalTimeoutMs ?? 6000);
+  const gotoBudget = Math.max(1, Math.floor(totalBudget * 0.5));
   const readyBudget = Math.max(0, totalBudget - gotoBudget);
 
   const callerGotoTimeout =
@@ -128,7 +128,7 @@ export async function navigate(
   if (readyBudget === 0 || options?.disableReadyWait) return;
 
   // App readiness via selector only (no waitForFunction)
-  await page.waitForSelector('body[data-ready="true"]', { timeout: readyBudget }).catch(() => {});
+  await page.waitForSelector('body[data-ready="true"]', { timeout: readyBudget });
 }
 
 // Helper function to handle dialog interactions
@@ -165,18 +165,22 @@ export function b64(obj: any) {
  * Leaves UI in a clean state for subsequent actions.
  */
 export async function clearStorage(page: Page) {
-  // Navigate to the app first to ensure we have access to localStorage/IndexedDB
+  // Navigate to the app and wait for it to be ready
   await navigate(page, '/');
+  // Clear storage and reinitialize
   await page.evaluate(async () => {
+    // Clear all storage
     localStorage.clear();
-    await new Promise(res => {
+    sessionStorage.clear();
+    // Delete IndexedDB and wait for completion
+    await new Promise<void>(res => {
       const req = indexedDB.deleteDatabase('asd-db');
-      req.onsuccess = req.onerror = req.onblocked = () => res(null);
+      req.onsuccess = req.onerror = req.onblocked = () => res();
     });
   });
-  // Navigate to blank page then back to app to get a fresh state
-  await page.goto('about:blank');
-  await navigate(page, '/');
+  // Reload to get a fresh app state after storage was cleared
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('body[data-ready="true"]', { timeout: 5000 }).catch(() => {});
 }
 
 /**
@@ -248,7 +252,7 @@ export async function getServices(
 }
 
 export async function getConfigBoards(page: Page) {
-  return await page.evaluate(async () => {
+  return await evaluateSafe(page, async () => {
     const { StorageManager } = await import('/storage/StorageManager.js');
     return StorageManager.getBoards();
   });
@@ -491,14 +495,14 @@ export async function resizeWidgetTo(page: Page, index: number, columns: number,
   await expect(widget).toHaveAttribute('data-rows', String(rows));
 }
 
-export async function reloadReady(page: Page, totalTimeoutMs = 4000): Promise<void> {
-    const gotoBudget = Math.max(1, Math.floor(totalTimeoutMs * 0.7));
+export async function reloadReady(page: Page, totalTimeoutMs = 6000): Promise<void> {
+    const gotoBudget = Math.max(1, Math.floor(totalTimeoutMs * 0.5));
     const readyBudget = Math.max(0, totalTimeoutMs - gotoBudget);
     try {
       await page.reload({ waitUntil: 'domcontentloaded', timeout: gotoBudget });
     } catch {
       // last try with 'load' in case DOMContentLoaded didn't fire in time
-      await page.reload({ waitUntil: 'load', timeout: gotoBudget }).catch(() => {});
+      await page.reload({ waitUntil: 'load', timeout: gotoBudget });
     }
-    await page.waitForSelector('body[data-ready="true"]', { timeout: readyBudget }).catch(() => {});
+    await page.waitForSelector('body[data-ready="true"]', { timeout: readyBudget });
 }

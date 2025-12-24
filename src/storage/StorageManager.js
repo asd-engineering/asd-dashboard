@@ -213,11 +213,18 @@ async function recordMetricsAfterInit () {
 
 /**
  * Request persistent storage to reduce eviction risk.
+ * Times out after 1 second to avoid blocking initialization in browsers
+ * where this API hangs (e.g., Firefox under Playwright).
  * @returns {Promise<boolean>}
  */
 async function requestPersistence () {
   if (typeof navigator === 'undefined' || !navigator.storage || !navigator.storage.persist) return false
-  try { return await navigator.storage.persist() } catch { return false }
+  try {
+    return await Promise.race([
+      navigator.storage.persist(),
+      new Promise(resolve => setTimeout(() => resolve(false), 1000))
+    ])
+  } catch { return false }
 }
 
 // -- API ------------------------------------------------------------------

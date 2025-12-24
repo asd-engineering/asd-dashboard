@@ -86,14 +86,21 @@ test.describe('StorageManager', () => {
     expect(result.migrated).toBe(true)
   })
 
-  test('meta contains storeSizes and quota after init', async ({ page }) => {
+  test('meta contains storeSizes and quota after init', async ({ page, browserName }) => {
     const meta = await page.evaluate(async () => {
       const { StorageManager: sm } = await import('/storage/StorageManager.js')
       await sm.init({ persist: false, forceLocal: true })
-      return { storeSizes: sm.misc.getItem('storeSizes'), quota: sm.misc.getItem('quota') }
+      return {
+        storeSizes: sm.misc.getItem('storeSizes'),
+        quota: sm.misc.getItem('quota'),
+        hasEstimate: typeof navigator !== 'undefined' && !!navigator.storage?.estimate
+      }
     })
     expect(meta.storeSizes).toBeTruthy()
-    expect(meta.quota).toBeTruthy()
+    // Safari/webkit may not support navigator.storage.estimate()
+    if (meta.hasEstimate) {
+      expect(meta.quota).toBeTruthy()
+    }
   })
 
   test('setConfig stores config only', async ({ page }) => {
