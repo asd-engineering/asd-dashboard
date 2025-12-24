@@ -53,8 +53,8 @@ test('URL import stores snapshot and remains switchable', async ({ page }) => {
     page.click('#fragment-decision-modal button#switch-environment')
   ])
 
-  // Wait for app ready
-  await page.waitForFunction(() => document.body.dataset.ready === 'true')
+  // Wait for app ready (increased timeout for slower browsers)
+  await page.waitForFunction(() => document.body.dataset.ready === 'true', { timeout: 10000 })
 
   // Verify snapshot is registered as Imported
   await openConfigModalSafe(page, "stateTab")
@@ -81,8 +81,14 @@ test('URL import stores snapshot and remains switchable', async ({ page }) => {
     switchBtn.click()
   ])
 
-  // Wait for app ready after reload
-  await page.waitForFunction(() => document.body.dataset.ready === 'true')
+  // Wait for app ready after reload (increased timeout for slower browsers)
+  await page.waitForFunction(() => document.body.dataset.ready === 'true', { timeout: 10000 })
+
+  // Ensure IndexedDB writes are complete
+  await page.evaluate(async () => {
+    const sm = (await import('/storage/StorageManager.js')).StorageManager // eslint-disable-line
+    await sm.flush()
+  })
 
   const cfg = await getUnwrappedConfig(page);
   expect((cfg.boards || []).length).toBeGreaterThan(0);

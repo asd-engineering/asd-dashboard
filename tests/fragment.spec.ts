@@ -65,6 +65,8 @@ test.describe("Secure fragments loading configuration", () => {
     // Now re-import StorageManager in a fresh JS context
     const result = await evaluateSafe(page, async () => {
       const sm = (await import("/storage/StorageManager.js")).StorageManager;
+      // Ensure any pending writes are complete
+      await sm.flush();
       const store = await sm.loadStateStore();
       const snapshot = store.states.find(
         (s: any) => s.name === "MySnapshot",

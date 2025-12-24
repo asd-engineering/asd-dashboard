@@ -20,8 +20,12 @@ test.describe('Snapshots & Share tab', () => {
   test('restore and delete snapshot (direct switch, no modal)', async ({ page }) => {
     await openConfigModalSafe(page, "stateTab")
     await expect(page.locator('#stateTab tbody tr:visible')).toHaveCount(2)
-    
-    await page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
+
+    // Click switch and wait for the reload it triggers
+    await Promise.all([
+      page.waitForEvent('load'),
+      page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
+    ])
 
     await waitForAppReady(page)
 

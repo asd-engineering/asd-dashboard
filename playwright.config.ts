@@ -53,6 +53,8 @@ export default defineConfig({
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
+      // Firefox needs more time for IndexedDB operations and DecompressionStream
+      timeout: 15000,
       // grep: process.env.CI ? /.*/ : /.^/,
     },
 

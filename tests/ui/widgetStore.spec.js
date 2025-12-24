@@ -133,9 +133,18 @@ test.describe('WidgetStore UI Tests', () => {
     expect(visibleIds).not.toContain('W1')
     expect(visibleIds.length).toBe(2)
 
+    // Flush IndexedDB writes before reload (absolute path is browser-side import)
+    await page.evaluate(async () => {
+      const sm = await import('/storage/StorageManager.js') // eslint-disable-line
+      await sm.StorageManager.flush()
+    })
+
     // Reload must preserve the invariant
     await page.reload()
     await waitForWidgetStoreIdle(page)
+
+    // Wait for widgets to render (Firefox needs more time after reload)
+    await page.waitForSelector('.widget-wrapper', { timeout: 5000 }).catch(() => {})
 
     const afterHydration = await page.locator('.widget-wrapper').evaluateAll(
       (els) => els.length
@@ -143,7 +152,7 @@ test.describe('WidgetStore UI Tests', () => {
     console.log('Widget count after hydration:', afterHydration)
 
     const widgets = page.locator('.widget-wrapper')
-    await expect(widgets).toHaveCount(2)
+    await expect(widgets).toHaveCount(2, { timeout: 5000 })
 
     // Verify LRU policy persisted after reload
     const idsAfterReload = await page.locator('.widget-wrapper').evaluateAll((els) =>

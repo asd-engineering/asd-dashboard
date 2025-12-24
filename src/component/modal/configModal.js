@@ -16,10 +16,9 @@ import { DEFAULT_TEMPLATES, DEFAULT_PLACEHOLDERS } from '../utils/json-form-defa
 import { isAdvancedMode, setAdvancedMode } from '../../state/uiState.js'
 import { applyTheme, THEME } from '../../ui/theme.js'
 import { autosaveIfPresent } from '../../storage/snapshots.js'
-import { decodeConfig } from '../../utils/compression.js'
+import { decodeConfig, base64UrlDecode } from '../../utils/compression.js'
 import { KEY_MAP } from '../../utils/fragmentKeyMap.js'
 import { mergeBoards, mergeServices } from '../../utils/merge.js'
-import { FRAG_DEFAULT_ALGO } from '../../utils/fragmentConstants.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 
 /** @typedef {import('../../types.js').DashboardConfig} DashboardConfig */
@@ -584,16 +583,36 @@ async function applySnapshotMerge (row) {
 }
 
 /**
+ * Detect compression algorithm from magic bytes.
+ * Gzip starts with 0x1f 0x8b, deflate doesn't have a fixed header.
+ * @param {string} str Base64url encoded string.
+ * @returns {'gzip'|'deflate'}
+ */
+function detectAlgo (str) {
+  try {
+    const bytes = base64UrlDecode(str)
+    if (bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b) {
+      return 'gzip'
+    }
+  } catch {}
+  return 'deflate'
+}
+
+/**
  * Decode an encoded snapshot string using supported algorithms.
+ * Detects algorithm from magic bytes to avoid unnecessary failed attempts.
  * @param {string} str
  * @returns {Promise<any>}
  */
 async function decodeSnapshot (str) {
+  const detected = detectAlgo(str)
+  const fallback = detected === 'gzip' ? 'deflate' : 'gzip'
+
   try {
-    return await decodeConfig(str, { algo: FRAG_DEFAULT_ALGO, keyMap: KEY_MAP, expectChecksum: null })
+    return await decodeConfig(str, { algo: detected, keyMap: KEY_MAP, expectChecksum: null })
   } catch {
     try {
-      return await decodeConfig(str, { algo: 'gzip', keyMap: KEY_MAP, expectChecksum: null })
+      return await decodeConfig(str, { algo: fallback, keyMap: KEY_MAP, expectChecksum: null })
     } catch {
       return null
     }

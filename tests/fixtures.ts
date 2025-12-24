@@ -3,6 +3,25 @@ import { test as base, expect, type Page } from '@playwright/test';
 export const test = base.extend<{ page: Page }>({
   page: async ({ page }, use) => {
     await page.addInitScript(() => { (window as any).__disableDebounce__ = true; });
+
+    // Stub widget iframe URLs to prevent 404 errors and reduce test noise
+    await page.route(/\/asd\/(toolbox|terminal|tunnel|containers)/, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<!DOCTYPE html><html><head><title>Widget Stub</title></head><body>Widget</body></html>'
+      });
+    });
+
+    // Stub manifest.json to prevent 404 errors
+    await page.route('**/manifest.json', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ name: 'ASD Dashboard', short_name: 'ASD' })
+      });
+    });
+
     await use(page);
   },
 });
