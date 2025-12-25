@@ -59,12 +59,11 @@ jobs:
           echo "$CURRENT_HASH" > src/.deploy-hash
 
       - name: Push to nightly repo
-        uses: cpina/github-action-push-to-another-repository@main
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.CIFAIL_LATEST }}
-        with:
-          source-directory: 'src'
-          destination-github-username: 'asd-engineering'
-          destination-repository-name: 'asd-dashboard-nightly'
-          target-branch: main
-          commit-message: 'nightly: update from ${{ github.sha }}'
+        run: |
+          cd src
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "nightly: update from ${{ github.sha }}"
+          git push --force https://x-access-token:${{ secrets.CI_TOKEN }}@github.com/asd-engineering/asd-dashboard-nightly.git HEAD:main
