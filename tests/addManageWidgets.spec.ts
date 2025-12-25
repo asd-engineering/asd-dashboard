@@ -168,20 +168,25 @@ test.describe('Widgets', () => {
 
     const widgets = page.locator('.widget-wrapper');
     const firstWidget = widgets.nth(0);
+    const resizeIcon = firstWidget.locator('.widget-icon-resize');
+
+    // Helper to click resize button - keeps hover active until click completes
+    async function clickResizeButton(arrow: string) {
+      await resizeIcon.hover();
+      const btn = page.locator(`text=${arrow}`);
+      await btn.hover();
+      await btn.click();
+    }
 
     // Resize 2/2
-    await firstWidget.locator('.widget-icon-resize').hover();
-    await page.click('text=⬇');
-    await firstWidget.locator('.widget-icon-resize').hover();
-    await page.click('text=➡');
+    await clickResizeButton('⬇');
+    await clickResizeButton('➡');
     await expect(firstWidget).toHaveAttribute('data-columns', '2');
     await expect(firstWidget).toHaveAttribute('data-rows', '2');
 
     // Resize 1/1
-    await firstWidget.locator('.widget-icon-resize').hover();
-    await page.click('text=⬆');
-    await firstWidget.locator('.widget-icon-resize').hover();
-    await page.click('text=⬅');
+    await clickResizeButton('⬆');
+    await clickResizeButton('⬅');
     await expect(firstWidget).toHaveAttribute('data-columns', '1');
     await expect(firstWidget).toHaveAttribute('data-rows', '1');
 
