@@ -141,8 +141,11 @@ export async function evictIfModalPresent(
   page: Page,
   opts: { appearTimeoutMs?: number; hideTimeoutMs?: number } = {},
 ): Promise<void> {
-  const appearTimeoutMs = opts.appearTimeoutMs ?? 900;
-  const hideTimeoutMs = opts.hideTimeoutMs ?? 2000;
+  // CI runners are slower, give more time for modal to appear
+  const defaultAppear = process.env.CI ? 1500 : 900;
+  const defaultHide = process.env.CI ? 3000 : 2000;
+  const appearTimeoutMs = opts.appearTimeoutMs ?? defaultAppear;
+  const hideTimeoutMs = opts.hideTimeoutMs ?? defaultHide;
 
   const modal = page.locator('#eviction-modal');
 

@@ -68,7 +68,9 @@ export async function addServices(page: Page, count: number) {
 
 export async function selectServiceByName(page: Page, serviceName: string) {
   await ensurePanelOpen(page, 'service-panel')
-  await page.click(`[data-testid="service-panel"] .panel-item:has-text("${serviceName}")`);
+  const item = page.locator(`[data-testid="service-panel"] .panel-item:has-text("${serviceName}")`)
+  await item.scrollIntoViewIfNeeded()
+  await item.click()
 }
 
 export interface NavigateOptions {
