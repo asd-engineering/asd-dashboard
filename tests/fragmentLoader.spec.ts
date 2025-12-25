@@ -21,7 +21,7 @@ test("verify config and services from URL fragment does not load before user dec
 
   // Use StorageManager directly for services
   const services = await page.evaluate(async () => {
-    const { default: sm } = await import("/storage/StorageManager.js");
+    const { StorageManager: sm } = await import("/storage/StorageManager.js");
     return sm.getServices();
   });
 
@@ -39,6 +39,7 @@ test("fragment data is not reapplied if localStorage already has data", async ({
     [],
     { board: "", view: "" },
     `/#cfg=${cfg}`,
+    { waitForReady: false }
   );
 
   await page.waitForSelector("#fragment-decision-modal", { timeout: 5000 });
@@ -63,6 +64,7 @@ test("shows merge decision modal when local data exists", async ({ page }) => {
     [{ name: "Old", url: "http://localhost/old" }],
     { board: "", view: "" },
     `/#cfg=${cfg}&svc=${svc}`,
+    { waitForReady: false }
   );
 
   await page.waitForSelector("#fragment-decision-modal", { timeout: 5000 });
@@ -96,7 +98,7 @@ test("imports fragment silently when query import flag is set", async ({ page })
   expect(theme).toBe("light");
 
   const snapshots = await page.evaluate(async () => {
-    const { default: sm } = await import("/storage/StorageManager.js");
+    const { StorageManager: sm } = await import("/storage/StorageManager.js");
     const store = await sm.loadStateStore();
     return store.states.map(s => ({ name: s.name, type: s.type }));
   });

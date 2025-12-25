@@ -4,7 +4,7 @@
  * @module BoardControl
  */
 import { SelectorPanel } from '../panel/SelectorPanel.js'
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 import { createBoard, renameBoard, deleteBoard, switchBoard, resetBoard, updateBoardSelector } from './boardManagement.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 

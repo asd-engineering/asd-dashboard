@@ -21,7 +21,7 @@ import { showNotification } from '../dialog/notification.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 import { Logger } from '../../utils/Logger.js'
 import { clearConfigFragment } from '../../utils/fragmentGuard.js'
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 import { debounceLeading } from '../../utils/utils.js'
 
 const logger = new Logger('dashboardMenu.js')
@@ -72,14 +72,14 @@ function initializeDashboardMenu () {
   }
 
   // Reset environment
-  const handleReset = debounceLeading(() => {
+  const handleReset = debounceLeading(async () => {
     // eslint-disable-next-line no-alert
 
     // Show confirmation dialog
     const confirmed = confirm('Reset dashboard (boards, views, services) but keep saved states?')
 
     if (confirmed) {
-      StorageManager.clearAllExceptState()
+      await StorageManager.clearAllExceptState()
       clearConfigFragment()
       location.reload()
     }

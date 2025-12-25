@@ -7,7 +7,7 @@
 
 import { loadFromFragment } from '../utils/fragmentLoader.js'
 import { clearConfigFragment } from '../utils/fragmentGuard.js'
-import StorageManager from '../storage/StorageManager.js'
+import { StorageManager } from '../storage/StorageManager.js'
 import { autosaveIfPresent, saveImportedSnapshot } from '../storage/snapshots.js'
 import { getImportFlags, removeImportFlagsFromUrl } from '../utils/url.js'
 import { Logger } from '../utils/Logger.js'

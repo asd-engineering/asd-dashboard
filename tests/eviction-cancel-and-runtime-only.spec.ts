@@ -67,7 +67,7 @@ test.describe('Eviction cancel & runtime-only behavior', () => {
 
     // Snapshot storage before
     const before = await page.evaluate(async () => {
-      const StorageManager = (await import('/storage/StorageManager.js')).default;
+      const { StorageManager } = await import('/storage/StorageManager.js');
       return StorageManager.getBoards();
     });
 
@@ -88,7 +88,7 @@ test.describe('Eviction cancel & runtime-only behavior', () => {
 
     // Storage must be unchanged
     const after = await page.evaluate(async () => {
-      const StorageManager = (await import('/storage/StorageManager.js')).default;
+      const { StorageManager } = await import('/storage/StorageManager.js');
       return StorageManager.getBoards();
     });
     expect(after).toEqual(before);
@@ -154,7 +154,7 @@ test.describe('Eviction cancel & runtime-only behavior', () => {
 
     // BUT storage definitions for both views must remain as originally configured
     const stored = await page.evaluate(async () => {
-      const StorageManager = (await import('/storage/StorageManager.js')).default;
+      const { StorageManager } = await import('/storage/StorageManager.js');
       return StorageManager.getBoards();
     });
     expect(stored[0].views.find(v => v.id === 'v1')!.widgetState.map(w => w.dataid).sort()).toEqual(['W1','W2','W3'].sort());

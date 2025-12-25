@@ -7,7 +7,7 @@
 import { showNotification } from '../dialog/notification.js'
 import { encodeConfig } from '../../utils/compression.js'
 import { Logger } from '../../utils/Logger.js'
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 import { minimizeDeep } from '../../utils/minimizer.js'
 import { splitIntoParams, formatChunksManifest } from '../../utils/chunker.js'

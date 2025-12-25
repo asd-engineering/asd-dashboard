@@ -46,7 +46,7 @@ export const test = base.extend<{
         const entry = { type: msg.type(), text: msg.text() };
         logs.push(entry);
         // 👇 Real-time terminal print
-        // console.log(`[console:${entry.type}] ${entry.text}`);
+        console.log(`[console:${entry.type}] ${entry.text}`);
       });
       await use(logs);
       if (logs.length) {

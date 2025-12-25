@@ -1,5 +1,5 @@
 // @ts-check
-import StorageManager from '../storage/StorageManager.js'
+import { StorageManager } from '../storage/StorageManager.js'
 /**
  * A simple browser console logger with runtime enable/disable support.
  * @class Logger

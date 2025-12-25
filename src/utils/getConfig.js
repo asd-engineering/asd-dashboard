@@ -8,7 +8,7 @@ import { Logger } from './Logger.js'
 import { showNotification } from '../component/dialog/notification.js'
 import { openConfigModal } from '../component/modal/configModal.js'
 import { DEFAULT_CONFIG_TEMPLATE } from '../storage/defaultConfig.js'
-import StorageManager from '../storage/StorageManager.js'
+import { StorageManager } from '../storage/StorageManager.js'
 import { deepEqual } from '../utils/objectUtils.js'
 
 const logger = new Logger('getConfig.js')
@@ -97,8 +97,14 @@ async function loadFromSources () {
   // 3. Get stored config
   const stored = StorageManager.getConfig()
 
-  // Check if config is missing or is effectively just the default template
-  const isEmpty = !stored || deepEqual(stored, DEFAULT_CONFIG_TEMPLATE)
+  // Check if config is missing, empty, or is effectively just the default template
+  // Note: warmCache adds `boards` key to cached config, so we need to check for meaningful content
+  // A valid user config should have globalSettings with some values
+  const hasNoMeaningfulConfig = !stored ||
+    !stored.globalSettings ||
+    Object.keys(stored.globalSettings).length === 0
+
+  const isEmpty = hasNoMeaningfulConfig || deepEqual(stored, DEFAULT_CONFIG_TEMPLATE)
 
   if (isEmpty) {
     const cfgJ = await fetchJson('config.json')

@@ -11,7 +11,7 @@ import { navigate, getConfigBoards, getServices } from './shared/common'
 
   test('preserves snapshots and allows wiping state store', async ({ page }) => {
     await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js')
+      const { StorageManager: sm } = await import('/storage/StorageManager.js')
       sm.setConfig({ boards: [{ id: 'b1', name: 'B1', views: [] }, { id: 'b2', name: 'B2', views: [] }] })
       sm.setServices([{ name: 'svc1', url: '' }] as any)
       await sm.saveStateSnapshot({ name: 'snap', type: 'manual', cfg: 'a', svc: 'b' })

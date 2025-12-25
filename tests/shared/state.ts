@@ -42,7 +42,7 @@ export async function setLocalItem(
 ): Promise<void> {
   await page.evaluate(
     async ({ key, value }) => {
-      const { default: sm } = await import("/storage/StorageManager.js");
+      const { StorageManager: sm } = await import("/storage/StorageManager.js");
       sm.misc.setItem(key, value);
     },
     { key, value },
@@ -67,7 +67,7 @@ export async function injectSnapshot(
 ): Promise<void> {
   await evaluateSafe(page,
     async ({ cfg, svc, name }) => {
-      const { default: sm } = await import("/storage/StorageManager.js");
+      const { StorageManager: sm } = await import("/storage/StorageManager.js");
       const { gzipJsonToBase64url } = await import("/utils/compression.js");
       const encodedCfg = await gzipJsonToBase64url(cfg);
       const encodedSvc = await gzipJsonToBase64url(svc);
@@ -90,7 +90,7 @@ export async function injectSnapshot(
  */
 export async function loadStateStore(page: Page): Promise<{ version: number; states: any[] }> {
   return await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js');
+    const { StorageManager: sm } = await import('/storage/StorageManager.js');
     return sm.loadStateStore();
   });
 }
@@ -103,7 +103,13 @@ export async function switchSnapshotByName(page: Page, name: string): Promise<vo
   await openConfigModalSafe(page, "stateTab")
 
   const row = page.locator(`#stateTab tbody tr:has-text("${name}")`).first();
-  await row.locator('button[data-action="switch"]').click();
+  const switchBtn = row.locator('button[data-action="switch"]');
+
+  // Click switch and wait for the reload it triggers
+  await Promise.all([
+    page.waitForEvent('load'),
+    switchBtn.click()
+  ]);
 
   await waitForAppReady(page)
 }
@@ -113,9 +119,15 @@ export async function switchSnapshotByName(page: Page, name: string): Promise<vo
  */
 export async function mergeSnapshotByName(page: Page, name: string): Promise<void> {
   await openConfigModalSafe(page, "stateTab")
-  
+
   const row = page.locator(`#stateTab tbody tr:has-text("${name}")`).first();
-  await row.locator('button[data-action="merge"]').click({ force: true });
+  const mergeBtn = row.locator('button[data-action="merge"]');
+
+  // Click merge and wait for the reload it triggers
+  await Promise.all([
+    page.waitForEvent('load'),
+    mergeBtn.click({ force: true })
+  ]);
 
   await waitForAppReady(page)
 }
@@ -129,8 +141,11 @@ export async function evictIfModalPresent(
   page: Page,
   opts: { appearTimeoutMs?: number; hideTimeoutMs?: number } = {},
 ): Promise<void> {
-  const appearTimeoutMs = opts.appearTimeoutMs ?? 900;
-  const hideTimeoutMs = opts.hideTimeoutMs ?? 2000;
+  // CI runners are slower, give more time for modal to appear
+  const defaultAppear = process.env.CI ? 1500 : 900;
+  const defaultHide = process.env.CI ? 3000 : 2000;
+  const appearTimeoutMs = opts.appearTimeoutMs ?? defaultAppear;
+  const hideTimeoutMs = opts.hideTimeoutMs ?? defaultHide;
 
   const modal = page.locator('#eviction-modal');
 
@@ -138,7 +153,9 @@ export async function evictIfModalPresent(
   await modal.waitFor({ state: 'visible', timeout: appearTimeoutMs }).catch(() => {});
 
   if (await modal.isVisible().catch(() => false)) {
-    await modal.locator('button:has-text("Remove")').click({ trial: false }).catch(() => {});
+    // Click "Auto-Remove" button with force:true for Firefox CI compatibility
+    const autoRemoveBtn = modal.locator('button:has-text("Auto-Remove")');
+    await autoRemoveBtn.click({ force: true, timeout: 2000 }).catch(() => {});
   }
 
   // Always wait for the store to settle; modal may have auto-evicted.

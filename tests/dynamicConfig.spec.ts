@@ -14,9 +14,8 @@ import { ensurePanelOpen } from './shared/panels'
 import { decodeConfig } from "../src/utils/compression.js";
 import { restoreDeep } from "../src/utils/minimizer.js";
 import { DEFAULT_CONFIG_TEMPLATE } from "../src/storage/defaultConfig.js";
-import { bootWithDashboardState } from "./shared/bootState.js";
-import { enableUITestMode } from './shared/uiHelpers';
-import { ensureNoBlockingDialogs, waitForNotificationsToClear } from './shared/uiHelpers'
+import { bootWithDashboardState, bootWithEmptyState } from "./shared/bootState.js";
+import { enableUITestMode, openConfigModalSafe, ensureNoBlockingDialogs, waitForNotificationsToClear } from './shared/uiHelpers';
 
 
 test.describe("Dashboard Config - Base64 via URL Params", () => {
@@ -42,25 +41,30 @@ test.describe("Dashboard Config - Base64 via URL Params", () => {
   });
 
   test("shows config modal on invalid base64", async ({ page }) => {
-    await navigate(page, "/?config_base64=%%%");
-    await expect(page.locator("#config-modal")).toBeVisible();
+    await navigate(page, "/?config_base64=%%%", { disableReadyWait: true });
+    await expect(page.locator("#config-modal")).toBeVisible({ timeout: 5000 });
   });
 
   test("shows modal if base64 decodes to invalid JSON", async ({ page }) => {
     const bad = Buffer.from("{broken}").toString("base64");
-    await navigate(page, `/?config_base64=${bad}`);
-    await expect(page.locator("#config-modal")).toBeVisible();
+    await navigate(page, `/?config_base64=${bad}`, { disableReadyWait: true });
+    await expect(page.locator("#config-modal")).toBeVisible({ timeout: 5000 });
   });
 });
 
 test.describe("Dashboard Config - Remote via URL Params", () => {
   test("loads dashboard from valid config_url and services_url", async ({ page }) => {
-    await page.route("**/remote-config.json", (route) =>
+    // Route the remote config/services files
+    // Use function matchers to avoid matching query strings
+    await page.route((url) => url.pathname === '/remote-config.json', (route) =>
       route.fulfill({ json: ciConfig })
     );
-    await page.route("**/remote-services.json", (route) =>
+    await page.route((url) => url.pathname === '/remote-services.json', (route) =>
       route.fulfill({ json: ciServices })
     );
+    // Also mock default fallbacks to avoid 404s
+    await page.route((url) => url.pathname === '/config.json', (route) => route.fulfill({ status: 404 }));
+    await page.route((url) => url.pathname === '/services.json', (route) => route.fulfill({ status: 404 }));
 
     await navigate(
       page,
@@ -79,8 +83,8 @@ test.describe("Dashboard Config - Remote via URL Params", () => {
         route.continue();
       }
     });
-    await navigate(page, "/?config_url=/missing.json");
-    await expect(page.locator("#config-modal")).toBeVisible();
+    await navigate(page, "/?config_url=/missing.json", { disableReadyWait: true });
+    await expect(page.locator("#config-modal")).toBeVisible({ timeout: 5000 });
   });
 
   test("shows modal on invalid JSON from remote url", async ({ page }) => {
@@ -92,14 +96,18 @@ test.describe("Dashboard Config - Remote via URL Params", () => {
         route.continue();
       }
     });
-    await navigate(page, "/?config_url=/bad.json");
-    await expect(page.locator("#config-modal")).toBeVisible();
+    await navigate(page, "/?config_url=/bad.json", { disableReadyWait: true });
+    await expect(page.locator("#config-modal")).toBeVisible({ timeout: 5000 });
   });
 });
 
 test.describe("Dashboard Config - Fallback Config Popup", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/config.json', r => r.fulfill({ status: 404 }));
+  });
+
   test("popup appears when no config available via url, storage, or local file", async ({ page }) => {
-    await bootWithDashboardState(page, {}, [], { board: "", view: "" });
+    await bootWithEmptyState(page, "/");
     await expect(page.locator("#config-modal")).toBeVisible();
   });
 
@@ -111,10 +119,7 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
   test("export button copies encoded URL", async ({ page }) => {
     await bootWithDashboardState(page, ciConfig, ciServices, { board: "", view: "" });
 
-    await page.evaluate(() =>
-      import("/component/modal/configModal.js").then((m) => m.openConfigModal())
-    );
-    await page.waitForSelector("#config-modal .modal__btn--export");
+    await openConfigModalSafe(page);
 
     await page.evaluate(() => {
       (window as any).__copied = "";
@@ -143,11 +148,7 @@ test.describe("Dashboard Config - Fallback Config Popup", () => {
 
   test("valid input in popup initializes dashboard", async ({ page }) => {
     await bootWithDashboardState(page, {}, [], { board: "", view: "" });
-
-    await page.click("#config-modal .modal__btn--cancel");
-    await page.evaluate(() =>
-      import("/component/modal/configModal.js").then((m) => m.openConfigModal())
-    );
+    await openConfigModalSafe(page);
 
     await page.locator('button[data-tab="cfgTab"]').click();
 
@@ -170,54 +171,30 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
     const config = b64(ciConfig);
     await navigate(page, `/?config_base64=${config}`);
     await page.reload();
-    await expect(page.locator('[data-testid="service-panel"]')).toBeVisible();
-
-    await enableUITestMode(page);
+    await page.waitForSelector('body[data-ready="true"]', { timeout: 5000 });
+    await expect(page.locator('[data-testid="service-panel"]')).toBeVisible({ timeout: 3000 });
   });
 
   test("changes via modal are saved and persist", async ({ page }) => {
     await navigate(page, `/?config_base64=${b64(ciConfig)}`);
 
-    // Open and verify modal is visible
-    await page.click("#open-config-modal");
-    await page.locator('button[data-tab="cfgTab"]').click();
-    
-    await page.locator('[data-testid="advanced-mode-toggle"]').click();
+    await openConfigModalSafe(page, 'cfgTab');
+    await page.locator('[data-testid="advanced-mode-toggle"]').check({ force: true });
     await page.locator('#config-modal').waitFor({ state: 'visible' });
-    await expect(page.locator("#config-modal")).toBeVisible();
 
     await page.click('button:has-text("JSON mode")');
     await page.fill("#config-json", JSON.stringify({ ...ciConfig, boards: [] }));
 
-    // Clear any transient notifications *without* sending Escape
-    // await ensureNoBlockingDialogs(page);
-
-    // Ensure the modal is still open (Escape on CI used to close it)
-    if (!(await page.locator("#config-modal").isVisible())) {
-      await page.evaluate(() =>
-        import("/component/modal/configModal.js").then((m) => m.openConfigModal())
-      );
-      await expect(page.locator("#config-modal")).toBeVisible();
-    }
-
-    await page.locator('button[data-tab="cfgTab"]').click();
-
-    // Prefer a modal-scoped Services tab locator
     const svcTab = page.locator('#config-modal button[data-tab="svcTab"]');
-    await svcTab.waitFor({ state: "visible" });
-    // await dismissAllNotifications(page); // guard against last-second toast
     await svcTab.click();
 
     await page.click('button:has-text("JSON mode")');
     await page.fill('#config-services', JSON.stringify([{ name: "svc1", url: "http://svc1" }]));
 
-    // await dismissAllNotifications(page);
-
     const saveBtn = page.locator("#config-modal .modal__btn--save");
-    await saveBtn.waitFor({ state: "visible" });
     await saveBtn.click();
-
-    await page.reload();
+    
+    await page.waitForLoadState('domcontentloaded');
 
     const stored = await getUnwrappedConfig(page);
     expect(Array.isArray(stored.boards)).toBeTruthy();
@@ -227,10 +204,19 @@ test.describe("Dashboard Config - LocalStorage Behavior", () => {
   });
 
   test("removing config from localStorage shows popup again", async ({ page }) => {
+    // Route config.json to 404 so fallback modal appears
+    await page.route((url) => url.pathname === '/config.json', route => route.fulfill({ status: 404 }));
     await navigate(page, `/?config_base64=${b64(ciConfig)}`);
-    await clearStorage(page);
+    // Clear storage without navigating
+    await page.evaluate(async () => {
+      localStorage.clear();
+      await new Promise(res => {
+        const req = indexedDB.deleteDatabase('asd-db');
+        req.onsuccess = req.onerror = req.onblocked = () => res(null);
+      });
+    });
     await page.reload();
-    await expect(page.locator("#config-modal")).toBeVisible();
+    await expect(page.locator("#config-modal")).toBeVisible({ timeout: 5000 });
   });
 });
 

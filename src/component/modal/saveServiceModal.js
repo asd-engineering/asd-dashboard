@@ -6,7 +6,7 @@
  * @module saveServiceModal
  */
 import { openModal } from './modalFactory.js'
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 import { addWidget } from '../widget/widgetManagement.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { serviceGetUUID } from '../../utils/id.js'
@@ -147,7 +147,7 @@ export function openSaveServiceModal (options, onCloseDeprecated) {
               })
             }
 
-            document.dispatchEvent(new CustomEvent('services-updated'))
+            document.dispatchEvent(new CustomEvent('state-change', { detail: { reason: 'services' } }))
           }
         } else {
           // Create new service entry

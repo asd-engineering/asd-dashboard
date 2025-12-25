@@ -10,7 +10,7 @@ import { decodeConfig } from '../../utils/compression.js'
 import { mergeBoards, mergeServices } from '../../utils/merge.js'
 import { Logger } from '../../utils/Logger.js'
 import { showNotification } from '../dialog/notification.js'
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 import { restoreDeep } from '../../utils/minimizer.js'
 import { DEFAULT_CONFIG_TEMPLATE } from '../../storage/defaultConfig.js'
 import { FRAG_MINIMIZE_ENABLED } from '../../utils/fragmentConstants.js'
@@ -152,6 +152,8 @@ export function openFragmentDecisionModal ({ cfgParam, svcParam, nameParam, algo
             showNotification('Failed to decode configuration from the URL fragment.', 4000, 'error')
           } finally {
             closeModal()
+            // Wait for IndexedDB writes to complete before reload
+            await StorageManager.flush()
             location.reload()
           }
         }
