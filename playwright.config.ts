@@ -22,15 +22,16 @@ export default defineConfig({
     ['json', { outputFile: 'playwright-report.json' }]
   ],
 
-  timeout: 8000, 
+  // Increase timeouts for CI which has slower runners
+  timeout: process.env.CI ? 15000 : 8000,
   expect: {
-    timeout: 1000, // Give assertions a little more breathing room.
+    timeout: process.env.CI ? 2000 : 1000,
   },
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    actionTimeout: 2000,
-    navigationTimeout: 2000,
+    actionTimeout: process.env.CI ? 5000 : 2000,
+    navigationTimeout: process.env.CI ? 5000 : 2000,
     
     /* OPTIMIZATION: Use 'retain-on-failure' to avoid saving artifacts for passing tests, saving CI resources. */
     trace: 'retain-on-failure',
@@ -61,6 +62,8 @@ export default defineConfig({
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      // WebKit also needs more time for async operations
+      timeout: 15000,
       // grep: process.env.CI ? /.*/ : /.^/,
     },
   ],

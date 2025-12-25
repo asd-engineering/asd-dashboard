@@ -22,6 +22,15 @@ export const test = base.extend<{ page: Page }>({
       });
     });
 
+    // Stub config.json to prevent 404 errors (app checks for external config)
+    await page.route('**/config.json', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({})
+      });
+    });
+
     await use(page);
   },
 });
