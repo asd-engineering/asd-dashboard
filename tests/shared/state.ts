@@ -153,17 +153,9 @@ export async function evictIfModalPresent(
   await modal.waitFor({ state: 'visible', timeout: appearTimeoutMs }).catch(() => {});
 
   if (await modal.isVisible().catch(() => false)) {
-    // Try "Auto-Remove" button first (LRU eviction), fallback to any "Remove" button
+    // Click "Auto-Remove" button with force:true for Firefox CI compatibility
     const autoRemoveBtn = modal.locator('button:has-text("Auto-Remove")');
-    if (await autoRemoveBtn.count() > 0) {
-      await autoRemoveBtn.waitFor({ state: 'visible', timeout: 1000 }).catch(() => {});
-      await autoRemoveBtn.click().catch(() => {});
-    } else {
-      const removeBtn = modal.locator('button:has-text("Remove")');
-      if (await removeBtn.count() > 0) {
-        await removeBtn.click().catch(() => {});
-      }
-    }
+    await autoRemoveBtn.click({ force: true, timeout: 2000 }).catch(() => {});
   }
 
   // Always wait for the store to settle; modal may have auto-evicted.

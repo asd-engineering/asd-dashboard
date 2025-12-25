@@ -170,12 +170,10 @@ test.describe('Widgets', () => {
     const firstWidget = widgets.nth(0);
     const resizeIcon = firstWidget.locator('.widget-icon-resize');
 
-    // Helper to click resize button - keeps hover active until click completes
+    // Helper to click resize button - use force:true for Firefox CI compatibility
     async function clickResizeButton(arrow: string) {
       await resizeIcon.hover();
-      const btn = page.locator(`text=${arrow}`);
-      await btn.hover();
-      await btn.click();
+      await page.click(`text=${arrow}`, { force: true });
     }
 
     // Resize 2/2

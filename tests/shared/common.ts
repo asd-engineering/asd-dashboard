@@ -70,7 +70,7 @@ export async function selectServiceByName(page: Page, serviceName: string) {
   await ensurePanelOpen(page, 'service-panel')
   const item = page.locator(`[data-testid="service-panel"] .panel-item:has-text("${serviceName}")`)
   await item.scrollIntoViewIfNeeded()
-  await item.click()
+  await item.click({ force: true })
 }
 
 export interface NavigateOptions {
