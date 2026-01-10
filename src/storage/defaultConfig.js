@@ -10,7 +10,6 @@
 export const DEFAULT_CONFIG_TEMPLATE = {
   globalSettings: {
     theme: 'light',
-    widgetStoreUrl: [],
     database: 'localStorage',
     hideBoardControl: false,
     hideViewControl: false,
@@ -40,5 +39,6 @@ export const DEFAULT_CONFIG_TEMPLATE = {
   },
   styling: {
     widget: { minColumns: 1, maxColumns: 8, minRows: 1, maxRows: 6 }
-  }
+  },
+  servicesUrl: ''
 }
