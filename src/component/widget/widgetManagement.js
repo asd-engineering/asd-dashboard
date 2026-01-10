@@ -27,6 +27,7 @@ import StorageManager from '../../storage/StorageManager.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { showNotification } from '../dialog/notification.js'
 import { resolveServiceConfig } from '../../utils/serviceUtils.js'
+import { attachFloatingWidgetMenu } from './floating-menu.mjs'
 
 const logger = new Logger('widgetManagement.js')
 
@@ -165,6 +166,12 @@ async function createWidget (
     dragHandle
   )
   widgetWrapper.append(iframe, widgetMenu)
+
+  // Move menu out of stacking context to prevent z-index issues
+  // Skip in test environment to avoid breaking existing tests
+  if (!window.asd?.testMode && typeof attachFloatingWidgetMenu === 'function') {
+    attachFloatingWidgetMenu(widgetWrapper)
+  }
 
   dragHandle.addEventListener('dragstart', (e) => {
     widgetWrapper.classList.add('dragging')
