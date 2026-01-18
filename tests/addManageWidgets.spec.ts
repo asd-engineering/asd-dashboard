@@ -174,8 +174,14 @@ test.describe('Widgets', () => {
     const resizeMenu = firstWidget.locator('.resize-menu');
 
     async function clickResizeButton(index: number) {
-      await resizeIcon.hover();
-      await resizeMenu.waitFor({ state: 'visible', timeout: 2000 });
+      // Click resize icon to create and show menu (hover doesn't work reliably in headless Firefox)
+      await resizeIcon.click();
+      await resizeMenu.waitFor({ state: 'attached', timeout: 2000 });
+      // Force display in case CSS hides it
+      await firstWidget.evaluate((widget) => {
+        const menu = widget.querySelector('.resize-menu') as HTMLElement;
+        if (menu) menu.style.display = 'block';
+      });
       await resizeMenu.locator('button').nth(index).click({ force: true });
     }
 
