@@ -54,7 +54,7 @@ export async function evaluateSafe(page: Page, fn: (arg?: any) => any, arg?: any
  */
 export async function addServices(page: Page, count: number) {
   // If an eviction dialog is up from the previous add, resolve it first.
-  await evictIfModalPresent(page, { appearTimeoutMs: 800, hideTimeoutMs: 2000 });
+  await evictIfModalPresent(page);
 
   for (let i = 0; i < count; i++) {
     // Re-open the panel (it may have auto-hidden).
@@ -64,7 +64,7 @@ export async function addServices(page: Page, count: number) {
     await row.click();
   }
   // Let create+evict complete; handle any modal that appeared because of THIS click.
-  await evictIfModalPresent(page, { appearTimeoutMs: 800, hideTimeoutMs: 2000 });
+  await evictIfModalPresent(page);
 }
 
 export async function selectServiceByName(page: Page, serviceName: string) {
