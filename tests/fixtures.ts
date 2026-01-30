@@ -32,6 +32,16 @@ export const test = base.extend<{ page: Page }>({
       });
     });
 
+    // Stub services.json to prevent "Invalid services data" errors
+    // This is the fallback services file that fetchServices() tries to load
+    await page.route('**/services.json', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([])
+      });
+    });
+
     await use(page);
   },
 });
