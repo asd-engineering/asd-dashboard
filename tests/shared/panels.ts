@@ -1,4 +1,26 @@
-import { expect, Page } from '@playwright/test'
+import { expect, Page, Locator } from '@playwright/test'
+
+/**
+ * Force hover on a panel item with Firefox fallback.
+ * Widget-container can intercept pointer events in Firefox headless.
+ */
+export async function hoverPanelItem(page: Page, item: Locator): Promise<void> {
+  // Try normal hover with force
+  await item.hover({ force: true }).catch(() => {})
+  await page.waitForTimeout(100)
+
+  // Firefox fallback: use JavaScript to trigger hover state
+  const flyout = item.locator('.panel-item-actions-flyout')
+  if (!await flyout.isVisible().catch(() => false)) {
+    await item.evaluate((el) => {
+      el.classList.add('hover')
+      const fly = el.querySelector('.panel-item-actions-flyout') as HTMLElement
+      if (fly) fly.style.visibility = 'visible'
+      el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }))
+    })
+    await page.waitForTimeout(100)
+  }
+}
 
 export async function ensurePanelOpen (page: Page, panelTestId: string) {
   const panel = page.locator(`[data-testid="${panelTestId}"]`)

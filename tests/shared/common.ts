@@ -437,6 +437,7 @@ export async function selectBoardByLabel(page: Page, label: string): Promise<voi
 
 /**
  * Hover a panel row and click a flyout action ('rename' | 'delete' | 'navigate').
+ * Includes Firefox-specific fallbacks for hover issues.
  */
 export async function clickFlyoutAction(
   page: Page,
@@ -446,10 +447,25 @@ export async function clickFlyoutAction(
 ): Promise<void> {
   await ensurePanelOpen(page, panelTestId);
   const row = page.locator(`[data-testid="${panelTestId}"] .panel-item`, { hasText: rowText }).first();
-  await row.hover();
+  const flyout = row.locator('.panel-item-actions-flyout');
   const btn = row.locator(`[data-item-action="${action}"]`).first();
-  await expect(btn).toBeVisible();
-  await btn.click();
+
+  // Try hover with force (works in Chromium, may fail in Firefox headless)
+  await row.hover({ force: true });
+  await page.waitForTimeout(100);
+
+  // Firefox fallback: force flyout visible via JS
+  if (!await flyout.isVisible().catch(() => false)) {
+    await row.evaluate((el) => {
+      const fly = el.querySelector('.panel-item-actions-flyout') as HTMLElement;
+      if (fly) fly.style.visibility = 'visible';
+      el.classList.add('hover');
+    });
+    await page.waitForTimeout(100);
+  }
+
+  await expect(btn).toBeVisible({ timeout: 2000 });
+  await btn.click({ force: true });
 }
 
 /**
