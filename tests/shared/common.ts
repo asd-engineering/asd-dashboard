@@ -68,10 +68,25 @@ export async function addServices(page: Page, count: number) {
 }
 
 export async function selectServiceByName(page: Page, serviceName: string) {
-  await ensurePanelOpen(page, 'service-panel')
-  const item = page.locator(`[data-testid="service-panel"] .panel-item:has-text("${serviceName}")`)
-  await item.scrollIntoViewIfNeeded()
-  await item.click({ force: true })
+  // Retry logic for Firefox flakiness with panel dropdowns
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await ensurePanelOpen(page, 'service-panel')
+      const panel = page.locator('[data-testid="service-panel"]')
+      const item = panel.locator(`.panel-item:has-text("${serviceName}")`)
+
+      // Wait for item to be visible with shorter timeout
+      await item.waitFor({ state: 'visible', timeout: 3000 })
+      await item.scrollIntoViewIfNeeded({ timeout: 2000 })
+      await item.click({ force: true })
+      return
+    } catch (e) {
+      if (attempt === 2) throw e
+      // Close any open dropdowns and retry
+      await page.keyboard.press('Escape')
+      await page.waitForTimeout(200)
+    }
+  }
 }
 
 export interface NavigateOptions {

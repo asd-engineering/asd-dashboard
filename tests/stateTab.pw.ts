@@ -17,7 +17,11 @@ test.describe('Snapshots & Share tab', () => {
     await page.waitForSelector('dialog.user-notification', { state: 'detached' }).catch(() => {})
   })
 
-  test('restore and delete snapshot (direct switch, no modal)', async ({ page }) => {
+  test('restore and delete snapshot (direct switch, no modal)', async ({ page }, testInfo) => {
+    // Extend timeout for Firefox due to multiple reloads and IndexedDB operations
+    if (testInfo.project.name === 'firefox') {
+      test.setTimeout(30000)
+    }
     await openConfigModalSafe(page, "stateTab")
     await expect(page.locator('#stateTab tbody tr:visible')).toHaveCount(2)
 
