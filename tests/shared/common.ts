@@ -181,7 +181,8 @@ export async function clearStorage(page: Page) {
     });
   });
   // Reload to get a fresh app state after storage was cleared
-  await page.reload({ waitUntil: 'domcontentloaded' });
+  // Firefox needs longer timeout for reload operations
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 10000 });
   await page.waitForSelector('body[data-ready="true"]', { timeout: 5000 }).catch(() => {});
 }
 

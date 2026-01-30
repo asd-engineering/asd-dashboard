@@ -58,7 +58,7 @@ test.describe("Secure fragments loading configuration", () => {
       page.locator('#switch-environment').click()
     ])
     await waitForAppReady(page)
-    
+
     // Wait for a stable element on the new page to appear.
     await page.waitForSelector('[data-testid="board-panel"]');
 
