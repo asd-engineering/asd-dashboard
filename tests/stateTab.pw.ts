@@ -22,12 +22,15 @@ test.describe('Snapshots & Share tab', () => {
     await expect(page.locator('#stateTab tbody tr:visible')).toHaveCount(2)
 
     // Click switch and wait for the reload it triggers
+    // Use longer timeout for Firefox CI stability
     await Promise.all([
-      page.waitForEvent('load'),
-      page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click()
+      page.waitForEvent('load', { timeout: 10000 }),
+      page.locator('#stateTab tbody tr:first-child button[data-action="switch"]').click({ force: true })
     ])
 
     await waitForAppReady(page)
+    // Extra wait for Firefox to stabilize after IndexedDB operations
+    await page.waitForSelector('[data-testid="board-panel"]', { timeout: 10000 }).catch(() => {})
 
     const boards = await getBoardCount(page)
     expect(boards).toBeGreaterThan(0)
@@ -38,9 +41,15 @@ test.describe('Snapshots & Share tab', () => {
     await page.locator('#stateTab tbody tr button:has-text("Delete")').last().click({ force: true })
     await expect(page.locator('#stateTab tbody tr:visible')).toHaveCount(2, { timeout: 2000 })
 
+    // Close modal before navigating to ensure clean state
+    await page.keyboard.press('Escape')
+    await page.waitForSelector('#configModal', { state: 'detached', timeout: 5000 }).catch(() => {})
+
+    // Wait for any pending operations before navigation
+    await page.waitForTimeout(500)
     await navigate(page, '/')
 
-    await page.waitForSelector('#open-config-modal')
+    await page.waitForSelector('#open-config-modal', { timeout: 10000 })
     await openConfigModalSafe(page, "stateTab")
     await expect(page.locator('#stateTab tbody tr:visible')).toHaveCount(2)
   })

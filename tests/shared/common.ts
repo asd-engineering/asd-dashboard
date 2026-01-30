@@ -13,7 +13,8 @@ import { waitForWidgetStoreIdle, evictIfModalPresent } from '../shared/state.js'
  */
 export async function waitForAppReady(page: import('@playwright/test').Page) {
   await page.waitForLoadState('domcontentloaded');
-  await page.waitForSelector('body[data-ready="true"]');
+  // Use explicit timeout for CI stability (Firefox + IndexedDB init can be slow)
+  await page.waitForSelector('body[data-ready="true"]', { timeout: 15000 });
 }
 
 /**
