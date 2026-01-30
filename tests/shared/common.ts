@@ -72,19 +72,23 @@ export async function selectServiceByName(page: Page, serviceName: string) {
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       await ensurePanelOpen(page, 'service-panel')
+      // CI stabilization: wait for dropdown content to render
+      if (process.env.CI) {
+        await page.waitForTimeout(300)
+      }
       const panel = page.locator('[data-testid="service-panel"]')
       const item = panel.locator(`.panel-item:has-text("${serviceName}")`)
 
-      // Wait for item to be visible with shorter timeout
-      await item.waitFor({ state: 'visible', timeout: 3000 })
-      await item.scrollIntoViewIfNeeded({ timeout: 2000 })
+      // Wait for item to be visible with longer timeout for CI
+      await item.waitFor({ state: 'visible', timeout: process.env.CI ? 5000 : 3000 })
+      await item.scrollIntoViewIfNeeded({ timeout: process.env.CI ? 3000 : 2000 })
       await item.click({ force: true })
       return
     } catch (e) {
       if (attempt === 2) throw e
       // Close any open dropdowns and retry
       await page.keyboard.press('Escape')
-      await page.waitForTimeout(200)
+      await page.waitForTimeout(300)
     }
   }
 }
@@ -171,6 +175,10 @@ export async function addServicesByName(page: Page, serviceName: string, count: 
       await evictIfModalPresent(page)
     }
     await selectServiceByName(page, serviceName);
+    // CI stabilization: brief delay between service additions
+    if (process.env.CI && i < count - 1) {
+      await page.waitForTimeout(200)
+    }
   }
 }
 
