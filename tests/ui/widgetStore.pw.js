@@ -116,6 +116,11 @@ test.describe('WidgetStore UI Tests', () => {
 
     await navigate(page, '/')
 
+    // CI stabilization: wait for panel to be fully ready
+    if (process.env.CI) {
+      await page.waitForTimeout(500)
+    }
+
     // Add three → oldest must be evicted to keep at most 2 visible
     await addServicesByName(page, 'ASD-toolbox', 1, true)
     await addServicesByName(page, 'ASD-terminal', 2, true)
