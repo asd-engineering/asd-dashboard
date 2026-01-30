@@ -94,7 +94,11 @@ test.describe('WidgetStore UI Tests', () => {
     expect(finalSize).toBe(2)
   })
 
-  test('LRU Eviction Policy', async ({ page }) => {
+  test('LRU Eviction Policy', async ({ page }, testInfo) => {
+    // Extend timeout for CI due to multiple eviction modal handlings
+    if (process.env.CI) {
+      test.setTimeout(45000)
+    }
     // Boot with maxSize=2 so adding a 3rd forces an eviction
     await routeWithWidgetStoreSize(
       page,
