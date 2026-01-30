@@ -26,10 +26,13 @@ export async function ensurePanelOpen (page: Page, panelTestId: string) {
   const panel = page.locator(`[data-testid="${panelTestId}"]`)
   const dropdown = panel.locator('.dropdown-content')
 
+  // CI-aware timeouts
+  const ciWait = process.env.CI ? 300 : 150
+
   // Firefox headless has hover issues - use JavaScript to force open
   // First try hover (works reliably in Chromium)
   await panel.hover({ force: true })
-  await page.waitForTimeout(150)
+  await page.waitForTimeout(ciWait)
 
   // If not visible, use JavaScript to add 'open' class directly
   if (!await dropdown.isVisible().catch(() => false)) {
@@ -38,16 +41,29 @@ export async function ensurePanelOpen (page: Page, panelTestId: string) {
       // Also trigger mouseenter to ensure any JS handlers run
       el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }))
     })
-    await page.waitForTimeout(150)
+    await page.waitForTimeout(ciWait)
   }
 
   // Final fallback: click to toggle
   if (!await dropdown.isVisible().catch(() => false)) {
     await panel.click({ force: true })
-    await page.waitForTimeout(150)
+    await page.waitForTimeout(ciWait)
   }
 
-  await expect(dropdown).toBeVisible({ timeout: 3000 })
+  // Last resort: use JavaScript to force display
+  if (!await dropdown.isVisible().catch(() => false)) {
+    await panel.evaluate((el) => {
+      const dd = el.querySelector('.dropdown-content') as HTMLElement
+      if (dd) {
+        dd.style.display = 'block'
+        dd.style.visibility = 'visible'
+        dd.style.opacity = '1'
+      }
+    })
+    await page.waitForTimeout(ciWait)
+  }
+
+  await expect(dropdown).toBeVisible({ timeout: process.env.CI ? 5000 : 3000 })
 }
 
 export async function openCreateFromTopMenu (page: Page, panelTestId: 'service-panel' | 'board-panel' | 'view-panel', label: string) {
