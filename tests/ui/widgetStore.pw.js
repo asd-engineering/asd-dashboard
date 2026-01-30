@@ -94,11 +94,7 @@ test.describe('WidgetStore UI Tests', () => {
     expect(finalSize).toBe(2)
   })
 
-  test('LRU Eviction Policy', async ({ page }, testInfo) => {
-    // Extend timeout for CI due to multiple eviction modal handlings
-    if (process.env.CI) {
-      test.setTimeout(45000)
-    }
+  test('LRU Eviction Policy', async ({ page }) => {
     // Boot with maxSize=2 so adding a 3rd forces an eviction
     await routeWithWidgetStoreSize(
       page,
@@ -120,15 +116,22 @@ test.describe('WidgetStore UI Tests', () => {
 
     await navigate(page, '/')
 
-    // CI stabilization: wait for panel to be fully ready
-    if (process.env.CI) {
-      await page.waitForTimeout(500)
-    }
+    // Set up auto-eviction handler - clicks LRU button whenever modal appears
+    await page.addLocatorHandler(
+      page.locator('#eviction-modal'),
+      async (modal) => {
+        const lruBtn = modal.locator('#evict-lru-btn')
+        if (await lruBtn.isVisible().catch(() => false)) {
+          await lruBtn.click()
+        }
+      }
+    )
 
-    // Add three → oldest must be evicted to keep at most 2 visible
-    await addServicesByName(page, 'ASD-toolbox', 1, true)
-    await addServicesByName(page, 'ASD-terminal', 2, true)
-    await addServicesByName(page, 'ASD-tunnel', 2, true)
+    // Add widgets - maxSize=2 means eviction triggers on 3rd+ widget
+    // First 2 don't need eviction, rest will auto-evict via handler
+    await addServicesByName(page, 'ASD-toolbox', 1, false)
+    await addServicesByName(page, 'ASD-terminal', 2, false)
+    await addServicesByName(page, 'ASD-tunnel', 2, false)
     await waitForWidgetStoreIdle(page)
 
     // Count only visible wrappers — hidden/tearing-down nodes shouldn't fail the test
