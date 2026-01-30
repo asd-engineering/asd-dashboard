@@ -5,11 +5,12 @@ export const test = base.extend<{ page: Page }>({
     await page.addInitScript(() => { (window as any).__disableDebounce__ = true; });
 
     // Stub widget iframe URLs to prevent 404 errors and reduce test noise
-    await page.route(/\/asd\/(toolbox|terminal|tunnel|containers)/, (route) => {
+    // Matches any /asd/* path (toolbox, terminal, tunnel, containers, templated, etc.)
+    await page.route(/\/asd\/[^/]+$/, (route) => {
       route.fulfill({
         status: 200,
         contentType: 'text/html',
-        body: '<!DOCTYPE html><html><head><title>Widget Stub</title></head><body>Widget</body></html>'
+        body: '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Widget Stub</title></head><body>Widget</body></html>'
       });
     });
 
