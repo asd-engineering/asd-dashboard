@@ -13,6 +13,7 @@ export {
   webkit,
   request,
   type Page,
+  type Locator,
 } from 'playwright/test';
 
 type ConsoleLog = { type: string; text: string };
