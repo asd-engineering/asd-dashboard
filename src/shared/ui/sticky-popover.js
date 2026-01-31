@@ -82,6 +82,9 @@ export function createStickyPopover (cfg) {
     root = document.createElement('div')
     root.dataset.stickyPopover = 'true'
     root.tabIndex = -1
+    root.setAttribute('role', 'dialog')
+    root.setAttribute('aria-modal', 'false')
+    root.setAttribute('aria-keyshortcuts', 'Escape')
     root.appendChild(content)
     ensureLayerRoot().appendChild(root)
     focusables = Array.from(root.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
@@ -114,6 +117,7 @@ export function createStickyPopover (cfg) {
       root.style.left = pos.left + 'px'
       root.style.top = pos.top + 'px'
       root.style.position = 'fixed'
+      root.setAttribute('aria-modal', 'true')
       currentStrategy = 'fixed'
       pinned = true
       anchor.setAttribute('data-sticky-popover-pinned', 'true')

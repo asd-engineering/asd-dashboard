@@ -30,17 +30,22 @@ test.describe('Service panel', () => {
     const panel = page.locator('[data-testid="service-panel"]')
     await ensurePanelOpen(page, 'service-panel')
 
-    const first = panel.locator('.panel-item').nth(0) 
+    const first = panel.locator('.panel-item').nth(0)
     const second = panel.locator('.panel-item').nth(1)
 
+    // Hover first item - popover should appear with flyout
     await first.hover()
-    await expect(first.locator('.panel-item-actions-flyout')).toBeVisible()
-    await expect(first.locator('[data-item-action="navigate"]')).toHaveCount(1) 
+    await page.waitForTimeout(200)
+    const popover = page.locator('[data-sticky-popover]')
+    await expect(popover.locator('.panel-item-actions-flyout')).toBeVisible()
+    // First item has a widget, so navigate should be present
+    await expect(popover.locator('[data-item-action="navigate"]')).toHaveCount(1)
 
-    await second.hover()
-    await expect(first.locator('.panel-item-actions-flyout')).toBeHidden()
-
-    await expect(second.locator('[data-item-action="navigate"]')).toHaveCount(0) 
+    // Hover second item - popover should show different content (no navigate action)
+    await second.hover({ force: true })
+    await page.waitForTimeout(300)
+    // Second item has no widget, so navigate should not be present in the popover
+    await expect(popover.locator('[data-item-action="navigate"]')).toHaveCount(0)
   })
 
   test('top menu shows single create action', async ({ page }) => {

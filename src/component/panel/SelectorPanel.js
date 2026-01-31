@@ -403,8 +403,22 @@ export class SelectorPanel {
 
       const pop = createStickyPopover({ anchor: row, content: acts, strategy: 'absolute' })
       this.popovers.set(row, pop)
-      row.addEventListener('mouseenter', () => { this.currentPopover = pop; pop.open() })
-      row.addEventListener('mouseleave', () => { if (!pop.isPinned()) pop.close() })
+      let closeTimer = null
+      row.addEventListener('mouseenter', () => {
+        if (closeTimer) { clearTimeout(closeTimer); closeTimer = null }
+        this.currentPopover = pop
+        pop.open()
+      })
+      row.addEventListener('mouseleave', () => {
+        // Delay close to allow mouse to move to popover
+        closeTimer = setTimeout(() => {
+          if (!pop.isPinned()) pop.close()
+        }, 150)
+      })
+      // Cancel close if mouse enters the popover content
+      acts.addEventListener('mouseenter', () => {
+        if (closeTimer) { clearTimeout(closeTimer); closeTimer = null }
+      })
       acts.addEventListener('click', (e) => {
         const tgt = /** @type {HTMLElement|null} */ (e.target instanceof HTMLElement ? e.target.closest('[data-item-action]') : null)
         if (tgt) {
