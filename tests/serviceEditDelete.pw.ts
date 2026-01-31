@@ -27,6 +27,9 @@ test.describe('Service Edit/Delete', () => {
 
     const services = await getServices(page);
     expect(services.some(s => s.name === 'Toolbox X' && s.url === 'http://localhost/x')).toBeTruthy()
+
+    // Re-open the service panel since it closes when modal appears
+    await ensurePanelOpen(page, 'service-panel')
     await expect(page.locator('[data-testid="service-panel"] .panel-item').filter({ hasText: 'Toolbox X' })).toHaveCount(1)
   })
 
@@ -38,7 +41,7 @@ test.describe('Service Edit/Delete', () => {
     await expect(page.locator('.widget-wrapper')).toHaveCount(1)
 
     page.on('dialog', d => d.accept())
-    
+
     await clickFlyoutAction(page, 'service-panel', 'ASD-terminal', 'delete')
 
     const services = await getServices(page);

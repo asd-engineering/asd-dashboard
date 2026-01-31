@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
-    "@types/node": "^22.7.4",
+    "@types/node": "^22.18.0",
     "@typescript-eslint/eslint-plugin": "^8.36.0",
     "@typescript-eslint/parser": "^8.36.0",
     "comment-parser": "^1.4.0",

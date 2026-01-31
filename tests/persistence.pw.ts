@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
-import { handleDialog, getConfigBoards, navigate } from './shared/common'
+import { handleDialog, getConfigBoards, navigate, flushStorage, waitForAppReady } from './shared/common'
 import { openCreateFromTopMenu, ensurePanelOpen } from './shared/panels'
 import { enableUITestMode } from './shared/uiHelpers';
 
@@ -19,8 +19,11 @@ test.describe('Board persistence', () => {
     await ensurePanelOpen(page, 'board-panel')
     await expect(page.locator('#board-selector')).toContainText(boardName)
 
+    // Flush IndexedDB writes before reloading
+    await flushStorage(page)
     await page.reload()
-    
+    await waitForAppReady(page)
+
     const boards = await getConfigBoards(page)
     expect(boards.some(b => b.name === boardName)).toBeTruthy()
   })
@@ -31,8 +34,11 @@ test.describe('Board persistence', () => {
     await ensurePanelOpen(page, 'view-panel')
     await expect(page.locator('#view-selector option:checked')).toHaveText('Second View')
 
+    // Flush IndexedDB writes before reloading
+    await flushStorage(page)
     await page.reload()
-    
+    await waitForAppReady(page)
+
     await expect(page.locator('#view-selector option:checked')).toHaveText('Second View')
   })
 })

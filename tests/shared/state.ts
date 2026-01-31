@@ -42,7 +42,7 @@ export async function setLocalItem(
 ): Promise<void> {
   await page.evaluate(
     async ({ key, value }) => {
-      const { default: sm } = await import("/storage/StorageManager.js");
+      const { StorageManager: sm } = await import("/storage/StorageManager.js");
       sm.misc.setItem(key, value);
     },
     { key, value },
@@ -67,7 +67,7 @@ export async function injectSnapshot(
 ): Promise<void> {
   await evaluateSafe(page,
     async ({ cfg, svc, name }) => {
-      const { default: sm } = await import("/storage/StorageManager.js");
+      const { StorageManager: sm } = await import("/storage/StorageManager.js");
       const { gzipJsonToBase64url } = await import("/utils/compression.js");
       const encodedCfg = await gzipJsonToBase64url(cfg);
       const encodedSvc = await gzipJsonToBase64url(svc);
@@ -90,7 +90,7 @@ export async function injectSnapshot(
  */
 export async function loadStateStore(page: Page): Promise<{ version: number; states: any[] }> {
   return await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js');
+    const { StorageManager: sm } = await import('/storage/StorageManager.js');
     return sm.loadStateStore();
   });
 }
@@ -103,7 +103,13 @@ export async function switchSnapshotByName(page: Page, name: string): Promise<vo
   await openConfigModalSafe(page, "stateTab")
 
   const row = page.locator(`#stateTab tbody tr:has-text("${name}")`).first();
-  await row.locator('button[data-action="switch"]').click();
+  const switchBtn = row.locator('button[data-action="switch"]');
+
+  // Click switch and wait for the reload it triggers
+  await Promise.all([
+    page.waitForEvent('load'),
+    switchBtn.click()
+  ]);
 
   await waitForAppReady(page)
 }
@@ -113,9 +119,15 @@ export async function switchSnapshotByName(page: Page, name: string): Promise<vo
  */
 export async function mergeSnapshotByName(page: Page, name: string): Promise<void> {
   await openConfigModalSafe(page, "stateTab")
-  
+
   const row = page.locator(`#stateTab tbody tr:has-text("${name}")`).first();
-  await row.locator('button[data-action="merge"]').click({ force: true });
+  const mergeBtn = row.locator('button[data-action="merge"]');
+
+  // Click merge and wait for the reload it triggers
+  await Promise.all([
+    page.waitForEvent('load'),
+    mergeBtn.click({ force: true })
+  ]);
 
   await waitForAppReady(page)
 }
@@ -129,24 +141,34 @@ export async function evictIfModalPresent(
   page: Page,
   opts: { appearTimeoutMs?: number; hideTimeoutMs?: number } = {},
 ): Promise<void> {
-  const appearTimeoutMs = opts.appearTimeoutMs ?? 900;
-  const hideTimeoutMs = opts.hideTimeoutMs ?? 2000;
+  // Short timeout - if modal is going to appear, it appears quickly
+  // Don't waste time waiting for modals that won't appear
+  const defaultAppear = process.env.CI ? 800 : 500;
+  const defaultHide = process.env.CI ? 2000 : 1000;
+  const appearTimeoutMs = opts.appearTimeoutMs ?? defaultAppear;
+  const hideTimeoutMs = opts.hideTimeoutMs ?? defaultHide;
 
   const modal = page.locator('#eviction-modal');
 
-  // Give WebKit a brief chance to render the modal. Ignore if it never shows.
-  await modal.waitFor({ state: 'visible', timeout: appearTimeoutMs }).catch(() => {});
-
+  // Quick check if modal is already visible (no wait)
   if (await modal.isVisible().catch(() => false)) {
-    await modal.locator('button:has-text("Remove")').click({ trial: false }).catch(() => {});
+    const autoRemoveBtn = modal.locator('#evict-lru-btn');
+    await autoRemoveBtn.click({ force: true, timeout: 2000 }).catch(() => {});
+    await modal.waitFor({ state: 'hidden', timeout: hideTimeoutMs }).catch(() => {});
+    return;
   }
 
-  // Always wait for the store to settle; modal may have auto-evicted.
-  try {
-    // reuse your existing helper
-    await waitForWidgetStoreIdle(page);
-  } catch {}
+  // Brief wait for modal to appear - return early if it doesn't
+  const appeared = await modal.waitFor({ state: 'visible', timeout: appearTimeoutMs })
+    .then(() => true)
+    .catch(() => false);
 
-  // If it did show, let it disappear (don’t fail if it’s already gone).
-  await modal.waitFor({ state: 'hidden', timeout: hideTimeoutMs }).catch(() => {});
+  if (appeared) {
+    const autoRemoveBtn = modal.locator('#evict-lru-btn');
+    await autoRemoveBtn.click({ force: true, timeout: 2000 }).catch(() => {});
+    await modal.waitFor({ state: 'hidden', timeout: hideTimeoutMs }).catch(() => {});
+  }
+
+  // Wait for store to settle (handles auto-eviction case too)
+  await waitForWidgetStoreIdle(page).catch(() => {});
 }

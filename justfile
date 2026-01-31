@@ -31,6 +31,7 @@ format:
 
 # Run static type checking
 check:
+    bash -c "! rg 'import\\s+StorageManager\\s+from' -n src tests || (echo 'Default StorageManager import found'; exit 1)"
     bash -c "! rg \"localStorage\\.getItem\\(['\\\"]asd\\.\" -n src | rg -v 'migration|adapters' || (echo 'Direct asd.* localStorage access found'; exit 1)"
     npm run check
 
@@ -39,7 +40,7 @@ export-all:
     mkdir -p local
     find src tests \
         -maxdepth 3 \
-        -type f \( -name '*.ts' \) \
+        -type f \( -name '*.js' -o -name '*.ts' \) \
         -not -path './.git/*' \
         -not -path './local/*' \
         -not -path './node_modules/*' \

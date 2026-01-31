@@ -5,7 +5,7 @@
  * @module ServiceControl
  */
 import { SelectorPanel } from '../panel/SelectorPanel.js'
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 import { addWidget, removeWidget, findServiceLocation } from '../widget/widgetManagement.js'
 import { widgetStore } from '../widget/widgetStore.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'

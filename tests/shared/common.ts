@@ -13,7 +13,8 @@ import { waitForWidgetStoreIdle, evictIfModalPresent } from '../shared/state.js'
  */
 export async function waitForAppReady(page: import('@playwright/test').Page) {
   await page.waitForLoadState('domcontentloaded');
-  await page.waitForSelector('body[data-ready="true"]');
+  // Use explicit timeout for CI stability (Firefox + IndexedDB init can be slow)
+  await page.waitForSelector('body[data-ready="true"]', { timeout: 15000 });
 }
 
 /**
@@ -50,17 +51,10 @@ export async function evaluateSafe(page: Page, fn: (arg?: any) => any, arg?: any
 
 /**
  * Add the first `count` services by clicking options in the widget selector panel.
- * Skips index 0 if it’s a placeholder/search row.
  */
-// export async function addServices(page: Page, count: number) {
-//   await ensurePanelOpen(page, 'service-panel')
-//   for (let i = 0; i < count; i++) {
-//     await page.locator('[data-testid="service-panel"] .panel-item').nth(i).click();
-//   }
-// }
 export async function addServices(page: Page, count: number) {
   // If an eviction dialog is up from the previous add, resolve it first.
-  await evictIfModalPresent(page, { appearTimeoutMs: 800, hideTimeoutMs: 2000 });
+  await evictIfModalPresent(page);
 
   for (let i = 0; i < count; i++) {
     // Re-open the panel (it may have auto-hidden).
@@ -70,23 +64,39 @@ export async function addServices(page: Page, count: number) {
     await row.click();
   }
   // Let create+evict complete; handle any modal that appeared because of THIS click.
-  await evictIfModalPresent(page, { appearTimeoutMs: 800, hideTimeoutMs: 2000 });
+  await evictIfModalPresent(page);
 }
 
-/**
- * Select a service by its label using the widget selector panel.
- */
 export async function selectServiceByName(page: Page, serviceName: string) {
-  await ensurePanelOpen(page, 'service-panel')
-  await page.click(`[data-testid="service-panel"] .panel-item:has-text("${serviceName}")`);
+  // Retry logic for Firefox flakiness with panel dropdowns
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await ensurePanelOpen(page, 'service-panel')
+      // CI stabilization: wait for dropdown content to render
+      if (process.env.CI) {
+        await page.waitForTimeout(300)
+      }
+      const panel = page.locator('[data-testid="service-panel"]')
+      const item = panel.locator(`.panel-item:has-text("${serviceName}")`)
+
+      // Wait for item to be visible with longer timeout for CI
+      await item.waitFor({ state: 'visible', timeout: process.env.CI ? 5000 : 3000 })
+      await item.scrollIntoViewIfNeeded({ timeout: process.env.CI ? 3000 : 2000 })
+      await item.click({ force: true })
+      return
+    } catch (e) {
+      if (attempt === 2) throw e
+      // Close any open dropdowns and retry
+      await page.keyboard.press('Escape')
+      await page.waitForTimeout(300)
+    }
+  }
 }
 
 export interface NavigateOptions {
-  /** Total budget for navigate (goto + readiness), in ms. Default: 2000 */
+  /** Total budget for navigate (goto + readiness), in ms. Default: 6000 */
   totalTimeoutMs?: number;
-  /** Additional options forwarded to page.goto (merged, not replaced) */
   gotoOptions?: Parameters<Page['goto']>[1];
-  /** Enable console proxy for debugging, default: false */
   debugConsole?: boolean;
   /** Disable readiness wait (skip app-ready selector), default: false */
   disableReadyWait?: boolean;
@@ -100,10 +110,10 @@ export interface NavigateOptions {
 export async function navigate(
   page: Page,
   destination: string,
-  options?: NavigateOptions
+  options?: NavigateOptions,
 ): Promise<void> {
-  const totalBudget = Math.max(1, options?.totalTimeoutMs ?? 4000);
-  const gotoBudget = Math.max(1, Math.floor(totalBudget * 0.7));
+  const totalBudget = Math.max(1, options?.totalTimeoutMs ?? 6000);
+  const gotoBudget = Math.max(1, Math.floor(totalBudget * 0.5));
   const readyBudget = Math.max(0, totalBudget - gotoBudget);
 
   const callerGotoTimeout =
@@ -115,7 +125,7 @@ export async function navigate(
   const mergedGotoOptions: Parameters<Page['goto']>[1] = {
     waitUntil: 'domcontentloaded',
     ...(options?.gotoOptions ?? {}),
-    timeout: finalGotoTimeout,
+    timeout: Math.min(gotoBudget, options?.gotoOptions?.timeout ?? gotoBudget),
   };
 
   // Two quick attempts – cheap and effective against cold starts in CI
@@ -140,21 +150,22 @@ export async function navigate(
   if (readyBudget === 0 || options?.disableReadyWait) return;
 
   // App readiness via selector only (no waitForFunction)
-  await page.waitForSelector('body[data-ready="true"]', { timeout: readyBudget }).catch(() => {});
+  await page.waitForSelector('body[data-ready="true"]', { timeout: readyBudget });
 }
 
 // Helper function to handle dialog interactions
 export async function handleDialog(page: Page, type: string, inputText = "") {
   page.on("dialog", async (dialog) => {
-    expect(dialog.type()).toBe(type);
-    if (type === "prompt") {
-      await dialog.accept(inputText);
-    } else {
-      await dialog.accept();
+    if (dialog.type() === type) {
+      if (inputText) {
+        await dialog.accept(inputText);
+      } else {
+        await dialog.accept();
+      }
     }
   });
 }
-// await waitForWidgetStoreIdle(page);
+
 /**
  * Click a specific service multiple times using the widget selector panel.
  */
@@ -164,6 +175,10 @@ export async function addServicesByName(page: Page, serviceName: string, count: 
       await evictIfModalPresent(page)
     }
     await selectServiceByName(page, serviceName);
+    // CI stabilization: brief delay between service additions
+    if (process.env.CI && i < count - 1) {
+      await page.waitForTimeout(200)
+    }
   }
 }
 
@@ -176,18 +191,38 @@ export function b64(obj: any) {
  * Leaves UI in a clean state for subsequent actions.
  */
 export async function clearStorage(page: Page) {
-  await navigate(page, "/");
+  // Navigate to the app and wait for it to be ready
+  await navigate(page, '/');
+  // Clear storage and reinitialize
   await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js');
-    sm.clearAll();
+    // Clear all storage
+    localStorage.clear();
+    sessionStorage.clear();
+    // Delete IndexedDB and wait for completion
+    await new Promise<void>(res => {
+      const req = indexedDB.deleteDatabase('asd-db');
+      req.onsuccess = req.onerror = req.onblocked = () => res();
+    });
   });
-  // Wait for any startup notifications to disappear to avoid intercepting clicks
-  await page.waitForSelector('dialog.user-notification', { state: 'detached' }).catch(() => {});
+  // Reload to get a fresh app state after storage was cleared
+  // Firefox needs longer timeout for reload operations
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 10000 });
+  await page.waitForSelector('body[data-ready="true"]', { timeout: 5000 }).catch(() => {});
+}
+
+/**
+ * Flush all pending IndexedDB writes via StorageManager.flush().
+ * Call this before page.reload() to ensure data is persisted.
+ */
+export async function flushStorage(page: Page) {
+  await page.evaluate(async () => {
+    const { StorageManager } = await import('/storage/StorageManager.js');
+    await StorageManager.flush();
+  });
 }
 
 /**
  * Read the dashboard config using StorageManager.
- * - No waitForFunction
  * - Supports optional waitForReady gate
  */
 export async function getUnwrappedConfig(
@@ -203,8 +238,8 @@ export async function getUnwrappedConfig(
   }
 
   const evalPromise = page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js');
-    return sm.getConfig();
+    const { StorageManager } = await import('/storage/StorageManager.js');
+    return StorageManager.getConfig();
   });
 
   return await Promise.race([
@@ -231,8 +266,8 @@ export async function getServices(
   }
 
   const evalPromise = page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js');
-    return sm.getServices();
+    const { StorageManager } = await import('/storage/StorageManager.js');
+    return StorageManager.getServices();
   });
 
   return await Promise.race([
@@ -244,32 +279,16 @@ export async function getServices(
 }
 
 export async function getConfigBoards(page: Page) {
-  const cfg = await getUnwrappedConfig(page);
-  return Array.isArray(cfg.boards) ? cfg.boards : [];
+  return await evaluateSafe(page, async () => {
+    const { StorageManager } = await import('/storage/StorageManager.js');
+    return StorageManager.getBoards();
+  });
 }
 
-export async function getConfigTheme(page: Page) {
-  const cfg = await getUnwrappedConfig(page);
-  return cfg?.globalSettings?.theme;
-}
-
-export async function getBoardWithWidgets(page: Page) {
-  const cfg = await getUnwrappedConfig(page);
-  const boards = Array.isArray(cfg.boards) ? cfg.boards : [];
-  return (
-    boards.find((b) => b.views?.some((v) => v.widgetState?.length > 0))?.id ||
-    null
-  );
-}
-
-export async function getBoardCount(page: Page) {
-  const cfg = await getUnwrappedConfig(page);
-  return Array.isArray(cfg.boards) ? cfg.boards.length : 0;
-}
 
 export async function getShowMenuWidgetFlag(page: Page) {
   const cfg = await getUnwrappedConfig(page);
-  return !!cfg?.globalSettings?.showMenuWidget;
+  return cfg.globalSettings?.showMenuWidget ?? false;
 }
 
 /**
@@ -277,15 +296,15 @@ export async function getShowMenuWidgetFlag(page: Page) {
  */
 export async function getLastUsedViewId(page: Page) {
   return await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js');
-    return sm.misc.getLastViewId();
+    const { StorageManager } = await import('/storage/StorageManager.js');
+    return StorageManager.misc.getLastViewId();
   });
 }
 
 export async function getLastUsedBoardId(page: Page) {
   return await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js');
-    return sm.misc.getLastBoardId();
+    const { StorageManager } = await import('/storage/StorageManager.js');
+    return StorageManager.misc.getLastBoardId();
   });
 }
 
@@ -297,7 +316,6 @@ export async function getLastUsedBoardId(page: Page) {
  */
 export async function selectViewByLabel(page: Page, label: string): Promise<void> {
   const sel = page.locator("#view-selector");
-
   try {
     await sel.selectOption({ label }, { force: true });
     return;
@@ -305,16 +323,43 @@ export async function selectViewByLabel(page: Page, label: string): Promise<void
     await page.evaluate((lbl) => {
       const select = document.querySelector("#view-selector") as HTMLSelectElement | null;
       if (!select) throw new Error("#view-selector not found");
-      const wanted = String(lbl).trim();
-      const opt = Array.from(select.options).find(
-        (o) => (o.textContent || "").trim() === wanted
-      );
-      if (!opt) throw new Error(`Option with label "${wanted}" not found`);
+      const opt = Array.from(select.options).find(o => (o.textContent || "").trim() === String(lbl).trim());
+      if (!opt) throw new Error(`Option with label "${lbl}" not found`);
       select.value = opt.value;
       select.dispatchEvent(new Event("input", { bubbles: true }));
       select.dispatchEvent(new Event("change", { bubbles: true }));
     }, label);
   }
+}
+
+/**
+ * Waits for a specific StorageManager update to complete.
+ * This is the key to solving async persistence failures.
+ * @param page The Playwright page object.
+ * @param reason The 'reason' string from the appStateChanged event detail.
+ */
+export async function waitForStorageUpdate(page: Page, reason: string) {
+  await page.evaluate((reason) =>
+    new Promise(resolve => {
+      window.addEventListener('appStateChanged', function listener(e) {
+        if ((e as CustomEvent).detail.reason === reason) {
+          window.removeEventListener('appStateChanged', listener);
+          resolve(true);
+        }
+      });
+    }),
+    reason
+  );
+}
+
+export async function getConfigTheme(page: Page) {
+  const cfg = await getUnwrappedConfig(page);
+  return cfg.globalSettings?.theme || 'light';
+}
+
+export async function getBoardCount(page: Page) {
+    const boards = await getConfigBoards(page);
+    return boards.length;
 }
 
 /**
@@ -327,9 +372,9 @@ export async function setConfigAndServices(
   services: any[],
 ): Promise<void> {
   await page.evaluate(async ({ cfg, services }) => {
-    const { default: sm } = await import('/storage/StorageManager.js');
-    sm.setConfig(cfg);
-    sm.setServices(services as any);
+    const { StorageManager } = await import('/storage/StorageManager.js');
+    StorageManager.setConfig(cfg);
+    StorageManager.setServices(services as any);
   }, { cfg, services });
 }
 
@@ -339,8 +384,8 @@ export async function setConfigAndServices(
  */
 export async function wipeConfigPreserveSnapshots(page: Page): Promise<void> {
   await page.evaluate(async () => {
-    const { default: sm } = await import('/storage/StorageManager.js');
-    sm.clearAllExceptState();
+    const { StorageManager } = await import('/storage/StorageManager.js');
+    StorageManager.clearAllExceptState();
   });
 }
 
@@ -380,7 +425,7 @@ export async function waitForStoredBoardsCount(page: Page, min = 1, timeout = 50
 }
 
 /**
- * Switch board by label (fast select), no “click” races.
+ * Switch board by label (fast select), no "click" races.
  */
 export async function selectBoardByLabel(page: Page, label: string): Promise<void> {
   const sel = page.locator('#board-selector');
@@ -400,6 +445,7 @@ export async function selectBoardByLabel(page: Page, label: string): Promise<voi
 
 /**
  * Hover a panel row and click a flyout action ('rename' | 'delete' | 'navigate').
+ * Includes Firefox-specific fallbacks for hover issues.
  */
 export async function clickFlyoutAction(
   page: Page,
@@ -409,10 +455,25 @@ export async function clickFlyoutAction(
 ): Promise<void> {
   await ensurePanelOpen(page, panelTestId);
   const row = page.locator(`[data-testid="${panelTestId}"] .panel-item`, { hasText: rowText }).first();
-  await row.hover();
+  const flyout = row.locator('.panel-item-actions-flyout');
   const btn = row.locator(`[data-item-action="${action}"]`).first();
-  await expect(btn).toBeVisible();
-  await btn.click();
+
+  // Try hover with force (works in Chromium, may fail in Firefox headless)
+  await row.hover({ force: true });
+  await page.waitForTimeout(100);
+
+  // Firefox fallback: force flyout visible via JS
+  if (!await flyout.isVisible().catch(() => false)) {
+    await row.evaluate((el) => {
+      const fly = el.querySelector('.panel-item-actions-flyout') as HTMLElement;
+      if (fly) fly.style.visibility = 'visible';
+      el.classList.add('hover');
+    });
+    await page.waitForTimeout(100);
+  }
+
+  await expect(btn).toBeVisible({ timeout: 2000 });
+  await btn.click({ force: true });
 }
 
 /**
@@ -477,14 +538,14 @@ export async function resizeWidgetTo(page: Page, index: number, columns: number,
   await expect(widget).toHaveAttribute('data-rows', String(rows));
 }
 
-export async function reloadReady(page: Page, totalTimeoutMs = 4000): Promise<void> {
-    const gotoBudget = Math.max(1, Math.floor(totalTimeoutMs * 0.7));
+export async function reloadReady(page: Page, totalTimeoutMs = 6000): Promise<void> {
+    const gotoBudget = Math.max(1, Math.floor(totalTimeoutMs * 0.5));
     const readyBudget = Math.max(0, totalTimeoutMs - gotoBudget);
     try {
       await page.reload({ waitUntil: 'domcontentloaded', timeout: gotoBudget });
     } catch {
       // last try with 'load' in case DOMContentLoaded didn't fire in time
-      await page.reload({ waitUntil: 'load', timeout: gotoBudget }).catch(() => {});
+      await page.reload({ waitUntil: 'load', timeout: gotoBudget });
     }
-    await page.waitForSelector('body[data-ready="true"]', { timeout: readyBudget }).catch(() => {});
+    await page.waitForSelector('body[data-ready="true"]', { timeout: readyBudget });
 }

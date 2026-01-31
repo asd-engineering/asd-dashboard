@@ -4,7 +4,7 @@
  * @module ViewControl
  */
 import { SelectorPanel } from '../panel/SelectorPanel.js'
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 import { getCurrentBoardId } from '../../utils/elements.js'
 import { createView, renameView, deleteView, resetView, switchView, updateViewSelector } from '../board/boardManagement.js'
 import emojiList from '../../ui/unicodeEmoji.js'

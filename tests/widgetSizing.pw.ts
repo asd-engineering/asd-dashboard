@@ -13,7 +13,7 @@ test.describe('Widget Sizing', () => {
 
     await expect.poll(async () => {
       const svc = await page.evaluate(async () => {
-        const sm = (await import('/storage/StorageManager.js')).default;
+        const { StorageManager: sm } = await import('/storage/StorageManager.js');
         return sm.getServices().find(s => s.name === 'ASD-templated')?.config;
       });
       return `${svc?.columns}/${svc?.rows}`;

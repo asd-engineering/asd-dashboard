@@ -19,7 +19,7 @@ import { loadFromFragment } from './utils/fragmentLoader.js'
 import { Logger } from './utils/Logger.js'
 import { widgetStore } from './component/widget/widgetStore.js'
 import { debounce, debounceLeading } from './utils/utils.js'
-import StorageManager, { APP_STATE_CHANGED } from './storage/StorageManager.js'
+import { StorageManager, APP_STATE_CHANGED } from './storage/StorageManager.js'
 import { runSilentImportFlowIfRequested } from './flows/silentImportFlow.js'
 import { initThemeFromConfig } from './ui/theme.js'
 
@@ -45,6 +45,13 @@ window.addEventListener('hashchange', () => loadFromFragment(false))
  */
 async function main () {
   logger.log('Application initialization started')
+
+  try {
+    await StorageManager.init({ persist: true })
+  } catch (err) {
+    console.error('Failed to initialize StorageManager', err)
+    throw err
+  }
 
   // 1. Handle configuration from URL fragment first
   const params = new URLSearchParams(location.search)
@@ -80,16 +87,7 @@ async function main () {
   applyControlVisibility()
   applyWidgetMenuVisibility()
 
-  // 5. Migrate legacy boards stored under the "boards" key into config if none exist
-  const oldBoards = JSON.parse(localStorage.getItem('boards') || '[]')
-  if (oldBoards.length > 0 && (!config.boards || config.boards.length === 0)) {
-    logger.log('Migrating old boards key into config')
-    StorageManager.updateConfig(cfg => { cfg.boards = oldBoards })
-    localStorage.removeItem('boards')
-    config.boards = oldBoards
-  }
-
-  // 6. Initialize boards and switch to the last used or default board/view
+  // 5. Initialize boards and switch to the last used or default board/view
   const initialBoardView = await initializeBoards()
 
   const lastUsedBoardId = StorageManager.misc.getLastBoardId()
@@ -157,5 +155,9 @@ async function main () {
   document.body.dataset.ready = 'true'
 }
 
-// Start the application when the DOM is ready
-document.addEventListener('DOMContentLoaded', main)
+// Start the application once the DOM is ready; ensure the event isn't missed
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', main)
+} else {
+  main().catch(err => logger.error('Failed to initialize application', err))
+}

@@ -8,7 +8,8 @@ import {
   navigate,
   handleDialog,
   dragAndDropWidgetStable,
-  reloadReady
+  reloadReady,
+  flushStorage
 } from './shared/common.js';
 import { setLocalItem } from './shared/state'
 import { waitForWidgetStoreIdle } from "./shared/state.js";
@@ -17,7 +18,7 @@ test.describe('Widgets', () => {
   test.beforeEach(async ({ page }) => {
     await routeServicesConfig(page)
     await navigate(page,'/');
-    
+
     await setLocalItem(page, 'log', 'widgetManagement')
   });
 
@@ -167,26 +168,40 @@ test.describe('Widgets', () => {
 
     const widgets = page.locator('.widget-wrapper');
     const firstWidget = widgets.nth(0);
+    const resizeIcon = firstWidget.locator('.widget-icon-resize');
 
-    // Resize 2/2
-    await firstWidget.locator('.widget-icon-resize').hover();
-    await page.click('text=⬇');
-    await firstWidget.locator('.widget-icon-resize').hover();
-    await page.click('text=➡');
+    // Resize menu buttons are in order: down, right, up, left (indices 0,1,2,3)
+    const resizeMenu = firstWidget.locator('.resize-menu');
+
+    async function clickResizeButton(index: number) {
+      // Click resize icon to create and show menu (hover doesn't work reliably in headless Firefox)
+      await resizeIcon.click();
+      await resizeMenu.waitFor({ state: 'attached', timeout: 2000 });
+      // Force display in case CSS hides it
+      await firstWidget.evaluate((widget) => {
+        const menu = widget.querySelector('.resize-menu') as HTMLElement;
+        if (menu) menu.style.display = 'block';
+      });
+      await resizeMenu.locator('button').nth(index).click({ force: true });
+    }
+
+    // Resize 2/2: down(0) increases rows, right(1) increases columns
+    await clickResizeButton(0); // down - increase rows
+    await clickResizeButton(1); // right - increase columns
     await expect(firstWidget).toHaveAttribute('data-columns', '2');
     await expect(firstWidget).toHaveAttribute('data-rows', '2');
 
-    // Resize 1/1
-    await firstWidget.locator('.widget-icon-resize').hover();
-    await page.click('text=⬆');
-    await firstWidget.locator('.widget-icon-resize').hover();
-    await page.click('text=⬅');
+    // Resize 1/1: up(2) decreases rows, left(3) decreases columns
+    await clickResizeButton(2); // up - decrease rows
+    await clickResizeButton(3); // left - decrease columns
     await expect(firstWidget).toHaveAttribute('data-columns', '1');
     await expect(firstWidget).toHaveAttribute('data-rows', '1');
 
+    // Flush IndexedDB writes before reload
+    await flushStorage(page);
     // Reload the page
     await reloadReady(page);
-    
+
     // Verify the widget retains its size
     await expect(firstWidget).toHaveAttribute('data-columns', '1');
     await expect(firstWidget).toHaveAttribute('data-rows', '1');
@@ -205,6 +220,8 @@ test.describe('Widgets', () => {
     await expect(firstWidget).toHaveAttribute('data-columns', '3');
     await expect(firstWidget).toHaveAttribute('data-rows', '3');
 
+    // Flush IndexedDB writes before reload
+    await flushStorage(page);
     // Reload the page
     await reloadReady(page);
 

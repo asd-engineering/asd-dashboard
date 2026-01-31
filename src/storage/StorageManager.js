@@ -1,11 +1,15 @@
 // @ts-check
 /**
- * Centralized manager for loading and saving dashboard state.
- *
+ * IndexedDB-backed StorageManager with warmed cache, migration and validation.
  * @module storage/StorageManager
  */
 
 import { md5Hex } from '../utils/hash.js'
+import { createDriver } from './driver.js'
+import { sanitizeBoards, sanitizeConfig, sanitizeServices } from './validators.js'
+import { busInit, busPost, busOnMessage } from './bus.js'
+import { idbKV, onVersionChange } from './adapters/idbKV.js'
+import { lsKV } from './adapters/lsKV.js'
 import { DEFAULT_CONFIG_TEMPLATE } from './defaultConfig.js'
 import { deepMerge } from '../utils/objectUtils.js'
 import { serviceGetUUID } from '../utils/id.js'
@@ -22,13 +26,125 @@ export const CURRENT_VERSION = 1
  */
 export const APP_STATE_CHANGED = 'appStateChanged'
 
-const KEYS = {
+let kv = lsKV
+const cache = {
+  config: {},
+  boards: [],
+  services: [],
+  meta: { migrated: false }
+}
+
+/**
+ * Track pending writes for flush support.
+ * @type {Promise<void>[]}
+ */
+const pendingWrites = []
+
+/**
+ * Track a write promise and clean it up when done.
+ * @param {Promise<void>} promise
+ */
+function trackWrite (promise) {
+  pendingWrites.push(promise)
+  promise.finally(() => {
+    const idx = pendingWrites.indexOf(promise)
+    if (idx !== -1) {
+      // Removing completed promise from tracking array (returns removed elements, ignored intentionally)
+      const _ = pendingWrites.splice(idx, 1)
+      if (_) { /* noop - suppress unused var */ }
+    }
+  }).catch(() => {}) // Intentional no-op: cleanup runs regardless of resolve/reject
+}
+
+/**
+ * Dispatch an application state change event.
+ * @param {string} reason
+ * @param {object} [detail]
+ * @returns {void}
+ */
+function dispatchChange (reason, detail = {}) {
+  try {
+    window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason, ...detail } }))
+  } catch (e) {
+    console.warn('dispatchChange failed:', e)
+  }
+}
+
+// -- helpers ---------------------------------------------------------------
+/**
+ * Read a value from the meta store.
+ * @param {string} key
+ * @param {any} [def]
+ * @returns {Promise<any>}
+ */
+async function getMeta (key, def = null) {
+  return (await kv.get('meta', key)) ?? def
+}
+/**
+ * Write a value to the meta store and update cache.
+ * @param {string} key
+ * @param {any} val
+ * @returns {Promise<void>}
+ */
+async function setMeta (key, val) {
+  await kv.set('meta', key, val)
+  cache.meta[key] = val
+}
+
+// Legacy localStorage keys
+const LS_KEYS = {
   CONFIG: 'config',
   BOARDS: 'boards',
   SERVICES: 'services',
-  STATES: 'asd-dashboard-state',
+  STATE: 'asd-dashboard-state',
   LAST_BOARD: 'lastUsedBoardId',
   LAST_VIEW: 'lastUsedViewId'
+}
+
+/**
+ * One-time migration from legacy localStorage keys.
+ * @returns {Promise<void>}
+ */
+async function migrateFromLocalStorageIfNeeded () {
+  const already = await getMeta('migrated', false)
+  if (already) return
+
+  let rawCfg = null; let rawBoards = null; let rawSvcs = null; let rawState = null
+  let lastBoardId = null; let lastViewId = null
+  try { rawCfg = JSON.parse(localStorage.getItem(LS_KEYS.CONFIG) || 'null') } catch {}
+  try { rawBoards = JSON.parse(localStorage.getItem(LS_KEYS.BOARDS) || 'null') } catch {}
+  try { rawSvcs = JSON.parse(localStorage.getItem(LS_KEYS.SERVICES) || 'null') } catch {}
+  try { rawState = JSON.parse(localStorage.getItem(LS_KEYS.STATE) || 'null') } catch {}
+  try { lastBoardId = localStorage.getItem(LS_KEYS.LAST_BOARD) } catch {}
+  try { lastViewId = localStorage.getItem(LS_KEYS.LAST_VIEW) } catch {}
+
+  const cfg = sanitizeConfig(rawCfg?.data || rawCfg || {})
+  const boards = sanitizeBoards(rawBoards || cfg.boards || [])
+  const svcs = sanitizeServices(rawSvcs || [])
+
+  if (cfg.boards) delete cfg.boards
+
+  const writes = []
+  if (Object.keys(cfg).length) writes.push(kv.set('config', 'v1', cfg))
+  if (boards.length) writes.push(kv.set('boards', 'v1', boards))
+  if (svcs.length) writes.push(kv.set('services', 'v1', svcs))
+  if (rawState) writes.push(kv.set('state_store', 'v1', rawState))
+  if (writes.length) await Promise.all(writes)
+
+  if (lastBoardId) await setMeta('lastBoardId', lastBoardId)
+  if (lastViewId) await setMeta('lastViewId', lastViewId)
+
+  try {
+    localStorage.removeItem(LS_KEYS.CONFIG)
+    localStorage.removeItem(LS_KEYS.BOARDS)
+    localStorage.removeItem(LS_KEYS.SERVICES)
+    localStorage.removeItem(LS_KEYS.STATE)
+    localStorage.removeItem(LS_KEYS.LAST_BOARD)
+    localStorage.removeItem(LS_KEYS.LAST_VIEW)
+  } catch {}
+
+  await setMeta('migrated', true)
+  await setMeta('migrationAt', new Date().toISOString())
 }
 
 /**
@@ -46,47 +162,285 @@ function mergeWithDefaults (userConfig = {}) {
 }
 
 /**
- * Read and parse JSON value from localStorage.
- * @function jsonGet
- * @param {string} key
- * @param {any|null} [fallback=null]
- * @returns {any}
+ * Populate in-memory cache from persistent stores.
+ * @returns {Promise<void>}
  */
-function jsonGet (key, fallback = null) {
-  const value = localStorage.getItem(key)
-  if (!value) return fallback
-  try {
-    return JSON.parse(value)
-  } catch (_) {
-    return fallback
+async function warmCache () {
+  const cfg = (await kv.get('config', 'v1')) ?? {}
+  const boards = (await kv.get('boards', 'v1')) ?? []
+  const services = (await kv.get('services', 'v1')) ?? []
+  const metaKeys = await kv.keys('meta')
+  cache.config = sanitizeConfig(cfg)
+  cache.boards = sanitizeBoards(boards)
+  cache.services = sanitizeServices(services)
+  cache.config.boards = cache.boards
+  for (const key of metaKeys) {
+    cache.meta[key] = await kv.get('meta', key)
   }
 }
 
 /**
- * Stringify and store value in localStorage.
- * @function jsonSet
- * @param {string} key
+ * Compute byte length of a JSON-serializable object.
  * @param {any} obj
- * @returns {void}
+ * @returns {number}
  */
-function jsonSet (key, obj) {
-  if (obj === undefined || obj === null) {
-    localStorage.removeItem(key)
-  } else {
-    localStorage.setItem(key, JSON.stringify(obj))
+function byteLen (obj) {
+  try { return new TextEncoder().encode(JSON.stringify(obj)).length } catch { return -1 }
+}
+
+/**
+ * Record quota and store size metrics after initialization.
+ * @returns {Promise<void>}
+ */
+async function recordMetricsAfterInit () {
+  if (typeof navigator !== 'undefined' && navigator.storage?.estimate) {
+    try {
+      const est = await navigator.storage.estimate()
+      const quota = { usage: est.usage ?? null, quota: est.quota ?? null }
+      await kv.set('meta', 'quota', quota)
+      cache.meta.quota = quota
+    } catch {}
+  }
+  const sizes = {
+    config: byteLen(cache.config),
+    boards: byteLen(cache.boards),
+    services: byteLen(cache.services),
+    state_store: byteLen((await kv.get('state_store', 'v1')) ?? {})
+  }
+  await kv.set('meta', 'storeSizes', sizes)
+  cache.meta.storeSizes = sizes
+}
+
+/**
+ * Request persistent storage to reduce eviction risk.
+ * Times out after 1 second to avoid blocking initialization in browsers
+ * where this API hangs (e.g., Firefox under Playwright).
+ * @returns {Promise<boolean>}
+ */
+async function requestPersistence () {
+  if (typeof navigator === 'undefined' || !navigator.storage || !navigator.storage.persist) return false
+  try {
+    return await Promise.race([
+      navigator.storage.persist(),
+      new Promise(resolve => setTimeout(() => resolve(false), 1000))
+    ])
+  } catch { return false }
+}
+
+// -- API ------------------------------------------------------------------
+export const StorageManager = {
+  /**
+   * Initialize storage layer, perform migration and warm the cache.
+   * @function init
+   * @param {{persist?:boolean, forceLocal?:boolean}} [opts]
+   * @returns {Promise<void>}
+   */
+  async init (opts = { persist: true, forceLocal: false }) {
+    try {
+      kv = createDriver(!!opts.forceLocal)
+      await migrateFromLocalStorageIfNeeded()
+      await warmCache()
+    } catch (e) {
+      kv = lsKV
+      await warmCache()
+      await setMeta('driver', 'localStorage')
+      await recordMetricsAfterInit()
+      dispatchChange('driver-fallback', { driver: 'localStorage' })
+      busInit()
+      return
+    }
+    if (opts.persist) await requestPersistence()
+    await setMeta('driver', kv === idbKV ? 'idb' : 'localStorage')
+    await recordMetricsAfterInit()
+    busInit()
+    busOnMessage(async m => {
+      if (!m || m.type !== 'STORE_UPDATED') return
+      const store = m.store
+      if (store === 'config') {
+        const cfg = (await kv.get('config', 'v1')) ?? {}
+        cache.config = sanitizeConfig(cfg)
+        cache.config.boards = cache.boards
+        dispatchChange('remote-update:config', { store: 'config' })
+      } else if (store === 'boards') {
+        const boards = (await kv.get('boards', 'v1')) ?? []
+        cache.boards = sanitizeBoards(boards)
+        cache.config.boards = cache.boards
+        dispatchChange('remote-update:boards', { store: 'boards' })
+      } else if (store === 'services') {
+        const services = (await kv.get('services', 'v1')) ?? []
+        cache.services = sanitizeServices(services)
+        dispatchChange('remote-update:services', { store: 'services' })
+      } else if (store === 'state_store') {
+        dispatchChange('remote-update:state_store', { store: 'state_store' })
+      }
+    })
+    if (kv === idbKV) {
+      onVersionChange(async () => {
+        const { lsKV } = await import('./adapters/lsKV.js')
+        kv = lsKV
+        await setMeta('driver', 'localStorage')
+        dispatchChange('driver-fallback', { driver: 'localStorage' })
+      })
+    }
+  },
+
+  // ---- Config ----
+  getConfig () {
+    return cache.config
+  },
+  setConfig (cfg) {
+    const merged = mergeWithDefaults(cfg)
+    const sanitized = sanitizeConfig(merged)
+    const boards = sanitizeBoards(sanitized.boards || [])
+    delete sanitized.boards
+    cache.config = sanitized
+    cache.boards = boards
+    cache.config.boards = boards
+    trackWrite(kv.set('config', 'v1', sanitized).catch(() => {}))
+    trackWrite(kv.set('boards', 'v1', boards).catch(() => {}))
+    busPost({ type: 'STORE_UPDATED', store: 'config', at: Date.now() })
+    busPost({ type: 'STORE_UPDATED', store: 'boards', at: Date.now() })
+    dispatchChange('update:config', { store: 'config' })
+  },
+  updateConfig (updater) {
+    const cfg = StorageManager.getConfig()
+    updater(cfg)
+    StorageManager.setConfig({ ...cfg })
+  },
+
+  // ---- Boards ----
+  getBoards () {
+    return cache.boards
+  },
+  setBoards (boards) {
+    const sanitized = sanitizeBoards(boards)
+    cache.boards = sanitized
+    cache.config.boards = sanitized
+    trackWrite(kv.set('boards', 'v1', sanitized).catch(() => {}))
+    busPost({ type: 'STORE_UPDATED', store: 'boards', at: Date.now() })
+    dispatchChange('update:boards', { store: 'boards' })
+  },
+  updateBoards (updater) {
+    const boards = StorageManager.getBoards()
+    const result = updater(boards)
+    // If updater returns an array, use that; otherwise use the mutated boards array
+    StorageManager.setBoards(Array.isArray(result) ? result : boards)
+  },
+
+  // ---- Services ----
+  getServices () {
+    return cache.services
+  },
+
+  setServices (services) {
+    const config = this.getConfig()
+    // Fall back to DEFAULT_CONFIG_TEMPLATE.serviceTemplates when config is empty/missing templates
+    const templates = (config.serviceTemplates && Object.keys(config.serviceTemplates).length > 0)
+      ? config.serviceTemplates
+      : DEFAULT_CONFIG_TEMPLATE.serviceTemplates
+
+    const resolvedAndNormalizedServices = services.map(rawService => {
+      const templateName = rawService.template || 'default'
+      const baseTemplate = templates[templateName] || templates.default || {}
+
+      const mergedService = deepMerge(baseTemplate, rawService)
+
+      return {
+        ...mergedService,
+        id: mergedService.id || serviceGetUUID(),
+        name: mergedService.name || 'Unnamed Service',
+        url: mergedService.url || '',
+        type: mergedService.type || 'iframe',
+        template: templateName,
+        category: mergedService.category || '',
+        subcategory: mergedService.subcategory || '',
+        tags: Array.isArray(mergedService.tags) ? mergedService.tags : [],
+        config: typeof mergedService.config === 'object' && mergedService.config ? mergedService.config : {},
+        // THIS IS THE FIX: Properly fall back to null if not defined anywhere.
+        maxInstances: typeof mergedService.maxInstances === 'number' ? mergedService.maxInstances : null
+      }
+    })
+
+    const sanitized = sanitizeServices(resolvedAndNormalizedServices)
+    cache.services = sanitized
+    trackWrite(kv.set('services', 'v1', sanitized).catch(() => {}))
+    busPost({ type: 'STORE_UPDATED', store: 'services', at: Date.now() })
+    dispatchChange('update:services', { store: 'services' })
+  },
+
+  // ---- State store ----
+  async loadStateStore () {
+    return (await kv.get('state_store', 'v1')) ?? { version: CURRENT_VERSION, states: [] }
+  },
+  async saveStateStore (store) {
+    await kv.set('state_store', 'v1', store)
+    busPost({ type: 'STORE_UPDATED', store: 'state_store', at: Date.now() })
+    dispatchChange('update:state_store', { store: 'state_store' })
+  },
+  async saveStateSnapshot ({ name, type, cfg, svc }) {
+    const store = await StorageManager.loadStateStore()
+    const { store: updated, md5 } = upsertSnapshotByMd5(store, { name, type, cfg, svc })
+    await StorageManager.saveStateStore(updated)
+    return md5
+  },
+
+  // ---- Misc ----
+  misc: {
+    getLastBoardId () { return cache.meta.lastBoardId ?? null },
+    setLastBoardId (id) { cache.meta.lastBoardId = id ?? null; kv.set('meta', 'lastBoardId', id ?? null).catch(() => {}) },
+    getLastViewId () { return cache.meta.lastViewId ?? null },
+    setLastViewId (id) { cache.meta.lastViewId = id ?? null; kv.set('meta', 'lastViewId', id ?? null).catch(() => {}) },
+    getItem (key) { return cache.meta[key] ?? null },
+    setItem (key, value) { cache.meta[key] = value; kv.set('meta', key, value).catch(() => {}) }
+  },
+
+  // ---- Utilities ----
+  /**
+   * Wait for all pending IndexedDB writes to complete.
+   * @returns {Promise<void>}
+   */
+  async flush () {
+    if (pendingWrites.length > 0) {
+      await Promise.all(pendingWrites)
+    }
+  },
+  async clearAll () {
+    await Promise.all([
+      kv.clear('config'),
+      kv.clear('boards'),
+      kv.clear('services'),
+      kv.clear('state_store'),
+      kv.del('meta', 'lastBoardId'),
+      kv.del('meta', 'lastViewId')
+    ])
+    cache.config = {}
+    cache.boards = []
+    cache.services = []
+    cache.meta.lastBoardId = null
+    cache.meta.lastViewId = null
+  },
+  async clearAllExceptState () {
+    await Promise.all([
+      kv.clear('config'),
+      kv.clear('boards'),
+      kv.clear('services'),
+      kv.del('meta', 'lastBoardId'),
+      kv.del('meta', 'lastViewId')
+    ])
+    cache.config = {}
+    cache.boards = []
+    cache.services = []
+    cache.meta.lastBoardId = null
+    cache.meta.lastViewId = null
+  },
+  async clearStateStore () {
+    await kv.set('state_store', 'v1', { version: CURRENT_VERSION, states: [] })
   }
 }
 
-/** @typedef {import('../types.js').DashboardConfig} DashboardConfig */
-/** @typedef {import('../types.js').Board} Board */
-/** @typedef {import('../types.js').Service} Service */
-
+// --- Snapshot helper -----------------------------------------------------
 /**
  * Insert or update a snapshot in the state store based on MD5 hash.
- *
- * If a snapshot with the same MD5 exists its timestamp is refreshed and it is
- * moved to the front of the list. Optionally updates the name when provided.
- *
  * @function upsertSnapshotByMd5
  * @param {{version:number,states:Array}} store
  * @param {{name:string,type:string,cfg:string,svc:string}} snap
@@ -97,7 +451,6 @@ export function upsertSnapshotByMd5 (store, { name, type, cfg, svc }) {
   const list = Array.isArray(store.states) ? store.states : []
   const idx = list.findIndex(s => s.md5 === md5)
   const ts = Date.now()
-
   if (idx !== -1) {
     const existing = list[idx]
     existing.ts = ts
@@ -108,298 +461,6 @@ export function upsertSnapshotByMd5 (store, { name, type, cfg, svc }) {
     }
     return { store, md5, updated: true }
   }
-
   list.unshift({ name, type, md5, cfg, svc, ts })
   return { store, md5, updated: false }
 }
-
-/**
- * Singleton API for storing and retrieving dashboard data.
- */
-const StorageManager = {
-  /**
-   * Get the persisted dashboard configuration.
-   * @function getConfig
-   * @returns {DashboardConfig|null}
-   */
-  getConfig () {
-    const stored = jsonGet(KEYS.CONFIG, null)
-    // Fallback to legacy unwrapped format
-    const cfg = stored?.data || stored
-    if (!cfg || typeof cfg !== 'object') return { ...DEFAULT_CONFIG_TEMPLATE }
-    return mergeWithDefaults(cfg)
-  },
-
-  /**
-   * Persist the dashboard configuration.
-   * @function setConfig
-   * @param {DashboardConfig} cfg
-   * @returns {void}
-   */
-  setConfig (cfg /* DashboardConfig */) {
-    // jsonSet(KEYS.CONFIG, { version: CURRENT_VERSION, data: cfg })
-    jsonSet(KEYS.CONFIG, {
-      version: CURRENT_VERSION,
-      data: mergeWithDefaults(cfg)
-    })
-    window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason: 'config' } }))
-  },
-
-  /**
-   * Atomically update the dashboard configuration.
-   * @function updateConfig
-   * @param {(cfg: DashboardConfig) => void} updater
-   * @returns {void}
-   */
-  updateConfig (updater) {
-    const cfg = StorageManager.getConfig()
-    updater(cfg)
-    StorageManager.setConfig(cfg)
-  },
-
-  /**
-   * Retrieve stored boards array.
-   * @function getBoards
-   * @returns {Array<Board>}
-   */
-  getBoards () {
-    return Array.isArray(StorageManager.getConfig().boards)
-      ? StorageManager.getConfig().boards
-      : []
-  },
-
-  /**
-   * Persist the provided boards array.
-   * @function setBoards
-   * @param {Array<Board>} boards
-   * @returns {void}
-   */
-  setBoards (boards) {
-    StorageManager.updateConfig(cfg => { cfg.boards = Array.isArray(boards) ? boards : [] })
-  },
-
-  /**
-   * Atomically update boards via callback.
-   * @function updateBoards
-   * @param {(boards: Array<Board>) => Array<Board>|void} updater
-   * @returns {void}
-   */
-  updateBoards (updater) {
-    StorageManager.updateConfig(cfg => {
-      const result = updater(Array.isArray(cfg.boards) ? cfg.boards : [])
-      if (Array.isArray(result)) cfg.boards = result
-    })
-  },
-
-  /**
-   * Retrieve stored services array.
-   * @function getServices
-   * @returns {Array<Service>}
-   */
-  getServices () {
-    return jsonGet(KEYS.SERVICES, [])
-  },
-
-  /**
-   * Persist the provided services array after resolving templates and normalizing.
-   * @function setServices
-   * @param {Array<Service>} services
-   * @returns {void}
-   */
-  setServices (services) {
-    // 1. Get the current config to access the service templates
-    const config = this.getConfig() // 'this' refers to the StorageManager singleton
-    const templates = config.serviceTemplates || {}
-
-    const resolvedAndNormalizedServices = services.map(rawService => {
-      // 2. Apply the appropriate template to get a fully resolved service object
-      const templateName = rawService.template || 'default'
-      const baseTemplate = templates[templateName] || templates.default || {}
-      const mergedService = deepMerge(baseTemplate, rawService)
-
-      // 3. Normalize the resolved object to guarantee essential fields
-      return {
-        ...mergedService, // Start with the fully merged object
-        id: mergedService.id || serviceGetUUID(),
-        name: mergedService.name || 'Unnamed Service',
-        url: mergedService.url || '',
-        type: mergedService.type || 'iframe',
-        category: mergedService.category || '',
-        subcategory: mergedService.subcategory || '',
-        tags: Array.isArray(mergedService.tags) ? mergedService.tags : [],
-        config: mergedService.config || {},
-        maxInstances: mergedService.maxInstances !== undefined ? mergedService.maxInstances : null
-      }
-    })
-
-    jsonSet(KEYS.SERVICES, resolvedAndNormalizedServices)
-    window.dispatchEvent(new CustomEvent(APP_STATE_CHANGED, { detail: { reason: 'services' } }))
-  },
-
-  /**
-  * Load and return the entire state store.
-  * @function loadStateStore
-   * @returns {Promise<{version:number,states:Array}>}
-   */
-  async loadStateStore () {
-    const store = jsonGet(KEYS.STATES, { version: CURRENT_VERSION, states: [] })
-    if (!('version' in store)) store.version = CURRENT_VERSION
-    return store
-  },
-
-  /**
-   * Persist the entire state store object.
-   * @function saveStateStore
-   * @param {{version:number,states:Array}} store
-   * @returns {Promise<void>}
-   */
-  async saveStateStore (store) { jsonSet(KEYS.STATES, store) },
-
-  /**
-  * Save the current state snapshot.
-  * @function saveStateSnapshot
-   * @param {{name:string,type:string,cfg:string,svc:string}} snapshot
-  * @returns {Promise<string>} Hash of the snapshot
-  */
-  async saveStateSnapshot ({ name, type, cfg, svc }) {
-    const store = await StorageManager.loadStateStore()
-    const { store: updated, md5 } = upsertSnapshotByMd5(store, { name, type, cfg, svc })
-    await StorageManager.saveStateStore(updated)
-    return md5
-  },
-
-  /**
-  * Remove all persisted data.
-  * @function clearAll
-  * @returns {void}
-  */
-  clearAll () {
-    Object.values(KEYS).forEach(key => localStorage.removeItem(key))
-  },
-
-  /**
-   * Remove persisted config, boards, services and last used ids while keeping saved states.
-   * @function clearAllExceptState
-   * @returns {void}
-   */
-  clearAllExceptState () {
-    [KEYS.CONFIG, KEYS.BOARDS, KEYS.SERVICES, KEYS.LAST_BOARD, KEYS.LAST_VIEW].forEach(key => localStorage.removeItem(key))
-  },
-
-  /**
-   * Reset the state store to an empty list.
-   * @function clearStateStore
-   * @returns {Promise<void>}
-   */
-  async clearStateStore () {
-    await StorageManager.saveStateStore({ version: CURRENT_VERSION, states: [] })
-  },
-
-  /**
-   * Miscellaneous helpers for simple string keys.
-   */
-  misc: {
-    /**
-     * Retrieve the last used board id.
-     * @function getLastBoardId
-     * @returns {string|null}
-     */
-    getLastBoardId () {
-      return localStorage.getItem(KEYS.LAST_BOARD)
-    },
-
-    /**
-     * Persist the last used board id.
-     * @function setLastBoardId
-     * @param {string|null} id
-     * @returns {void}
-     */
-    setLastBoardId (id) {
-      if (id) localStorage.setItem(KEYS.LAST_BOARD, id)
-      else localStorage.removeItem(KEYS.LAST_BOARD)
-    },
-
-    /**
-     * Retrieve the last used view id.
-     * @function getLastViewId
-     * @returns {string|null}
-     */
-    getLastViewId () {
-      return localStorage.getItem(KEYS.LAST_VIEW)
-    },
-
-    /**
-     * Persist the last used view id.
-     * @function setLastViewId
-     * @param {string|null} id
-     * @returns {void}
-     */
-    setLastViewId (id) {
-      if (id) localStorage.setItem(KEYS.LAST_VIEW, id)
-      else localStorage.removeItem(KEYS.LAST_VIEW)
-    },
-
-    /**
-     * Retrieve a raw string value from localStorage.
-     *
-     * @function getItem
-     * @param {string} key
-     * @returns {string|null}
-     */
-    getItem (key) {
-      return localStorage.getItem(key)
-    },
-
-    /**
-     * Persist a raw string value under a custom key.
-     *
-     * @function setItem
-     * @param {string} key
-     * @param {string|null} value
-     * @returns {void}
-     */
-    setItem (key, value) {
-      if (value === null || value === undefined) {
-        localStorage.removeItem(key)
-      } else {
-        localStorage.setItem(key, String(value))
-      }
-    },
-
-    /**
-     * Get all JSON-parsable items from localStorage.
-     *
-     * @function getAllJson
-     * @returns {Record<string, any>}
-     */
-    getAllJson () {
-      const data = {}
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i)
-        if (!key) continue
-        const value = localStorage.getItem(key)
-        try {
-          data[key] = JSON.parse(value)
-        } catch {
-          // ignore unparsable entries
-        }
-      }
-      return data
-    },
-
-    /**
-     * Persist an object of key/value pairs as JSON strings.
-     *
-     * @function setJsonRecord
-     * @param {Record<string, any>} record
-     * @returns {void}
-     */
-    setJsonRecord (record) {
-      for (const key in record) {
-        localStorage.setItem(key, JSON.stringify(record[key]))
-      }
-    }
-  }
-}
-
-export default StorageManager

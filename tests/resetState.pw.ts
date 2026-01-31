@@ -11,7 +11,7 @@ import { navigate, getConfigBoards, getServices } from './shared/common'
 
   test('preserves snapshots and allows wiping state store', async ({ page }) => {
     await page.evaluate(async () => {
-      const { default: sm } = await import('/storage/StorageManager.js')
+      const { StorageManager: sm } = await import('/storage/StorageManager.js')
       sm.setConfig({ boards: [{ id: 'b1', name: 'B1', views: [] }, { id: 'b2', name: 'B2', views: [] }] })
       sm.setServices([{ name: 'svc1', url: '' }] as any)
       await sm.saveStateSnapshot({ name: 'snap', type: 'manual', cfg: 'a', svc: 'b' })
@@ -21,11 +21,15 @@ import { navigate, getConfigBoards, getServices } from './shared/common'
       expect(dialog.message()).toContain('keep saved states')
       dialog.accept()
     })
-    
+
+    // Reset triggers a page reload - wait for it properly
     await Promise.all([
-      page.click('#reset-button'),
-      page.waitForLoadState('networkidle')
+      page.waitForEvent('load', { timeout: 10000 }),
+      page.click('#reset-button')
     ])
+
+    // Wait for app to be ready after reload
+    await page.waitForSelector('body[data-ready="true"]', { timeout: 10000 })
 
     const boards = await getConfigBoards(page)
     expect(boards.some(b => b.id === 'b2')).toBeFalsy()

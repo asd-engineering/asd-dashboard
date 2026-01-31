@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures'
 import { routeServicesConfig } from './shared/mocking'
 import { navigate, addServices, clickFlyoutAction } from './shared/common'
-import { openCreateFromTopMenu, ensurePanelOpen } from './shared/panels'
+import { openCreateFromTopMenu, ensurePanelOpen, hoverPanelItem } from './shared/panels'
 import { enableUITestMode } from './shared/uiHelpers';
 
 test.describe('Board panel', () => {
@@ -23,7 +23,7 @@ test.describe('Board panel', () => {
     const panel = page.locator('[data-testid="board-panel"]')
     await ensurePanelOpen(page, 'board-panel')
     const row = panel.locator('.panel-item').first()
-    await row.hover()
+    await hoverPanelItem(page, row)
     await expect(row.locator('.panel-item-actions-flyout')).toBeVisible()
     await expect(row.locator('[data-item-action="navigate"]')).toHaveCount(0)
     await expect(row.locator('[data-item-action="delete"]')).toHaveText('❌')
@@ -34,7 +34,7 @@ test.describe('Board panel', () => {
     await ensurePanelOpen(page, 'board-panel')
     const first = panel.locator('.panel-item').first()
     await expect(first).toHaveAttribute('aria-label', /^Switch:/)
-    await first.hover()
+    await hoverPanelItem(page, first)
     await expect(first.locator('.panel-item-hint')).toHaveText('Click to switch')
   })
 
