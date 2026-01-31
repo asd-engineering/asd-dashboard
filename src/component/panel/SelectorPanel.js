@@ -80,6 +80,7 @@ function hasReset (a) {
  */
 export class SelectorPanel {
   /**
+   * Creates an instance of SelectorPanel.
    * @param {SelectorPanelCfg} cfg
    */
   constructor (cfg) {
@@ -449,20 +450,30 @@ export class SelectorPanel {
     }
   }
 
-  /** Dispatch selection */
+  /**
+   * Dispatch selection
+   * @param {string} id The ID of the selected item.
+   */
   dispatchSelect (id) {
     this.dom.wrap.dispatchEvent(new CustomEvent('selector:select', { bubbles: true, composed: true, detail: { id } }))
     if (typeof this.cfg.onSelect === 'function') this.cfg.onSelect(id)
   }
 
-  /** Dispatch top-level action */
+  /**
+   * Dispatch top-level action
+   * @param {string} action The key of the action to dispatch.
+   */
   dispatchAction (action) {
     const ctx = this.cfg.context ? this.cfg.context() : null
     this.dom.wrap.dispatchEvent(new CustomEvent('selector:action', { bubbles: true, composed: true, detail: { action, context: ctx } }))
     if (typeof this.cfg.onAction === 'function') this.cfg.onAction(action, ctx)
   }
 
-  /** Dispatch per-item action */
+  /**
+   * Dispatch per-item action
+   * @param {string} action The key of the item action.
+   * @param {string} id The ID of the item.
+   */
   dispatchItemAction (action, id) {
     const ctx = this.cfg.context ? this.cfg.context() : null
     this.dom.wrap.dispatchEvent(new CustomEvent('selector:item-action', { bubbles: true, composed: true, detail: { action, id, context: ctx } }))

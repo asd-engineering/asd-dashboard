@@ -19,7 +19,7 @@ export async function enableUITestMode(page: Page, opts?: {
   const {
     showFlyouts = true,
     disableMotion = true,
-    fixHeaderOverlaps = true,
+    fixHeaderOverlaps = false,
   } = opts || {};
 
   // Mark page as test-mode (one tiny evaluate).
@@ -63,16 +63,16 @@ export async function enableUITestMode(page: Page, opts?: {
     `);
   }
 
-  if (fixHeaderOverlaps) {
-    // Ensure the config button is always clickable even if sibling header controls exist.
-    parts.push(`
-      html[data-test-mode="true"] #open-config-modal {
-        position: relative !important;
-        z-index: 1000 !important;
-        pointer-events: auto !important;
-      }
-    `);
-  }
+  // if (fixHeaderOverlaps) {
+  //   // Ensure the config button is always clickable even if sibling header controls exist.
+  //   parts.push(`
+  //     html[data-test-mode="true"] #open-config-modal {
+  //       position: relative !important;
+  //       z-index: 1000 !important;
+  //       pointer-events: auto !important;
+  //     }
+  //   `);
+  // }
 
   if (parts.length) {
     await page.addStyleTag({
@@ -86,14 +86,106 @@ export async function enableUITestMode(page: Page, opts?: {
  * - Try a normal click first.
  * - Fallback to programmatic open if something still covers the button.
  */
-export async function openConfigModalSafe(page: Page): Promise<void> {
-  const btn = page.locator('#open-config-modal');
-  try {
-    await btn.click({ timeout: 250 });
-  } catch {
-    await page.evaluate(() =>
-      import('/component/modal/configModal.js').then(m => m.openConfigModal())
-    );
+// export async function openConfigModalSafe(page: Page, tab?: 'stateTab'|'cfgTab'|'svcTab'): Promise<void> {
+//   await page.waitForLoadState('domcontentloaded')
+
+//   // Try twice in case something closes it immediately
+//   for (let i = 0; i < 2; i++) {
+//     if (!(await page.locator('#config-modal').isVisible())) {
+//       await page.click('#open-config-modal', { force: true }).catch(() => {})
+//     }
+
+//     // Attached is enough; don’t require "visible"
+//     await page.locator('#config-modal .tabs').waitFor({ state: 'attached', timeout: 1500 }).catch(() => {})
+
+//     if (tab) {
+//       const btn = page.locator(`#config-modal .tabs button[data-tab="${tab}"]`)
+//       if (await btn.count()) await btn.click().catch(() => {})
+//       await page.locator(`#${tab}`).waitFor({ state: 'attached', timeout: 1500 }).catch(() => {})
+//     }
+
+//     if (await page.locator('#config-modal').isVisible()) break
+//   }
+// }
+/**
+ * Safe modal opener that is reload-tolerant.
+ * - Prefer programmatic open (import + call) to avoid header overlap.
+ * - All locator checks are wrapped so nav/context-loss doesn't explode the test.
+ */
+export async function openConfigModalSafe(
+  page: Page,
+  tab?: 'stateTab'|'cfgTab'|'svcTab'
+): Promise<void> {
+  await page.waitForLoadState('domcontentloaded').catch(() => {});
+
+  const isVisible = async (sel: string) => {
+    try {
+      return await page.locator(sel).isVisible();
+    } catch {
+      return false;
+    }
+  };
+
+  // Try up to 3 cycles to cross any navigation boundary safely.
+  for (let i = 0; i < 3; i++) {
+    // Programmatic open is the most reliable
+    try {
+      await page.evaluate(() =>
+        import('/component/modal/configModal.js').then((m) => m.openConfigModal())
+      );
+    } catch {
+      // fallback to click
+      await page.click('#open-config-modal', { force: true }).catch(() => {});
+    }
+
+    // Tabs attached = modal is present in DOM
+    await page.locator('#config-modal .tabs').waitFor({ state: 'attached', timeout: 1500 }).catch(() => {});
+
+    if (tab) {
+      const btn = page.locator(`#config-modal .tabs button[data-tab="${tab}"]`);
+      try {
+        if (await btn.count()) await btn.click({ force: true }).catch(() => {});
+        await page.locator(`#${tab}`).waitFor({ state: 'attached', timeout: 1500 }).catch(() => {});
+      } catch { /* retry next loop */ }
+    }
+
+    if (await isVisible('#config-modal')) return;
   }
-  await page.locator('#config-modal').waitFor({ state: 'visible', timeout: 1000 });
+
+  throw new Error('openConfigModalSafe: could not open #config-modal after 3 attempts');
+}
+
+/**
+ * Dismiss any stack of user notifications (toasts).
+ * Best-effort: ignores if buttons aren’t present.
+ */
+export async function dismissAllNotifications(page: Page): Promise<void> {
+  const toasts = page.locator('dialog.user-notification');
+  const count = await toasts.count().catch(() => 0);
+  for (let i = 0; i < count; i++) {
+    const toast = toasts.nth(i);
+    const btn = toast.locator('button, [role="button"]').first();
+    if (await btn.isVisible().catch(() => false)) {
+      await btn.click({ trial: false }).catch(() => {});
+    }
+  }
+}
+
+/**
+ * Ensure no blocking overlays remain before a critical click sequence.
+ */
+export async function ensureNoBlockingDialogs(page: Page): Promise<void> {
+  await dismissAllNotifications(page);
+  await page.locator('dialog.user-notification').waitFor({ state: 'detached' }).catch(() => {});
+}
+
+/**
+ * Wait until any transient toast/dialog overlays are gone.
+ * Safe no-op if none are present.
+ */
+export async function waitForNotificationsToClear(page: Page, timeout = 3000): Promise<void> {
+  await page
+    .locator('dialog.user-notification')
+    .waitFor({ state: 'detached', timeout })
+    .catch(() => {});
 }

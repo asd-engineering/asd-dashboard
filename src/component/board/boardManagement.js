@@ -8,7 +8,7 @@ import { addWidget } from '../widget/widgetManagement.js'
 import { widgetStore } from '../widget/widgetStore.js'
 import { Logger } from '../../utils/Logger.js'
 import { boardGetUUID, viewGetUUID } from '../../utils/id.js'
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { saveWidgetState } from '../../storage/widgetStatePersister.js'
 
@@ -130,35 +130,48 @@ export async function switchView (boardId = getCurrentBoardId(), viewId) {
   }
 
   const board = StorageManager.getBoards().find(b => b.id === boardId)
-  const view = board?.views.find(v => v.id === viewId)
-  if (!view) return logger.warn(`Invalid view ${viewId} on board ${boardId}`)
+  if (!board) return
+  const view = board.views.find(v => v.id === viewId)
+  if (!view) return
 
-  document.querySelector('.board-view').id = viewId
+  logger.log('switchView', { boardId, viewId })
 
+  // CAPACITY CHECK *BEFORE* instantiating any missing widgets or hiding current ones.
+  const missing = view.widgetState.filter(w => !widgetStore.has(w.dataid))
+  const proceed = await widgetStore.confirmCapacity(missing.length)
+  if (!proceed) return // user cancelled eviction; do not navigate or mutate storage
+
+  // Now safe to switch the DOM id for the view
+  const boardViewEl = document.querySelector('.board-view')
+  if (boardViewEl) boardViewEl.id = viewId
+
+  // Hide widgets not in target view (runtime only)
   const activeIds = new Set(view.widgetState.map(w => w.dataid))
-
   for (const id of widgetStore.widgets.keys()) {
     if (!activeIds.has(id)) {
       widgetStore.hide(id)
     }
   }
 
+  // Show existing and create missing (skip capacity inside addWidget since we already confirmed)
   for (const widget of view.widgetState) {
     if (widgetStore.has(widget.dataid)) {
       widgetStore.show(widget.dataid)
     } else {
       await addWidget(
         widget.url,
-        Number(widget.columns),
-        Number(widget.rows),
+        widget.columns != null ? Number(widget.columns) : undefined,
+        widget.rows != null ? Number(widget.rows) : undefined,
         widget.type,
         boardId,
         viewId,
-        widget.dataid
+        widget.dataid,
+        { skipCapacity: true }
       )
     }
   }
 
+  // Persist current view selection (metadata-only)
   StorageManager.misc.setLastViewId(viewId)
 }
 

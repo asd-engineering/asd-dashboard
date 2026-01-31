@@ -15,10 +15,14 @@ body > main {
   height: 100%;
   /* main scrolbar */
   overflow: auto;
-  margin: 0; 
+  margin: 0;
+}
+main {
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
-body { 
+body {
   overflow: hidden;
 }
 
@@ -40,8 +44,116 @@ menu::before {
   display: block;
   width: 34px;
   height: 36px;
-  background: url("/assets/asd.png") center/contain no-repeat;
+  background: var(--logo-url) center/contain no-repeat;
   padding: 20px;
 }
 
-main { margin-right: 15px; }
+/* Smooth background/text transition on theme flip */
+html {
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+/* Ensure typography inherits the theme text color everywhere */
+html, body {
+  color: var(--color-text);
+}
+
+/* Labels, small hints, placeholders map to weak text */
+label, small, .hint, .subtle {
+  color: var(--color-text-weak);
+}
+
+/* === THEME-AWARE FORM CONTROLS === */
+input[type="text"],
+input[type="search"],
+input[type="url"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="time"],
+input[type="date"],
+input[type="datetime-local"],
+textarea,
+select {
+  background: var(--control-bg);
+  color: var(--control-fg);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-2);
+  padding: 6px 8px;
+  box-shadow: var(--shadow-1);
+  outline: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--control-placeholder);
+  opacity: 1;
+}
+
+/* Focus treatment */
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--control-focus-ring);
+}
+
+/* Disabled/read-only */
+input[disabled],
+textarea[disabled],
+select[disabled],
+input[readonly],
+textarea[readonly] {
+  background: var(--color-soft);
+  color: var(--color-text-weak);
+  border-color: var(--color-border);
+}
+
+/* Buttons */
+button {
+  background: var(--color-elevated);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2);
+  padding: 6px 10px;
+  box-shadow: var(--shadow-1);
+}
+
+button.primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+/* Autofill fix to avoid bright fields in dark mode */
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: var(--control-fg);
+  transition: background-color 9999s ease-out 0s;
+  box-shadow: 0 0 0px 1000px var(--control-bg) inset;
+}
+
+/* Global scrollbar styling (Firefox) */
+* {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin; /* auto | thin | none */
+}
+
+/* Global scrollbar styling (WebKit: Chrome, Edge, Safari) */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px; /* horizontal bars */
+}
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 8px;
+  border: 2px solid var(--scrollbar-track); /* adds padding illusion */
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}

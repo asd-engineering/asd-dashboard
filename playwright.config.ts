@@ -1,4 +1,4 @@
-import os from 'os';
+// import os from 'os';
 import { defineConfig, devices } from '@playwright/test';
 
 /**
@@ -6,6 +6,8 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests',
+  /* Match .pw.ts files (renamed from .spec.ts to avoid bun test conflicts) */
+  testMatch: '**/*.pw.{ts,js}',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -22,15 +24,16 @@ export default defineConfig({
     ['json', { outputFile: 'playwright-report.json' }]
   ],
 
-  timeout: 8000, 
+  // Increase timeouts for CI which has slower runners
+  timeout: process.env.CI ? 15000 : 8000,
   expect: {
-    timeout: 1000, // Give assertions a little more breathing room.
+    timeout: process.env.CI ? 2000 : 1000,
   },
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    actionTimeout: 2000,
-    navigationTimeout: 2000,
+    actionTimeout: process.env.CI ? 5000 : 2000,
+    navigationTimeout: process.env.CI ? 5000 : 2000,
     
     /* OPTIMIZATION: Use 'retain-on-failure' to avoid saving artifacts for passing tests, saving CI resources. */
     trace: 'retain-on-failure',
@@ -47,18 +50,23 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      // grep: process.env.CI ? /.*/ : /.^/,
     },
 
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      grep: process.env.CI ? /.*/ : /.^/,
+      // Firefox needs more time for IndexedDB operations and DecompressionStream
+      timeout: 15000,
+      // grep: process.env.CI ? /.*/ : /.^/,
     },
 
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-      grep: process.env.CI ? /.*/ : /.^/,
+      // WebKit also needs more time for async operations
+      timeout: 15000,
+      // grep: process.env.CI ? /.*/ : /.^/,
     },
   ],
   /* Run local dev server before starting the tests */

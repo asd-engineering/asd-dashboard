@@ -6,7 +6,7 @@
  * @module storage/widgetStatePersister
  */
 import { Logger } from '../utils/Logger.js'
-import StorageManager from './StorageManager.js'
+import { StorageManager } from './StorageManager.js'
 import { getCurrentBoardId, getCurrentViewId } from '../utils/elements.js'
 
 const logger = new Logger('widgetStatePersister.js')

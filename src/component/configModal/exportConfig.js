@@ -7,13 +7,14 @@
 import { showNotification } from '../dialog/notification.js'
 import { encodeConfig } from '../../utils/compression.js'
 import { Logger } from '../../utils/Logger.js'
-import StorageManager from '../../storage/StorageManager.js'
+import { StorageManager } from '../../storage/StorageManager.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 import { minimizeDeep } from '../../utils/minimizer.js'
 import { splitIntoParams, formatChunksManifest } from '../../utils/chunker.js'
 import { computeCRC32Hex } from '../../utils/checksum.js'
 import { applyKeyMap } from '../../utils/keymap.js'
 import { DEFAULT_CONFIG_TEMPLATE } from '../../storage/defaultConfig.js'
+import { KEY_MAP } from '../../utils/fragmentKeyMap.js'
 import {
   FRAG_DEFAULT_ALGO,
   FRAG_MINIMIZE_ENABLED,
@@ -22,43 +23,6 @@ import {
 } from '../../utils/fragmentConstants.js'
 
 const logger = new Logger('exportConfig.js')
-
-// Reversible key map: map long property names to short tokens.
-// Populate this map to reduce URL size further.
-/** @type {Record<string,string>} */
-const KEY_MAP = {
-  v: 'version',
-  n: 'name',
-  i: 'id',
-  t: 'type',
-  u: 'url',
-  c: 'config',
-  S: 'settings',
-  d: 'data',
-  st: 'state',
-  p: 'params',
-  o: 'options',
-  ds: 'description',
-  b: 'board',
-  B: 'boards',
-  vw: 'view',
-  V: 'views',
-  si: 'serviceId',
-  sv: 'service',
-  s: 'services',
-  wi: 'widgetId',
-  wg: 'widget',
-  w: 'widgets',
-  // extra common keys
-  gs: 'globalSettings',
-  ls: 'localStorage',
-  ws: 'widgetState',
-  c2: 'columns',
-  r2: 'rows',
-  mi: 'maxInstances',
-  or: 'order',
-  di: 'dataid'
-}
 
 // Feature flags and defaults are centralized in fragmentConstants.
 

@@ -1,5 +1,13 @@
 [
   {
+    "name": "__openForTests",
+    "kind": "function",
+    "file": "src/component/menu/widgetSelectorPanel.js",
+    "description": "Open the widget selector panel for automated tests.",
+    "params": [],
+    "returns": "void"
+  },
+  {
     "name": "_ensureLimit",
     "kind": "function",
     "file": "src/component/widget/widgetStore.js",
@@ -103,6 +111,11 @@
         "name": "dataid",
         "type": "string|null",
         "desc": "- An optional persistent identifier for the widget."
+      },
+      {
+        "name": "opts",
+        "type": "{skipCapacity?:boolean}",
+        "desc": "- Optional flags."
       }
     ],
     "returns": "Promise<void>"
@@ -178,6 +191,20 @@
     "returns": "any"
   },
   {
+    "name": "applyTheme",
+    "kind": "function",
+    "file": "src/ui/theme.js",
+    "description": "Apply the given theme by setting a data attribute on <html>. Falls back to 'light' when an unknown value is provided.",
+    "params": [
+      {
+        "name": "theme",
+        "type": "string|undefined|null",
+        "desc": ""
+      }
+    ],
+    "returns": "void"
+  },
+  {
     "name": "applyWidgetMenuVisibility",
     "kind": "function",
     "file": "src/component/menu/dashboardMenu.js",
@@ -238,36 +265,12 @@
     "returns": "boolean"
   },
   {
-    "name": "clearAll",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Remove all persisted data.",
-    "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "clearAllExceptState",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Remove persisted config, boards, services and last used ids while keeping saved states.",
-    "params": [],
-    "returns": "void"
-  },
-  {
     "name": "clearConfigFragment",
     "kind": "function",
     "file": "src/utils/fragmentGuard.js",
     "description": "Remove any `#cfg` or `#svc` fragment from the current URL without triggering a reload.",
     "params": [],
     "returns": "void"
-  },
-  {
-    "name": "clearStateStore",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Reset the state store to an empty list.",
-    "params": [],
-    "returns": "Promise<void>"
   },
   {
     "name": "clearWidgetContainer",
@@ -332,7 +335,13 @@
     "kind": "function",
     "file": "src/component/widget/widgetStore.js",
     "description": "Ensure capacity before adding a widget. Prompts for eviction when full.",
-    "params": [],
+    "params": [
+      {
+        "name": "needed",
+        "type": "number",
+        "desc": "- Number of widgets that will be added."
+      }
+    ],
     "returns": "Promise<boolean>"
   },
   {
@@ -358,6 +367,20 @@
       }
     ],
     "returns": "Promise<Board>"
+  },
+  {
+    "name": "createDriver",
+    "kind": "function",
+    "file": "src/storage/driver.js",
+    "description": "Create a storage driver, preferring IndexedDB unless forced otherwise.",
+    "params": [
+      {
+        "name": "forceLocal",
+        "type": "boolean",
+        "desc": ""
+      }
+    ],
+    "returns": "KV"
   },
   {
     "name": "createResizeOverlay",
@@ -745,14 +768,6 @@
     "returns": "HTMLElement|undefined"
   },
   {
-    "name": "getAllJson",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Get all JSON-parsable items from localStorage.",
-    "params": [],
-    "returns": "Record<string, any>"
-  },
-  {
     "name": "getAuthToken",
     "kind": "function",
     "file": "src/component/widget/utils/fetchData.js",
@@ -761,28 +776,12 @@
     "returns": "string"
   },
   {
-    "name": "getBoards",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Retrieve stored boards array.",
-    "params": [],
-    "returns": "Array<Board>"
-  },
-  {
     "name": "getCallingFunctionName",
     "kind": "function",
     "file": "src/utils/Logger.js",
     "description": "Extracts the function name of the caller (if available) from the stack trace.",
     "params": [],
     "returns": "string"
-  },
-  {
-    "name": "getConfig",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Get the persisted dashboard configuration.",
-    "params": [],
-    "returns": "DashboardConfig|null"
   },
   {
     "name": "getConfig",
@@ -825,36 +824,6 @@
     "returns": "{isImport:boolean, importName:string}"
   },
   {
-    "name": "getItem",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Retrieve a raw string value from localStorage.",
-    "params": [
-      {
-        "name": "key",
-        "type": "string",
-        "desc": ""
-      }
-    ],
-    "returns": "string|null"
-  },
-  {
-    "name": "getLastBoardId",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Retrieve the last used board id.",
-    "params": [],
-    "returns": "string|null"
-  },
-  {
-    "name": "getLastViewId",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Retrieve the last used view id.",
-    "params": [],
-    "returns": "string|null"
-  },
-  {
     "name": "getSelectedBoardId",
     "kind": "function",
     "file": "src/component/board/boardDropdown.js",
@@ -875,14 +844,6 @@
       }
     ],
     "returns": "Promise<string>"
-  },
-  {
-    "name": "getServices",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Retrieve stored services array.",
-    "params": [],
-    "returns": "Array<Service>"
   },
   {
     "name": "getUUID",
@@ -1198,6 +1159,20 @@
     "returns": ""
   },
   {
+    "name": "init",
+    "kind": "function",
+    "file": "src/storage/StorageManager.js",
+    "description": "Initialize storage layer, perform migration and warm the cache.",
+    "params": [
+      {
+        "name": "opts",
+        "type": "{persist?:boolean, forceLocal?:boolean}",
+        "desc": ""
+      }
+    ],
+    "returns": "Promise<void>"
+  },
+  {
     "name": "initializeBoardDropdown",
     "kind": "function",
     "file": "src/component/board/boardDropdown.js",
@@ -1273,11 +1248,33 @@
     "returns": "void"
   },
   {
+    "name": "initializeWidgetSelectorPanel",
+    "kind": "function",
+    "file": "src/component/menu/widgetSelectorPanel.js",
+    "description": "Set up click/search/keyboard handlers for the selector.",
+    "params": [],
+    "returns": "void"
+  },
+  {
     "name": "initSW",
     "kind": "function",
     "file": "src/component/menu/menu.js",
     "description": "Initialize service worker controls in the menu.",
     "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "initThemeFromConfig",
+    "kind": "function",
+    "file": "src/ui/theme.js",
+    "description": "Initialize the theme from a configuration object.",
+    "params": [
+      {
+        "name": "cfg",
+        "type": "DashboardConfig|undefined|null",
+        "desc": ""
+      }
+    ],
     "returns": "void"
   },
   {
@@ -1356,44 +1353,6 @@
     "returns": ""
   },
   {
-    "name": "jsonGet",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Read and parse JSON value from localStorage.",
-    "params": [
-      {
-        "name": "key",
-        "type": "string",
-        "desc": ""
-      },
-      {
-        "name": "fallback",
-        "type": "any|null",
-        "desc": ""
-      }
-    ],
-    "returns": "any"
-  },
-  {
-    "name": "jsonSet",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Stringify and store value in localStorage.",
-    "params": [
-      {
-        "name": "key",
-        "type": "string",
-        "desc": ""
-      },
-      {
-        "name": "obj",
-        "type": "any",
-        "desc": ""
-      }
-    ],
-    "returns": "void"
-  },
-  {
     "name": "listLoggedFiles",
     "kind": "function",
     "file": "src/utils/Logger.js",
@@ -1422,14 +1381,6 @@
     "description": "Loads configuration from various sources in a specific order: URL params, localStorage, then a default file.",
     "params": [],
     "returns": "Promise<object|null>"
-  },
-  {
-    "name": "loadStateStore",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Load and return the entire state store.",
-    "params": [],
-    "returns": "Promise<{version:number,states:Array}>"
   },
   {
     "name": "lock",
@@ -1600,20 +1551,6 @@
     "returns": "void"
   },
   {
-    "name": "openEvictionModal",
-    "kind": "function",
-    "file": "src/component/modal/evictionModal.js",
-    "description": "Display a modal to choose a widget for removal.",
-    "params": [
-      {
-        "name": "widgets",
-        "type": "Map<string, HTMLElement>",
-        "desc": "- Current widget map."
-      }
-    ],
-    "returns": "Promise<{id:string, title:string}|null>"
-  },
-  {
     "name": "openFragmentDecisionModal",
     "kind": "function",
     "file": "src/component/modal/fragmentDecisionModal.js",
@@ -1735,6 +1672,22 @@
       }
     ],
     "returns": "Record<string,number>"
+  },
+  {
+    "name": "populateWidgetSelectorPanel",
+    "kind": "function",
+    "file": "src/component/menu/widgetSelectorPanel.js",
+    "description": "Populate dropdown list with saved services.",
+    "params": [],
+    "returns": "void"
+  },
+  {
+    "name": "refreshRowCounts",
+    "kind": "function",
+    "file": "src/component/menu/widgetSelectorPanel.js",
+    "description": "Update the instance count labels for each service row and enforce limits.",
+    "params": [],
+    "returns": "void"
   },
   {
     "name": "registerServiceWorker",
@@ -1936,6 +1889,67 @@
     "returns": "Promise<boolean>"
   },
   {
+    "name": "safeParse",
+    "kind": "function",
+    "file": "src/storage/jsonUtil.js",
+    "description": "Safely parse a JSON string.",
+    "params": [
+      {
+        "name": "json",
+        "type": "string|null",
+        "desc": ""
+      },
+      {
+        "name": "fallback",
+        "type": "any",
+        "desc": ""
+      }
+    ],
+    "returns": "any"
+  },
+  {
+    "name": "sanitizeBoards",
+    "kind": "function",
+    "file": "src/storage/validators.js",
+    "description": "Sanitize an array of boards.",
+    "params": [
+      {
+        "name": "boards",
+        "type": "any",
+        "desc": ""
+      }
+    ],
+    "returns": "Array<object>"
+  },
+  {
+    "name": "sanitizeConfig",
+    "kind": "function",
+    "file": "src/storage/validators.js",
+    "description": "Sanitize the dashboard configuration.",
+    "params": [
+      {
+        "name": "cfg",
+        "type": "any",
+        "desc": ""
+      }
+    ],
+    "returns": "object"
+  },
+  {
+    "name": "sanitizeServices",
+    "kind": "function",
+    "file": "src/storage/validators.js",
+    "description": "Sanitize an array of services.",
+    "params": [
+      {
+        "name": "svcs",
+        "type": "any",
+        "desc": ""
+      }
+    ],
+    "returns": "Array<object>"
+  },
+  {
     "name": "saveImportedSnapshot",
     "kind": "function",
     "file": "src/storage/snapshots.js",
@@ -1960,143 +1974,12 @@
     "returns": "Promise<string>"
   },
   {
-    "name": "saveStateSnapshot",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Save the current state snapshot.",
-    "params": [
-      {
-        "name": "snapshot",
-        "type": "{name:string,type:string,cfg:string,svc:string}",
-        "desc": ""
-      }
-    ],
-    "returns": "Promise<string>"
-  },
-  {
-    "name": "saveStateStore",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Persist the entire state store object.",
-    "params": [
-      {
-        "name": "store",
-        "type": "{version:number,states:Array}",
-        "desc": ""
-      }
-    ],
-    "returns": "Promise<void>"
-  },
-  {
     "name": "serviceGetUUID",
     "kind": "function",
     "file": "src/utils/id.js",
     "description": "Generate a unique service id.",
     "params": [],
     "returns": "string"
-  },
-  {
-    "name": "setBoards",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Persist the provided boards array.",
-    "params": [
-      {
-        "name": "boards",
-        "type": "Array<Board>",
-        "desc": ""
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "setConfig",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Persist the dashboard configuration.",
-    "params": [
-      {
-        "name": "cfg",
-        "type": "DashboardConfig",
-        "desc": ""
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "setItem",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Persist a raw string value under a custom key.",
-    "params": [
-      {
-        "name": "key",
-        "type": "string",
-        "desc": ""
-      },
-      {
-        "name": "value",
-        "type": "string|null",
-        "desc": ""
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "setJsonRecord",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Persist an object of key/value pairs as JSON strings.",
-    "params": [
-      {
-        "name": "record",
-        "type": "Record<string, any>",
-        "desc": ""
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "setLastBoardId",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Persist the last used board id.",
-    "params": [
-      {
-        "name": "id",
-        "type": "string|null",
-        "desc": ""
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "setLastViewId",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Persist the last used view id.",
-    "params": [
-      {
-        "name": "id",
-        "type": "string|null",
-        "desc": ""
-      }
-    ],
-    "returns": "void"
-  },
-  {
-    "name": "setServices",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Persist the provided services array after resolving templates and normalizing.",
-    "params": [
-      {
-        "name": "services",
-        "type": "Array<Service>",
-        "desc": ""
-      }
-    ],
-    "returns": "void"
   },
   {
     "name": "show",
@@ -2203,6 +2086,30 @@
     "returns": "Promise<void>"
   },
   {
+    "name": "snapshotDedup",
+    "kind": "function",
+    "file": "src/utils/snapshotDedup.js",
+    "description": "Deduplicate items keeping first occurrence.",
+    "params": [
+      {
+        "name": "items",
+        "type": "Array<T>",
+        "desc": ""
+      },
+      {
+        "name": "getId",
+        "type": "(item:T)=>string|undefined",
+        "desc": ""
+      },
+      {
+        "name": "getName",
+        "type": "(item:T)=>string|undefined",
+        "desc": ""
+      }
+    ],
+    "returns": "Array<T>"
+  },
+  {
     "name": "splitIntoParams",
     "kind": "function",
     "file": "src/utils/chunker.js",
@@ -2225,6 +2132,20 @@
       }
     ],
     "returns": "Array<[string,string]>"
+  },
+  {
+    "name": "stableStringify",
+    "kind": "function",
+    "file": "src/storage/jsonUtil.js",
+    "description": "Stable stringify (keys sorted) for deterministic storage/debug.",
+    "params": [
+      {
+        "name": "value",
+        "type": "any",
+        "desc": ""
+      }
+    ],
+    "returns": "string"
   },
   {
     "name": "stopResize",
@@ -2309,39 +2230,11 @@
     "returns": "void"
   },
   {
-    "name": "updateBoards",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Atomically update boards via callback.",
-    "params": [
-      {
-        "name": "updater",
-        "type": "(boards: Array<Board>) => Array<Board>|void",
-        "desc": ""
-      }
-    ],
-    "returns": "void"
-  },
-  {
     "name": "updateBoardSelector",
     "kind": "function",
     "file": "src/component/board/boardManagement.js",
     "description": "Rebuilds the board selector dropdown from the in-memory `boards` array.",
     "params": [],
-    "returns": "void"
-  },
-  {
-    "name": "updateConfig",
-    "kind": "function",
-    "file": "src/storage/StorageManager.js",
-    "description": "Atomically update the dashboard configuration.",
-    "params": [
-      {
-        "name": "updater",
-        "type": "(cfg: DashboardConfig) => void",
-        "desc": ""
-      }
-    ],
     "returns": "void"
   },
   {
@@ -2373,10 +2266,18 @@
     "returns": "void"
   },
   {
+    "name": "updateWidgetCounter",
+    "kind": "function",
+    "file": "src/component/menu/widgetSelectorPanel.js",
+    "description": "Update the Running/Max and total Widgets counter in the panel.",
+    "params": [],
+    "returns": "void"
+  },
+  {
     "name": "upsertSnapshotByMd5",
     "kind": "function",
     "file": "src/storage/StorageManager.js",
-    "description": "Insert or update a snapshot in the state store based on MD5 hash. If a snapshot with the same MD5 exists its timestamp is refreshed and it is moved to the front of the list. Optionally updates the name when provided.",
+    "description": "Insert or update a snapshot in the state store based on MD5 hash.",
     "params": [
       {
         "name": "store",
