@@ -3,6 +3,9 @@
 import { parse } from 'comment-parser'
 import { promises as fs } from 'fs'
 import { globby } from 'globby'
+import { getCliIcon } from '../../core/assets/icons.mjs'
+
+const okIcon = getCliIcon('cli.ok')?.glyph || '✅'
 
 /**
  * Normalize description text from jsdoc block
@@ -92,7 +95,7 @@ async function extractSymbols () {
   })
 
   await fs.writeFile('symbols.json', JSON.stringify(deduped, null, 2), 'utf8')
-  console.log(`✅ symbols.json generated with ${deduped.length} entries.`)
+  console.log(`${okIcon} symbols.json generated with ${deduped.length} entries.`)
 }
 
 extractSymbols().catch(err => {
