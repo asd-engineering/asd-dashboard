@@ -48,7 +48,7 @@ export const DEFAULT_TEMPLATES = {
  * Placeholder texts mapped by path patterns.
  */
 export const DEFAULT_PLACEHOLDERS = {
-  'globalSettings.widgetStoreUrl[]': 'https://…',
+  servicesUrl: 'https://example.com/services.json',
   'boards[].views[].widgetState[].url': 'https://…',
   'boards[].views[].widgetState[].type': 'iframe'
 }

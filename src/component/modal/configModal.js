@@ -42,12 +42,19 @@ export async function openConfigModal () {
     id: 'config-modal',
     onCloseCallback: () => logger.log('Config modal closed'),
     buildContent: async (modal, closeModal) => {
-      const getVisibleConfig = () => advancedMode
-        ? structuredClone(configData)
-        : {
-            globalSettings: structuredClone(configData.globalSettings),
-            serviceTemplates: structuredClone(configData.serviceTemplates)
-          }
+      const getVisibleConfig = () => {
+        const base = advancedMode
+          ? structuredClone(configData)
+          : {
+              globalSettings: structuredClone(configData.globalSettings),
+              serviceTemplates: structuredClone(configData.serviceTemplates)
+            }
+
+        if (typeof base.servicesUrl !== 'string') {
+          base.servicesUrl = typeof configData.servicesUrl === 'string' ? configData.servicesUrl : ''
+        }
+        return base
+      }
 
       const tabsMeta = [
         { id: 'stateTab', label: 'Snapshots & Share', populate: populateStateTab },
@@ -85,8 +92,8 @@ export async function openConfigModal () {
               topLevelTabs: {
                 enabled: true,
                 order: advancedMode
-                  ? ['globalSettings', 'boards', 'serviceTemplates', 'styling']
-                  : ['globalSettings', 'serviceTemplates']
+                  ? ['globalSettings', 'boards', 'serviceTemplates', 'styling', 'servicesUrl']
+                  : ['globalSettings', 'serviceTemplates', 'servicesUrl']
               },
               templates: DEFAULT_TEMPLATES,
               placeholders: DEFAULT_PLACEHOLDERS
