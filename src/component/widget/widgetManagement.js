@@ -91,13 +91,21 @@ async function createWidget (
   const isOffline = String(serviceObj.state || '').toLowerCase() === 'offline'
   const hasFallback = Boolean(serviceObj && serviceObj.fallback && serviceObj.fallback.url)
   if (hasFallback && (isOffline || !url)) {
-    const startOverlay = document.createElement('button')
+    const startOverlay = document.createElement('div')
     startOverlay.className = 'widget-start-overlay'
-    startOverlay.textContent = 'Start'
-    startOverlay.title = `Start ${serviceObj.name || service}`
-    startOverlay.addEventListener('click', () => {
+    const startTitle = document.createElement('h2')
+    startTitle.className = 'widget-start-overlay-title'
+    startTitle.textContent = 'Acties'
+
+    const startButton = document.createElement('button')
+    startButton.className = 'widget-start-overlay-button'
+    startButton.textContent = 'Start'
+    startButton.title = `Start ${serviceObj.name || service}`
+    startButton.addEventListener('click', () => {
       showServiceModal(serviceObj, widgetWrapper)
     })
+
+    startOverlay.append(startTitle, startButton)
     widgetWrapper.appendChild(startOverlay)
   }
 
@@ -129,7 +137,7 @@ async function createWidget (
   refreshButton.title = 'Refresh widget'
   refreshButton.addEventListener('click', () => {
     try {
-      iframe.src = iframe.src
+      const current = iframe.src; iframe.src = current
     } catch {
       // no-op
     }

@@ -19,31 +19,18 @@ import { showServiceModal } from '../modal/serviceLaunchModal.js'
 const logger = new Logger('ServiceControl.js')
 
 /**
- * Infer action domain from service metadata.
- * @param {{id?:string,name?:string,url?:string}} service
- * @returns {'code'|'database'|'terminal'}
- */
-function inferActionDomain (service) {
-  const text = `${service.id || ''} ${service.name || ''} ${service.url || ''}`.toLowerCase()
-  if (/(db|database|postgres|mysql|mariadb|redis|mongo|dbgate)/.test(text)) return 'database'
-  if (/(code|codeserver|ide|editor|workspace)/.test(text)) return 'code'
-  return 'terminal'
-}
-
-/**
  * Build ttyd URL-arg task URL.
+ * CLI commands follow `asd <serviceId> <action>` pattern.
  * @param {string} serviceId
  * @param {'start'|'stop'|'restart'|'terminal'} action
- * @param {'code'|'database'|'terminal'} domain
  * @returns {string}
  */
-function buildTtydTaskUrl (serviceId, action, domain) {
+function buildTtydTaskUrl (serviceId, action) {
   const params = new URLSearchParams()
   params.append('arg', 'asd')
-  params.append('arg', domain)
   params.append('arg', serviceId)
   params.append('arg', action)
-  return `/asde/ttyd/?${params.toString()}`
+  return `/asd/ttyd/?${params.toString()}`
 }
 
 /**
@@ -210,8 +197,7 @@ export function mountServiceControl () {
           showNotification(`No service action configured for "${resolved.name}".`, 2500, 'error')
         }
       } else if (action === 'launch') {
-        const domain = inferActionDomain(resolved)
-        const taskUrl = buildTtydTaskUrl(resolved.id, 'terminal', domain)
+        const taskUrl = buildTtydTaskUrl(resolved.id, 'terminal')
         showServiceModal(
           {
             id: resolved.id,
@@ -221,9 +207,8 @@ export function mountServiceControl () {
           null
         )
       } else if (action.startsWith('task-')) {
-        const domain = inferActionDomain(resolved)
         const taskAction = /** @type {'start'|'stop'|'restart'|'terminal'} */ (action.replace('task-', ''))
-        const taskUrl = buildTtydTaskUrl(resolved.id, taskAction, domain)
+        const taskUrl = buildTtydTaskUrl(resolved.id, taskAction)
         showServiceModal(
           {
             id: resolved.id,
