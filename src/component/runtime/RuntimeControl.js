@@ -37,6 +37,8 @@ export function mountRuntimeControl () {
   /** @type {Record<string, HTMLButtonElement>} */
   const tabButtons = {}
   let activeTab = ''
+  /** @type {((ev:MouseEvent) => void) | null} */
+  let outsideClickHandler = null
 
   /**
    * Build panel content by active tab.
@@ -149,6 +151,10 @@ export function mountRuntimeControl () {
         activeTab = ''
         panel.hidden = true
         for (const item of Object.values(tabButtons)) item.classList.remove('active')
+        if (outsideClickHandler) {
+          document.removeEventListener('click', outsideClickHandler)
+          outsideClickHandler = null
+        }
         return
       }
       activeTab = def.key
@@ -157,6 +163,21 @@ export function mountRuntimeControl () {
         item.classList.toggle('active', key === def.key)
       }
       renderPanel(/** @type {'tasks'|'shells'|'processes'} */ (def.key))
+      if (!outsideClickHandler) {
+        outsideClickHandler = (ev) => {
+          const target = /** @type {Node | null} */ (ev.target)
+          if (!target || !root.contains(target)) {
+            activeTab = ''
+            panel.hidden = true
+            for (const item of Object.values(tabButtons)) item.classList.remove('active')
+            document.removeEventListener('click', outsideClickHandler)
+            outsideClickHandler = null
+          }
+        }
+        setTimeout(() => {
+          if (outsideClickHandler) document.addEventListener('click', outsideClickHandler)
+        }, 0)
+      }
     })
     tabButtons[def.key] = btn
     tabs.appendChild(btn)

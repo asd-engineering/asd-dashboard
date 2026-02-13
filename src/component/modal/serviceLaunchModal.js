@@ -25,6 +25,7 @@ const logger = new Logger('serviceLaunchModal.js')
 export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
   const taskId = opts.taskId || `task-${getUUID()}`
   const taskTitle = serviceObj.name || serviceObj.id || 'Service Task'
+  const taskUrl = withTaskSessionArg(serviceObj.url, taskId)
   const openTask = () => showServiceModal(serviceObj, widgetWrapper, { taskId })
 
   upsertTask({
@@ -44,10 +45,20 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
       logger.log('Service modal closed')
     },
     buildContent: (modal, closeModal) => {
+      modal.classList.add('service-action-modal')
       const iframe = document.createElement('iframe')
-      iframe.src = serviceObj.url
+      iframe.src = taskUrl
+      iframe.style.width = '100%'
+      iframe.style.minHeight = '420px'
+      iframe.style.border = '1px solid #ccc'
+      iframe.style.display = 'block'
       const instructions = document.createElement('p')
       instructions.textContent = "The action is being performed. Please wait a few moments and then press 'Done and refresh widget'"
+      const openExternal = document.createElement('a')
+      openExternal.href = taskUrl
+      openExternal.target = '_blank'
+      openExternal.rel = 'noopener noreferrer'
+      openExternal.textContent = 'Open task in new tab'
       const minimizeButton = document.createElement('button')
       minimizeButton.textContent = 'Minimize task'
       minimizeButton.addEventListener('click', () => {
@@ -63,14 +74,33 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
         try {
           if (widgetWrapper) {
             const iframeEl = widgetWrapper.querySelector('iframe')
-            iframeEl.src = widgetWrapper.dataset.url
+            if (iframeEl) iframeEl.src = widgetWrapper.dataset.url || iframeEl.src
           }
         } catch (error) {
           logger.error('Error refreshing widget iframe:', error)
           showNotification('Failed to refresh widget')
         }
       })
-      modal.append(instructions, iframe, minimizeButton, doneButton)
+      modal.append(instructions, openExternal, iframe, minimizeButton, doneButton)
     }
   })
+}
+
+/**
+ * Append a stable task session id to ttyd URL args.
+ * @param {string} url
+ * @param {string} sessionId
+ * @returns {string}
+ */
+function withTaskSessionArg (url, sessionId) {
+  try {
+    const parsed = new URL(url, window.location.origin)
+    const args = parsed.searchParams.getAll('arg')
+    if (args[0] !== 'asd') return parsed.toString()
+    const hasSession = args.some(arg => arg.startsWith('--session='))
+    if (!hasSession) parsed.searchParams.append('arg', `--session=${sessionId}`)
+    return parsed.toString()
+  } catch {
+    return url
+  }
 }

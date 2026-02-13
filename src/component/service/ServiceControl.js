@@ -19,6 +19,34 @@ import { showServiceModal } from '../modal/serviceLaunchModal.js'
 const logger = new Logger('ServiceControl.js')
 
 /**
+ * Infer action domain from service metadata.
+ * @param {{id?:string,name?:string,url?:string}} service
+ * @returns {'code'|'database'|'terminal'}
+ */
+function inferActionDomain (service) {
+  const text = `${service.id || ''} ${service.name || ''} ${service.url || ''}`.toLowerCase()
+  if (/(db|database|postgres|mysql|mariadb|redis|mongo|dbgate)/.test(text)) return 'database'
+  if (/(code|codeserver|ide|editor|workspace)/.test(text)) return 'code'
+  return 'terminal'
+}
+
+/**
+ * Build ttyd URL-arg task URL.
+ * @param {string} serviceId
+ * @param {'start'|'stop'|'restart'|'terminal'} action
+ * @param {'code'|'database'|'terminal'} domain
+ * @returns {string}
+ */
+function buildTtydTaskUrl (serviceId, action, domain) {
+  const params = new URLSearchParams()
+  params.append('arg', 'asd')
+  params.append('arg', domain)
+  params.append('arg', serviceId)
+  params.append('arg', action)
+  return `/asde/ttyd/?${params.toString()}`
+}
+
+/**
  * Emit a standardized state change event.
  * @param {string} reason
  */
@@ -175,12 +203,35 @@ export function mountServiceControl () {
           showNotification(`No instances of "${resolved.name}" found in any board.`, 3000, 'error')
           logger.error(`Service with name "${resolved.name}" not found in StorageManager.`)
         }
-      } else if (action === 'start') {
+      } else if (action === 'task') {
         if (resolved.fallback?.url) {
           showServiceModal({ id: resolved.id, name: resolved.name, url: resolved.fallback.url }, null)
         } else {
-          showNotification(`No start action configured for "${resolved.name}".`, 2500, 'error')
+          showNotification(`No service action configured for "${resolved.name}".`, 2500, 'error')
         }
+      } else if (action === 'launch') {
+        const domain = inferActionDomain(resolved)
+        const taskUrl = buildTtydTaskUrl(resolved.id, 'terminal', domain)
+        showServiceModal(
+          {
+            id: resolved.id,
+            name: `${resolved.name} terminal`,
+            url: taskUrl
+          },
+          null
+        )
+      } else if (action.startsWith('task-')) {
+        const domain = inferActionDomain(resolved)
+        const taskAction = /** @type {'start'|'stop'|'restart'|'terminal'} */ (action.replace('task-', ''))
+        const taskUrl = buildTtydTaskUrl(resolved.id, taskAction, domain)
+        showServiceModal(
+          {
+            id: resolved.id,
+            name: `${resolved.name} ${taskAction}`,
+            url: taskUrl
+          },
+          null
+        )
       }
       panel.refresh()
     },
@@ -191,11 +242,14 @@ export function mountServiceControl () {
     itemActionsFor: (item) => {
       /** @type {{action:string,title:string,icon:string}[]} */
       const acts = []
+      acts.push({ action: 'launch', title: 'Launch terminal task', icon: emojiList.launch.unicode })
       if (item.canNavigate) {
         acts.push({ action: 'navigate', title: 'Locate widget', icon: emojiList.magnifyingGlass.unicode })
       }
-      if (String(item.state || '').toLowerCase() === 'offline' && item.fallback?.url) {
-        acts.push({ action: 'start', title: 'Start service', icon: emojiList.launch.unicode })
+      if (item.fallback?.url) {
+        const label = item.fallback.name || 'Run service task'
+        const isStart = String(label).toLowerCase().includes('start')
+        acts.push({ action: 'task', title: label, icon: isStart ? emojiList.launch.unicode : emojiList.noEntry.unicode })
       }
       acts.push({ action: 'rename', title: 'Rename service', icon: emojiList.edit.unicode })
       acts.push({ action: 'delete', title: 'Delete service', icon: emojiList.cross.unicode })

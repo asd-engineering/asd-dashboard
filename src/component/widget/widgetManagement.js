@@ -88,6 +88,19 @@ async function createWidget (
   const widgetMenu = document.createElement('div')
   widgetMenu.classList.add('widget-menu')
 
+  const isOffline = String(serviceObj.state || '').toLowerCase() === 'offline'
+  const hasFallback = Boolean(serviceObj && serviceObj.fallback && serviceObj.fallback.url)
+  if (hasFallback && (isOffline || !url)) {
+    const startOverlay = document.createElement('button')
+    startOverlay.className = 'widget-start-overlay'
+    startOverlay.textContent = 'Start'
+    startOverlay.title = `Start ${serviceObj.name || service}`
+    startOverlay.addEventListener('click', () => {
+      showServiceModal(serviceObj, widgetWrapper)
+    })
+    widgetWrapper.appendChild(startOverlay)
+  }
+
   if (serviceObj && serviceObj.fallback) {
     const state = String(serviceObj.state || '').toLowerCase()
     const fixServiceButton = document.createElement('button')
@@ -109,6 +122,18 @@ async function createWidget (
   configureButton.innerHTML = emojiList.link.unicode
   configureButton.classList.add('widget-button', 'widget-icon-link')
   configureButton.addEventListener('click', () => configureWidget(iframe))
+
+  const refreshButton = document.createElement('button')
+  refreshButton.innerHTML = emojiList.crossCycle.unicode
+  refreshButton.classList.add('widget-button', 'widget-icon-refresh')
+  refreshButton.title = 'Refresh widget'
+  refreshButton.addEventListener('click', () => {
+    try {
+      iframe.src = iframe.src
+    } catch {
+      // no-op
+    }
+  })
 
   const buttonDebounce = 200
   const debouncedHideResizeMenu = debounce(
@@ -161,6 +186,7 @@ async function createWidget (
 
   widgetMenu.append(
     fullScreenButton,
+    refreshButton,
     removeButton,
     configureButton,
     resizeMenuIcon,

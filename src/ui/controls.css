@@ -148,6 +148,7 @@ menu#controls #admin-control.control-group {
   display: flex;
   flex-direction: column;
   min-width: 280px;
+  position: relative;
 }
 
 .runtime-tabs {
@@ -176,7 +177,12 @@ menu#controls #admin-control.control-group {
   background: var(--color-elevated);
   max-height: 220px;
   overflow: auto;
-  min-width: 260px;
+  min-width: 280px;
+  position: absolute;
+  top: calc(100% + 0.15rem);
+  right: 0;
+  z-index: 1200;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
 .runtime-list {

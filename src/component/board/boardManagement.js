@@ -217,6 +217,9 @@ export function updateViewSelector (boardId) {
         btn.addEventListener('click', async () => {
           try {
             await switchView(boardId, view.id)
+            viewButtonMenu.querySelectorAll('button').forEach(other => {
+              other.classList.toggle('active', other === btn)
+            })
           } catch (error) {
             logger.error('Error switching view:', error)
           }
