@@ -89,9 +89,12 @@ async function createWidget (
   widgetMenu.classList.add('widget-menu')
 
   if (serviceObj && serviceObj.fallback) {
+    const state = String(serviceObj.state || '').toLowerCase()
     const fixServiceButton = document.createElement('button')
     fixServiceButton.innerHTML = emojiList.launch.unicode
     fixServiceButton.classList.add('widget-button', 'widget-icon-action')
+    fixServiceButton.title = state === 'offline' ? 'Start service' : 'Service action'
+    fixServiceButton.dataset.testid = 'widget-service-action'
     fixServiceButton.onclick = () =>
       showServiceModal(serviceObj, widgetWrapper)
     widgetMenu.appendChild(fixServiceButton)

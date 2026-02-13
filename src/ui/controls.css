@@ -144,6 +144,77 @@ menu#controls #admin-control.control-group {
 #toggle-widget-menu,
 .icon-checkbox { display: inline-block; cursor: pointer; font-size: var(--admin-icon-size); user-select: none; }
 
+.runtime-control {
+  display: flex;
+  flex-direction: column;
+  min-width: 280px;
+}
+
+.runtime-tabs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.runtime-tab-btn {
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-1);
+  padding: 0.2rem 0.5rem !important;
+  background: var(--color-elevated) !important;
+  color: var(--color-text) !important;
+  font-size: 0.85rem !important;
+}
+
+.runtime-tab-btn.active {
+  background: var(--color-success) !important;
+  color: #fff !important;
+}
+
+.runtime-panel {
+  margin-top: 0.35rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-1);
+  background: var(--color-elevated);
+  max-height: 220px;
+  overflow: auto;
+  min-width: 260px;
+}
+
+.runtime-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.runtime-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.85rem;
+}
+
+.runtime-item:last-child {
+  border-bottom: 0;
+}
+
+.runtime-status {
+  color: var(--color-text-weak);
+  text-transform: capitalize;
+}
+
+.runtime-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runtime-open-btn {
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-1);
+  padding: 0.15rem 0.45rem !important;
+}
+
 /* ----------------------- Small screens: switch to grid -------------------- */
 @media (max-width: 645px) {
   menu#controls {
@@ -184,4 +255,3 @@ menu#controls #admin-control.control-group {
   /* Make sure form controls don't overflow the column */
   #controls select, #controls input { max-width: 100%; }
 }
-

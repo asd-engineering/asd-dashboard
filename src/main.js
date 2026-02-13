@@ -24,6 +24,7 @@ import { runSilentImportFlowIfRequested } from './flows/silentImportFlow.js'
 import { initThemeFromConfig } from './ui/theme.js'
 
 import { mountServiceControl } from './component/service/ServiceControl.js'
+import { mountRuntimeControl } from './component/runtime/RuntimeControl.js'
 
 const logger = new Logger('main.js')
 Logger.enableLogs('all')
@@ -67,6 +68,7 @@ async function main () {
   const boardPanel = mountBoardControl()
   const viewPanel = mountViewControl()
   const servicePanel = mountServiceControl()
+  const runtimePanel = mountRuntimeControl()
   initializeDragAndDrop()
 
   // 3. Load services and configuration in parallel
@@ -136,11 +138,13 @@ async function main () {
         if (viewPanel) viewPanel.refresh()
         // Repopulate panel when config (e.g., boards/views) changes
         servicePanel?.refresh()
+        runtimePanel?.refresh()
         break
 
       case 'services':
         // Repopulate panel when services update
         servicePanel?.refresh()
+        runtimePanel?.refresh()
         break
     }
   }
