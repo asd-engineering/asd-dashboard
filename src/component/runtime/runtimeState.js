@@ -11,7 +11,7 @@ const RUNTIME_EVENT = 'asd:runtime:changed'
  * @returns {{tasks:any[],shells:any[],processes:any[]}}
  */
 function ensureRuntime () {
-  if (!window.asd) window.asd = {}
+  if (!window.asd) window.asd = /** @type {any} */ ({})
   if (!window.asd.runtime) {
     window.asd.runtime = {
       tasks: [],

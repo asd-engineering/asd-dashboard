@@ -106,7 +106,7 @@ export function mountRuntimeControl () {
           row.className = 'runtime-item'
           const st = document.createElement('span')
           st.className = 'runtime-status'
-          st.textContent = String(proc.state || proc.status || 'unknown')
+          st.textContent = String(proc.state || 'unknown')
           const title = document.createElement('span')
           title.className = 'runtime-title'
           title.textContent = String(proc.name || proc.id || 'process')
