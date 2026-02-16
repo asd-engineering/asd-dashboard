@@ -50,6 +50,7 @@ export class WidgetStore {
     this.widgets.set(id, element)
     // Ensure we never exceed the capacity during initial load
     this._ensureLimit()
+    this.refreshEmptyState()
   }
 
   /**
@@ -90,6 +91,7 @@ export class WidgetStore {
     if (el) {
       el.style.display = ''
     }
+    this.refreshEmptyState()
   }
 
   /**
@@ -104,6 +106,7 @@ export class WidgetStore {
     if (el) {
       el.style.display = 'none'
     }
+    this.refreshEmptyState()
   }
 
   /**
@@ -169,6 +172,7 @@ export class WidgetStore {
       el.remove()
     } catch {}
     this.widgets.delete(id)
+    this.refreshEmptyState()
     // If you track LRU or observers, notify them here (no StorageManager updates)
     // e.g., this._touchLRUOnEvict?.(id)
   }
@@ -193,6 +197,36 @@ export class WidgetStore {
       this.widgets.delete(id)
       this.logger.log('Evicted widget:', id)
     }
+    this.refreshEmptyState()
+  }
+
+  /**
+   * Ensure the widget container shows a centered empty state when no widgets are visible.
+   * @returns {void}
+   */
+  refreshEmptyState () {
+    const container = document.getElementById('widget-container')
+    if (!(container instanceof HTMLElement)) return
+
+    /** @type {HTMLDivElement|null} */
+    let empty = container.querySelector('.widget-empty-state')
+    if (!empty) {
+      empty = document.createElement('div')
+      empty.className = 'widget-empty-state'
+      empty.dataset.testid = 'widget-empty-state'
+
+      const title = document.createElement('h1')
+      title.className = 'widget-empty-state-title'
+      title.textContent = 'Acties'
+      empty.appendChild(title)
+
+      container.appendChild(empty)
+    }
+
+    const visibleWidgets = Array.from(container.querySelectorAll('.widget-wrapper'))
+      .filter((el) => el instanceof HTMLElement && el.style.display !== 'none')
+
+    empty.style.display = visibleWidgets.length === 0 ? 'flex' : 'none'
   }
 
   /**

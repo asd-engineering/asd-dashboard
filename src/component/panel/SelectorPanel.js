@@ -358,7 +358,6 @@ export class SelectorPanel {
         const verb = selectVerb(it)
         const lbl = `${verb}: ${it.label}`
         row.setAttribute('aria-label', lbl)
-        row.title = lbl
       }
 
       const left = document.createElement('span')
@@ -393,7 +392,6 @@ export class SelectorPanel {
         b.type = 'button'
         b.className = 'panel-item-icon'
         b.dataset.itemAction = a.action
-        b.title = a.title
         b.setAttribute('aria-label', a.title)
         b.textContent = a.icon || ''
         acts.appendChild(b)

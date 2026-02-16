@@ -182,7 +182,7 @@ menu#controls #admin-control.control-group {
   top: calc(100% + 0.15rem);
   right: 0;
   z-index: 1200;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
 .runtime-list {

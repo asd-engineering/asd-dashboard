@@ -110,6 +110,7 @@ function clearWidgetContainer () {
   for (const id of widgetStore.widgets.keys()) {
     widgetStore.hide(id)
   }
+  widgetStore.refreshEmptyState()
 }
 
 /**
@@ -170,6 +171,7 @@ export async function switchView (boardId = getCurrentBoardId(), viewId) {
       )
     }
   }
+  widgetStore.refreshEmptyState()
 
   // Persist current view selection (metadata-only)
   StorageManager.misc.setLastViewId(viewId)
