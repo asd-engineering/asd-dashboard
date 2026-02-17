@@ -88,10 +88,37 @@ async function createWidget (
   const widgetMenu = document.createElement('div')
   widgetMenu.classList.add('widget-menu')
 
-  if (serviceObj && serviceObj.fallback) {
+  const isOffline = String(serviceObj.state || '').toLowerCase() === 'offline'
+  const hasFallback = Boolean(serviceObj && serviceObj.fallback && serviceObj.fallback.url)
+  // All fallback actions use ttyd — only show when ttyd is online
+  const ttydSvc = StorageManager.getServices().find(s => s.id === 'ttyd')
+  const ttydUp = Boolean(ttydSvc && String(ttydSvc.state || '').toLowerCase() === 'online')
+  if (ttydUp && hasFallback && (isOffline || !url)) {
+    const startOverlay = document.createElement('div')
+    startOverlay.className = 'widget-start-overlay'
+    const startTitle = document.createElement('h2')
+    startTitle.className = 'widget-start-overlay-title'
+    startTitle.textContent = 'Acties'
+
+    const startButton = document.createElement('button')
+    startButton.className = 'widget-start-overlay-button'
+    startButton.textContent = 'Start'
+    startButton.title = `Start ${serviceObj.name || service}`
+    startButton.addEventListener('click', () => {
+      showServiceModal(serviceObj, widgetWrapper)
+    })
+
+    startOverlay.append(startTitle, startButton)
+    widgetWrapper.appendChild(startOverlay)
+  }
+
+  if (ttydUp && serviceObj && serviceObj.fallback) {
+    const state = String(serviceObj.state || '').toLowerCase()
     const fixServiceButton = document.createElement('button')
     fixServiceButton.innerHTML = emojiList.launch.unicode
     fixServiceButton.classList.add('widget-button', 'widget-icon-action')
+    fixServiceButton.title = state === 'offline' ? 'Start service' : 'Service action'
+    fixServiceButton.dataset.testid = 'widget-service-action'
     fixServiceButton.onclick = () =>
       showServiceModal(serviceObj, widgetWrapper)
     widgetMenu.appendChild(fixServiceButton)
@@ -106,6 +133,18 @@ async function createWidget (
   configureButton.innerHTML = emojiList.link.unicode
   configureButton.classList.add('widget-button', 'widget-icon-link')
   configureButton.addEventListener('click', () => configureWidget(iframe))
+
+  const refreshButton = document.createElement('button')
+  refreshButton.innerHTML = emojiList.crossCycle.unicode
+  refreshButton.classList.add('widget-button', 'widget-icon-refresh')
+  refreshButton.title = 'Refresh widget'
+  refreshButton.addEventListener('click', () => {
+    try {
+      const current = iframe.src; iframe.src = current
+    } catch {
+      // no-op
+    }
+  })
 
   const buttonDebounce = 200
   const debouncedHideResizeMenu = debounce(
@@ -158,6 +197,7 @@ async function createWidget (
 
   widgetMenu.append(
     fullScreenButton,
+    refreshButton,
     removeButton,
     configureButton,
     resizeMenuIcon,

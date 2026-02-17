@@ -22,7 +22,7 @@
   border: 1px solid var(--color-border); border-radius: var(--radius-1);
   padding: var(--space-2);
   display: none;
-  box-shadow: var(--shadow-2);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
   z-index: 2001;
   overflow: visible;
 }
@@ -88,13 +88,13 @@
 .panel-item > .panel-item-actions-flyout button,
 .panel-item > .panel-item-actions-flyout .panel-item-icon {
   appearance: none; background: transparent !important; border: 0; padding: 2px;
-  line-height: 1; border-radius: var(--radius-1); font-size: 1.4rem; cursor: pointer;
+  line-height: 1; border-radius: var(--radius-1); font-size: 1.25rem; cursor: pointer;
   transition: transform .15s ease, background-color .15s ease;
-  color: var(--color-text);
+  color: var(--color-text); opacity: .85;
 }
 .panel-item > .panel-item-actions-flyout button:hover,
 .panel-item > .panel-item-actions-flyout .panel-item-icon:hover {
-  background: rgba(0,0,0,0.06); transform: translateY(-1px);
+  background: rgba(0,0,0,0.05); transform: translateY(-1px); opacity: 1;
 }
 
 /* Header “Actions” (hidden by default) */

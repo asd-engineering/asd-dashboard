@@ -74,7 +74,8 @@ async function compressString (text, algo) {
 async function decompressToString (bytes, algo) {
   if (typeof DecompressionStream !== 'undefined') {
     const ds = new DecompressionStream(algo)
-    const stream = new Blob([bytes]).stream().pipeThrough(ds)
+    const blobBytes = /** @type {BlobPart} */ (bytes)
+    const stream = new Blob([blobBytes]).stream().pipeThrough(ds)
     return await new Response(stream).text()
   }
   const zlib = await import('zlib')

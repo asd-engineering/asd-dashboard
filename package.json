@@ -12,7 +12,7 @@
     "start": "node serve_no_cache.js",
     "build": "mkdir -p dist && cp -r src/* dist/ && cp serve_no_cache.js dist/",
     "deploy": "npm run build",
-    "lint": "npx standard && npx eslint src tests --ext .js",
+    "lint": "npx standard && ESLINT_USE_FLAT_CONFIG=false npx eslint src tests --ext .js",
     "lint-fix": "npx standard --fix",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
