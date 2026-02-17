@@ -90,7 +90,10 @@ async function createWidget (
 
   const isOffline = String(serviceObj.state || '').toLowerCase() === 'offline'
   const hasFallback = Boolean(serviceObj && serviceObj.fallback && serviceObj.fallback.url)
-  if (hasFallback && (isOffline || !url)) {
+  // All fallback actions use ttyd — only show when ttyd is online
+  const ttydSvc = StorageManager.getServices().find(s => s.id === 'ttyd')
+  const ttydUp = Boolean(ttydSvc && String(ttydSvc.state || '').toLowerCase() === 'online')
+  if (ttydUp && hasFallback && (isOffline || !url)) {
     const startOverlay = document.createElement('div')
     startOverlay.className = 'widget-start-overlay'
     const startTitle = document.createElement('h2')
@@ -109,7 +112,7 @@ async function createWidget (
     widgetWrapper.appendChild(startOverlay)
   }
 
-  if (serviceObj && serviceObj.fallback) {
+  if (ttydUp && serviceObj && serviceObj.fallback) {
     const state = String(serviceObj.state || '').toLowerCase()
     const fixServiceButton = document.createElement('button')
     fixServiceButton.innerHTML = emojiList.launch.unicode

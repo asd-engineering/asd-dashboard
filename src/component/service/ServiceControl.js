@@ -19,6 +19,17 @@ import { showServiceModal } from '../modal/serviceLaunchModal.js'
 const logger = new Logger('ServiceControl.js')
 
 /**
+ * Check whether the ttyd service is online.
+ * All task actions (launch terminal, start/stop service) require ttyd.
+ * @returns {boolean}
+ */
+function isTtydAvailable () {
+  const services = StorageManager.getServices() || []
+  const ttyd = services.find(s => s.id === 'ttyd')
+  return Boolean(ttyd && String(ttyd.state || '').toLowerCase() === 'online')
+}
+
+/**
  * Build ttyd URL-arg task URL.
  * CLI commands follow `asd <serviceId> <action>` pattern.
  * @param {string} serviceId
@@ -227,11 +238,14 @@ export function mountServiceControl () {
     itemActionsFor: (item) => {
       /** @type {{action:string,title:string,icon:string}[]} */
       const acts = []
-      acts.push({ action: 'launch', title: 'Launch terminal task', icon: emojiList.launch.unicode })
+      const ttydUp = isTtydAvailable()
+      if (ttydUp) {
+        acts.push({ action: 'launch', title: 'Launch terminal task', icon: emojiList.launch.unicode })
+      }
       if (item.canNavigate) {
         acts.push({ action: 'navigate', title: 'Locate widget', icon: emojiList.magnifyingGlass.unicode })
       }
-      if (item.fallback?.url) {
+      if (ttydUp && item.fallback?.url) {
         const label = item.fallback.name || 'Run service task'
         const isStart = String(label).toLowerCase().includes('start')
         acts.push({ action: 'task', title: label, icon: isStart ? emojiList.launch.unicode : emojiList.noEntry.unicode })
