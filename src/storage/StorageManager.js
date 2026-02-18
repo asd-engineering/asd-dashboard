@@ -351,11 +351,13 @@ export const StorageManager = {
         name: mergedService.name || 'Unnamed Service',
         url: mergedService.url || '',
         type: mergedService.type || 'iframe',
+        state: mergedService.state || 'online',
         template: templateName,
         category: mergedService.category || '',
         subcategory: mergedService.subcategory || '',
         tags: Array.isArray(mergedService.tags) ? mergedService.tags : [],
         config: typeof mergedService.config === 'object' && mergedService.config ? mergedService.config : {},
+        fallback: (mergedService.fallback && typeof mergedService.fallback === 'object') ? mergedService.fallback : undefined,
         // THIS IS THE FIX: Properly fall back to null if not defined anywhere.
         maxInstances: typeof mergedService.maxInstances === 'number' ? mergedService.maxInstances : null
       }

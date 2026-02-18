@@ -12,11 +12,14 @@ test.describe('Service Edit/Delete', () => {
 
   test('edit service updates list', async ({ page }) => {
     const serviceRow = page.locator('[data-testid="service-panel"] .panel-item:has-text("ASD-toolbox")');
-    
-    // *** FIX: Hover over the row first to make action buttons appear ***
+
+    // Hover over the row to trigger sticky popover with action buttons
     await serviceRow.hover();
-    
-    await serviceRow.locator('[data-item-action="rename"]').click();
+    await page.waitForTimeout(200);
+
+    // Action buttons are now in the sticky popover
+    const popover = page.locator('[data-sticky-popover]');
+    await popover.locator('[data-item-action="rename"]').click();
 
     const modal = page.locator('#save-service-modal') // The modal ID is now save-service-modal
     await expect(modal).toBeVisible()

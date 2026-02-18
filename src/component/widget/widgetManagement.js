@@ -79,11 +79,31 @@ async function createWidget (
 
   const iframe = document.createElement('iframe')
   iframe.className = 'widget-iframe'
-  iframe.src = url
+  iframe.src = serviceObj.state === 'offline' && serviceObj.fallback ? 'about:blank' : url
   iframe.loading = 'lazy'
   iframe.style.border = '1px solid #ccc'
   iframe.style.width = '100%'
   iframe.style.height = '100%'
+
+  const offlineOverlay = document.createElement('div')
+  offlineOverlay.className = 'widget-offline-overlay'
+  const offlineButton = document.createElement('button')
+  offlineButton.className = 'widget-offline-start'
+  offlineButton.textContent = `Start ${service}`
+  offlineButton.addEventListener('click', () => {
+    if (serviceObj?.fallback?.url) {
+      showServiceModal({ ...serviceObj, url: serviceObj.fallback.url }, widgetWrapper, {
+        onDone: () => {
+          iframe.src = widgetWrapper.dataset.url || url
+          offlineOverlay.style.display = 'none'
+        }
+      })
+    }
+  })
+  offlineOverlay.appendChild(offlineButton)
+  if (!(serviceObj.state === 'offline' && serviceObj.fallback)) {
+    offlineOverlay.style.display = 'none'
+  }
 
   const widgetMenu = document.createElement('div')
   widgetMenu.classList.add('widget-menu')
@@ -93,9 +113,16 @@ async function createWidget (
     fixServiceButton.innerHTML = emojiList.launch.unicode
     fixServiceButton.classList.add('widget-button', 'widget-icon-action')
     fixServiceButton.onclick = () =>
-      showServiceModal(serviceObj, widgetWrapper)
+      showServiceModal({ ...serviceObj, url: serviceObj.fallback.url }, widgetWrapper)
     widgetMenu.appendChild(fixServiceButton)
   }
+
+  const refreshButton = document.createElement('button')
+  refreshButton.innerHTML = emojiList.crossCycle.unicode
+  refreshButton.classList.add('widget-button', 'widget-icon-refresh')
+  refreshButton.addEventListener('click', () => {
+    iframe.src = widgetWrapper.dataset.url || iframe.src
+  })
 
   const removeButton = document.createElement('button')
   removeButton.innerHTML = emojiList.cross.unicode
@@ -157,6 +184,7 @@ async function createWidget (
   })
 
   widgetMenu.append(
+    refreshButton,
     fullScreenButton,
     removeButton,
     configureButton,
@@ -164,7 +192,7 @@ async function createWidget (
     resizeMenuBlockIcon,
     dragHandle
   )
-  widgetWrapper.append(iframe, widgetMenu)
+  widgetWrapper.append(iframe, offlineOverlay, widgetMenu)
 
   dragHandle.addEventListener('dragstart', (e) => {
     widgetWrapper.classList.add('dragging')
