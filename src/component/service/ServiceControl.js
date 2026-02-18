@@ -14,6 +14,7 @@ import { showNotification } from '../dialog/notification.js'
 import { switchBoard } from '../board/boardManagement.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 import { Logger } from '../../utils/Logger.js'
+import { showServiceModal } from '../modal/serviceLaunchModal.js'
 
 const logger = new Logger('ServiceControl.js')
 
@@ -96,6 +97,7 @@ export function mountServiceControl () {
           label: resolved.name,
           meta: `(${instances}/${max})`,
           url: resolved.url,
+          fallback: resolved.fallback,
           overService,
           name: resolved.name,
           overGlobal,
@@ -172,6 +174,10 @@ export function mountServiceControl () {
           showNotification(`No instances of "${resolved.name}" found in any board.`, 3000, 'error')
           logger.error(`Service with name "${resolved.name}" not found in StorageManager.`)
         }
+      } else if (action === 'task' && resolved.fallback?.url) {
+        showServiceModal({ url: resolved.fallback.url, name: resolved.name }, null, {
+          onDone: () => panel.refresh()
+        })
       }
       panel.refresh()
     },
@@ -184,6 +190,14 @@ export function mountServiceControl () {
       const acts = []
       if (item.canNavigate) {
         acts.push({ action: 'navigate', title: 'Locate widget', icon: emojiList.magnifyingGlass.unicode })
+      }
+      if (item.fallback?.url) {
+        const isStart = String(item.fallback.name || '').toLowerCase().includes('start')
+        acts.push({
+          action: 'task',
+          title: item.fallback.name || 'Run service task',
+          icon: isStart ? emojiList.launch.unicode : emojiList.noEntry.unicode
+        })
       }
       acts.push({ action: 'rename', title: 'Rename service', icon: emojiList.edit.unicode })
       acts.push({ action: 'delete', title: 'Delete service', icon: emojiList.cross.unicode })

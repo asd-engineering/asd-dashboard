@@ -20,7 +20,7 @@ const logger = new Logger('fetchServices.js')
  */
 function parseBase64 (data) {
   try {
-    return JSON.parse(atob(data))
+    return normalizeServicesPayload(JSON.parse(atob(data)))
   } catch (e) {
     logger.error('Failed to parse base64 services:', e)
     showNotification('Invalid services data', 3000, 'error')
@@ -38,12 +38,27 @@ async function fetchJson (url) {
   try {
     const response = await fetch(url)
     if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`)
-    return await response.json()
+    const payload = await response.json()
+    return normalizeServicesPayload(payload)
   } catch (e) {
     logger.error('Failed to fetch services:', e)
     showNotification('Invalid services data', 3000, 'error')
     return null
   }
+}
+
+/**
+ * Normalize incoming payload to service array.
+ * @param {any} payload
+ * @returns {Array<Service>|null}
+ */
+function normalizeServicesPayload (payload) {
+  if (Array.isArray(payload)) return payload
+  if (payload && Array.isArray(payload.services)) return payload.services
+  if (payload == null) return null
+  logger.error('Invalid services payload shape:', payload)
+  showNotification('Invalid services data', 3000, 'error')
+  return []
 }
 
 /**

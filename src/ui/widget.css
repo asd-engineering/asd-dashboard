@@ -70,6 +70,28 @@
 .widget-icon-action { order: 4; }
 .widget-icon-link { order: 5; }
 .widget-icon-remove { order: 6; }
+.widget-icon-refresh { order: 3; }
+
+.widget-offline-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  z-index: 8;
+}
+
+.widget-offline-start {
+  border: 0;
+  border-radius: var(--radius-2);
+  padding: 14px 28px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--color-success);
+  color: #fff;
+}
 
 /* Resize menus */
 .resize-menu, .resize-menu-block {
