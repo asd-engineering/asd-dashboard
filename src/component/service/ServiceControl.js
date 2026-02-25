@@ -41,7 +41,7 @@ function buildTtydTaskUrl (serviceId, action) {
   params.append('arg', 'asd')
   params.append('arg', serviceId)
   params.append('arg', action)
-  return `/asde/ttyd/?${params.toString()}`
+  return `/asde/terminal/?${params.toString()}`
 }
 
 /**
