@@ -79,23 +79,87 @@ async function createWidget (
 
   const iframe = document.createElement('iframe')
   iframe.className = 'widget-iframe'
-  iframe.src = url
+  iframe.src = serviceObj.state === 'offline' && serviceObj.fallback ? 'about:blank' : url
   iframe.loading = 'lazy'
   iframe.style.border = '1px solid #ccc'
   iframe.style.width = '100%'
   iframe.style.height = '100%'
 
+  const isOffline = String(serviceObj.state || '').toLowerCase() === 'offline'
+  const hasFallback = Boolean(serviceObj && serviceObj.fallback && serviceObj.fallback.url)
+
+  const offlineOverlay = document.createElement('div')
+  offlineOverlay.className = 'widget-offline-overlay'
+
+  if (isOffline && hasFallback) {
+    // Status badge
+    const badge = document.createElement('span')
+    badge.className = 'widget-offline-badge'
+    badge.textContent = 'offline'
+    offlineOverlay.appendChild(badge)
+
+    // Service name label (above button)
+    if (serviceObj.name) {
+      const label = document.createElement('span')
+      label.className = 'widget-offline-label'
+      label.textContent = serviceObj.name
+      label.title = serviceObj.name
+      offlineOverlay.appendChild(label)
+    }
+
+    // Action button
+    const offlineButton = document.createElement('button')
+    offlineButton.className = 'widget-offline-start'
+    offlineButton.textContent = serviceObj.fallback.name || `Start ${service}`
+    offlineButton.addEventListener('click', () => {
+      showServiceModal({ ...serviceObj, url: serviceObj.fallback.url }, widgetWrapper, {
+        onDone: () => {
+          iframe.src = widgetWrapper.dataset.url || url
+          offlineOverlay.style.display = 'none'
+        }
+      })
+    })
+    offlineOverlay.appendChild(offlineButton)
+
+    // Command preview
+    const cmdPreview = document.createElement('code')
+    cmdPreview.className = 'widget-offline-cmd'
+    const fallbackUrl = serviceObj.fallback.url || ''
+    try {
+      const parsed = new URL(fallbackUrl, window.location.origin)
+      const args = parsed.searchParams.getAll('arg')
+      if (args.length) cmdPreview.textContent = args.join(' ')
+    } catch { /* skip */ }
+    if (cmdPreview.textContent) offlineOverlay.appendChild(cmdPreview)
+  } else {
+    offlineOverlay.style.display = 'none'
+  }
+
   const widgetMenu = document.createElement('div')
   widgetMenu.classList.add('widget-menu')
 
-  if (serviceObj && serviceObj.fallback) {
+  if (serviceObj && hasFallback) {
     const fixServiceButton = document.createElement('button')
     fixServiceButton.innerHTML = emojiList.launch.unicode
     fixServiceButton.classList.add('widget-button', 'widget-icon-action')
+    fixServiceButton.title = isOffline ? 'Start service' : 'Service action'
+    fixServiceButton.dataset.testid = 'widget-service-action'
     fixServiceButton.onclick = () =>
-      showServiceModal(serviceObj, widgetWrapper)
+      showServiceModal({ ...serviceObj, url: serviceObj.fallback.url }, widgetWrapper)
     widgetMenu.appendChild(fixServiceButton)
   }
+
+  const refreshButton = document.createElement('button')
+  refreshButton.innerHTML = emojiList.crossCycle.unicode
+  refreshButton.classList.add('widget-button', 'widget-icon-refresh')
+  refreshButton.title = 'Refresh widget'
+  refreshButton.addEventListener('click', () => {
+    try {
+      const current = iframe.src; iframe.src = current
+    } catch {
+      // no-op
+    }
+  })
 
   const removeButton = document.createElement('button')
   removeButton.innerHTML = emojiList.cross.unicode
@@ -157,6 +221,7 @@ async function createWidget (
   })
 
   widgetMenu.append(
+    refreshButton,
     fullScreenButton,
     removeButton,
     configureButton,
@@ -164,7 +229,7 @@ async function createWidget (
     resizeMenuBlockIcon,
     dragHandle
   )
-  widgetWrapper.append(iframe, widgetMenu)
+  widgetWrapper.append(iframe, offlineOverlay, widgetMenu)
 
   dragHandle.addEventListener('dragstart', (e) => {
     widgetWrapper.classList.add('dragging')
@@ -206,20 +271,37 @@ async function addWidget (
   viewId = viewId || getCurrentViewId()
 
   await fetchServices() // Ensure services are loaded
-  const serviceName = await getServiceFromUrl(url)
+  // Resolve service: prefer serviceId from persisted widgetState, fall back to URL matching
+  let serviceName
+  let rawServiceObj
+  if (dataid) {
+    const allServices = StorageManager.getServices() || []
+    const allBoards = StorageManager.getBoards() || []
+    const widgetEntry = allBoards
+      .flatMap(b => (b.views || []))
+      .flatMap(v => (v.widgetState || []))
+      .find(w => w.dataid === dataid)
+    if (widgetEntry?.serviceId) {
+      rawServiceObj = allServices.find(s => s.id === widgetEntry.serviceId)
+    }
+  }
+  if (!rawServiceObj) {
+    serviceName = await getServiceFromUrl(url)
+    rawServiceObj = StorageManager.getServices().find((s) => s.name === serviceName) || {}
+  }
+  serviceName = serviceName || rawServiceObj.name || 'defaultService'
   if (window.asd.widgetStore.isAdding(serviceName)) return
   window.asd.widgetStore.lock(serviceName)
   try {
-    const rawServiceObj = StorageManager.getServices().find((s) => s.name === serviceName) || {}
     const serviceObj = resolveServiceConfig(rawServiceObj)
 
     // Determine final dimensions with fallbacks to template defaults
     const finalColumns = columns ?? serviceObj.config?.columns ?? 1
     const finalRows = rows ?? serviceObj.config?.rows ?? 1
 
-    // Enforce global maxInstances (across live DOM and persisted config)
+    // Enforce per-service maxInstances (across live DOM and persisted config)
     const liveDataIds = Array.from(window.asd.widgetStore.widgets.values())
-      .filter(el => el.dataset.service === serviceName)
+      .filter(el => el.dataset.serviceId === serviceObj.id)
       .map(el => el.dataset.dataid)
 
     const config = StorageManager.getConfig() || {}
@@ -227,6 +309,7 @@ async function addWidget (
     const persistedDataIds = boards
       .flatMap(b => Array.isArray(b.views) ? b.views : [])
       .flatMap(v => Array.isArray(v.widgetState) ? v.widgetState : [])
+      .filter(w => w?.serviceId === serviceObj.id)
       .map(w => w?.dataid)
       .filter(Boolean)
 

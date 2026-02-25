@@ -14,8 +14,35 @@ import { showNotification } from '../dialog/notification.js'
 import { switchBoard } from '../board/boardManagement.js'
 import emojiList from '../../ui/unicodeEmoji.js'
 import { Logger } from '../../utils/Logger.js'
+import { showServiceModal } from '../modal/serviceLaunchModal.js'
 
 const logger = new Logger('ServiceControl.js')
+
+/**
+ * Check whether the ttyd service is online.
+ * All task actions (launch terminal, start/stop service) require ttyd.
+ * @returns {boolean}
+ */
+function isTtydAvailable () {
+  const services = StorageManager.getServices() || []
+  const ttyd = services.find(s => s.id === 'ttyd')
+  return Boolean(ttyd && String(ttyd.state || '').toLowerCase() === 'online')
+}
+
+/**
+ * Build ttyd URL-arg task URL.
+ * CLI commands follow `asd <serviceId> <action>` pattern.
+ * @param {string} serviceId
+ * @param {'start'|'stop'|'restart'|'terminal'} action
+ * @returns {string}
+ */
+function buildTtydTaskUrl (serviceId, action) {
+  const params = new URLSearchParams()
+  params.append('arg', 'asd')
+  params.append('arg', serviceId)
+  params.append('arg', action)
+  return `/asde/terminal/?${params.toString()}`
+}
 
 /**
  * Emit a standardized state change event.
@@ -94,13 +121,15 @@ export function mountServiceControl () {
         return {
           id: resolved.id,
           label: resolved.name,
-          meta: `(${instances}/${max})`,
+          meta: `${String(resolved.state || 'unknown')} (${instances}/${max})`,
           url: resolved.url,
+          fallback: resolved.fallback,
           overService,
           name: resolved.name,
           overGlobal,
           instances,
-          canNavigate
+          canNavigate,
+          state: resolved.state || 'unknown'
         }
       })
     },
@@ -172,6 +201,35 @@ export function mountServiceControl () {
           showNotification(`No instances of "${resolved.name}" found in any board.`, 3000, 'error')
           logger.error(`Service with name "${resolved.name}" not found in StorageManager.`)
         }
+      } else if (action === 'task') {
+        if (resolved.fallback?.url) {
+          showServiceModal({ id: resolved.id, name: resolved.name, url: resolved.fallback.url }, null, {
+            onDone: () => panel.refresh()
+          })
+        } else {
+          showNotification(`No service action configured for "${resolved.name}".`, 2500, 'error')
+        }
+      } else if (action === 'launch') {
+        const taskUrl = buildTtydTaskUrl(resolved.id, 'terminal')
+        showServiceModal(
+          {
+            id: resolved.id,
+            name: `${resolved.name} terminal`,
+            url: taskUrl
+          },
+          null
+        )
+      } else if (action.startsWith('task-')) {
+        const taskAction = /** @type {'start'|'stop'|'restart'|'terminal'} */ (action.replace('task-', ''))
+        const taskUrl = buildTtydTaskUrl(resolved.id, taskAction)
+        showServiceModal(
+          {
+            id: resolved.id,
+            name: `${resolved.name} ${taskAction}`,
+            url: taskUrl
+          },
+          null
+        )
       }
       panel.refresh()
     },
@@ -182,8 +240,21 @@ export function mountServiceControl () {
     itemActionsFor: (item) => {
       /** @type {{action:string,title:string,icon:string}[]} */
       const acts = []
+      const ttydUp = isTtydAvailable()
+      if (ttydUp) {
+        acts.push({ action: 'launch', title: 'Launch terminal task', icon: emojiList.launch.unicode })
+      }
       if (item.canNavigate) {
         acts.push({ action: 'navigate', title: 'Locate widget', icon: emojiList.magnifyingGlass.unicode })
+      }
+      if (item.fallback?.url) {
+        const label = String(item.fallback.name || '').toLowerCase()
+        const isStart = label.includes('start') || label.includes('launch')
+        acts.push({
+          action: 'task',
+          title: item.fallback.name || 'Run service task',
+          icon: isStart ? emojiList.launch.unicode : emojiList.noEntry.unicode
+        })
       }
       acts.push({ action: 'rename', title: 'Rename service', icon: emojiList.edit.unicode })
       acts.push({ action: 'delete', title: 'Delete service', icon: emojiList.cross.unicode })

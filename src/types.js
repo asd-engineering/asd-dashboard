@@ -60,9 +60,11 @@
  * @property {string} [category]
  * @property {string} [subcategory]
  * @property {Array<string>} [tags]
+ * @property {'online'|'offline'} [state]
  * @property {ServiceConfig} [config]
  * @property {number} [maxInstances] Maximum allowed widget instances
  * @property {string} [template] - The key of the template to inherit from
+ * @property {'online'|'offline'|'unknown'} [state]
  * @property {{name:string,url:string,method?:string,headers?:Object}} [fallback]
  */
 
