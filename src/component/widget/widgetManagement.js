@@ -101,7 +101,7 @@ async function createWidget (
     }
   })
   offlineOverlay.appendChild(offlineButton)
-  if (serviceObj.name && serviceObj.name !== service) {
+  if (serviceObj.name && serviceObj.state === 'offline' && serviceObj.fallback) {
     const label = document.createElement('span')
     label.className = 'widget-offline-label'
     label.textContent = serviceObj.name
@@ -241,20 +241,37 @@ async function addWidget (
   viewId = viewId || getCurrentViewId()
 
   await fetchServices() // Ensure services are loaded
-  const serviceName = await getServiceFromUrl(url)
+  // Resolve service: prefer serviceId from persisted widgetState, fall back to URL matching
+  let serviceName
+  let rawServiceObj
+  if (dataid) {
+    const allServices = StorageManager.getServices() || []
+    const allBoards = StorageManager.getBoards() || []
+    const widgetEntry = allBoards
+      .flatMap(b => (b.views || []))
+      .flatMap(v => (v.widgetState || []))
+      .find(w => w.dataid === dataid)
+    if (widgetEntry?.serviceId) {
+      rawServiceObj = allServices.find(s => s.id === widgetEntry.serviceId)
+    }
+  }
+  if (!rawServiceObj) {
+    serviceName = await getServiceFromUrl(url)
+    rawServiceObj = StorageManager.getServices().find((s) => s.name === serviceName) || {}
+  }
+  serviceName = serviceName || rawServiceObj.name || 'defaultService'
   if (window.asd.widgetStore.isAdding(serviceName)) return
   window.asd.widgetStore.lock(serviceName)
   try {
-    const rawServiceObj = StorageManager.getServices().find((s) => s.name === serviceName) || {}
     const serviceObj = resolveServiceConfig(rawServiceObj)
 
     // Determine final dimensions with fallbacks to template defaults
     const finalColumns = columns ?? serviceObj.config?.columns ?? 1
     const finalRows = rows ?? serviceObj.config?.rows ?? 1
 
-    // Enforce global maxInstances (across live DOM and persisted config)
+    // Enforce per-service maxInstances (across live DOM and persisted config)
     const liveDataIds = Array.from(window.asd.widgetStore.widgets.values())
-      .filter(el => el.dataset.service === serviceName)
+      .filter(el => el.dataset.serviceId === serviceObj.id)
       .map(el => el.dataset.dataid)
 
     const config = StorageManager.getConfig() || {}
@@ -262,6 +279,7 @@ async function addWidget (
     const persistedDataIds = boards
       .flatMap(b => Array.isArray(b.views) ? b.views : [])
       .flatMap(v => Array.isArray(v.widgetState) ? v.widgetState : [])
+      .filter(w => w?.serviceId === serviceObj.id)
       .map(w => w?.dataid)
       .filter(Boolean)
 
