@@ -9,6 +9,8 @@ import { bootWithDashboardState } from './shared/bootState'
 import { ensurePanelOpen, hoverPanelItem } from './shared/panels'
 
 // -- Test fixtures: mimics what hub-config.ts generates from sessions.yaml --
+// Fallback URLs use absolute ttyd endpoint (resolved from registry tunnel/caddy URL)
+const TTYD_BASE = 'https://asd-dashboard.test.local/asde/ttyd'
 
 const SESSION_SERVICES = [
   {
@@ -19,7 +21,7 @@ const SESSION_SERVICES = [
     maxInstances: 1,
     fallback: {
       name: 'Launch Session',
-      url: '/asde/ttyd/?arg=claude&arg=--resume&arg=abc12345-full-uuid&arg=--session%3Dsession-abc12345',
+      url: `${TTYD_BASE}/?arg=claude&arg=--resume&arg=abc12345-full-uuid&arg=--session%3Dsession-abc12345`,
       method: 'GET'
     }
   },
@@ -31,7 +33,7 @@ const SESSION_SERVICES = [
     maxInstances: 1,
     fallback: {
       name: 'Launch Session',
-      url: '/asde/ttyd/?arg=claude&arg=--resume&arg=def67890-full-uuid&arg=--session%3Dsession-def67890',
+      url: `${TTYD_BASE}/?arg=claude&arg=--resume&arg=def67890-full-uuid&arg=--session%3Dsession-def67890`,
       method: 'GET'
     }
   },
@@ -43,7 +45,7 @@ const SESSION_SERVICES = [
     maxInstances: 1,
     fallback: {
       name: 'Launch Session',
-      url: '/asde/ttyd/?arg=pnpm&arg=dev&arg=--session%3Dpinned-dev-server',
+      url: `${TTYD_BASE}/?arg=pnpm&arg=dev&arg=--session%3Dpinned-dev-server`,
       method: 'GET'
     }
   },
@@ -56,7 +58,7 @@ const SESSION_SERVICES = [
     maxInstances: 1,
     fallback: {
       name: 'Stop Service',
-      url: '/asde/ttyd/?arg=asd&arg=codeserver&arg=stop',
+      url: `${TTYD_BASE}/?arg=asd&arg=codeserver&arg=stop`,
       method: 'GET'
     }
   },
@@ -227,10 +229,10 @@ test.describe('Session widgets', () => {
     const instructions = modal.locator('p')
     await expect(instructions).toContainText('Task is running below')
 
-    // iframe pointing to ttyd
+    // iframe pointing to ttyd (absolute URL from resolved registry)
     const iframe = modal.locator('iframe')
     const src = await iframe.getAttribute('src')
-    expect(src).toContain('/asde/ttyd/')
+    expect(src).toContain('asd-dashboard.test.local/asde/ttyd')
     expect(src).toContain('arg=claude')
     expect(src).toContain('arg=--resume')
 
@@ -363,10 +365,10 @@ test.describe('Service task control', () => {
     const header = modal.locator('.service-action-header')
     await expect(header).toContainText('Code Server')
 
-    // iframe should point to the stop command
+    // iframe should point to the stop command (absolute ttyd URL)
     const iframe = modal.locator('iframe')
     const src = await iframe.getAttribute('src')
-    expect(src).toContain('/asde/ttyd/')
+    expect(src).toContain('asd-dashboard.test.local/asde/ttyd')
     expect(src).toContain('arg=asd')
     expect(src).toContain('arg=codeserver')
     expect(src).toContain('arg=stop')
