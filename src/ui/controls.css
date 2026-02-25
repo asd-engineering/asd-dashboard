@@ -205,8 +205,28 @@ menu#controls #admin-control.control-group {
 }
 
 .runtime-status {
-  color: var(--color-text-weak);
-  text-transform: capitalize;
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  border-radius: var(--radius-1);
+  background: var(--color-text-weak);
+  color: var(--color-elevated);
+}
+.runtime-status[data-status="running"] {
+  background: var(--color-success);
+  color: #fff;
+}
+.runtime-status[data-status="minimized"] {
+  background: var(--color-accent);
+  color: #fff;
+}
+.runtime-status[data-status="done"] {
+  background: var(--color-text-weak);
+  color: var(--color-elevated);
+  opacity: 0.6;
 }
 
 .runtime-title {

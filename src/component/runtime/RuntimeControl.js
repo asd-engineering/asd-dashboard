@@ -59,9 +59,11 @@ export function mountRuntimeControl () {
         for (const task of items) {
           const row = document.createElement('div')
           row.className = 'runtime-item'
+          const statusText = String(task.status || 'running')
           const status = document.createElement('span')
           status.className = 'runtime-status'
-          status.textContent = String(task.status || 'running')
+          status.dataset.status = statusText
+          status.textContent = statusText
           const title = document.createElement('span')
           title.className = 'runtime-title'
           title.textContent = String(task.title || task.id)
@@ -104,9 +106,11 @@ export function mountRuntimeControl () {
         for (const proc of items) {
           const row = document.createElement('div')
           row.className = 'runtime-item'
+          const stateText = String(proc.state || 'unknown')
           const st = document.createElement('span')
           st.className = 'runtime-status'
-          st.textContent = String(proc.state || 'unknown')
+          st.dataset.status = stateText === 'online' ? 'running' : stateText
+          st.textContent = stateText
           const title = document.createElement('span')
           title.className = 'runtime-title'
           title.textContent = String(proc.name || proc.id || 'process')

@@ -85,66 +85,64 @@ async function createWidget (
   iframe.style.width = '100%'
   iframe.style.height = '100%'
 
+  const isOffline = String(serviceObj.state || '').toLowerCase() === 'offline'
+  const hasFallback = Boolean(serviceObj && serviceObj.fallback && serviceObj.fallback.url)
+
   const offlineOverlay = document.createElement('div')
   offlineOverlay.className = 'widget-offline-overlay'
-  const offlineButton = document.createElement('button')
-  offlineButton.className = 'widget-offline-start'
-  offlineButton.textContent = serviceObj?.fallback?.name || `Start ${service}`
-  offlineButton.addEventListener('click', () => {
-    if (serviceObj?.fallback?.url) {
+
+  if (isOffline && hasFallback) {
+    // Status badge
+    const badge = document.createElement('span')
+    badge.className = 'widget-offline-badge'
+    badge.textContent = 'offline'
+    offlineOverlay.appendChild(badge)
+
+    // Service name label (above button)
+    if (serviceObj.name) {
+      const label = document.createElement('span')
+      label.className = 'widget-offline-label'
+      label.textContent = serviceObj.name
+      label.title = serviceObj.name
+      offlineOverlay.appendChild(label)
+    }
+
+    // Action button
+    const offlineButton = document.createElement('button')
+    offlineButton.className = 'widget-offline-start'
+    offlineButton.textContent = serviceObj.fallback.name || `Start ${service}`
+    offlineButton.addEventListener('click', () => {
       showServiceModal({ ...serviceObj, url: serviceObj.fallback.url }, widgetWrapper, {
         onDone: () => {
           iframe.src = widgetWrapper.dataset.url || url
           offlineOverlay.style.display = 'none'
         }
       })
-    }
-  })
-  offlineOverlay.appendChild(offlineButton)
-  if (serviceObj.name && serviceObj.state === 'offline' && serviceObj.fallback) {
-    const label = document.createElement('span')
-    label.className = 'widget-offline-label'
-    label.textContent = serviceObj.name
-    label.title = serviceObj.name
-    offlineOverlay.appendChild(label)
-  }
-  if (!(serviceObj.state === 'offline' && serviceObj.fallback)) {
+    })
+    offlineOverlay.appendChild(offlineButton)
+
+    // Command preview
+    const cmdPreview = document.createElement('code')
+    cmdPreview.className = 'widget-offline-cmd'
+    const fallbackUrl = serviceObj.fallback.url || ''
+    try {
+      const parsed = new URL(fallbackUrl, window.location.origin)
+      const args = parsed.searchParams.getAll('arg')
+      if (args.length) cmdPreview.textContent = args.join(' ')
+    } catch { /* skip */ }
+    if (cmdPreview.textContent) offlineOverlay.appendChild(cmdPreview)
+  } else {
     offlineOverlay.style.display = 'none'
   }
 
   const widgetMenu = document.createElement('div')
   widgetMenu.classList.add('widget-menu')
 
-  const isOffline = String(serviceObj.state || '').toLowerCase() === 'offline'
-  const hasFallback = Boolean(serviceObj && serviceObj.fallback && serviceObj.fallback.url)
-  // All fallback actions use ttyd — only show when ttyd is online
-  const ttydSvc = StorageManager.getServices().find(s => s.id === 'ttyd')
-  const ttydUp = Boolean(ttydSvc && String(ttydSvc.state || '').toLowerCase() === 'online')
-  if (ttydUp && hasFallback && (isOffline || !url)) {
-    const startOverlay = document.createElement('div')
-    startOverlay.className = 'widget-start-overlay'
-    const startTitle = document.createElement('h2')
-    startTitle.className = 'widget-start-overlay-title'
-    startTitle.textContent = 'Acties'
-
-    const startButton = document.createElement('button')
-    startButton.className = 'widget-start-overlay-button'
-    startButton.textContent = 'Start'
-    startButton.title = `Start ${serviceObj.name || service}`
-    startButton.addEventListener('click', () => {
-      showServiceModal(serviceObj, widgetWrapper)
-    })
-
-    startOverlay.append(startTitle, startButton)
-    widgetWrapper.appendChild(startOverlay)
-  }
-
-  if (ttydUp && serviceObj && serviceObj.fallback) {
-    const state = String(serviceObj.state || '').toLowerCase()
+  if (serviceObj && hasFallback) {
     const fixServiceButton = document.createElement('button')
     fixServiceButton.innerHTML = emojiList.launch.unicode
     fixServiceButton.classList.add('widget-button', 'widget-icon-action')
-    fixServiceButton.title = state === 'offline' ? 'Start service' : 'Service action'
+    fixServiceButton.title = isOffline ? 'Start service' : 'Service action'
     fixServiceButton.dataset.testid = 'widget-service-action'
     fixServiceButton.onclick = () =>
       showServiceModal({ ...serviceObj, url: serviceObj.fallback.url }, widgetWrapper)

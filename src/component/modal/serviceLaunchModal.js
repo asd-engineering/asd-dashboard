@@ -46,35 +46,43 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
     },
     buildContent: (modal, closeModal) => {
       modal.classList.add('service-action-modal')
+
+      // Header with service name
       if (serviceObj.name) {
         const header = document.createElement('h3')
         header.className = 'service-action-header'
         header.textContent = serviceObj.name
         modal.appendChild(header)
       }
-      const iframe = document.createElement('iframe')
-      iframe.src = taskUrl
-      iframe.style.width = '100%'
-      iframe.style.minHeight = '420px'
-      iframe.style.border = '1px solid #ccc'
-      iframe.style.display = 'block'
+
+      // Instructions
       const instructions = document.createElement('p')
       instructions.textContent = serviceObj.name
         ? 'Task is running below. Press "Done" when finished or "Minimize" to continue working.'
         : "The action is being performed. Please wait a few moments and then press 'Done and refresh widget'"
-      const openInNewTab = document.createElement('a')
-      openInNewTab.href = taskUrl
-      openInNewTab.target = '_blank'
-      openInNewTab.rel = 'noopener noreferrer'
-      openInNewTab.textContent = 'Open task in new tab'
+      modal.appendChild(instructions)
+
+      // Terminal iframe
+      const iframe = document.createElement('iframe')
+      iframe.src = taskUrl
+      iframe.className = 'service-action-iframe'
+      modal.appendChild(iframe)
+
+      // Button bar
+      const btnBar = document.createElement('div')
+      btnBar.className = 'service-action-buttons'
+
       const minimizeButton = document.createElement('button')
-      minimizeButton.textContent = 'Minimize task'
+      minimizeButton.textContent = 'Minimize'
+      minimizeButton.className = 'service-action-btn-secondary'
       minimizeButton.addEventListener('click', () => {
         updateTask(taskId, { status: 'minimized', open: openTask })
         closeModal()
       })
+
       const doneButton = document.createElement('button')
-      doneButton.textContent = 'Done and refresh widget'
+      doneButton.textContent = 'Done'
+      doneButton.className = 'service-action-btn-primary'
       doneButton.addEventListener('click', () => {
         completed = true
         updateTask(taskId, { status: 'done', open: openTask })
@@ -95,7 +103,15 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
           showNotification('Failed to refresh widget')
         }
       })
-      modal.append(instructions, openInNewTab, iframe, minimizeButton, doneButton)
+
+      const openInNewTab = document.createElement('a')
+      openInNewTab.href = taskUrl
+      openInNewTab.target = '_blank'
+      openInNewTab.rel = 'noopener noreferrer'
+      openInNewTab.textContent = 'Open in new tab'
+
+      btnBar.append(minimizeButton, openInNewTab, doneButton)
+      modal.appendChild(btnBar)
     }
   })
 }
