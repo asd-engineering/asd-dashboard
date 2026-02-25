@@ -18,7 +18,7 @@ const logger = new Logger('serviceLaunchModal.js')
  *
  * @param {{url: string, name?: string, id?: string}} serviceObj - Service information with a URL.
  * @param {HTMLElement|null} widgetWrapper - Widget element to refresh.
- * @param {{taskId?: string}} [opts]
+ * @param {{taskId?: string, onDone?: Function}} [opts]
  * @function showServiceModal
  * @returns {void}
  */
@@ -46,6 +46,12 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
     },
     buildContent: (modal, closeModal) => {
       modal.classList.add('service-action-modal')
+      if (serviceObj.name) {
+        const header = document.createElement('h3')
+        header.className = 'service-action-header'
+        header.textContent = serviceObj.name
+        modal.appendChild(header)
+      }
       const iframe = document.createElement('iframe')
       iframe.src = taskUrl
       iframe.style.width = '100%'
@@ -53,12 +59,14 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
       iframe.style.border = '1px solid #ccc'
       iframe.style.display = 'block'
       const instructions = document.createElement('p')
-      instructions.textContent = "The action is being performed. Please wait a few moments and then press 'Done and refresh widget'"
-      const openExternal = document.createElement('a')
-      openExternal.href = taskUrl
-      openExternal.target = '_blank'
-      openExternal.rel = 'noopener noreferrer'
-      openExternal.textContent = 'Open task in new tab'
+      instructions.textContent = serviceObj.name
+        ? 'Task is running below. Press "Done" when finished or "Minimize" to continue working.'
+        : "The action is being performed. Please wait a few moments and then press 'Done and refresh widget'"
+      const openInNewTab = document.createElement('a')
+      openInNewTab.href = taskUrl
+      openInNewTab.target = '_blank'
+      openInNewTab.rel = 'noopener noreferrer'
+      openInNewTab.textContent = 'Open task in new tab'
       const minimizeButton = document.createElement('button')
       minimizeButton.textContent = 'Minimize task'
       minimizeButton.addEventListener('click', () => {
@@ -71,17 +79,23 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
         completed = true
         updateTask(taskId, { status: 'done', open: openTask })
         closeModal()
+        document.dispatchEvent(new CustomEvent('state-change', { detail: { reason: 'services' } }))
         try {
           if (widgetWrapper) {
             const iframeEl = widgetWrapper.querySelector('iframe')
-            if (iframeEl) iframeEl.src = widgetWrapper.dataset.url || iframeEl.src
+            if (iframeEl) {
+              iframeEl.src = widgetWrapper.dataset.url || iframeEl.src
+            }
+          }
+          if (typeof opts.onDone === 'function') {
+            opts.onDone()
           }
         } catch (error) {
           logger.error('Error refreshing widget iframe:', error)
           showNotification('Failed to refresh widget')
         }
       })
-      modal.append(instructions, openExternal, iframe, minimizeButton, doneButton)
+      modal.append(instructions, openInNewTab, iframe, minimizeButton, doneButton)
     }
   })
 }

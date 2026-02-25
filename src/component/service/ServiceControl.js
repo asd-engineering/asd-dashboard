@@ -123,13 +123,13 @@ export function mountServiceControl () {
           label: resolved.name,
           meta: `${String(resolved.state || 'unknown')} (${instances}/${max})`,
           url: resolved.url,
+          fallback: resolved.fallback,
           overService,
           name: resolved.name,
           overGlobal,
           instances,
           canNavigate,
-          state: resolved.state || 'unknown',
-          fallback: resolved.fallback
+          state: resolved.state || 'unknown'
         }
       })
     },
@@ -203,7 +203,9 @@ export function mountServiceControl () {
         }
       } else if (action === 'task') {
         if (resolved.fallback?.url) {
-          showServiceModal({ id: resolved.id, name: resolved.name, url: resolved.fallback.url }, null)
+          showServiceModal({ id: resolved.id, name: resolved.name, url: resolved.fallback.url }, null, {
+            onDone: () => panel.refresh()
+          })
         } else {
           showNotification(`No service action configured for "${resolved.name}".`, 2500, 'error')
         }
@@ -245,10 +247,14 @@ export function mountServiceControl () {
       if (item.canNavigate) {
         acts.push({ action: 'navigate', title: 'Locate widget', icon: emojiList.magnifyingGlass.unicode })
       }
-      if (ttydUp && item.fallback?.url) {
-        const label = item.fallback.name || 'Run service task'
-        const isStart = String(label).toLowerCase().includes('start')
-        acts.push({ action: 'task', title: label, icon: isStart ? emojiList.launch.unicode : emojiList.noEntry.unicode })
+      if (item.fallback?.url) {
+        const label = String(item.fallback.name || '').toLowerCase()
+        const isStart = label.includes('start') || label.includes('launch')
+        acts.push({
+          action: 'task',
+          title: item.fallback.name || 'Run service task',
+          icon: isStart ? emojiList.launch.unicode : emojiList.noEntry.unicode
+        })
       }
       acts.push({ action: 'rename', title: 'Rename service', icon: emojiList.edit.unicode })
       acts.push({ action: 'delete', title: 'Delete service', icon: emojiList.cross.unicode })

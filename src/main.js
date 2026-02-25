@@ -29,6 +29,16 @@ import { mountRuntimeControl } from './component/runtime/RuntimeControl.js'
 const logger = new Logger('main.js')
 Logger.enableLogs('all')
 
+const LAYER_ROOT_ID = 'asd-layer-root'
+/** Ensure the overlay layer root exists */
+function ensureLayerRoot () {
+  if (!document.getElementById(LAYER_ROOT_ID)) {
+    const el = document.createElement('div')
+    el.id = LAYER_ROOT_ID
+    document.body.appendChild(el)
+  }
+}
+
 // Global state container
 window.asd = {
   services: [],
@@ -46,6 +56,8 @@ window.addEventListener('hashchange', () => loadFromFragment(false))
  */
 async function main () {
   logger.log('Application initialization started')
+
+  ensureLayerRoot()
 
   try {
     await StorageManager.init({ persist: true })

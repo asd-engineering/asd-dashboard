@@ -1,6 +1,7 @@
 // @ts-check
 import { emojiList } from '../../ui/unicodeEmoji.js'
 import { installHoverIntent } from './selector-hover-intent.js'
+import { createStickyPopover } from '../../shared/ui/index.js'
 /**
  * Generic selector panel with compact top menu and per-row flyout actions.
  *
@@ -88,6 +89,8 @@ export class SelectorPanel {
     this.state = { wasFocused: false }
     this.dom = /** @type {any} */ ({})
     this.handlers = /** @type {any} */ ({})
+    this.popovers = new WeakMap()
+    this.currentPopover = null
     this.render()
     this.bind()
     this.refresh()
@@ -174,16 +177,6 @@ export class SelectorPanel {
 
     const onListClick = (e) => {
       const target = /** @type {HTMLElement} */ (e.target)
-      const itemBtn = target.closest('[data-item-action]')
-      if (itemBtn) {
-        e.preventDefault()
-        e.stopPropagation()
-        const action = /** @type {HTMLElement} */ (itemBtn).dataset.itemAction || ''
-        const row = target.closest('[data-id]')
-        const id = row ? /** @type {HTMLElement} */ (row).dataset.id || '' : ''
-        this.dispatchItemAction(action, id)
-        return
-      }
       const row = target.closest('[data-id]')
       if (row) {
         e.preventDefault()
@@ -279,6 +272,9 @@ export class SelectorPanel {
     this.dom.menu.innerHTML = ''
     this.dom.list.innerHTML = ''
     if (this.dom.empty) { this.dom.empty.remove(); this.dom.empty = null }
+    this.currentPopover?.destroy()
+    this.currentPopover = null
+    this.popovers = new WeakMap()
 
     // build top menu
     if (actions.length === 1 && (hasCreate(actions[0]) || hasReset(actions[0]))) {
@@ -386,6 +382,11 @@ export class SelectorPanel {
       const acts = document.createElement('div')
       acts.className = 'panel-item-actions-flyout'
       acts.setAttribute('role', 'menu')
+      const pinBtn = document.createElement('button')
+      pinBtn.type = 'button'
+      pinBtn.className = 'panel-item-pin'
+      pinBtn.textContent = '📌'
+      acts.appendChild(pinBtn)
       const actionsArr = typeof itemActionsFor === 'function' ? itemActionsFor(it) : itemActions
       for (const a of actionsArr) {
         const b = document.createElement('button')
@@ -397,6 +398,37 @@ export class SelectorPanel {
         acts.appendChild(b)
       }
       row.appendChild(acts)
+
+      const pop = createStickyPopover({ anchor: row, content: acts, strategy: 'absolute' })
+      this.popovers.set(row, pop)
+      let closeTimer = null
+      row.addEventListener('mouseenter', () => {
+        if (closeTimer) { clearTimeout(closeTimer); closeTimer = null }
+        this.currentPopover = pop
+        pop.open()
+      })
+      row.addEventListener('mouseleave', () => {
+        // Delay close to allow mouse to move to popover
+        closeTimer = setTimeout(() => {
+          if (!pop.isPinned()) pop.close()
+        }, 150)
+      })
+      // Cancel close if mouse enters the popover content
+      acts.addEventListener('mouseenter', () => {
+        if (closeTimer) { clearTimeout(closeTimer); closeTimer = null }
+      })
+      acts.addEventListener('click', (e) => {
+        const tgt = /** @type {HTMLElement|null} */ (e.target instanceof HTMLElement ? e.target.closest('[data-item-action]') : null)
+        if (tgt) {
+          e.preventDefault()
+          e.stopPropagation()
+          pop.pin()
+          const action = tgt.dataset.itemAction || ''
+          const id = row.dataset.id || ''
+          this.dispatchItemAction(action, id)
+        }
+      })
+      pinBtn.addEventListener('click', (e) => { e.stopPropagation(); pop.pin() })
 
       this.dom.list.appendChild(row)
     }
@@ -475,5 +507,6 @@ export class SelectorPanel {
     menu.removeEventListener('keydown', this.handlers.onMenuKeydown)
     document.removeEventListener('modal:open', this.handlers.onModalOpen)
     document.removeEventListener('modal:close', this.handlers.onModalClose)
+    this.currentPopover?.destroy()
   }
 }

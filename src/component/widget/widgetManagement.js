@@ -79,11 +79,38 @@ async function createWidget (
 
   const iframe = document.createElement('iframe')
   iframe.className = 'widget-iframe'
-  iframe.src = url
+  iframe.src = serviceObj.state === 'offline' && serviceObj.fallback ? 'about:blank' : url
   iframe.loading = 'lazy'
   iframe.style.border = '1px solid #ccc'
   iframe.style.width = '100%'
   iframe.style.height = '100%'
+
+  const offlineOverlay = document.createElement('div')
+  offlineOverlay.className = 'widget-offline-overlay'
+  const offlineButton = document.createElement('button')
+  offlineButton.className = 'widget-offline-start'
+  offlineButton.textContent = serviceObj?.fallback?.name || `Start ${service}`
+  offlineButton.addEventListener('click', () => {
+    if (serviceObj?.fallback?.url) {
+      showServiceModal({ ...serviceObj, url: serviceObj.fallback.url }, widgetWrapper, {
+        onDone: () => {
+          iframe.src = widgetWrapper.dataset.url || url
+          offlineOverlay.style.display = 'none'
+        }
+      })
+    }
+  })
+  offlineOverlay.appendChild(offlineButton)
+  if (serviceObj.name && serviceObj.state === 'offline' && serviceObj.fallback) {
+    const label = document.createElement('span')
+    label.className = 'widget-offline-label'
+    label.textContent = serviceObj.name
+    label.title = serviceObj.name
+    offlineOverlay.appendChild(label)
+  }
+  if (!(serviceObj.state === 'offline' && serviceObj.fallback)) {
+    offlineOverlay.style.display = 'none'
+  }
 
   const widgetMenu = document.createElement('div')
   widgetMenu.classList.add('widget-menu')
@@ -120,19 +147,9 @@ async function createWidget (
     fixServiceButton.title = state === 'offline' ? 'Start service' : 'Service action'
     fixServiceButton.dataset.testid = 'widget-service-action'
     fixServiceButton.onclick = () =>
-      showServiceModal(serviceObj, widgetWrapper)
+      showServiceModal({ ...serviceObj, url: serviceObj.fallback.url }, widgetWrapper)
     widgetMenu.appendChild(fixServiceButton)
   }
-
-  const removeButton = document.createElement('button')
-  removeButton.innerHTML = emojiList.cross.unicode
-  removeButton.classList.add('widget-button', 'widget-icon-remove')
-  removeButton.addEventListener('click', () => removeWidget(widgetWrapper))
-
-  const configureButton = document.createElement('button')
-  configureButton.innerHTML = emojiList.link.unicode
-  configureButton.classList.add('widget-button', 'widget-icon-link')
-  configureButton.addEventListener('click', () => configureWidget(iframe))
 
   const refreshButton = document.createElement('button')
   refreshButton.innerHTML = emojiList.crossCycle.unicode
@@ -145,6 +162,16 @@ async function createWidget (
       // no-op
     }
   })
+
+  const removeButton = document.createElement('button')
+  removeButton.innerHTML = emojiList.cross.unicode
+  removeButton.classList.add('widget-button', 'widget-icon-remove')
+  removeButton.addEventListener('click', () => removeWidget(widgetWrapper))
+
+  const configureButton = document.createElement('button')
+  configureButton.innerHTML = emojiList.link.unicode
+  configureButton.classList.add('widget-button', 'widget-icon-link')
+  configureButton.addEventListener('click', () => configureWidget(iframe))
 
   const buttonDebounce = 200
   const debouncedHideResizeMenu = debounce(
@@ -196,15 +223,15 @@ async function createWidget (
   })
 
   widgetMenu.append(
-    fullScreenButton,
     refreshButton,
+    fullScreenButton,
     removeButton,
     configureButton,
     resizeMenuIcon,
     resizeMenuBlockIcon,
     dragHandle
   )
-  widgetWrapper.append(iframe, widgetMenu)
+  widgetWrapper.append(iframe, offlineOverlay, widgetMenu)
 
   dragHandle.addEventListener('dragstart', (e) => {
     widgetWrapper.classList.add('dragging')
@@ -246,20 +273,37 @@ async function addWidget (
   viewId = viewId || getCurrentViewId()
 
   await fetchServices() // Ensure services are loaded
-  const serviceName = await getServiceFromUrl(url)
+  // Resolve service: prefer serviceId from persisted widgetState, fall back to URL matching
+  let serviceName
+  let rawServiceObj
+  if (dataid) {
+    const allServices = StorageManager.getServices() || []
+    const allBoards = StorageManager.getBoards() || []
+    const widgetEntry = allBoards
+      .flatMap(b => (b.views || []))
+      .flatMap(v => (v.widgetState || []))
+      .find(w => w.dataid === dataid)
+    if (widgetEntry?.serviceId) {
+      rawServiceObj = allServices.find(s => s.id === widgetEntry.serviceId)
+    }
+  }
+  if (!rawServiceObj) {
+    serviceName = await getServiceFromUrl(url)
+    rawServiceObj = StorageManager.getServices().find((s) => s.name === serviceName) || {}
+  }
+  serviceName = serviceName || rawServiceObj.name || 'defaultService'
   if (window.asd.widgetStore.isAdding(serviceName)) return
   window.asd.widgetStore.lock(serviceName)
   try {
-    const rawServiceObj = StorageManager.getServices().find((s) => s.name === serviceName) || {}
     const serviceObj = resolveServiceConfig(rawServiceObj)
 
     // Determine final dimensions with fallbacks to template defaults
     const finalColumns = columns ?? serviceObj.config?.columns ?? 1
     const finalRows = rows ?? serviceObj.config?.rows ?? 1
 
-    // Enforce global maxInstances (across live DOM and persisted config)
+    // Enforce per-service maxInstances (across live DOM and persisted config)
     const liveDataIds = Array.from(window.asd.widgetStore.widgets.values())
-      .filter(el => el.dataset.service === serviceName)
+      .filter(el => el.dataset.serviceId === serviceObj.id)
       .map(el => el.dataset.dataid)
 
     const config = StorageManager.getConfig() || {}
@@ -267,6 +311,7 @@ async function addWidget (
     const persistedDataIds = boards
       .flatMap(b => Array.isArray(b.views) ? b.views : [])
       .flatMap(v => Array.isArray(v.widgetState) ? v.widgetState : [])
+      .filter(w => w?.serviceId === serviceObj.id)
       .map(w => w?.dataid)
       .filter(Boolean)
 
