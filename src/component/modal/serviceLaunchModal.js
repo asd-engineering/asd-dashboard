@@ -29,10 +29,18 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
     onCloseCallback: () => logger.log('Service modal closed'),
     buildContent: (modal, closeModal) => {
       modal.classList.add('service-action-modal')
+      if (serviceObj.name) {
+        const header = document.createElement('h3')
+        header.className = 'service-action-header'
+        header.textContent = serviceObj.name
+        modal.appendChild(header)
+      }
       const iframe = document.createElement('iframe')
       iframe.src = taskUrl
       const instructions = document.createElement('p')
-      instructions.textContent = "The action is being performed. Please wait a few moments and then press 'Done and refresh widget'"
+      instructions.textContent = serviceObj.name
+        ? 'Task is running below. Press "Done" when finished or "Minimize" to continue working.'
+        : "The action is being performed. Please wait a few moments and then press 'Done and refresh widget'"
       const openInNewTab = document.createElement('a')
       openInNewTab.href = taskUrl
       openInNewTab.target = '_blank'

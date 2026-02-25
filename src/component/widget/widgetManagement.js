@@ -89,7 +89,7 @@ async function createWidget (
   offlineOverlay.className = 'widget-offline-overlay'
   const offlineButton = document.createElement('button')
   offlineButton.className = 'widget-offline-start'
-  offlineButton.textContent = `Start ${service}`
+  offlineButton.textContent = serviceObj?.fallback?.name || `Start ${service}`
   offlineButton.addEventListener('click', () => {
     if (serviceObj?.fallback?.url) {
       showServiceModal({ ...serviceObj, url: serviceObj.fallback.url }, widgetWrapper, {
@@ -101,6 +101,13 @@ async function createWidget (
     }
   })
   offlineOverlay.appendChild(offlineButton)
+  if (serviceObj.name && serviceObj.name !== service) {
+    const label = document.createElement('span')
+    label.className = 'widget-offline-label'
+    label.textContent = serviceObj.name
+    label.title = serviceObj.name
+    offlineOverlay.appendChild(label)
+  }
   if (!(serviceObj.state === 'offline' && serviceObj.fallback)) {
     offlineOverlay.style.display = 'none'
   }

@@ -192,7 +192,8 @@ export function mountServiceControl () {
         acts.push({ action: 'navigate', title: 'Locate widget', icon: emojiList.magnifyingGlass.unicode })
       }
       if (item.fallback?.url) {
-        const isStart = String(item.fallback.name || '').toLowerCase().includes('start')
+        const label = String(item.fallback.name || '').toLowerCase()
+        const isStart = label.includes('start') || label.includes('launch')
         acts.push({
           action: 'task',
           title: item.fallback.name || 'Run service task',

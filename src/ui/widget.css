@@ -76,9 +76,11 @@
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.92);
+  gap: 8px;
+  background: var(--color-soft);
   z-index: 8;
 }
 
@@ -91,6 +93,16 @@
   cursor: pointer;
   background: var(--color-success);
   color: #fff;
+}
+
+.widget-offline-label {
+  font-size: 0.8rem;
+  color: var(--color-text-weak);
+  max-width: 80%;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Resize menus */

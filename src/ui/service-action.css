@@ -5,13 +5,21 @@
   top: 50%; left: 50%; transform: translate(-50%, -50%);
   box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 1000; color: var(--color-text);
 }
-.service-action-modal p { font-size: 16px; color: var(--color-text); margin-bottom: 20px; }
+.service-action-modal .service-action-header {
+  margin: 0 0 4px 0; font-size: 1.1rem; font-weight: 700;
+  color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.service-action-modal p { font-size: 14px; color: var(--color-text-weak); margin-bottom: 12px; }
 .service-action-modal iframe { flex-grow: 1; width: 100%; height: 100%; border: none; background: #000; }
 .service-action-modal button {
   margin-top: 20px; padding: 10px 15px; background: var(--color-success); color: #fff;
   border: none; border-radius: var(--radius-1); cursor: pointer; font-size: 16px; font-weight: 700;
 }
 .service-action-modal button:hover { filter: brightness(0.95); }
+.service-action-modal a {
+  font-size: 13px; color: var(--color-accent); text-decoration: none; margin-bottom: 8px;
+}
+.service-action-modal a:hover { text-decoration: underline; }
 @media (max-width: 768px) {
   .service-action-modal { width: 90vw; height: 80vh; }
   .service-action-modal iframe { height: calc(100% - 50px); }
