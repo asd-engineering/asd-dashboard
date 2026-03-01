@@ -107,30 +107,42 @@ async function createWidget (
       offlineOverlay.appendChild(label)
     }
 
-    // Action button
-    const offlineButton = document.createElement('button')
-    offlineButton.className = 'widget-offline-start'
-    offlineButton.textContent = serviceObj.fallback.name || `Start ${service}`
-    offlineButton.addEventListener('click', () => {
-      showServiceModal({ ...serviceObj, url: serviceObj.fallback.url }, widgetWrapper, {
-        onDone: () => {
-          iframe.src = widgetWrapper.dataset.url || url
-          offlineOverlay.style.display = 'none'
-        }
-      })
-    })
-    offlineOverlay.appendChild(offlineButton)
+    // Guard: check if ttyd is online before showing action button
+    const allSvcs = StorageManager.getServices()
+    const ttydSvc = allSvcs.find(s => s.id === 'ttyd')
+    const ttydOnline = ttydSvc && ttydSvc.state === 'online'
 
-    // Command preview
-    const cmdPreview = document.createElement('code')
-    cmdPreview.className = 'widget-offline-cmd'
-    const fallbackUrl = serviceObj.fallback.url || ''
-    try {
-      const parsed = new URL(fallbackUrl, window.location.origin)
-      const args = parsed.searchParams.getAll('arg')
-      if (args.length) cmdPreview.textContent = args.join(' ')
-    } catch { /* skip */ }
-    if (cmdPreview.textContent) offlineOverlay.appendChild(cmdPreview)
+    if (!ttydOnline) {
+      const msg = document.createElement('span')
+      msg.className = 'widget-offline-label'
+      msg.textContent = 'Terminal offline'
+      offlineOverlay.appendChild(msg)
+    } else {
+      // Action button
+      const offlineButton = document.createElement('button')
+      offlineButton.className = 'widget-offline-start'
+      offlineButton.textContent = serviceObj.fallback.name || `Start ${service}`
+      offlineButton.addEventListener('click', () => {
+        showServiceModal({ ...serviceObj, url: serviceObj.fallback.url }, widgetWrapper, {
+          onDone: () => {
+            iframe.src = widgetWrapper.dataset.url || url
+            offlineOverlay.style.display = 'none'
+          }
+        })
+      })
+      offlineOverlay.appendChild(offlineButton)
+
+      // Command preview
+      const cmdPreview = document.createElement('code')
+      cmdPreview.className = 'widget-offline-cmd'
+      const fallbackUrl = serviceObj.fallback.url || ''
+      try {
+        const parsed = new URL(fallbackUrl, window.location.origin)
+        const args = parsed.searchParams.getAll('arg')
+        if (args.length) cmdPreview.textContent = args.join(' ')
+      } catch { /* skip */ }
+      if (cmdPreview.textContent) offlineOverlay.appendChild(cmdPreview)
+    }
   } else {
     offlineOverlay.style.display = 'none'
   }

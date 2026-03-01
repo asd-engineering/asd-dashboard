@@ -80,8 +80,18 @@ export const fetchServices = async () => {
   if (!services) {
     const config = StorageManager.getConfig()
     if (config && config.servicesUrl) {
-      logger.info(`Fetching services from config.servicesUrl: ${config.servicesUrl}`)
-      services = await fetchJson(config.servicesUrl)
+      let servicesUrl = config.servicesUrl
+      // Tunnel detection: non-localhost origins use public (tunneled-only) services
+      const host = window.location.hostname
+      const isLocal = host === 'localhost' || host === '127.0.0.1' ||
+                      host === '0.0.0.0' || host.endsWith('.localhost')
+      if (!isLocal && servicesUrl.endsWith('hub-services.json') &&
+          !servicesUrl.endsWith('hub-services-public.json')) {
+        servicesUrl = servicesUrl.replace('hub-services.json', 'hub-services-public.json')
+        logger.info(`Tunnel detected: using public services from ${servicesUrl}`)
+      }
+      logger.info(`Fetching services from config.servicesUrl: ${servicesUrl}`)
+      services = await fetchJson(servicesUrl)
       if (!services) failedAttempts++
     }
   }

@@ -9,6 +9,7 @@ import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
 import { getUUID } from '../../utils/utils.js'
 import { upsertTask, updateTask } from '../runtime/runtimeState.js'
+import { fetchServices } from '../../utils/fetchServices.js'
 
 const logger = new Logger('serviceLaunchModal.js')
 
@@ -36,9 +37,11 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
   })
 
   let completed = false
+  let completionInterval = null
   openModal({
     id: `service-action-modal-${taskId}`,
     onCloseCallback: () => {
+      if (completionInterval) clearInterval(completionInterval)
       if (!completed) {
         updateTask(taskId, { status: 'minimized', open: openTask })
       }
@@ -54,6 +57,13 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
         header.textContent = serviceObj.name
         modal.appendChild(header)
       }
+
+      // Status badge
+      const statusBadge = document.createElement('span')
+      statusBadge.className = 'service-action-status'
+      statusBadge.textContent = 'Running...'
+      statusBadge.dataset.status = 'running'
+      modal.appendChild(statusBadge)
 
       // Instructions
       const instructions = document.createElement('p')
@@ -85,15 +95,19 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
       doneButton.className = 'service-action-btn-primary'
       doneButton.addEventListener('click', () => {
         completed = true
+        if (completionInterval) clearInterval(completionInterval)
         updateTask(taskId, { status: 'done', open: openTask })
         closeModal()
         document.dispatchEvent(new CustomEvent('state-change', { detail: { reason: 'services' } }))
+        fetchServices().catch(err => logger.error('Failed to re-fetch services:', err))
         try {
           if (widgetWrapper) {
             const iframeEl = widgetWrapper.querySelector('iframe')
             if (iframeEl) {
               iframeEl.src = widgetWrapper.dataset.url || iframeEl.src
             }
+            const overlay = widgetWrapper.querySelector('.widget-offline-overlay')
+            if (overlay) overlay.style.display = 'none'
           }
           if (typeof opts.onDone === 'function') {
             opts.onDone()
@@ -112,6 +126,25 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
 
       btnBar.append(minimizeButton, openInNewTab, doneButton)
       modal.appendChild(btnBar)
+
+      // Auto-detect task completion via iframe content polling
+      completionInterval = setInterval(() => {
+        try {
+          const doc = iframe.contentDocument || iframe.contentWindow?.document
+          if (!doc) return
+          const rows = doc.querySelector('.xterm-rows')
+          if (rows && rows.textContent.includes('[task completed]')) {
+            clearInterval(completionInterval)
+            completionInterval = null
+            statusBadge.textContent = 'Completed'
+            statusBadge.dataset.status = 'completed'
+            doneButton.textContent = 'Close'
+          }
+        } catch {
+          clearInterval(completionInterval)
+          completionInterval = null
+        }
+      }, 2000)
     }
   })
 }
