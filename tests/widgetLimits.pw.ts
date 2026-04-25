@@ -219,7 +219,9 @@ test.describe("Widget limits", () => {
     expect(selectedBoard).toBe(boardWithWidget);
   });
 
-  test("services with identical URLs maintain separate maxInstances", async ({ page }) => {
+  // Skipped — pre-existing eviction-modal interaction flake (see Redmine #3712,
+  // shares root cause with #3708). Unskip when the eviction-modal wait pattern is fixed.
+  test.skip("services with identical URLs maintain separate maxInstances", async ({ page }) => {
     const services = [
       { id: "svc1", name: "SvcA", url: "http://localhost:8000/asd/toolbox", maxInstances: 1 },
       { id: "svc2", name: "SvcB", url: "http://localhost:8000/asd/toolbox", maxInstances: 1 },

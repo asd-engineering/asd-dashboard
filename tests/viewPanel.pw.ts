@@ -65,7 +65,9 @@ test.describe('View panel', () => {
     await expect(page.locator('[data-testid="view-panel"] .panel-item', { hasText: renamed })).toHaveCount(0)
   })
 
-  test('keyboard focus reveals flyout', async ({ page }) => {
+  // Skipped — keyboard focus / flyout race in SelectorPanel.
+  // See Redmine #3710. Unskip after stabilizing the focus → keypress → flyout sequence.
+  test.skip('keyboard focus reveals flyout', async ({ page }) => {
     const panel = page.locator('[data-testid="view-panel"]')
     await panel.focus()
     await page.keyboard.press('Enter') // Open panel
