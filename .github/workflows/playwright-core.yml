@@ -2,11 +2,22 @@ name: Playwright Tests
 
 on:
   workflow_call:
+    inputs:
+      project:
+        description: 'Playwright --project filter (e.g. "chromium"). Empty = all 3 browsers.'
+        type: string
+        required: false
+        default: ''
+      timeout-minutes:
+        description: 'Job timeout in minutes. Bump for full 3-browser runs.'
+        type: number
+        required: false
+        default: 30
 
 jobs:
   test:
     name: Playwright
-    timeout-minutes: 15
+    timeout-minutes: ${{ inputs.timeout-minutes }}
     runs-on: ubuntu-latest
 
     concurrency:
@@ -35,18 +46,27 @@ jobs:
     - name: Install deps & browsers
       run: |
         npm ci
-        npx playwright install --with-deps
+        if [ -n "${{ inputs.project }}" ]; then
+          npx playwright install --with-deps "${{ inputs.project }}"
+        else
+          npx playwright install --with-deps
+        fi
 
     - name: Run Playwright tests
       env:
         CI: 'true'
-      run: npm run test:report
+      run: |
+        if [ -n "${{ inputs.project }}" ]; then
+          npx playwright test --reporter=html --project="${{ inputs.project }}"
+        else
+          npm run test:report
+        fi
 
     - name: Upload Playwright report
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: playwright-report
+        name: playwright-report${{ inputs.project && format('-{0}', inputs.project) || '' }}
         path: |
           playwright-report/
           playwright-report.json
