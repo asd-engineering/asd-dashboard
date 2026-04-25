@@ -52,7 +52,17 @@
       "caches",
       "HTMLElement",
       "requestAnimationFrame",
-      "HTMLInputElement"
+      "HTMLInputElement",
+      "EventSource",
+      "CSS",
+      "fetch",
+      "setTimeout",
+      "clearTimeout",
+      "clearInterval",
+      "setInterval",
+      "CustomEvent",
+      "URL",
+      "URLSearchParams"
     ]
   },
   "eslintConfig": {
