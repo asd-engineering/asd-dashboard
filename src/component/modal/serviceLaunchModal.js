@@ -107,7 +107,7 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
               iframeEl.src = widgetWrapper.dataset.url || iframeEl.src
             }
             const overlay = widgetWrapper.querySelector('.widget-offline-overlay')
-            if (overlay) overlay.style.display = 'none'
+            if (overlay) /** @type {HTMLElement} */ (overlay).style.display = 'none'
           }
           if (typeof opts.onDone === 'function') {
             opts.onDone()
