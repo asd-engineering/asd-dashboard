@@ -20,10 +20,9 @@ const logger = new Logger('fetchServices.js')
  */
 function parseBase64 (data) {
   try {
-    return JSON.parse(atob(data))
+    return normalizeServicesPayload(JSON.parse(atob(data)))
   } catch (e) {
     logger.error('Failed to parse base64 services:', e)
-    showNotification('Invalid services data', 3000, 'error')
     return null
   }
 }
@@ -38,12 +37,25 @@ async function fetchJson (url) {
   try {
     const response = await fetch(url)
     if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`)
-    return await response.json()
+    const payload = await response.json()
+    return normalizeServicesPayload(payload)
   } catch (e) {
     logger.error('Failed to fetch services:', e)
-    showNotification('Invalid services data', 3000, 'error')
     return null
   }
+}
+
+/**
+ * Normalize incoming payload to service array.
+ * @param {any} payload
+ * @returns {Array<Service>|null}
+ */
+function normalizeServicesPayload (payload) {
+  if (Array.isArray(payload)) return payload
+  if (payload && Array.isArray(payload.services)) return payload.services
+  if (payload == null) return null
+  logger.error('Invalid services payload shape:', payload)
+  return []
 }
 
 /**
@@ -56,24 +68,38 @@ async function fetchJson (url) {
 export const fetchServices = async () => {
   const params = new URLSearchParams(window.location.search)
   let services = null
+  let failedAttempts = 0
 
   // Priority 1: Explicit base64 parameter (highest priority for backwards compat)
   if (params.has('services_base64')) {
     services = parseBase64(params.get('services_base64'))
+    if (!services) failedAttempts++
   }
 
   // Priority 2: servicesUrl from config (fragment-based URL reference)
   if (!services) {
     const config = StorageManager.getConfig()
     if (config && config.servicesUrl) {
-      logger.info(`Fetching services from config.servicesUrl: ${config.servicesUrl}`)
-      services = await fetchJson(config.servicesUrl)
+      let servicesUrl = config.servicesUrl
+      // Tunnel detection: non-localhost origins use public (tunneled-only) services
+      const host = window.location.hostname
+      const isLocal = host === 'localhost' || host === '127.0.0.1' ||
+                      host === '0.0.0.0' || host.endsWith('.localhost')
+      if (!isLocal && servicesUrl.endsWith('hub-services.json') &&
+          !servicesUrl.endsWith('hub-services-public.json')) {
+        servicesUrl = servicesUrl.replace('hub-services.json', 'hub-services-public.json')
+        logger.info(`Tunnel detected: using public services from ${servicesUrl}`)
+      }
+      logger.info(`Fetching services from config.servicesUrl: ${servicesUrl}`)
+      services = await fetchJson(servicesUrl)
+      if (!services) failedAttempts++
     }
   }
 
   // Priority 3: Explicit services_url parameter (backwards compat)
   if (!services && params.has('services_url')) {
     services = await fetchJson(params.get('services_url'))
+    if (!services) failedAttempts++
   }
 
   // Priority 4: localStorage (previously saved services)
@@ -87,9 +113,13 @@ export const fetchServices = async () => {
   // Priority 5: Local services.json file (fallback)
   if (!services) {
     services = await fetchJson('services.json')
+    if (!services) failedAttempts++
   }
 
   services = services || []
+  if (services.length === 0 && failedAttempts > 0) {
+    showNotification('Invalid services data', 3000, 'error')
+  }
 
   // Persist via main's storage model
   StorageManager.setServices(services)

@@ -8,6 +8,11 @@ declare global {
       currentBoardId: string | null;
       currentViewId: string | null;
       widgetStore: import('./component/widget/widgetStore.js').WidgetStore;
+      runtime?: {
+        tasks: any[];
+        shells: any[];
+        processes: any[];
+      };
     };
     _appLogs?: import('./types.js').LoggerEntry[];
 

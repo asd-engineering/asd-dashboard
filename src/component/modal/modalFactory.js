@@ -69,12 +69,16 @@ export function openModal ({ id, buildContent, onCloseCallback, showCloseIcon = 
     const closeBtn = document.createElement('button')
     closeBtn.innerText = emojiList.cross.icon
     closeBtn.setAttribute('aria-label', 'Close modal')
+    closeBtn.classList.add('modal-close-btn')
     Object.assign(closeBtn.style, {
       position: 'absolute',
-      top: '0.2rem',
-      right: '-0.3rem',
-      background: 'none',
-      border: 'none',
+      top: '0.5rem',
+      right: '0.5rem',
+      background: 'transparent',
+      border: '0',
+      boxShadow: 'none',
+      padding: '0.2rem 0.35rem',
+      borderRadius: '8px',
       fontSize: '1rem',
       cursor: 'pointer',
       lineHeight: '1'

@@ -200,6 +200,11 @@ function initializeMainMenu () {
   viewButtonMenu.id = 'view-button-menu'
   menu.appendChild(viewButtonMenu)
 
+  const runtimeControl = document.createElement('div')
+  runtimeControl.className = 'control-group'
+  runtimeControl.id = 'runtime-control'
+  menu.appendChild(runtimeControl)
+
   // Service control group
   const serviceControl = document.createElement('div')
   serviceControl.className = 'control-group'

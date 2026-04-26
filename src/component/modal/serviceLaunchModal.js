@@ -8,6 +8,8 @@ import { openModal } from './modalFactory.js'
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
 import { getUUID } from '../../utils/utils.js'
+import { upsertTask, updateTask } from '../runtime/runtimeState.js'
+import { fetchServices } from '../../utils/fetchServices.js'
 
 const logger = new Logger('serviceLaunchModal.js')
 
@@ -15,33 +17,153 @@ const logger = new Logger('serviceLaunchModal.js')
  * Open a modal that loads a service URL in an iframe to perform an action.
  * After completion the widget iframe is refreshed.
  *
- * @param {{url: string}} serviceObj - Service information with a URL.
- * @param {HTMLElement} widgetWrapper - Widget element to refresh.
+ * @param {{url: string, name?: string, id?: string}} serviceObj - Service information with a URL.
+ * @param {HTMLElement|null} widgetWrapper - Widget element to refresh.
+ * @param {{taskId?: string, onDone?: Function}} [opts]
  * @function showServiceModal
  * @returns {void}
  */
-export function showServiceModal (serviceObj, widgetWrapper) {
+export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
+  const taskId = opts.taskId || `task-${getUUID()}`
+  const taskTitle = serviceObj.name || serviceObj.id || 'Service Task'
+  const taskUrl = withTaskSessionArg(serviceObj.url, taskId)
+  const openTask = () => showServiceModal(serviceObj, widgetWrapper, { taskId })
+
+  upsertTask({
+    id: taskId,
+    title: taskTitle,
+    status: 'running',
+    open: openTask
+  })
+
+  let completed = false
+  let completionInterval = null
   openModal({
-    id: `service-action-modal-${getUUID()}`,
-    onCloseCallback: () => logger.log('Service modal closed'),
+    id: `service-action-modal-${taskId}`,
+    onCloseCallback: () => {
+      if (completionInterval) clearInterval(completionInterval)
+      if (!completed) {
+        updateTask(taskId, { status: 'minimized', open: openTask })
+      }
+      logger.log('Service modal closed')
+    },
     buildContent: (modal, closeModal) => {
-      const iframe = document.createElement('iframe')
-      iframe.src = serviceObj.url
+      modal.classList.add('service-action-modal')
+
+      // Header with service name
+      if (serviceObj.name) {
+        const header = document.createElement('h3')
+        header.className = 'service-action-header'
+        header.textContent = serviceObj.name
+        modal.appendChild(header)
+      }
+
+      // Status badge
+      const statusBadge = document.createElement('span')
+      statusBadge.className = 'service-action-status'
+      statusBadge.textContent = 'Running...'
+      statusBadge.dataset.status = 'running'
+      modal.appendChild(statusBadge)
+
+      // Instructions
       const instructions = document.createElement('p')
-      instructions.textContent = "The action is being performed. Please wait a few moments and then press 'Done and refresh widget'"
-      const doneButton = document.createElement('button')
-      doneButton.textContent = 'Done and refresh widget'
-      doneButton.addEventListener('click', () => {
+      instructions.textContent = serviceObj.name
+        ? 'Task is running below. Press "Done" when finished or "Minimize" to continue working.'
+        : "The action is being performed. Please wait a few moments and then press 'Done and refresh widget'"
+      modal.appendChild(instructions)
+
+      // Terminal iframe
+      const iframe = document.createElement('iframe')
+      iframe.src = taskUrl
+      iframe.className = 'service-action-iframe'
+      modal.appendChild(iframe)
+
+      // Button bar
+      const btnBar = document.createElement('div')
+      btnBar.className = 'service-action-buttons'
+
+      const minimizeButton = document.createElement('button')
+      minimizeButton.textContent = 'Minimize'
+      minimizeButton.className = 'service-action-btn-secondary'
+      minimizeButton.addEventListener('click', () => {
+        updateTask(taskId, { status: 'minimized', open: openTask })
         closeModal()
+      })
+
+      const doneButton = document.createElement('button')
+      doneButton.textContent = 'Done'
+      doneButton.className = 'service-action-btn-primary'
+      doneButton.addEventListener('click', () => {
+        completed = true
+        if (completionInterval) clearInterval(completionInterval)
+        updateTask(taskId, { status: 'done', open: openTask })
+        closeModal()
+        document.dispatchEvent(new CustomEvent('state-change', { detail: { reason: 'services' } }))
+        fetchServices().catch(err => logger.error('Failed to re-fetch services:', err))
         try {
-          const iframeEl = widgetWrapper.querySelector('iframe')
-          iframeEl.src = widgetWrapper.dataset.url
+          if (widgetWrapper) {
+            const iframeEl = widgetWrapper.querySelector('iframe')
+            if (iframeEl) {
+              iframeEl.src = widgetWrapper.dataset.url || iframeEl.src
+            }
+            const overlay = widgetWrapper.querySelector('.widget-offline-overlay')
+            if (overlay) /** @type {HTMLElement} */ (overlay).style.display = 'none'
+          }
+          if (typeof opts.onDone === 'function') {
+            opts.onDone()
+          }
         } catch (error) {
           logger.error('Error refreshing widget iframe:', error)
           showNotification('Failed to refresh widget')
         }
       })
-      modal.append(instructions, iframe, doneButton)
+
+      const openInNewTab = document.createElement('a')
+      openInNewTab.href = taskUrl
+      openInNewTab.target = '_blank'
+      openInNewTab.rel = 'noopener noreferrer'
+      openInNewTab.textContent = 'Open in new tab'
+
+      btnBar.append(minimizeButton, openInNewTab, doneButton)
+      modal.appendChild(btnBar)
+
+      // Auto-detect task completion via iframe content polling
+      completionInterval = setInterval(() => {
+        try {
+          const doc = iframe.contentDocument || iframe.contentWindow?.document
+          if (!doc) return
+          const rows = doc.querySelector('.xterm-rows')
+          if (rows && rows.textContent.includes('[task completed]')) {
+            clearInterval(completionInterval)
+            completionInterval = null
+            statusBadge.textContent = 'Completed'
+            statusBadge.dataset.status = 'completed'
+            doneButton.textContent = 'Close'
+          }
+        } catch {
+          clearInterval(completionInterval)
+          completionInterval = null
+        }
+      }, 2000)
     }
   })
+}
+
+/**
+ * Append a stable task session id to ttyd URL args.
+ * @param {string} url
+ * @param {string} sessionId
+ * @returns {string}
+ */
+function withTaskSessionArg (url, sessionId) {
+  try {
+    const parsed = new URL(url, window.location.origin)
+    const args = parsed.searchParams.getAll('arg')
+    if (args[0] !== 'asd') return parsed.toString()
+    const hasSession = args.some(arg => arg.startsWith('--session='))
+    if (!hasSession) parsed.searchParams.append('arg', `--session=${sessionId}`)
+    return parsed.toString()
+  } catch {
+    return url
+  }
 }

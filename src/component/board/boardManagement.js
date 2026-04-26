@@ -110,6 +110,7 @@ function clearWidgetContainer () {
   for (const id of widgetStore.widgets.keys()) {
     widgetStore.hide(id)
   }
+  widgetStore.refreshEmptyState()
 }
 
 /**
@@ -170,6 +171,7 @@ export async function switchView (boardId = getCurrentBoardId(), viewId) {
       )
     }
   }
+  widgetStore.refreshEmptyState()
 
   // Persist current view selection (metadata-only)
   StorageManager.misc.setLastViewId(viewId)
@@ -217,6 +219,9 @@ export function updateViewSelector (boardId) {
         btn.addEventListener('click', async () => {
           try {
             await switchView(boardId, view.id)
+            viewButtonMenu.querySelectorAll('button').forEach(other => {
+              other.classList.toggle('active', other === btn)
+            })
           } catch (error) {
             logger.error('Error switching view:', error)
           }
