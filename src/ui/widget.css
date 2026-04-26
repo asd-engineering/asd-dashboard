@@ -137,35 +137,6 @@
   opacity: 0.7;
 }
 
-/* Optimistic-pending: button click sets data-pending; cleared on next SSE state change. */
-.widget-wrapper[data-pending] {
-  outline: 2px solid var(--color-accent, #888);
-  outline-offset: -2px;
-}
-.widget-wrapper[data-pending]::before {
-  content: attr(data-pending) "...";
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  z-index: 9;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 2px 8px;
-  border-radius: var(--radius-1);
-  background: var(--color-accent, #888);
-  color: #fff;
-  pointer-events: none;
-}
-.widget-wrapper[data-pending="timeout"] {
-  outline-color: var(--color-warning, #c93);
-}
-.widget-wrapper[data-pending="timeout"]::before {
-  content: "no response";
-  background: var(--color-warning, #c93);
-}
-
 .widget-empty-state {
   grid-column: 1 / -1;
   min-height: min(48vh, 520px);

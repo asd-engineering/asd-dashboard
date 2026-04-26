@@ -25,8 +25,6 @@ import { initThemeFromConfig } from './ui/theme.js'
 
 import { mountServiceControl } from './component/service/ServiceControl.js'
 import { mountRuntimeControl } from './component/runtime/RuntimeControl.js'
-import { startServiceStateBus } from './utils/serviceStateBus.js'
-import { attachWidgetStateListener } from './component/widget/widgetManagement.js'
 
 const logger = new Logger('main.js')
 Logger.enableLogs('all')
@@ -166,12 +164,6 @@ async function main () {
   const debouncedUiUpdater = debounce(onStateChange, 150)
   window.addEventListener(APP_STATE_CHANGED, /** @type {EventListener} */(debouncedUiUpdater))
   logger.log('Active event listener for state changes has been initialized.')
-
-  // Subscribe to MCP /api/state/stream so widgets reflect registry state
-  // changes without a page reload. Caddy proxies /api/* → MCP, so the
-  // browser only knows one origin; falls back to polling if MCP is down.
-  attachWidgetStateListener()
-  startServiceStateBus()
 
   logger.log('Application initialization finished')
   // Signal to Playwright that the initial load and render is complete.

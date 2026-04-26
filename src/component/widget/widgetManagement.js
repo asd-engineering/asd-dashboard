@@ -27,188 +27,8 @@ import { StorageManager } from '../../storage/StorageManager.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { showNotification } from '../dialog/notification.js'
 import { resolveServiceConfig } from '../../utils/serviceUtils.js'
-import { readActionTrailer } from '../../utils/readActionTrailer.js'
 
 const logger = new Logger('widgetManagement.js')
-
-/** Optimistic-pending grace before falling back to "didn't take effect". */
-const PENDING_TIMEOUT_MS = 30_000
-
-/**
- * Render (or re-render) the widget's offline overlay based on current service state.
- * Idempotent: removes any prior overlay and rebuilds in place.
- *
- * @function renderOfflineOverlay
- * @param {HTMLElement} widgetWrapper
- * @param {any} serviceObj - resolved service from StorageManager
- * @param {HTMLIFrameElement} iframe
- * @param {string} originalUrl - the widget's online URL
- * @returns {void}
- */
-function renderOfflineOverlay (widgetWrapper, serviceObj, iframe, originalUrl) {
-  const existing = widgetWrapper.querySelector(':scope > .widget-offline-overlay')
-  if (existing) existing.remove()
-
-  const isOffline = String(serviceObj.state || '').toLowerCase() === 'offline'
-  const hasFallback = Boolean(serviceObj && serviceObj.fallback && serviceObj.fallback.url)
-
-  const offlineOverlay = document.createElement('div')
-  offlineOverlay.className = 'widget-offline-overlay'
-
-  if (!isOffline || !hasFallback) {
-    offlineOverlay.style.display = 'none'
-    widgetWrapper.appendChild(offlineOverlay)
-    if (!isOffline) iframe.src = originalUrl
-    return
-  }
-
-  // iframe shows blank while service is offline (overlay covers it)
-  iframe.src = 'about:blank'
-
-  // Status badge
-  const badge = document.createElement('span')
-  badge.className = 'widget-offline-badge'
-  badge.textContent = 'offline'
-  offlineOverlay.appendChild(badge)
-
-  // Service name label
-  if (serviceObj.name) {
-    const label = document.createElement('span')
-    label.className = 'widget-offline-label'
-    label.textContent = serviceObj.name
-    label.title = serviceObj.name
-    offlineOverlay.appendChild(label)
-  }
-
-  // Guard: ttyd must be online to launch action buttons
-  const allSvcs = StorageManager.getServices()
-  const ttydSvc = allSvcs.find((s) => s.id === 'ttyd')
-  const ttydOnline = ttydSvc && ttydSvc.state === 'online'
-
-  if (!ttydOnline) {
-    const msg = document.createElement('span')
-    msg.className = 'widget-offline-label'
-    msg.textContent = 'Terminal offline'
-    offlineOverlay.appendChild(msg)
-  } else {
-    const offlineButton = document.createElement('button')
-    offlineButton.className = 'widget-offline-start'
-    offlineButton.textContent = serviceObj.fallback.name || `Start ${serviceObj.name || serviceObj.id}`
-    offlineButton.addEventListener('click', () => {
-      markWidgetPending(widgetWrapper, 'starting')
-      showServiceModal({ ...serviceObj, url: serviceObj.fallback.url }, widgetWrapper, {
-        onDone: () => {
-          iframe.src = widgetWrapper.dataset.url || originalUrl
-          offlineOverlay.style.display = 'none'
-        }
-      })
-    })
-    offlineOverlay.appendChild(offlineButton)
-
-    // Command preview from fallback URL args
-    const cmdPreview = document.createElement('code')
-    cmdPreview.className = 'widget-offline-cmd'
-    const fallbackUrl = serviceObj.fallback.url || ''
-    try {
-      const parsed = new URL(fallbackUrl, window.location.origin)
-      const args = parsed.searchParams.getAll('arg')
-      if (args.length) cmdPreview.textContent = args.join(' ')
-    } catch { /* skip */ }
-    if (cmdPreview.textContent) offlineOverlay.appendChild(cmdPreview)
-  }
-
-  widgetWrapper.appendChild(offlineOverlay)
-}
-
-/**
- * Parse the --session=<id> arg from a service's fallback URL.
- *
- * @param {any} serviceObj
- * @returns {string | null}
- */
-function inferSessionIdFromFallback (serviceObj) {
-  const fallbackUrl = serviceObj?.fallback?.url
-  if (!fallbackUrl) return null
-  try {
-    const parsed = new URL(fallbackUrl, window.location.origin)
-    const args = parsed.searchParams.getAll('arg')
-    const sessionArg = args.find((a) => a.startsWith('--session='))
-    return sessionArg ? sessionArg.slice('--session='.length) : null
-  } catch {
-    return null
-  }
-}
-
-/**
- * Set the optimistic-pending state on a widget. Auto-clears after timeout
- * to avoid a stuck spinner if the action never lands.
- *
- * @param {HTMLElement} widgetWrapper
- * @param {string} action - "starting" | "stopping" | "restarting"
- */
-function markWidgetPending (widgetWrapper, action) {
-  widgetWrapper.dataset.pending = action
-  const prevTimerId = widgetWrapper.dataset.pendingTimerId
-  if (prevTimerId) {
-    clearTimeout(Number(prevTimerId))
-  }
-  const timer = setTimeout(() => {
-    if (widgetWrapper.dataset.pending === action) {
-      widgetWrapper.dataset.pending = 'timeout'
-    }
-  }, PENDING_TIMEOUT_MS)
-  widgetWrapper.dataset.pendingTimerId = String(timer)
-}
-
-/**
- * Clear optimistic-pending state on a widget.
- *
- * @param {HTMLElement} widgetWrapper
- */
-function clearWidgetPending (widgetWrapper) {
-  delete widgetWrapper.dataset.pending
-  const timerId = widgetWrapper.dataset.pendingTimerId
-  if (timerId) {
-    clearTimeout(Number(timerId))
-    delete widgetWrapper.dataset.pendingTimerId
-  }
-}
-
-let stateListenerAttached = false
-
-/**
- * Subscribe to `service-state-changed` events from the bus and re-render
- * affected widgets. Must be called once from main.js after init.
- *
- * @function attachWidgetStateListener
- * @returns {void}
- */
-export function attachWidgetStateListener () {
-  if (stateListenerAttached) return
-  stateListenerAttached = true
-
-  document.addEventListener('service-state-changed', (e) => {
-    const detail = /** @type {CustomEvent} */(e).detail
-    const diffs = (detail && Array.isArray(detail.diffs)) ? detail.diffs : []
-    if (diffs.length === 0) return
-
-    const allServices = StorageManager.getServices()
-
-    for (const diff of diffs) {
-      const widgets = document.querySelectorAll(`.widget-wrapper[data-service-id="${CSS.escape(diff.id)}"]`)
-      const rawService = allServices.find((s) => s.id === diff.id)
-      if (!rawService) continue
-      const serviceObj = resolveServiceConfig(rawService)
-      widgets.forEach((wrapper) => {
-        const widgetEl = /** @type {HTMLElement} */(wrapper)
-        const iframe = widgetEl.querySelector('iframe')
-        const originalUrl = widgetEl.dataset.url || ''
-        if (iframe) renderOfflineOverlay(widgetEl, serviceObj, /** @type {HTMLIFrameElement} */(iframe), originalUrl)
-        clearWidgetPending(widgetEl)
-      })
-    }
-  })
-}
 
 /**
  * Creates the DOM structure for a new widget, including its iframe and menu.
@@ -268,9 +88,64 @@ async function createWidget (
   const isOffline = String(serviceObj.state || '').toLowerCase() === 'offline'
   const hasFallback = Boolean(serviceObj && serviceObj.fallback && serviceObj.fallback.url)
 
-  // Defer overlay construction to the shared helper so it can be re-rendered
-  // in place when the registry state changes (via service-state-changed events).
-  renderOfflineOverlay(widgetWrapper, serviceObj, iframe, url)
+  const offlineOverlay = document.createElement('div')
+  offlineOverlay.className = 'widget-offline-overlay'
+
+  if (isOffline && hasFallback) {
+    // Status badge
+    const badge = document.createElement('span')
+    badge.className = 'widget-offline-badge'
+    badge.textContent = 'offline'
+    offlineOverlay.appendChild(badge)
+
+    // Service name label (above button)
+    if (serviceObj.name) {
+      const label = document.createElement('span')
+      label.className = 'widget-offline-label'
+      label.textContent = serviceObj.name
+      label.title = serviceObj.name
+      offlineOverlay.appendChild(label)
+    }
+
+    // Guard: check if ttyd is online before showing action button
+    const allSvcs = StorageManager.getServices()
+    const ttydSvc = allSvcs.find(s => s.id === 'ttyd')
+    const ttydOnline = ttydSvc && ttydSvc.state === 'online'
+
+    if (!ttydOnline) {
+      const msg = document.createElement('span')
+      msg.className = 'widget-offline-label'
+      msg.textContent = 'Terminal offline'
+      offlineOverlay.appendChild(msg)
+    } else {
+      // Action button
+      const offlineButton = document.createElement('button')
+      offlineButton.className = 'widget-offline-start'
+      offlineButton.textContent = serviceObj.fallback.name || `Start ${service}`
+      offlineButton.addEventListener('click', () => {
+        showServiceModal({ ...serviceObj, url: serviceObj.fallback.url }, widgetWrapper, {
+          onDone: () => {
+            iframe.src = widgetWrapper.dataset.url || url
+            offlineOverlay.style.display = 'none'
+          }
+        })
+      })
+      offlineOverlay.appendChild(offlineButton)
+
+      // Command preview
+      const cmdPreview = document.createElement('code')
+      cmdPreview.className = 'widget-offline-cmd'
+      const fallbackUrl = serviceObj.fallback.url || ''
+      try {
+        const parsed = new URL(fallbackUrl, window.location.origin)
+        const args = parsed.searchParams.getAll('arg')
+        if (args.length) cmdPreview.textContent = args.join(' ')
+      } catch { /* skip */ }
+      if (cmdPreview.textContent) offlineOverlay.appendChild(cmdPreview)
+    }
+  } else {
+    offlineOverlay.style.display = 'none'
+  }
 
   const widgetMenu = document.createElement('div')
   widgetMenu.classList.add('widget-menu')
@@ -281,23 +156,8 @@ async function createWidget (
     fixServiceButton.classList.add('widget-button', 'widget-icon-action')
     fixServiceButton.title = isOffline ? 'Start service' : 'Service action'
     fixServiceButton.dataset.testid = 'widget-service-action'
-    fixServiceButton.onclick = () => {
-      // Optimistic pending: badge updates instantly; clears on next SSE state change.
-      const expectedAction = isOffline ? 'starting' : 'stopping'
-      markWidgetPending(widgetWrapper, expectedAction)
+    fixServiceButton.onclick = () =>
       showServiceModal({ ...serviceObj, url: serviceObj.fallback.url }, widgetWrapper)
-    }
-    // Hover surfaces last-action trailer (404 → silent skip).
-    fixServiceButton.addEventListener('mouseenter', async () => {
-      const sessionId = inferSessionIdFromFallback(serviceObj)
-      if (!sessionId) return
-      const trailer = await readActionTrailer(sessionId)
-      if (trailer) {
-        fixServiceButton.title = trailer.ok
-          ? `Last: ok (exit ${trailer.exit_code}, ${trailer.duration_ms}ms)`
-          : `Last: failed (exit ${trailer.exit_code})`
-      }
-    })
     widgetMenu.appendChild(fixServiceButton)
   }
 
@@ -381,7 +241,7 @@ async function createWidget (
     resizeMenuBlockIcon,
     dragHandle
   )
-  widgetWrapper.append(iframe, widgetMenu)
+  widgetWrapper.append(iframe, offlineOverlay, widgetMenu)
 
   dragHandle.addEventListener('dragstart', (e) => {
     widgetWrapper.classList.add('dragging')
