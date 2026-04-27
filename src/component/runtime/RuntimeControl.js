@@ -14,8 +14,11 @@ import {
   listShellSessions,
   killShellSession,
   killAllShellSessions,
-  attachUrlFor
+  attachUrlFor,
+  newShellUrl
 } from './shellsClient.js'
+import { openModal } from '../modal/modalFactory.js'
+import { showNotification } from '../dialog/notification.js'
 
 /**
  * Mount runtime tabs in menu header.
@@ -87,78 +90,7 @@ export function mountRuntimeControl () {
         }
       }
     } else if (key === 'shells') {
-      // Header row with a "Kill all" action — only shown when there's
-      // something to kill. Mirrors the `asd tmux kill-all` CLI command.
-      if (runtime.shells.length) {
-        const header = document.createElement('div')
-        header.className = 'runtime-item runtime-item-header'
-        const title = document.createElement('span')
-        title.textContent = `${runtime.shells.length} session(s)`
-        const killAll = document.createElement('button')
-        killAll.type = 'button'
-        killAll.className = 'runtime-action runtime-action-kill'
-        killAll.dataset.testid = 'shells-kill-all'
-        killAll.textContent = 'Kill all'
-        killAll.addEventListener('click', async (ev) => {
-          ev.stopPropagation()
-          if (!confirm(`Kill all ${runtime.shells.length} asd-* tmux sessions?`)) return
-          await killAllShellSessions()
-          await refreshShells()
-        })
-        header.append(title, killAll)
-        list.appendChild(header)
-      }
-
-      if (!runtime.shells.length) {
-        list.textContent = 'No active asd-* tmux sessions.'
-      } else {
-        for (const shell of runtime.shells) {
-          const id = String(shell.id || shell.name || '')
-          if (!id) continue
-          const row = document.createElement('div')
-          row.className = 'runtime-item'
-          row.dataset.shellId = id
-
-          const label = document.createElement('span')
-          label.className = 'runtime-title'
-          label.textContent = id
-          row.appendChild(label)
-
-          // Attach: navigates the iframe (or top window if dashboard is
-          // standalone) to ttyd with --target=<id> argv. The wrapper
-          // re-attaches to the existing tmux session.
-          const attachBtn = document.createElement('a')
-          attachBtn.className = 'runtime-action'
-          attachBtn.dataset.testid = `shells-attach-${id}`
-          attachBtn.textContent = 'Attach'
-          attachBtn.href = attachUrlFor(id)
-          attachBtn.target = '_blank'
-          attachBtn.rel = 'noopener'
-          row.appendChild(attachBtn)
-
-          // Kill: confirm, POST tmux.kill, re-fetch.
-          const killBtn = document.createElement('button')
-          killBtn.type = 'button'
-          killBtn.className = 'runtime-action runtime-action-kill'
-          killBtn.dataset.testid = `shells-kill-${id}`
-          killBtn.textContent = 'Kill'
-          killBtn.addEventListener('click', async (ev) => {
-            ev.stopPropagation()
-            if (!confirm(`Kill tmux session asd-${id}?`)) return
-            killBtn.disabled = true
-            const result = await killShellSession(id)
-            if (!result.ok) {
-              killBtn.disabled = false
-              alert(`Failed to kill asd-${id}`)
-              return
-            }
-            await refreshShells()
-          })
-          row.appendChild(killBtn)
-
-          list.appendChild(row)
-        }
-      }
+      renderShellsPanel(list)
     } else {
       const items = (StorageManager.getServices() || []).map((svc) => ({
         id: svc.id,
@@ -187,6 +119,315 @@ export function mountRuntimeControl () {
     }
 
     panel.appendChild(list)
+  }
+
+  // ── Shells panel state ─────────────────────────────────────────
+  // Local state co-located with the closure that owns the panel. Kept
+  // out of runtimeState.js because nothing else in the dashboard needs
+  // it — runtime.shells is just the list of session ids for rendering.
+
+  /** Last result from listShellSessions(); 'unknown' until first poll. */
+  let shellsStatus = /** @type {'unknown'|'ok'|'error'} */ ('unknown')
+  /** Last error reason, when shellsStatus === 'error'. */
+  let shellsErrorReason = ''
+  /**
+   * Sessions we've optimistically removed via Kill but haven't been
+   * confirmed by a subsequent poll. Used by refreshShells() to suppress
+   * a momentary re-introduction caused by an in-flight poll that was
+   * already mid-flight when Kill fired (race A6 in the proposal).
+   * Entries auto-clear when the next poll confirms the absence.
+   * @type {Set<string>}
+   */
+  const inFlightKills = new Set()
+  /** Per-row "are you sure" pending state — id → row element. */
+  /** @type {Map<string, HTMLElement>} */
+  const pendingConfirm = new Map()
+
+  /**
+   * Open ttyd in an in-page modal iframe instead of `_blank`. Mirrors the
+   * service-action modal's UX so users keep dashboard context. The modal
+   * is borrowed via openModal() rather than reimplemented.
+   * @param {{title: string, url: string}} opts
+   */
+  const openTerminalModal = (opts) => {
+    openModal({
+      id: `shells-terminal-${Date.now()}`,
+      buildContent: (modal) => {
+        modal.classList.add('service-action-modal')
+        const header = document.createElement('h3')
+        header.className = 'service-action-header'
+        header.textContent = opts.title
+        modal.appendChild(header)
+
+        const iframe = document.createElement('iframe')
+        iframe.src = opts.url
+        iframe.className = 'service-action-iframe'
+        iframe.dataset.testid = 'shells-terminal-iframe'
+        modal.appendChild(iframe)
+      }
+    })
+  }
+
+  /**
+   * Map errorReason → user-readable text.
+   * @param {string} reason
+   * @returns {string}
+   */
+  const errorBannerText = (reason) => {
+    switch (reason) {
+      case 'unauthorized': return 'Session expired — refresh to log back in.'
+      case 'network': return 'MCP unreachable — check the hub is up.'
+      case 'parse': return 'MCP returned an unexpected response.'
+      default: return 'MCP returned an error — see console for details.'
+    }
+  }
+
+  /**
+   * Build the Shells panel inside the given list element.
+   * @param {HTMLElement} list
+   */
+  function renderShellsPanel (list) {
+    // Error banner takes precedence when MCP is unreachable. Hides the
+    // empty-state copy that would otherwise look like "everything's fine,
+    // there's just nothing here" and confuse the user (A5/C4).
+    if (shellsStatus === 'error') {
+      const banner = document.createElement('div')
+      banner.className = 'runtime-item runtime-banner-error'
+      banner.dataset.testid = 'shells-error-banner'
+      banner.textContent = errorBannerText(shellsErrorReason)
+      list.appendChild(banner)
+    }
+
+    // "+ New Shell" row — always present so users can spin up a fresh
+    // tmux session without going hunting for the terminal URL (C5).
+    const newRow = document.createElement('div')
+    newRow.className = 'runtime-item runtime-item-action'
+    const newBtn = document.createElement('button')
+    newBtn.type = 'button'
+    newBtn.className = 'runtime-action runtime-action-primary'
+    newBtn.dataset.testid = 'shells-new'
+    newBtn.textContent = '+ New Shell'
+    newBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation()
+      const { url, sessionId } = newShellUrl()
+      openTerminalModal({ title: `New shell: asd-${sessionId}`, url })
+      // The shell exists once ttyd's wrapper boots tmux. Kick a refresh
+      // shortly after so the new session shows up without waiting a full
+      // poll cycle.
+      setTimeout(() => { refreshShells().catch(() => {}) }, 800)
+    })
+    newRow.appendChild(newBtn)
+    list.appendChild(newRow)
+
+    // Kill-all only when there are surviving sessions.
+    const shellsNow = getRuntimeState().shells
+    const visible = shellsNow.filter(
+      (s) => !inFlightKills.has(String(s.id || ''))
+    )
+    if (visible.length) {
+      const header = document.createElement('div')
+      header.className = 'runtime-item runtime-item-header'
+      const title = document.createElement('span')
+      title.textContent = `${visible.length} session(s)`
+      const killAll = document.createElement('button')
+      killAll.type = 'button'
+      killAll.className = 'runtime-action runtime-action-kill'
+      killAll.dataset.testid = 'shells-kill-all'
+      killAll.textContent = 'Kill all'
+      // Two-step inline confirm (C3): first click flips the button into a
+      // "Confirm" / "Cancel" pair; second click in 5s does the kill.
+      killAll.addEventListener('click', (ev) => {
+        ev.stopPropagation()
+        confirmKillAll(killAll, header)
+      })
+      header.append(title, killAll)
+      list.appendChild(header)
+    }
+
+    if (shellsStatus === 'ok' && !visible.length) {
+      const empty = document.createElement('div')
+      empty.className = 'runtime-empty'
+      empty.dataset.testid = 'shells-empty'
+      empty.textContent =
+        'No shells running. Click + New Shell, or use Start on a service to open one.'
+      list.appendChild(empty)
+      return
+    }
+    if (shellsStatus === 'unknown' && !visible.length) {
+      const loading = document.createElement('div')
+      loading.className = 'runtime-empty'
+      loading.dataset.testid = 'shells-loading'
+      loading.textContent = 'Loading sessions…'
+      list.appendChild(loading)
+      return
+    }
+
+    for (const shell of visible) {
+      const id = String(shell.id || shell.name || '')
+      if (!id) continue
+      const row = document.createElement('div')
+      row.className = 'runtime-item'
+      row.dataset.shellId = id
+
+      const label = document.createElement('span')
+      label.className = 'runtime-title'
+      label.textContent = `asd-${id}`
+      row.appendChild(label)
+
+      const attachBtn = document.createElement('button')
+      attachBtn.type = 'button'
+      attachBtn.className = 'runtime-action'
+      attachBtn.dataset.testid = `shells-attach-${id}`
+      attachBtn.textContent = 'Attach'
+      attachBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation()
+        openTerminalModal({ title: `Attach: asd-${id}`, url: attachUrlFor(id) })
+      })
+      row.appendChild(attachBtn)
+
+      const killBtn = document.createElement('button')
+      killBtn.type = 'button'
+      killBtn.className = 'runtime-action runtime-action-kill'
+      killBtn.dataset.testid = `shells-kill-${id}`
+      killBtn.textContent = 'Kill'
+      killBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation()
+        confirmKillOne(id, killBtn, row)
+      })
+      row.appendChild(killBtn)
+
+      list.appendChild(row)
+    }
+  }
+
+  /**
+   * Two-step confirmation for killing a single session. First click swaps
+   * the button into a Confirm/Cancel pair; the Confirm action does the
+   * actual kill with optimistic UI removal.
+   * @param {string} id
+   * @param {HTMLButtonElement} killBtn
+   * @param {HTMLElement} row
+   */
+  function confirmKillOne (id, killBtn, row) {
+    if (pendingConfirm.has(id)) return
+    pendingConfirm.set(id, row)
+
+    const original = killBtn.textContent
+    killBtn.style.display = 'none'
+
+    const confirmBtn = document.createElement('button')
+    confirmBtn.type = 'button'
+    confirmBtn.className = 'runtime-action runtime-action-kill'
+    confirmBtn.dataset.testid = `shells-kill-confirm-${id}`
+    confirmBtn.textContent = 'Confirm'
+
+    const cancelBtn = document.createElement('button')
+    cancelBtn.type = 'button'
+    cancelBtn.className = 'runtime-action'
+    cancelBtn.dataset.testid = `shells-kill-cancel-${id}`
+    cancelBtn.textContent = 'Cancel'
+
+    const cleanup = () => {
+      pendingConfirm.delete(id)
+      confirmBtn.remove()
+      cancelBtn.remove()
+      killBtn.style.display = ''
+      killBtn.textContent = original
+      clearTimeout(timeoutId)
+    }
+    // Auto-cancel after 5s — no nag, no commitment.
+    const timeoutId = setTimeout(cleanup, 5000)
+    cancelBtn.addEventListener('click', (ev) => { ev.stopPropagation(); cleanup() })
+
+    confirmBtn.addEventListener('click', async (ev) => {
+      ev.stopPropagation()
+      cleanup()
+      // Optimistic UI removal (A6): drop from the rendered list and add
+      // to the in-flight set so the next poll's snapshot doesn't bring
+      // it back during the kill round-trip.
+      inFlightKills.add(id)
+      row.classList.add('runtime-item-killing')
+      const before = getRuntimeState().shells
+      setShells(before.filter((s) => String(s.id || '') !== id))
+      const result = await killShellSession(id)
+      if (result.ok) {
+        showNotification(`Killed asd-${id}`, 1500, 'success')
+      } else if (result.errorReason === 'no-session') {
+        showNotification(`asd-${id} was already gone`, 1500, 'success')
+      } else {
+        showNotification(`Could not kill asd-${id}`, 2500, 'error')
+        // Roll back optimistic removal so the user sees what's still there.
+        const current = getRuntimeState().shells
+        if (!current.some((s) => String(s.id || '') === id)) {
+          setShells([...current, { id, name: `asd-${id}` }])
+        }
+        inFlightKills.delete(id)
+      }
+      // On success, in-flight is cleared by the next refreshShells() once
+      // it confirms absence. If the panel closes first, set entries stay
+      // until next mount — fine; nothing renders against them.
+    })
+
+    row.appendChild(confirmBtn)
+    row.appendChild(cancelBtn)
+    confirmBtn.focus()
+  }
+
+  /**
+   * Two-step confirmation for kill-all. Same mechanism as confirmKillOne
+   * but at the panel level.
+   * @param {HTMLButtonElement} killAllBtn
+   * @param {HTMLElement} header
+   */
+  function confirmKillAll (killAllBtn, header) {
+    if (killAllBtn.dataset.confirming === '1') return
+    killAllBtn.dataset.confirming = '1'
+
+    const original = killAllBtn.textContent
+    killAllBtn.style.display = 'none'
+
+    const confirmBtn = document.createElement('button')
+    confirmBtn.type = 'button'
+    confirmBtn.className = 'runtime-action runtime-action-kill'
+    confirmBtn.dataset.testid = 'shells-kill-all-confirm'
+    confirmBtn.textContent = 'Confirm kill all'
+
+    const cancelBtn = document.createElement('button')
+    cancelBtn.type = 'button'
+    cancelBtn.className = 'runtime-action'
+    cancelBtn.dataset.testid = 'shells-kill-all-cancel'
+    cancelBtn.textContent = 'Cancel'
+
+    const cleanup = () => {
+      killAllBtn.dataset.confirming = ''
+      confirmBtn.remove()
+      cancelBtn.remove()
+      killAllBtn.style.display = ''
+      killAllBtn.textContent = original
+      clearTimeout(timeoutId)
+    }
+    const timeoutId = setTimeout(cleanup, 5000)
+    cancelBtn.addEventListener('click', (ev) => { ev.stopPropagation(); cleanup() })
+
+    confirmBtn.addEventListener('click', async (ev) => {
+      ev.stopPropagation()
+      cleanup()
+      // Mark every visible session as in-flight before the call returns
+      // so the optimistic empty-state shows immediately.
+      const before = getRuntimeState().shells.map((s) => String(s.id || '')).filter(Boolean)
+      for (const id of before) inFlightKills.add(id)
+      setShells([])
+      const result = await killAllShellSessions()
+      if (result.ok) {
+        showNotification(`Killed ${result.killed} session(s)`, 1500, 'success')
+      } else {
+        showNotification('Could not kill sessions', 2500, 'error')
+      }
+    })
+
+    header.appendChild(confirmBtn)
+    header.appendChild(cancelBtn)
+    confirmBtn.focus()
   }
 
   const refresh = () => {
@@ -218,8 +459,25 @@ export function mountRuntimeControl () {
   const SHELLS_POLL_INTERVAL_MS = 5000
 
   const refreshShells = async () => {
-    const ids = await listShellSessions()
-    setShells(ids.map((id) => ({ id, name: `asd-${id}` })))
+    const result = await listShellSessions()
+    shellsStatus = result.status
+    shellsErrorReason = result.errorReason || ''
+    if (result.status === 'ok') {
+      // A confirmed-absent session can leave the in-flight set so a
+      // future poll cycle treats it like any other gone session. Sessions
+      // still present after a poll keep their in-flight flag (kill is
+      // still racing).
+      const present = new Set(result.sessions)
+      for (const id of Array.from(inFlightKills)) {
+        if (!present.has(id)) inFlightKills.delete(id)
+      }
+      setShells(result.sessions.map((id) => ({ id, name: `asd-${id}` })))
+    } else {
+      // Don't blow away the rendered list on a transient error — keep
+      // showing what we last knew + the error banner. Status flip alone
+      // triggers re-render via the runtime change emit below.
+      setShells(getRuntimeState().shells)
+    }
   }
 
   const startShellsPoll = () => {
