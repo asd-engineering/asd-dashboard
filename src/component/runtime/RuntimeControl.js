@@ -7,8 +7,15 @@
 import { StorageManager } from '../../storage/StorageManager.js'
 import {
   getRuntimeState,
-  onRuntimeChange
+  onRuntimeChange,
+  setShells
 } from './runtimeState.js'
+import {
+  listShellSessions,
+  killShellSession,
+  killAllShellSessions,
+  attachUrlFor
+} from './shellsClient.js'
 
 /**
  * Mount runtime tabs in menu header.
@@ -80,16 +87,75 @@ export function mountRuntimeControl () {
         }
       }
     } else if (key === 'shells') {
-      const items = runtime.shells.length
-        ? runtime.shells
-        : [{ id: 'terminal-default', name: 'Default Shell' }]
-      if (!items.length) {
-        list.textContent = 'No shell sessions.'
+      // Header row with a "Kill all" action — only shown when there's
+      // something to kill. Mirrors the `asd tmux kill-all` CLI command.
+      if (runtime.shells.length) {
+        const header = document.createElement('div')
+        header.className = 'runtime-item runtime-item-header'
+        const title = document.createElement('span')
+        title.textContent = `${runtime.shells.length} session(s)`
+        const killAll = document.createElement('button')
+        killAll.type = 'button'
+        killAll.className = 'runtime-action runtime-action-kill'
+        killAll.dataset.testid = 'shells-kill-all'
+        killAll.textContent = 'Kill all'
+        killAll.addEventListener('click', async (ev) => {
+          ev.stopPropagation()
+          if (!confirm(`Kill all ${runtime.shells.length} asd-* tmux sessions?`)) return
+          await killAllShellSessions()
+          await refreshShells()
+        })
+        header.append(title, killAll)
+        list.appendChild(header)
+      }
+
+      if (!runtime.shells.length) {
+        list.textContent = 'No active asd-* tmux sessions.'
       } else {
-        for (const shell of items) {
+        for (const shell of runtime.shells) {
+          const id = String(shell.id || shell.name || '')
+          if (!id) continue
           const row = document.createElement('div')
           row.className = 'runtime-item'
-          row.textContent = String(shell.name || shell.id || 'shell')
+          row.dataset.shellId = id
+
+          const label = document.createElement('span')
+          label.className = 'runtime-title'
+          label.textContent = id
+          row.appendChild(label)
+
+          // Attach: navigates the iframe (or top window if dashboard is
+          // standalone) to ttyd with --target=<id> argv. The wrapper
+          // re-attaches to the existing tmux session.
+          const attachBtn = document.createElement('a')
+          attachBtn.className = 'runtime-action'
+          attachBtn.dataset.testid = `shells-attach-${id}`
+          attachBtn.textContent = 'Attach'
+          attachBtn.href = attachUrlFor(id)
+          attachBtn.target = '_blank'
+          attachBtn.rel = 'noopener'
+          row.appendChild(attachBtn)
+
+          // Kill: confirm, POST tmux.kill, re-fetch.
+          const killBtn = document.createElement('button')
+          killBtn.type = 'button'
+          killBtn.className = 'runtime-action runtime-action-kill'
+          killBtn.dataset.testid = `shells-kill-${id}`
+          killBtn.textContent = 'Kill'
+          killBtn.addEventListener('click', async (ev) => {
+            ev.stopPropagation()
+            if (!confirm(`Kill tmux session asd-${id}?`)) return
+            killBtn.disabled = true
+            const result = await killShellSession(id)
+            if (!result.ok) {
+              killBtn.disabled = false
+              alert(`Failed to kill asd-${id}`)
+              return
+            }
+            await refreshShells()
+          })
+          row.appendChild(killBtn)
+
           list.appendChild(row)
         }
       }
@@ -128,7 +194,9 @@ export function mountRuntimeControl () {
     const processCount = (StorageManager.getServices() || []).length
     const counts = {
       tasks: runtime.tasks.length,
-      shells: runtime.shells.length || 1,
+      // Show real session count — was previously `|| 1` to surface the
+      // hardcoded "Default Shell" placeholder, which is gone now.
+      shells: runtime.shells.length,
       processes: processCount
     }
 
@@ -140,6 +208,32 @@ export function mountRuntimeControl () {
 
     if (activeTab) {
       renderPanel(/** @type {'tasks'|'shells'|'processes'} */ (activeTab))
+    }
+  }
+
+  // Poll /asde/mcp/tmux.list while the Shells tab is open so the list and
+  // the tab counter stay current as users open/close terminals elsewhere.
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let shellsPollTimer = null
+  const SHELLS_POLL_INTERVAL_MS = 5000
+
+  const refreshShells = async () => {
+    const ids = await listShellSessions()
+    setShells(ids.map((id) => ({ id, name: `asd-${id}` })))
+  }
+
+  const startShellsPoll = () => {
+    if (shellsPollTimer) return
+    refreshShells().catch(() => {})
+    shellsPollTimer = setInterval(() => {
+      refreshShells().catch(() => {})
+    }, SHELLS_POLL_INTERVAL_MS)
+  }
+
+  const stopShellsPoll = () => {
+    if (shellsPollTimer) {
+      clearInterval(shellsPollTimer)
+      shellsPollTimer = null
     }
   }
 
@@ -159,6 +253,7 @@ export function mountRuntimeControl () {
           document.removeEventListener('click', outsideClickHandler)
           outsideClickHandler = null
         }
+        stopShellsPoll()
         return
       }
       activeTab = def.key
@@ -166,6 +261,10 @@ export function mountRuntimeControl () {
       for (const [key, item] of Object.entries(tabButtons)) {
         item.classList.toggle('active', key === def.key)
       }
+      // Switch poll on/off based on which tab is active. Shells tab does
+      // its own ~5s refresh; other tabs don't need to hammer MCP.
+      if (def.key === 'shells') startShellsPoll()
+      else stopShellsPoll()
       renderPanel(/** @type {'tasks'|'shells'|'processes'} */ (def.key))
       if (!outsideClickHandler) {
         outsideClickHandler = (ev) => {
@@ -174,6 +273,7 @@ export function mountRuntimeControl () {
             activeTab = ''
             panel.hidden = true
             for (const item of Object.values(tabButtons)) item.classList.remove('active')
+            stopShellsPoll()
             document.removeEventListener('click', outsideClickHandler)
             outsideClickHandler = null
           }
@@ -190,6 +290,9 @@ export function mountRuntimeControl () {
   root.append(tabs, panel)
   onRuntimeChange(refresh)
   refresh()
+  // Prime the tab counter even if the user never opens Shells — keeps the
+  // header label honest when sessions exist before the dashboard loads.
+  refreshShells().catch(() => {})
 
   return { refresh }
 }
