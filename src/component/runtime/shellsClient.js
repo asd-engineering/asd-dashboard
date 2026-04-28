@@ -22,10 +22,20 @@
 const BASE = '/asde/mcp'
 
 /**
+ * @typedef {Object} SessionMeta
+ * @property {string} id
+ * @property {string} name
+ * @property {number|null} created       - unix seconds
+ * @property {number|null} lastAttached  - unix seconds; null if never attached
+ * @property {boolean} attached
+ */
+
+/**
  * @typedef {Object} ListResult
  * @property {'ok'|'error'} status
- * @property {string[]} sessions
- * @property {string} [errorReason] - 'network'|'unauthorized'|'server-error'|'parse'
+ * @property {string[]} sessions             - bare ids (backwards-compatible)
+ * @property {SessionMeta[]} [sessionsMeta]  - metadata, present when MCP returns sessions_meta
+ * @property {string} [errorReason] - 'network'|'unauthorized'|'server-error'|'parse'|'tmux-missing'
  */
 
 /**
@@ -57,7 +67,17 @@ export async function listShellSessions () {
   }
   try {
     const data = await res.json()
-    return { status: 'ok', sessions: Array.isArray(data?.sessions) ? data.sessions : [] }
+    // tmux-missing arrives as ok:true + reason:tmux-missing — treat as
+    // an error condition for the UI banner so the user gets a real hint
+    // rather than 'no sessions running'.
+    if (data?.reason === 'tmux-missing') {
+      return { status: 'error', sessions: [], errorReason: 'tmux-missing' }
+    }
+    return {
+      status: 'ok',
+      sessions: Array.isArray(data?.sessions) ? data.sessions : [],
+      sessionsMeta: Array.isArray(data?.sessions_meta) ? data.sessions_meta : undefined
+    }
   } catch {
     return { status: 'error', sessions: [], errorReason: 'parse' }
   }
@@ -96,10 +116,12 @@ export async function killShellSession (id) {
   try {
     const data = await res.json()
     if (data?.ok) return { ok: true, killed: data.killed ?? null }
-    // Server returned ok:false — most often "no such session" (idempotent
-    // kill or external race). Surface as no-session so toast text reads
-    // accurately rather than implying a real failure.
-    return { ok: false, killed: null, errorReason: 'no-session' }
+    // Server returned ok:false. Trust its `reason` field when present
+    // (Phase-3: MCP now distinguishes no-session / tmux-missing /
+    // exec-error). Default to no-session for back-compat with older
+    // MCP versions that don't ship reason yet.
+    const reason = typeof data?.reason === 'string' ? data.reason : 'no-session'
+    return { ok: false, killed: null, errorReason: reason }
   } catch {
     return { ok: false, killed: null, errorReason: 'server-error' }
   }

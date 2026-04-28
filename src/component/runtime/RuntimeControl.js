@@ -178,8 +178,25 @@ export function mountRuntimeControl () {
       case 'unauthorized': return 'Session expired — refresh to log back in.'
       case 'network': return 'MCP unreachable — check the hub is up.'
       case 'parse': return 'MCP returned an unexpected response.'
+      case 'tmux-missing': return 'tmux is not installed on this host. See the tmux module README for install instructions.'
       default: return 'MCP returned an error — see console for details.'
     }
+  }
+
+  /**
+   * Compact relative-time formatter for session metadata. "2m ago",
+   * "3h ago", "1d ago". Falls back to absolute date if older than 30 days.
+   * @param {number} unixSeconds
+   * @returns {string}
+   */
+  const formatRelativeTime = (unixSeconds) => {
+    const nowSec = Math.floor(Date.now() / 1000)
+    const dt = nowSec - unixSeconds
+    if (dt < 60) return 'just now'
+    if (dt < 3600) return `${Math.floor(dt / 60)}m ago`
+    if (dt < 86400) return `${Math.floor(dt / 3600)}h ago`
+    if (dt < 30 * 86400) return `${Math.floor(dt / 86400)}d ago`
+    return new Date(unixSeconds * 1000).toLocaleDateString()
   }
 
   /**
@@ -269,10 +286,30 @@ export function mountRuntimeControl () {
       row.className = 'runtime-item'
       row.dataset.shellId = id
 
+      const labelGroup = document.createElement('span')
+      labelGroup.className = 'runtime-title'
+
       const label = document.createElement('span')
-      label.className = 'runtime-title'
       label.textContent = `asd-${id}`
-      row.appendChild(label)
+      labelGroup.appendChild(label)
+
+      // Metadata: "started 2m ago" + "attached" indicator. Only renders
+      // when MCP supplies sessions_meta — older MCP versions return just
+      // the name array, in which case the row stays minimal.
+      const meta = shellsMetaById.get(id)
+      if (meta) {
+        const metaSpan = document.createElement('span')
+        metaSpan.className = 'runtime-meta'
+        metaSpan.dataset.testid = `shells-meta-${id}`
+        const parts = []
+        if (typeof meta.created === 'number') {
+          parts.push(`started ${formatRelativeTime(meta.created)}`)
+        }
+        if (meta.attached) parts.push('attached')
+        metaSpan.textContent = parts.length ? `  ·  ${parts.join('  ·  ')}` : ''
+        labelGroup.appendChild(metaSpan)
+      }
+      row.appendChild(labelGroup)
 
       const attachBtn = document.createElement('button')
       attachBtn.type = 'button'
@@ -454,9 +491,20 @@ export function mountRuntimeControl () {
 
   // Poll /asde/mcp/tmux.list while the Shells tab is open so the list and
   // the tab counter stay current as users open/close terminals elsewhere.
+  // Visibility-aware (A11/C6): we suspend on document.hidden so a forgotten
+  // background tab doesn't hammer MCP every couple of seconds.
   /** @type {ReturnType<typeof setTimeout> | null} */
   let shellsPollTimer = null
-  const SHELLS_POLL_INTERVAL_MS = 5000
+  // 2s while panel is open + visible — fast enough that an external kill
+  // or service-start propagates without the user noticing lag, slow enough
+  // that a tab left open for hours doesn't generate hundreds of req/min.
+  const SHELLS_POLL_INTERVAL_MS = 2000
+
+  /** Cached metadata keyed by session id — populated when MCP returns
+   *  sessions_meta. Used by the panel to render "started Xm ago" and the
+   *  attached indicator. Stale entries are pruned each refreshShells cycle.
+   *  @type {Map<string, import('./shellsClient.js').SessionMeta>} */
+  const shellsMetaById = new Map()
 
   const refreshShells = async () => {
     const result = await listShellSessions()
@@ -471,6 +519,13 @@ export function mountRuntimeControl () {
       for (const id of Array.from(inFlightKills)) {
         if (!present.has(id)) inFlightKills.delete(id)
       }
+      // Refresh metadata cache; remove entries for sessions that have gone.
+      shellsMetaById.clear()
+      if (Array.isArray(result.sessionsMeta)) {
+        for (const m of result.sessionsMeta) {
+          if (m && typeof m.id === 'string') shellsMetaById.set(m.id, m)
+        }
+      }
       setShells(result.sessions.map((id) => ({ id, name: `asd-${id}` })))
     } else {
       // Don't blow away the rendered list on a transient error — keep
@@ -480,8 +535,16 @@ export function mountRuntimeControl () {
     }
   }
 
+  // Visibility-aware polling: pause when the tab is hidden so a forgotten
+  // background dashboard doesn't generate ~30 req/min against MCP.
+  /** @returns {boolean} */
+  const isShellsTabActive = () => activeTab === 'shells'
+  const isPageVisible = () =>
+    typeof document === 'undefined' || document.visibilityState !== 'hidden'
+
   const startShellsPoll = () => {
     if (shellsPollTimer) return
+    if (!isPageVisible()) return // resumed by visibilitychange handler below
     refreshShells().catch(() => {})
     shellsPollTimer = setInterval(() => {
       refreshShells().catch(() => {})
@@ -493,6 +556,14 @@ export function mountRuntimeControl () {
       clearInterval(shellsPollTimer)
       shellsPollTimer = null
     }
+  }
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (!isShellsTabActive()) return
+      if (document.visibilityState === 'hidden') stopShellsPoll()
+      else startShellsPoll()
+    })
   }
 
   for (const def of tabDefs) {
