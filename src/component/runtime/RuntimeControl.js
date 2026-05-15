@@ -451,14 +451,17 @@ export function mountRuntimeControl () {
       cleanup()
       // Mark every visible session as in-flight before the call returns
       // so the optimistic empty-state shows immediately.
-      const before = getRuntimeState().shells.map((s) => String(s.id || '')).filter(Boolean)
-      for (const id of before) inFlightKills.add(id)
+      const beforeShells = getRuntimeState().shells
+      const beforeIds = beforeShells.map((s) => String(s.id || '')).filter(Boolean)
+      for (const id of beforeIds) inFlightKills.add(id)
       setShells([])
       const result = await killAllShellSessions()
       if (result.ok) {
         showNotification(`Killed ${result.killed} session(s)`, 1500, 'success')
       } else {
         showNotification('Could not kill sessions', 2500, 'error')
+        for (const id of beforeIds) inFlightKills.delete(id)
+        setShells(beforeShells)
       }
     })
 
