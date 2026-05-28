@@ -57,7 +57,7 @@ jobs:
       if: always()
       uses: asd-engineering/artifact-nas/upload@v1.4.1
       with:
-        mode: fallback
+        mode: nas-first
         name: playwright-report
         path: |
           playwright-report/
