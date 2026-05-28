@@ -29,7 +29,7 @@ jobs:
 
     - name: Restore Playwright browsers cache
       id: playwright-cache
-      uses: asd-engineering/artifact-nas/download@v1.4.2
+      uses: asd-engineering/artifact-nas/download@v1.4.3
       with:
         mode: cache
         name: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
@@ -42,7 +42,7 @@ jobs:
 
     - name: Save Playwright browsers cache
       if: always()
-      uses: asd-engineering/artifact-nas/upload@v1.4.2
+      uses: asd-engineering/artifact-nas/upload@v1.4.3
       with:
         mode: cache
         name: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
@@ -55,7 +55,7 @@ jobs:
 
     - name: Upload Playwright report
       if: always()
-      uses: asd-engineering/artifact-nas/upload@v1.4.2
+      uses: asd-engineering/artifact-nas/upload@v1.4.3
       with:
         mode: nas-first
         name: playwright-report
