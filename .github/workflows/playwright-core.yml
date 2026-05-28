@@ -7,11 +7,15 @@ jobs:
   test:
     name: Playwright
     timeout-minutes: 15
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
 
     concurrency:
       group: ${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
       cancel-in-progress: ${{ github.ref_name != 'main' }}
+
+    env:
+      RCLONE_CONF_B64: ${{ secrets.RCLONE_CONF_B64 }}
+      NAS_DEST: ${{ secrets.NAS_DEST }}
 
     steps:
     - uses: actions/checkout@v4
@@ -25,17 +29,24 @@ jobs:
 
     - name: Restore Playwright browsers cache
       id: playwright-cache
-      uses: actions/cache@v4
+      uses: asd-engineering/artifact-nas/download@v1.4.4
       with:
+        mode: cache
+        name: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
         path: ~/.cache/ms-playwright
-        key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-playwright-
 
     - name: Install deps & browsers
       run: |
         npm ci
         npx playwright install --with-deps
+
+    - name: Save Playwright browsers cache
+      if: always()
+      uses: asd-engineering/artifact-nas/upload@v1.4.4
+      with:
+        mode: cache
+        name: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+        path: ~/.cache/ms-playwright
 
     - name: Run Playwright tests
       env:
@@ -44,8 +55,9 @@ jobs:
 
     - name: Upload Playwright report
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: asd-engineering/artifact-nas/upload@v1.4.4
       with:
+        mode: nas-first
         name: playwright-report
         path: |
           playwright-report/

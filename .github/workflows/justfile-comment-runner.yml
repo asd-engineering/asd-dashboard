@@ -7,7 +7,7 @@ on:
 jobs:
   run_justfile_commands:
     if: startsWith(github.event.comment.body, '/run')
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
 
     steps:
       - name: Checkout code
