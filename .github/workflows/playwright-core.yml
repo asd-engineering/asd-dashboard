@@ -7,7 +7,7 @@ jobs:
   test:
     name: Playwright
     timeout-minutes: 15
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
 
     concurrency:
       group: ${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
