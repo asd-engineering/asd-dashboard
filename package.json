@@ -23,7 +23,7 @@
     "check": "tsc"
   },
   "devDependencies": {
-    "@playwright/test": "^1.55.0",
+    "@playwright/test": "^1.60.0",
     "@types/node": "^22.18.0",
     "@typescript-eslint/eslint-plugin": "^8.36.0",
     "@typescript-eslint/parser": "^8.36.0",
@@ -34,7 +34,7 @@
     "fs-extra": "^11.3.0",
     "globby": "^13.2.2",
     "husky": "^9.1.6",
-    "playwright": "^1.47.2",
+    "playwright": "^1.60.0",
     "standard": "*",
     "typescript": "^5.8.3"
   },
