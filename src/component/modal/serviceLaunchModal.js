@@ -37,11 +37,9 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
   })
 
   let completed = false
-  let completionInterval = null
   openModal({
     id: `service-action-modal-${taskId}`,
     onCloseCallback: () => {
-      if (completionInterval) clearInterval(completionInterval)
       if (!completed) {
         updateTask(taskId, { status: 'minimized', open: openTask })
       }
@@ -95,7 +93,6 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
       doneButton.className = 'service-action-btn-primary'
       doneButton.addEventListener('click', () => {
         completed = true
-        if (completionInterval) clearInterval(completionInterval)
         updateTask(taskId, { status: 'done', open: openTask })
         closeModal()
         document.dispatchEvent(new CustomEvent('state-change', { detail: { reason: 'services' } }))
@@ -127,24 +124,13 @@ export function showServiceModal (serviceObj, widgetWrapper = null, opts = {}) {
       btnBar.append(minimizeButton, openInNewTab, doneButton)
       modal.appendChild(btnBar)
 
-      // Auto-detect task completion via iframe content polling
-      completionInterval = setInterval(() => {
-        try {
-          const doc = iframe.contentDocument || iframe.contentWindow?.document
-          if (!doc) return
-          const rows = doc.querySelector('.xterm-rows')
-          if (rows && rows.textContent.includes('[task completed]')) {
-            clearInterval(completionInterval)
-            completionInterval = null
-            statusBadge.textContent = 'Completed'
-            statusBadge.dataset.status = 'completed'
-            doneButton.textContent = 'Close'
-          }
-        } catch {
-          clearInterval(completionInterval)
-          completionInterval = null
-        }
-      }, 2000)
+      // Completion is driven by the user pressing Done — not by scraping the
+      // ttyd iframe DOM. The previous `setInterval` read `iframe.contentDocument`
+      // which throws SecurityError cross-origin (tunnel/public variant), silently
+      // killing auto-detect and risking a false "Completed" badge. The task's
+      // tmux shell intentionally lingers (managed from the Shells tab), so
+      // completion is decoupled from session lifetime. Real-time auto-completion
+      // returns later via the NATS event bus (see docs/EVENT_BUS_NATS.md).
     }
   })
 }

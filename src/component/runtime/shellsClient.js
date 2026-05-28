@@ -21,6 +21,10 @@
 
 const BASE = '/asde/mcp'
 
+// Monotonic per-session counter so two "+ New Shell" clicks in the same
+// millisecond can't mint the same session id (Date.now() alone collides).
+let shellSeq = 0
+
 /**
  * @typedef {Object} SessionMeta
  * @property {string} id
@@ -110,6 +114,9 @@ export async function killShellSession (id) {
   if (res.status === 401 || res.status === 403) {
     return { ok: false, killed: null, errorReason: 'unauthorized' }
   }
+  if (res.status === 429) {
+    return { ok: false, killed: null, errorReason: 'rate-limited' }
+  }
   if (!res.ok) {
     return { ok: false, killed: null, errorReason: 'server-error' }
   }
@@ -153,6 +160,9 @@ export async function killAllShellSessions () {
   if (res.status === 401 || res.status === 403) {
     return { ok: false, killed: 0, errorReason: 'unauthorized' }
   }
+  if (res.status === 429) {
+    return { ok: false, killed: 0, errorReason: 'rate-limited' }
+  }
   if (!res.ok) {
     return { ok: false, killed: 0, errorReason: 'server-error' }
   }
@@ -186,7 +196,7 @@ export function attachUrlFor (id) {
  * @returns {{ url: string, sessionId: string }}
  */
 export function newShellUrl (seed) {
-  const ts = Date.now().toString(36)
+  const ts = `${Date.now().toString(36)}-${(shellSeq++).toString(36)}`
   // Keep id readable; only [a-zA-Z0-9_.:-] survive the wrapper sanitizer.
   const sessionId = (seed || `shell-${ts}`).replace(/[^a-zA-Z0-9_.:-]/g, '-').replace(/^-+|-+$/g, '') || `shell-${ts}`
   const params = new URLSearchParams()

@@ -219,9 +219,7 @@ test.describe("Widget limits", () => {
     expect(selectedBoard).toBe(boardWithWidget);
   });
 
-  // Skipped — pre-existing eviction-modal interaction flake (see Redmine #3712,
-  // shares root cause with #3708). Unskip when the eviction-modal wait pattern is fixed.
-  test.skip("services with identical URLs maintain separate maxInstances", async ({ page }) => {
+  test("services with identical URLs maintain separate maxInstances", async ({ page }) => {
     const services = [
       { id: "svc1", name: "SvcA", url: "http://localhost:8000/asd/toolbox", maxInstances: 1 },
       { id: "svc2", name: "SvcB", url: "http://localhost:8000/asd/toolbox", maxInstances: 1 },
@@ -265,8 +263,10 @@ test.describe("Widget limits", () => {
       .locator('[data-testid="service-panel"] .panel-item', { hasText: 'SvcB' })
       .locator('.panel-item-meta')
       .innerText();
-    expect(countA).toBe("(1/1)");
-    expect(countB).toBe("(0/1)");
+    // Meta carries a service-state prefix (e.g. "online (1/1)") from
+    // ServiceControl; assert the count substring, not the full string.
+    expect(countA).toContain("(1/1)");
+    expect(countB).toContain("(0/1)");
 
     await page.evaluate(async () => {
       const StorageManager = (await import("/storage/StorageManager.js")).StorageManager;
@@ -294,8 +294,8 @@ test.describe("Widget limits", () => {
       .locator('[data-testid="service-panel"] .panel-item', { hasText: 'SvcB' })
       .locator('.panel-item-meta')
       .innerText();
-    expect(updatedA).toBe("(1/1)");
-    expect(updatedB).toBe("(1/1)");
+    expect(updatedA).toContain("(1/1)");
+    expect(updatedB).toContain("(1/1)");
   });
 
 });

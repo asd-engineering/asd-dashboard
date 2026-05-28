@@ -186,49 +186,19 @@ test.describe('Service action modal', () => {
     await expect(overlay).toHaveCSS('display', 'none')
   })
 
-  test('status badge transitions to Completed on [task completed] signal', async ({ page }) => {
+  // NOTE: auto-completion via iframe DOM-scraping was intentionally removed
+  // (cross-origin SecurityError + false-success risk). Completion is now driven
+  // by the manual Done button; the task's tmux shell lingers by design and is
+  // managed from the Shells tab. Real-time auto-completion returns later via the
+  // NATS event bus (docs/EVENT_BUS_NATS.md). The badge stays "Running..." while
+  // the modal is open — covered by 'shows status badge with Running state'.
+
+  test('modal closes cleanly with no orphaned timers/errors', async ({ page }) => {
     await routeConfigAndServices(page, { config: { ...ciConfig, boards: ciBoards }, services: servicesWithOffline })
     await bootWithDashboardState(page, testConfig, servicesWithOffline, last)
 
-    // Stub the iframe route to serve controllable content
-    await page.route('**/asd/ttyd/**', route => {
-      route.fulfill({
-        status: 200,
-        contentType: 'text/html',
-        body: '<!DOCTYPE html><html><body><div class="xterm-rows">waiting...</div></body></html>'
-      })
-    })
-
-    // Open modal
-    const startBtn = page.locator('.widget-offline-start')
-    await startBtn.click()
-
-    const badge = page.locator('.service-action-status')
-    await expect(badge).toHaveAttribute('data-status', 'running')
-
-    // Inject [task completed] into the iframe via page.evaluate
-    await page.evaluate(() => {
-      const iframe = document.querySelector('.service-action-iframe') as HTMLIFrameElement
-      if (iframe?.contentDocument) {
-        iframe.contentDocument.body.innerHTML = '<div class="xterm-rows">[task completed]</div>'
-      }
-    })
-
-    // Wait for the 2s polling interval + margin
-    await page.waitForTimeout(2500)
-
-    // Badge should update
-    await expect(badge).toHaveText('Completed')
-    await expect(badge).toHaveAttribute('data-status', 'completed')
-
-    // Done button should now say Close
-    const done = page.locator('.service-action-btn-primary')
-    await expect(done).toHaveText('Close')
-  })
-
-  test('completion interval cleans up on modal close', async ({ page }) => {
-    await routeConfigAndServices(page, { config: { ...ciConfig, boards: ciBoards }, services: servicesWithOffline })
-    await bootWithDashboardState(page, testConfig, servicesWithOffline, last)
+    const errors: string[] = []
+    page.on('pageerror', err => errors.push(err.message))
 
     // Open modal
     const startBtn = page.locator('.widget-offline-start')
@@ -241,11 +211,10 @@ test.describe('Service action modal', () => {
     // Modal should be gone
     await expect(page.locator('.service-action-modal')).not.toBeVisible()
 
-    // No errors should appear from orphaned intervals
-    const errors: string[] = []
-    page.on('pageerror', err => errors.push(err.message))
-    await page.waitForTimeout(3000) // longer than the 2s interval
-    expect(errors.length).toBe(0)
+    // No errors should appear after close (regression guard for the removed
+    // polling interval and any future timers).
+    await page.waitForTimeout(2500)
+    expect(errors).toEqual([])
   })
 })
 

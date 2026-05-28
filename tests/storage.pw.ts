@@ -234,9 +234,7 @@ test.describe('StorageManager', () => {
     expect(result.store.states).toHaveLength(0)
   })
 
-  // Skipped — pre-existing failure in StorageManager.setServices normalization.
-  // See Redmine #3709. Likely fallout from the IndexedDB migration (71f8902).
-  test.skip('setServices normalizes and resolves service data', async ({ page }) => {
+  test('setServices normalizes and resolves service data', async ({ page }) => {
     const services = await page.evaluate(async () => {
       const { StorageManager: sm } = await import('/storage/StorageManager.js')
       await sm.init({ persist: false, forceLocal: true })
@@ -268,6 +266,9 @@ test.describe('StorageManager', () => {
       category: 'c',
       subcategory: 'sc',
       tags: ['t'],
+      // `state` defaults to 'online' in setServices() — added with the
+      // runtime-task-control service schema; the expectation predates it.
+      state: 'online',
       config: { minColumns: 1, maxColumns: 8, minRows: 1, maxRows: 6, x: 1 },
       maxInstances: 5
     })

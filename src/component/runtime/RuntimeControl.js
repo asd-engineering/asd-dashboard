@@ -391,6 +391,13 @@ export function mountRuntimeControl () {
         showNotification(`Killed asd-${id}`, 1500, 'success')
       } else if (result.errorReason === 'no-session') {
         showNotification(`asd-${id} was already gone`, 1500, 'success')
+      } else if (result.errorReason === 'rate-limited') {
+        showNotification('Too many kill requests — slow down and retry.', 2500, 'error')
+        const current = getRuntimeState().shells
+        if (!current.some((s) => String(s.id || '') === id)) {
+          setShells([...current, { id, name: `asd-${id}` }])
+        }
+        inFlightKills.delete(id)
       } else {
         showNotification(`Could not kill asd-${id}`, 2500, 'error')
         // Roll back optimistic removal so the user sees what's still there.
@@ -459,7 +466,13 @@ export function mountRuntimeControl () {
       if (result.ok) {
         showNotification(`Killed ${result.killed} session(s)`, 1500, 'success')
       } else {
-        showNotification('Could not kill sessions', 2500, 'error')
+        showNotification(
+          result.errorReason === 'rate-limited'
+            ? 'Too many kill requests — slow down and retry.'
+            : 'Could not kill sessions',
+          2500,
+          'error'
+        )
         for (const id of beforeIds) inFlightKills.delete(id)
         setShells(beforeShells)
       }

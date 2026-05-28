@@ -65,27 +65,27 @@ test.describe('View panel', () => {
     await expect(page.locator('[data-testid="view-panel"] .panel-item', { hasText: renamed })).toHaveCount(0)
   })
 
-  // Skipped — keyboard focus / flyout race in SelectorPanel.
-  // See Redmine #3710. Unskip after stabilizing the focus → keypress → flyout sequence.
-  test.skip('keyboard focus reveals flyout', async ({ page }) => {
+  test('keyboard focus reveals flyout', async ({ page }) => {
     const panel = page.locator('[data-testid="view-panel"]')
-    await panel.focus()
-    await page.keyboard.press('Enter') // Open panel
-    const firstItem = panel.locator('.panel-item').first()
 
-    // Hover to trigger sticky popover
-    await firstItem.hover()
-    await page.waitForTimeout(200)
+    // Open the panel via keyboard: focusing the wrap and pressing Enter calls
+    // open() synchronously (SelectorPanel onKeydown). Assert it opened before
+    // proceeding so the rest isn't racing an unopened panel.
+    await panel.focus()
+    await page.keyboard.press('Enter')
+    await expect(panel.locator('.dropdown-content')).toBeVisible()
+
+    // Reveal the sticky popover. Use the shared force-hover helper — a plain
+    // hover can be intercepted by the widget container's pointer events.
+    const firstItem = panel.locator('.panel-item').first()
+    await hoverPanelItem(page, firstItem)
 
     const popover = page.locator('[data-sticky-popover]')
     await expect(popover).toBeVisible()
 
-    // Move mouse away first to prevent re-triggering on close
-    await page.mouse.move(0, 0)
-    await page.waitForTimeout(100)
-
-    // Escape closes the popover (focus must be inside popover)
-    await popover.locator('button').first().focus()
+    // The popover auto-focuses its first control and traps Escape → close
+    // (createStickyPopover.trapFocus), so Escape closes it without any mouse
+    // dance. close() unmounts the popover entirely.
     await page.keyboard.press('Escape')
     await expect(popover).toHaveCount(0)
   })

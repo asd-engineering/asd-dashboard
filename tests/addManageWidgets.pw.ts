@@ -22,9 +22,7 @@ test.describe('Widgets', () => {
     await setLocalItem(page, 'log', 'widgetManagement')
   });
 
-  // Skipped — eviction-modal race in addServices() / evictIfModalPresent().
-  // See Redmine #3708. Unskip after root-causing the wait that escapes .catch().
-  test.skip(`should be able to add 4 services and drag and drop ${emojiList.pinching.unicode}`, async ({ page }) => {
+  test(`should be able to add 4 services and drag and drop ${emojiList.pinching.unicode}`, async ({ page }) => {
     // const logs: string[] = [];
 
     // Listen for console events // Does not work in Firefox

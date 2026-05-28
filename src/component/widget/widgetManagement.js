@@ -64,7 +64,10 @@ async function createWidget (
   widgetWrapper.className = 'widget-wrapper widget'
   widgetWrapper.style.position = 'relative'
   widgetWrapper.dataset.service = service
-  widgetWrapper.dataset.serviceId = serviceObj.id
+  // Use the resolved id when present, else fall back to the service name as a
+  // stable key. Never write a literal "undefined" (which broke per-service
+  // maxInstances enforcement: `"undefined" === undefined` is always false).
+  widgetWrapper.dataset.serviceId = serviceObj.id || service
   widgetWrapper.dataset.url = url
   widgetWrapper.dataset.dataid = dataid || widgetGetUUID()
   logger.log(`Creating widget for service: ${service}`)
@@ -311,9 +314,13 @@ async function addWidget (
     const finalColumns = columns ?? serviceObj.config?.columns ?? 1
     const finalRows = rows ?? serviceObj.config?.rows ?? 1
 
-    // Enforce per-service maxInstances (across live DOM and persisted config)
+    // Enforce per-service maxInstances (across live DOM and persisted config).
+    // Key on the resolved id, falling back to the service name for services
+    // that have no id (e.g. URL-unmatched). This MUST match the key written to
+    // dataset.serviceId / persisted widgetState.serviceId in createWidget.
+    const limitKey = serviceObj.id || serviceName
     const liveDataIds = Array.from(window.asd.widgetStore.widgets.values())
-      .filter(el => el.dataset.serviceId === serviceObj.id)
+      .filter(el => el.dataset.serviceId === limitKey)
       .map(el => el.dataset.dataid)
 
     const config = StorageManager.getConfig() || {}
@@ -321,7 +328,7 @@ async function addWidget (
     const persistedDataIds = boards
       .flatMap(b => Array.isArray(b.views) ? b.views : [])
       .flatMap(v => Array.isArray(v.widgetState) ? v.widgetState : [])
-      .filter(w => w?.serviceId === serviceObj.id)
+      .filter(w => w?.serviceId === limitKey)
       .map(w => w?.dataid)
       .filter(Boolean)
 
