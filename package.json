@@ -23,7 +23,7 @@
     "check": "tsc"
   },
   "devDependencies": {
-    "@accelerated-software-development/playwright-video-merge": "file:../playwright-video-merge",
+    "@accelerated-software-development/playwright-video-merge": "^0.1.0",
     "@playwright/test": "^1.60.0",
     "@types/node": "^22.18.0",
     "@typescript-eslint/eslint-plugin": "^8.36.0",
