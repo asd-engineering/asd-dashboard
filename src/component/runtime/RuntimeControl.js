@@ -142,6 +142,13 @@ export function mountRuntimeControl () {
   /** Per-row "are you sure" pending state — id → row element. */
   /** @type {Map<string, HTMLElement>} */
   const pendingConfirm = new Map()
+  /**
+   * True while the kill-all two-step confirm is awaiting the user. Tracked as a
+   * closure flag (not just the button's dataset) so the 2s poll re-render can be
+   * suppressed while a confirmation is pending — otherwise the poll rebuilds the
+   * panel and destroys the Confirm button out from under the user.
+   */
+  let killAllConfirming = false
 
   /**
    * Open ttyd in an in-page modal iframe instead of `_blank`. Mirrors the
@@ -426,6 +433,7 @@ export function mountRuntimeControl () {
   function confirmKillAll (killAllBtn, header) {
     if (killAllBtn.dataset.confirming === '1') return
     killAllBtn.dataset.confirming = '1'
+    killAllConfirming = true
 
     const original = killAllBtn.textContent
     killAllBtn.style.display = 'none'
@@ -444,6 +452,7 @@ export function mountRuntimeControl () {
 
     const cleanup = () => {
       killAllBtn.dataset.confirming = ''
+      killAllConfirming = false
       confirmBtn.remove()
       cancelBtn.remove()
       killAllBtn.style.display = ''
@@ -501,6 +510,13 @@ export function mountRuntimeControl () {
     }
 
     if (activeTab) {
+      // Don't re-render the Shells panel out from under a pending two-step kill
+      // confirmation — the 2s poll would otherwise destroy the Confirm button
+      // mid-interaction (the row's optimistic state survives via inFlightKills).
+      // Tab counts above are already updated; just skip the DOM rebuild.
+      if (activeTab === 'shells' && (pendingConfirm.size > 0 || killAllConfirming)) {
+        return
+      }
       renderPanel(/** @type {'tasks'|'shells'|'processes'} */ (activeTab))
     }
   }
