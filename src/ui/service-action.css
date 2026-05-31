@@ -61,9 +61,9 @@
   background: var(--color-warning-bg, #fff3cd); color: var(--color-warning, #856404);
   animation: pulse-status 1.5s ease-in-out infinite;
 }
-.service-action-status[data-status="completed"] {
-  background: var(--color-success-bg, #d4edda); color: var(--color-success, #155724);
-}
+/* The [data-status="completed"] state was driven by the removed iframe-scrape
+   completion detection; auto-completion now returns via the NATS event bus
+   (docs/EVENT_BUS_NATS.md), so the rule is omitted until that lands. */
 @keyframes pulse-status { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
 @media (max-width: 768px) {

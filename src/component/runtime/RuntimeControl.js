@@ -151,6 +151,22 @@ export function mountRuntimeControl () {
   let killAllConfirming = false
 
   /**
+   * Roll back an optimistic single-kill removal after the server rejects it.
+   * Order matters: drop the in-flight flag BEFORE setShells, because setShells
+   * synchronously re-renders and renderShellsPanel filters out anything still in
+   * inFlightKills — re-adding first would leave the restored row invisible until
+   * the next 2s poll. Shared by the rate-limited and generic-error branches.
+   * @param {string} id
+   */
+  const rollbackOptimisticKill = (id) => {
+    inFlightKills.delete(id)
+    const current = getRuntimeState().shells
+    if (!current.some((s) => String(s.id || '') === id)) {
+      setShells([...current, { id, name: `asd-${id}` }])
+    }
+  }
+
+  /**
    * Open ttyd in an in-page modal iframe instead of `_blank`. Mirrors the
    * service-action modal's UX so users keep dashboard context. The modal
    * is borrowed via openModal() rather than reimplemented.
@@ -400,19 +416,10 @@ export function mountRuntimeControl () {
         showNotification(`asd-${id} was already gone`, 1500, 'success')
       } else if (result.errorReason === 'rate-limited') {
         showNotification('Too many kill requests — slow down and retry.', 2500, 'error')
-        const current = getRuntimeState().shells
-        if (!current.some((s) => String(s.id || '') === id)) {
-          setShells([...current, { id, name: `asd-${id}` }])
-        }
-        inFlightKills.delete(id)
+        rollbackOptimisticKill(id)
       } else {
         showNotification(`Could not kill asd-${id}`, 2500, 'error')
-        // Roll back optimistic removal so the user sees what's still there.
-        const current = getRuntimeState().shells
-        if (!current.some((s) => String(s.id || '') === id)) {
-          setShells([...current, { id, name: `asd-${id}` }])
-        }
-        inFlightKills.delete(id)
+        rollbackOptimisticKill(id)
       }
       // On success, in-flight is cleared by the next refreshShells() once
       // it confirms absence. If the panel closes first, set entries stay
