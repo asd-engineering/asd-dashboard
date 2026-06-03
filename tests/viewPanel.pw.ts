@@ -25,8 +25,10 @@ test.describe('View panel', () => {
     const first = panel.locator('.panel-item').first()
     await expect(first.locator('.panel-item-meta')).toContainText('widgets')
     await hoverPanelItem(page, first)
-    await expect(first.locator('.panel-item-actions-flyout')).toBeVisible()
-    await expect(first.locator('[data-item-action="delete"]')).toHaveText('❌')
+    // Flyout is now inside sticky popover (layer root)
+    const popover = page.locator('[data-sticky-popover]')
+    await expect(popover.locator('.panel-item-actions-flyout')).toBeVisible()
+    await expect(popover.locator('[data-item-action="delete"]')).toHaveText('❌')
   })
 
   test('label hint and aria for switch', async ({ page }) => {
@@ -65,13 +67,26 @@ test.describe('View panel', () => {
 
   test('keyboard focus reveals flyout', async ({ page }) => {
     const panel = page.locator('[data-testid="view-panel"]')
+
+    // Open the panel via keyboard: focusing the wrap and pressing Enter calls
+    // open() synchronously (SelectorPanel onKeydown). Assert it opened before
+    // proceeding so the rest isn't racing an unopened panel.
     await panel.focus()
-    await page.keyboard.press('Enter') // Open panel
+    await page.keyboard.press('Enter')
+    await expect(panel.locator('.dropdown-content')).toBeVisible()
+
+    // Reveal the sticky popover. Use the shared force-hover helper — a plain
+    // hover can be intercepted by the widget container's pointer events.
     const firstItem = panel.locator('.panel-item').first()
-    await firstItem.focus() // Focus the first row
-    const fly = panel.locator('.panel-item').first().locator('.panel-item-actions-flyout')
-    await expect(fly).toBeVisible()
+    await hoverPanelItem(page, firstItem)
+
+    const popover = page.locator('[data-sticky-popover]')
+    await expect(popover).toBeVisible()
+
+    // The popover auto-focuses its first control and traps Escape → close
+    // (createStickyPopover.trapFocus), so Escape closes it without any mouse
+    // dance. close() unmounts the popover entirely.
     await page.keyboard.press('Escape')
-    await expect(fly).toBeHidden()
+    await expect(popover).toHaveCount(0)
   })
 })

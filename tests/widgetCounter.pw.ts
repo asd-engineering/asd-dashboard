@@ -33,8 +33,10 @@ test.describe('Widget counters', () => {
     await ensurePanelOpen(page, 'service-panel')
     await expect(page.locator('[data-testid="service-panel"] .panel-count')).toHaveText('Running: 1/1 Widgets: 1')
 
-    // Re-acquire the locator to get the refreshed element
+    // Re-acquire the locator to get the refreshed element. The meta now carries
+    // a service-state prefix (e.g. "online (1/20)") from ServiceControl — assert
+    // the count substring rather than the full text.
     const updatedRow = page.locator('[data-testid="service-panel"] .panel-item:has-text("ASD-toolbox")')
-    await expect(updatedRow.locator('.panel-item-meta')).toHaveText('(1/20)')
+    await expect(updatedRow.locator('.panel-item-meta')).toContainText('(1/20)')
   })
 })

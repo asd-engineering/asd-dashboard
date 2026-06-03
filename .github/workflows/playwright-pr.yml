@@ -8,4 +8,10 @@ jobs:
   call-playwright:
     name: Playwright Tests (PR)
     uses: ./.github/workflows/playwright-core.yml
+    with:
+      # PR runs only chromium for fast feedback. Push to main/develop runs all
+      # three browsers (see playwright-push.yml). The 15min job limit was being
+      # blown by the 3-browser × 170-test combo on a 1-worker ubuntu-latest.
+      project: chromium
+      timeout-minutes: 15
     secrets: inherit

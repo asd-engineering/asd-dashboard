@@ -20,7 +20,7 @@ async function getServiceFromUrl (url) {
   try {
     const services = await fetchServices()
     logger.log('Matching URL:', url)
-    const service = services.find(service => url.startsWith(service.url))
+    const service = services.find(service => service.url && url.startsWith(service.url))
     logger.log('Matched service:', service)
     return service ? service.name : 'defaultService'
   } catch (error) {

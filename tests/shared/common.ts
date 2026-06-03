@@ -455,23 +455,17 @@ export async function clickFlyoutAction(
 ): Promise<void> {
   await ensurePanelOpen(page, panelTestId);
   const row = page.locator(`[data-testid="${panelTestId}"] .panel-item`, { hasText: rowText }).first();
-  const flyout = row.locator('.panel-item-actions-flyout');
-  const btn = row.locator(`[data-item-action="${action}"]`).first();
 
-  // Try hover with force (works in Chromium, may fail in Firefox headless)
+  // Hover to trigger sticky popover
   await row.hover({ force: true });
-  await page.waitForTimeout(100);
+  await page.waitForTimeout(200);
 
-  // Firefox fallback: force flyout visible via JS
-  if (!await flyout.isVisible().catch(() => false)) {
-    await row.evaluate((el) => {
-      const fly = el.querySelector('.panel-item-actions-flyout') as HTMLElement;
-      if (fly) fly.style.visibility = 'visible';
-      el.classList.add('hover');
-    });
-    await page.waitForTimeout(100);
-  }
+  // Flyout is now inside the sticky popover (layer root)
+  const popover = page.locator('[data-sticky-popover]');
+  const btn = popover.locator(`[data-item-action="${action}"]`).first();
 
+  // Wait for popover to be visible
+  await expect(popover).toBeVisible({ timeout: 2000 });
   await expect(btn).toBeVisible({ timeout: 2000 });
   await btn.click({ force: true });
 }
@@ -486,37 +480,46 @@ export async function dragAndDropWidgetByIndex(page: Page, fromIndex: number, to
 }
 
 export async function dragAndDropWidgetStable(page: Page, fromIndex: number, toIndex: number): Promise<void> {
-  // Temporarily neutralize the header controls during DnD
-  // Guard against a closed page because of page.reload after adding widgets (test)
-  if (!page.isClosed()) {
-    await page.evaluate(() => {
-      const el = document.getElementById('controls') as HTMLElement | null
-      if (el) {
-        el.dataset.prevPointer = el.style.pointerEvents || ''
-        el.style.pointerEvents = 'none'
+  // Guard against a closed page (e.g. after page.reload in the test).
+  if (page.isClosed()) return
+
+  // The drag handle is `draggable="true"`. Driving it with synthetic mouse
+  // down/move/up triggers the browser's NATIVE HTML5 drag loop, which can
+  // deadlock against Playwright's stepped mouse.move (the move never resolves).
+  // Instead dispatch the HTML5 DnD event sequence directly with a single shared
+  // DataTransfer — deterministic and loop-free. The contract (dragDrop.js):
+  //   • dragstart on `.widget-icon-drag` sets dataTransfer('text/plain', dataid)
+  //     and injects a `.drag-overlay` drop target into every OTHER widget;
+  //   • dragover/drop fire on the target widget's `.drag-overlay`.
+  await page.evaluate(({ from, to }) => {
+    const widgets = Array.from(
+      document.querySelectorAll('#widget-container .widget-wrapper'),
+    )
+    const src = widgets[from] as HTMLElement | undefined
+    const dst = widgets[to] as HTMLElement | undefined
+    const handle = src?.querySelector('.widget-icon-drag') as HTMLElement | undefined
+    if (!src || !dst || !handle) throw new Error('drag source/target not found')
+
+    const dt = new DataTransfer()
+    const evInit = (target: Element): DragEventInit => {
+      const r = target.getBoundingClientRect()
+      return {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        dataTransfer: dt,
+        clientX: r.left + r.width / 2,
+        clientY: r.top + r.height / 2,
       }
-    })
-
-    try {
-      const src = page.locator('.widget-wrapper').nth(fromIndex).locator('.widget-icon-drag')
-      const dst = page.locator('.widget-wrapper').nth(toIndex).locator('.widget-icon-drag')
-      await src.scrollIntoViewIfNeeded()
-      await dst.scrollIntoViewIfNeeded()
-      const sb = await src.boundingBox()
-      const db = await dst.boundingBox()
-      if (!sb || !db) throw new Error('drag handles not found')
-
-      await page.mouse.move(sb.x + sb.width / 2, sb.y + sb.height / 2)
-      await page.mouse.down()
-      await page.mouse.move(db.x + db.width / 2, db.y + db.height / 2, { steps: 10 })
-      await page.mouse.up()
-    } finally {
-      await page.evaluate(() => {
-        const el = document.getElementById('controls') as HTMLElement | null
-        if (el) el.style.pointerEvents = el.dataset.prevPointer || ''
-      })
     }
-  }
+
+    // dragstart creates the .drag-overlay drop targets on the other widgets.
+    handle.dispatchEvent(new DragEvent('dragstart', evInit(handle)))
+    const overlay = (dst.querySelector('.drag-overlay') as HTMLElement) || dst
+    overlay.dispatchEvent(new DragEvent('dragover', evInit(overlay)))
+    overlay.dispatchEvent(new DragEvent('drop', evInit(overlay)))
+    handle.dispatchEvent(new DragEvent('dragend', evInit(handle)))
+  }, { from: fromIndex, to: toIndex })
 }
 
 

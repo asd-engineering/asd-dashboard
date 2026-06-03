@@ -24,9 +24,20 @@ import { runSilentImportFlowIfRequested } from './flows/silentImportFlow.js'
 import { initThemeFromConfig } from './ui/theme.js'
 
 import { mountServiceControl } from './component/service/ServiceControl.js'
+import { mountRuntimeControl } from './component/runtime/RuntimeControl.js'
 
 const logger = new Logger('main.js')
 Logger.enableLogs('all')
+
+const LAYER_ROOT_ID = 'asd-layer-root'
+/** Ensure the overlay layer root exists */
+function ensureLayerRoot () {
+  if (!document.getElementById(LAYER_ROOT_ID)) {
+    const el = document.createElement('div')
+    el.id = LAYER_ROOT_ID
+    document.body.appendChild(el)
+  }
+}
 
 // Global state container
 window.asd = {
@@ -45,6 +56,8 @@ window.addEventListener('hashchange', () => loadFromFragment(false))
  */
 async function main () {
   logger.log('Application initialization started')
+
+  ensureLayerRoot()
 
   try {
     await StorageManager.init({ persist: true })
@@ -67,6 +80,7 @@ async function main () {
   const boardPanel = mountBoardControl()
   const viewPanel = mountViewControl()
   const servicePanel = mountServiceControl()
+  const runtimePanel = mountRuntimeControl()
   initializeDragAndDrop()
 
   // 3. Load services and configuration in parallel
@@ -136,11 +150,13 @@ async function main () {
         if (viewPanel) viewPanel.refresh()
         // Repopulate panel when config (e.g., boards/views) changes
         servicePanel?.refresh()
+        runtimePanel?.refresh()
         break
 
       case 'services':
         // Repopulate panel when services update
         servicePanel?.refresh()
+        runtimePanel?.refresh()
         break
     }
   }

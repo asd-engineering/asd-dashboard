@@ -23,6 +23,17 @@
 .modal--sm { width: 40vw; height: auto; max-height: 85vh; }
 @media (max-width: 768px) { .modal { width: 95vw; height: 90vh; max-height: 90vh; } }
 
+.modal-close-btn {
+  color: var(--color-danger);
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+
+.modal-close-btn:hover,
+.modal-close-btn:focus-visible {
+  background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+  transform: translateY(-1px);
+}
+
 /* -------------------------------------------------------------------------- */
 /* ! MODAL COMPONENTS (HEADER, CONTENT, FOOTER)                               */
 /* -------------------------------------------------------------------------- */

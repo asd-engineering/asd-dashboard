@@ -263,8 +263,10 @@ test.describe("Widget limits", () => {
       .locator('[data-testid="service-panel"] .panel-item', { hasText: 'SvcB' })
       .locator('.panel-item-meta')
       .innerText();
-    expect(countA).toBe("(1/1)");
-    expect(countB).toBe("(0/1)");
+    // Meta carries a service-state prefix (e.g. "online (1/1)") from
+    // ServiceControl; assert the count substring, not the full string.
+    expect(countA).toContain("(1/1)");
+    expect(countB).toContain("(0/1)");
 
     await page.evaluate(async () => {
       const StorageManager = (await import("/storage/StorageManager.js")).StorageManager;
@@ -292,8 +294,8 @@ test.describe("Widget limits", () => {
       .locator('[data-testid="service-panel"] .panel-item', { hasText: 'SvcB' })
       .locator('.panel-item-meta')
       .innerText();
-    expect(updatedA).toBe("(1/1)");
-    expect(updatedB).toBe("(1/1)");
+    expect(updatedA).toContain("(1/1)");
+    expect(updatedB).toContain("(1/1)");
   });
 
 });

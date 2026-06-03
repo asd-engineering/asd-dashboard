@@ -24,9 +24,11 @@ test.describe('Board panel', () => {
     await ensurePanelOpen(page, 'board-panel')
     const row = panel.locator('.panel-item').first()
     await hoverPanelItem(page, row)
-    await expect(row.locator('.panel-item-actions-flyout')).toBeVisible()
-    await expect(row.locator('[data-item-action="navigate"]')).toHaveCount(0)
-    await expect(row.locator('[data-item-action="delete"]')).toHaveText('❌')
+    // Flyout is now inside sticky popover (layer root)
+    const popover = page.locator('[data-sticky-popover]')
+    await expect(popover.locator('.panel-item-actions-flyout')).toBeVisible()
+    await expect(popover.locator('[data-item-action="navigate"]')).toHaveCount(0)
+    await expect(popover.locator('[data-item-action="delete"]')).toHaveText('❌')
   })
 
   test('label hint and aria for switch', async ({ page }) => {
@@ -68,11 +70,21 @@ test.describe('Board panel', () => {
     await panel.focus()
     await page.keyboard.press('Enter') // Open panel
     const firstItem = panel.locator('.panel-item').first()
-    await firstItem.focus() // Focus the first row
 
-    const fly = panel.locator('.panel-item').first().locator('.panel-item-actions-flyout')
-    await expect(fly).toBeVisible()
+    // Hover to trigger sticky popover
+    await firstItem.hover()
+    await page.waitForTimeout(200)
+
+    const popover = page.locator('[data-sticky-popover]')
+    await expect(popover).toBeVisible()
+
+    // Move mouse away first to prevent re-triggering on close
+    await page.mouse.move(0, 0)
+    await page.waitForTimeout(100)
+
+    // Escape closes the popover (focus must be inside popover)
+    await popover.locator('button').first().focus()
     await page.keyboard.press('Escape')
-    await expect(fly).toBeHidden()
+    await expect(popover).toHaveCount(0)
   })
 })

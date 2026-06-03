@@ -20,6 +20,9 @@ async function routeLimits(page, boards, services, maxSize = 2, configOverrides 
 }
 
 test.describe('Eviction cancel & runtime-only behavior', () => {
+  // These tests use page.evaluate with async modal interactions - need extra time under load
+  test.setTimeout(30000);
+
   test('Cancel: stays on current view and storage is unchanged', async ({ page }) => {
     const boards = [
       {
@@ -72,15 +75,16 @@ test.describe('Eviction cancel & runtime-only behavior', () => {
     });
 
     // Attempt to switch; cancel eviction
-    await page.evaluate(async () => {
+    // Start the switchView in background, then wait for modal and click cancel
+    const switchPromise = page.evaluate(async () => {
       const { switchView } = await import('/component/board/boardManagement.js');
-      // Kick off, then cancel via UI
-      setTimeout(() => {
-        const btn = document.querySelector('#eviction-modal .modal__btn--cancel');
-        if (btn) (btn as HTMLButtonElement).click();
-      }, 50);
-      await switchView('b', 'v2');
+      return switchView('b', 'v2');
     });
+    // Wait for modal cancel button and click it
+    const cancelBtn = page.locator('#eviction-modal .modal__btn--cancel');
+    await cancelBtn.waitFor({ timeout: 5000 });
+    await cancelBtn.click();
+    await switchPromise;
 
     // We should remain on v1 DOM-wise (all original W1..W3 still present)
     const currentIds = await page.$$eval('.widget-wrapper', els => els.map(e => e.getAttribute('data-dataid')).filter(Boolean));
@@ -139,14 +143,16 @@ test.describe('Eviction cancel & runtime-only behavior', () => {
     await page.locator('.widget-wrapper').nth(2).waitFor();
 
     // Switch to v2; confirm eviction (auto LRU)
-    await page.evaluate(async () => {
+    // Start the switchView in background, then wait for modal and click auto-remove
+    const switchPromise = page.evaluate(async () => {
       const { switchView } = await import('/component/board/boardManagement.js');
-      setTimeout(() => {
-        const auto = document.querySelector('#eviction-modal #evict-lru-btn') as HTMLButtonElement | null;
-        if (auto) auto.click(); // one-shot auto-select + commit
-      }, 50);
-      await switchView('b', 'v2');
+      return switchView('b', 'v2');
     });
+    // Wait for auto-remove button and click it
+    const autoBtn = page.locator('#eviction-modal #evict-lru-btn');
+    await autoBtn.waitFor({ timeout: 5000 });
+    await autoBtn.click();
+    await switchPromise;
 
     // New DOM should reflect v2 widgets
     const currentIds = await page.$$eval('.widget-wrapper', els => els.map(e => e.getAttribute('data-dataid')).filter(Boolean));

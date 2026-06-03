@@ -266,6 +266,9 @@ test.describe('StorageManager', () => {
       category: 'c',
       subcategory: 'sc',
       tags: ['t'],
+      // `state` defaults to 'online' in setServices() — added with the
+      // runtime-task-control service schema; the expectation predates it.
+      state: 'online',
       config: { minColumns: 1, maxColumns: 8, minRows: 1, maxRows: 6, x: 1 },
       maxInstances: 5
     })

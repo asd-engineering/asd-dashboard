@@ -391,6 +391,20 @@
     "returns": "HTMLDivElement"
   },
   {
+    "name": "createStickyPopover",
+    "kind": "function",
+    "file": "src/shared/ui/sticky-popover.js",
+    "description": "Create a sticky popover anchored to an element.",
+    "params": [
+      {
+        "name": "cfg",
+        "type": "StickyPopoverCfg",
+        "desc": ""
+      }
+    ],
+    "returns": "{open:()=>void,pin:()=>void,unpin:()=>void,close:()=>void,destroy:()=>void,isPinned:()=>boolean}"
+  },
+  {
     "name": "createView",
     "kind": "function",
     "file": "src/component/board/boardManagement.js",
