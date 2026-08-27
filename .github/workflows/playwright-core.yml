@@ -44,10 +44,15 @@ jobs:
           ${{ runner.os }}-playwright-
 
     - name: Install deps & browsers
+      # PROJECT goes through env, not ${{ }} interpolation into the script body.
+      # A workflow_call input expanded inline is pasted into the shell before
+      # bash ever sees it, so any caller that can set it can append a command.
+      env:
+        PROJECT: ${{ inputs.project }}
       run: |
         npm ci
-        if [ -n "${{ inputs.project }}" ]; then
-          npx playwright install --with-deps "${{ inputs.project }}"
+        if [ -n "$PROJECT" ]; then
+          npx playwright install --with-deps "$PROJECT"
         else
           npx playwright install --with-deps
         fi
@@ -55,9 +60,10 @@ jobs:
     - name: Run Playwright tests
       env:
         CI: 'true'
+        PROJECT: ${{ inputs.project }}
       run: |
-        if [ -n "${{ inputs.project }}" ]; then
-          npx playwright test --reporter=html --project="${{ inputs.project }}"
+        if [ -n "$PROJECT" ]; then
+          npx playwright test --reporter=html --project="$PROJECT"
         else
           npm run test:report
         fi

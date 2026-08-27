@@ -9,7 +9,7 @@ import { StorageManager } from '../../storage/StorageManager.js'
 import { addWidget, removeWidget, findServiceLocation } from '../widget/widgetManagement.js'
 import { widgetStore } from '../widget/widgetStore.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
-import { resolveServiceConfig } from '../../utils/serviceUtils.js'
+import { resolveServiceConfig, serviceLimitKey } from '../../utils/serviceUtils.js'
 import { showNotification } from '../dialog/notification.js'
 import { switchBoard } from '../board/boardManagement.js'
 import emojiList from '../../ui/unicodeEmoji.js'
@@ -66,10 +66,11 @@ function getGlobalWidgetTotal () {
 
 /**
  * Count active instances for a given service.
- * @param {string} serviceId
+ * @param {string|undefined} serviceId
  * @returns {number}
  */
 function countServiceInstances (serviceId) {
+  if (!serviceId) return 0
   const boards = StorageManager.getBoards() || []
   return boards.reduce(
     (c, b) => c + (b.views || []).reduce(
@@ -114,7 +115,7 @@ export function mountServiceControl () {
       const overGlobal = typeof widgetStore.maxSize === 'number' && widgetStore.widgets.size >= widgetStore.maxSize
       return services.map(svc => {
         const resolved = resolveServiceConfig(svc)
-        const instances = countServiceInstances(resolved.id)
+        const instances = countServiceInstances(serviceLimitKey(resolved))
         const max = resolved.maxInstances ?? '∞'
         const overService = typeof resolved.maxInstances === 'number' && instances >= resolved.maxInstances
         const canNavigate = instances > 0
@@ -138,12 +139,12 @@ export function mountServiceControl () {
       if (!svc) return
       const resolved = resolveServiceConfig(svc)
 
-      const instances = countServiceInstances(resolved.id)
+      const instances = countServiceInstances(serviceLimitKey(resolved))
       const max = resolved.maxInstances
 
       // If the service's instance limit is met or exceeded...
       if (typeof max === 'number' && instances >= max) {
-        const location = findServiceLocation(resolved.id)
+        const location = findServiceLocation(serviceLimitKey(resolved))
         if (location) {
           // ...navigate to the existing widget instead of adding a new one.
           await switchBoard(location.boardId, location.viewId)
@@ -193,7 +194,7 @@ export function mountServiceControl () {
           emitStateChange('services')
         }
       } else if (action === 'navigate') {
-        const location = findServiceLocation(resolved.id)
+        const location = findServiceLocation(serviceLimitKey(resolved))
         if (location) {
           await switchBoard(location.boardId, location.viewId)
           showNotification(`Navigated to view containing "${resolved.name}".`, 2500, 'success')

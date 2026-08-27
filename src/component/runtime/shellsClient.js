@@ -60,7 +60,7 @@ export async function listShellSessions () {
       body: '{}',
       credentials: 'include'
     })
-  } catch (err) {
+  } catch {
     return { status: 'error', sessions: [], errorReason: 'network' }
   }
   if (res.status === 401 || res.status === 403) {
@@ -91,7 +91,10 @@ export async function listShellSessions () {
  * @typedef {Object} KillResult
  * @property {boolean} ok
  * @property {string|null} killed - The full asd-<id> name on success.
- * @property {string} [errorReason] - 'network'|'unauthorized'|'no-session'|'server-error'
+ * @property {string} [errorReason] - 'network'|'unauthorized'|'rate-limited'|'server-error',
+ *   or whatever `reason` MCP returned on an ok:false body ('no-session',
+ *   'tmux-missing', 'exec-error'); defaults to 'no-session' for MCP versions
+ *   that predate the field.
  */
 
 /**

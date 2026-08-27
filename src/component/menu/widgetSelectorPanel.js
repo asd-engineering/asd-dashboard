@@ -15,7 +15,7 @@ import { switchBoard } from '../board/boardManagement.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { StorageManager } from '../../storage/StorageManager.js'
 import emojiList from '../../ui/unicodeEmoji.js'
-import { resolveServiceConfig } from '../../utils/serviceUtils.js'
+import { resolveServiceConfig, serviceLimitKey } from '../../utils/serviceUtils.js'
 import { showNotification } from '../dialog/notification.js'
 import { Logger } from '../../utils/Logger.js'
 
@@ -43,10 +43,11 @@ function getGlobalWidgetTotal () {
 
 /**
  * Count active instances for a given service across persisted state.
- * @param {string} serviceId
+ * @param {string|undefined} serviceId
  * @returns {number}
  */
 function countServiceInstances (serviceId) {
+  if (!serviceId) return 0
   const boards = StorageManager.getBoards() || []
   return boards.reduce(
     (c, b) => c + (b.views || []).reduce(
@@ -119,7 +120,7 @@ export function refreshRowCounts () {
     const cnt = item.querySelector('.widget-option-count')
     if (!(label instanceof HTMLElement) || !(cnt instanceof HTMLElement)) return
 
-    const activeCount = countServiceInstances(resolved.id)
+    const activeCount = countServiceInstances(serviceLimitKey(resolved))
     const max = resolved.maxInstances ?? '∞'
 
     // Update text
@@ -167,7 +168,7 @@ export function populateWidgetSelectorPanel () {
     if (resolved.subcategory) item.dataset.subcategory = resolved.subcategory
     if (Array.isArray(resolved.tags)) item.dataset.tags = resolved.tags.join(',')
 
-    const activeCount = countServiceInstances(resolved.id)
+    const activeCount = countServiceInstances(serviceLimitKey(resolved))
     const max = resolved.maxInstances ?? '∞'
     const overService = typeof resolved.maxInstances === 'number' && activeCount >= resolved.maxInstances
     if (!overService && !overGlobal) item.dataset.url = resolved.url
