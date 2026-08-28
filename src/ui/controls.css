@@ -289,6 +289,15 @@ menu#controls #admin-control.control-group {
   color: var(--color-danger, #c0392b);
 }
 
+/* A row whose kill is in flight. The optimistic removal from the list is
+   immediate, but a rollback can put the row back, so the row is dimmed and
+   made inert rather than deleted — the state has to be legible for the moment
+   it exists, or a failed kill looks like a row that flickered for no reason. */
+.runtime-item-killing {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 /* ----------------------- Small screens: switch to grid -------------------- */
 @media (max-width: 645px) {
   menu#controls {

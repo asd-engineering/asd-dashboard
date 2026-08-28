@@ -567,10 +567,11 @@ export function mountRuntimeControl () {
       }
       setShells(result.sessions.map((id) => ({ id, name: `asd-${id}` })))
     } else {
-      // Don't blow away the rendered list on a transient error — keep
-      // showing what we last knew + the error banner. Status flip alone
-      // triggers re-render via the runtime change emit below.
-      setShells(getRuntimeState().shells)
+      // Don't blow away the rendered list on a transient error — keep showing
+      // what we last knew, plus the error banner. Nothing in runtime state
+      // changed, so re-render directly instead of round-tripping the unchanged
+      // array through setShells purely to make it emit at every subscriber.
+      refresh()
     }
   }
 

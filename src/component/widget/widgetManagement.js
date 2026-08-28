@@ -26,7 +26,7 @@ import { widgetGetUUID } from '../../utils/id.js'
 import { StorageManager } from '../../storage/StorageManager.js'
 import { getCurrentBoardId, getCurrentViewId } from '../../utils/elements.js'
 import { showNotification } from '../dialog/notification.js'
-import { resolveServiceConfig } from '../../utils/serviceUtils.js'
+import { resolveServiceConfig, serviceLimitKey } from '../../utils/serviceUtils.js'
 
 const logger = new Logger('widgetManagement.js')
 
@@ -64,10 +64,11 @@ async function createWidget (
   widgetWrapper.className = 'widget-wrapper widget'
   widgetWrapper.style.position = 'relative'
   widgetWrapper.dataset.service = service
-  // Use the resolved id when present, else fall back to the service name as a
-  // stable key. Never write a literal "undefined" (which broke per-service
-  // maxInstances enforcement: `"undefined" === undefined` is always false).
-  widgetWrapper.dataset.serviceId = serviceObj.id || service
+  // serviceLimitKey is the single definition of this key — the panels that
+  // count instances use the same one, so an id-less service is not counted
+  // under two different names. Never write a literal "undefined" (which broke
+  // per-service maxInstances: `"undefined" === undefined` is always false).
+  widgetWrapper.dataset.serviceId = serviceLimitKey(serviceObj, service) || service
   widgetWrapper.dataset.url = url
   widgetWrapper.dataset.dataid = dataid || widgetGetUUID()
   logger.log(`Creating widget for service: ${service}`)
@@ -315,10 +316,9 @@ async function addWidget (
     const finalRows = rows ?? serviceObj.config?.rows ?? 1
 
     // Enforce per-service maxInstances (across live DOM and persisted config).
-    // Key on the resolved id, falling back to the service name for services
-    // that have no id (e.g. URL-unmatched). This MUST match the key written to
-    // dataset.serviceId / persisted widgetState.serviceId in createWidget.
-    const limitKey = serviceObj.id || serviceName
+    // Same key as createWidget writes to dataset.serviceId / persisted
+    // widgetState.serviceId, and as the service panels count under.
+    const limitKey = serviceLimitKey(serviceObj, serviceName)
     const liveDataIds = Array.from(window.asd.widgetStore.widgets.values())
       .filter(el => el.dataset.serviceId === limitKey)
       .map(el => el.dataset.dataid)
